@@ -2,7 +2,7 @@ module github.com/FleekHQ/space-poc
 
 go 1.14
 
-
 require (
-    github.com/hsanjuan/ipfs-lite v1.1.13
+	bazil.org/fuse v0.0.0-20200430160008-602fc2ff4a00
+	github.com/hsanjuan/ipfs-lite v1.1.13 // indirect
 )
