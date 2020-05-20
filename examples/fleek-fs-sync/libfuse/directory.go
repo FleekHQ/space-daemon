@@ -1,10 +1,11 @@
-package filesystem
+package libfuse
 
 import (
 	"context"
 	"io/ioutil"
 	"log"
 	"os"
+	"syscall"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
@@ -22,22 +23,19 @@ type VFSDir struct {
 
 // Attr returns fuse.Attr for the directory
 func (dir *VFSDir) Attr(ctx context.Context, attr *fuse.Attr) error {
-	// TODO: Handle isFile
-	// return fuse.Attr{
-	// 	Size:   f.UncompressedSize64,
-	// 	Mode:   f.Mode(),
-	// 	Mtime:  f.ModTime(),
-	// 	Ctime:  f.ModTime(),
-	// 	Crtime: f.ModTime(),
-	// }
 	attr.Mode = os.ModeDir | 0755
+	log.Printf("Attr of dir %s is %+v", dir.path, attr)
 	return nil
 }
 
 // ReadDirAll reads all the content of a directory
+// In this mirror drive case, we just return items in the mirror path
 func (dir *VFSDir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
-	dirItems, err := ioutil.ReadDir(dir.vfs.mountPath)
+	path := dir.vfs.mirrorPath + dir.path
+	log.Printf("Directory List started %s", path)
+	dirItems, err := ioutil.ReadDir(path)
 	if err != nil {
+		log.Printf("Error readdirAll %s", path)
 		return nil, err
 	}
 
@@ -49,17 +47,22 @@ func (dir *VFSDir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 
 		if dirItem.IsDir() {
 			entry.Type = fuse.DT_Dir
+		} else {
+			// assume it is a file in this case, but not always the case
+			entry.Type = fuse.DT_File
 		}
 
 		res = append(res, entry)
 	}
 
+	log.Printf("Directory list result %s : %+v", path, res)
 	return res, nil
 }
 
-// Lookup finds entry Nodes withing a directory
+// Lookup finds entry Node within a directory
+// Seems to be called when not enough information is gotten from the ReadDirAll
 func (dir *VFSDir) Lookup(ctx context.Context, req *fuse.LookupRequest, resp *fuse.LookupResponse) (fs.Node, error) {
-	path := dir.vfs.mountPath + dir.path + req.Name
+	path := dir.vfs.mirrorPath + dir.path + req.Name
 	log.Printf("Looking up directory entry by path: %s", path)
 	// ideal logic would be:
 	// - Fetch server entry (synced) and merge with local entry
@@ -67,27 +70,33 @@ func (dir *VFSDir) Lookup(ctx context.Context, req *fuse.LookupRequest, resp *fu
 	// - perhaps maintain a local map of sycing directory and folders and use that instead
 	//
 	// for now just read the actual os file directory
-	dirItems, err := ioutil.ReadDir(path)
+	osFile, err := os.Open(path)
+
 	if err != nil {
+		log.Printf("Error looking up directory %s : %s", path, err.Error())
+		if os.IsNotExist(err) {
+			return nil, syscall.ENOENT
+		}
 		return nil, err
 	}
 
-	for _, dirItem := range dirItems {
-		if dirItem.Name() == req.Name {
-
-			if dirItem.IsDir() {
-				return &VFSDir{
-					vfs:  dir.vfs,
-					path: dir.path + "/" + req.Name,
-				}, nil
-			}
-
-			return &VFSFile{
-				vfs:  dir.vfs,
-				path: dir.path + "/" + req.Name,
-			}, nil
-
-		}
+	fileStat, err := osFile.Stat()
+	if err != nil {
+		log.Printf("Error getting file/directory state %s : %s", path, err.Error())
+		return nil, err
 	}
-	return nil, fuse.ENOENT
+
+	if fileStat.IsDir() {
+		log.Printf("Lookup %s is Directory", path)
+		return &VFSDir{
+			vfs:  dir.vfs,
+			path: dir.path + req.Name + "/",
+		}, nil
+	}
+
+	log.Printf("Lookup %s is File", path)
+	return &VFSFile{
+		vfs:  dir.vfs,
+		path: dir.path + req.Name,
+	}, nil
 }

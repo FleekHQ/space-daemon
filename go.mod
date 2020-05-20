@@ -3,8 +3,8 @@ module github.com/FleekHQ/space-poc
 go 1.14
 
 require (
-	bazil.org/fuse v0.0.0-20200430160008-602fc2ff4a00
 	github.com/fsnotify/fsnotify v1.4.9
+	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
 	github.com/gin-gonic/gin v1.6.3
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/stretchr/testify v1.5.1 // indirect

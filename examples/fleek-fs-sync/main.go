@@ -3,8 +3,11 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
-	fs "github.com/FleekHQ/space-poc/examples/fleek-fs-sync/filesystem"
+	fuse "github.com/FleekHQ/space-poc/examples/fleek-fs-sync/libfuse"
 )
 
 // DefaultMountPoint if no mount path is provided
@@ -27,9 +30,24 @@ func main() {
 	}
 
 	log.Printf("Mounting at %s\n", mountPoint)
-	vfs := fs.NewVFileSystem(mountPoint)
-	err := vfs.Mount()
-	if err != nil {
+	mirrorPath := "/Users/perfect/Terminal/mirror-path"
+
+	vfs := fuse.NewVFileSystem(mountPoint, mirrorPath)
+	if err := vfs.Mount(); err != nil {
 		log.Fatal(err)
+		return
 	}
+
+	// listen for system interrupt
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-sigs
+		log.Printf("Received OS Signal %s", sig.String())
+		if err := vfs.Unmount(); err != nil {
+			log.Printf("Error Unmounting fuse connection: %s", err.Error())
+		}
+	}()
+
+	vfs.Serve()
 }
