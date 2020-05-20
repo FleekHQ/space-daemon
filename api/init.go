@@ -1,11 +1,15 @@
 package api
 
-import "github.com/FleekHQ/space-poc/logger"
+import (
+	"context"
+	"github.com/FleekHQ/space-poc/config"
+	"github.com/FleekHQ/space-poc/log"
+)
 
-func Start() {
+func Start(ctx context.Context, cfg config.Config) {
 	setupRoutes()
 
-	logger.Info("about to start the application")
+	log.Info("about to start the application")
 	go func() {
 		router.Run(":8080")
 	}()

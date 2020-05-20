@@ -15,3 +15,6 @@
 # vendor/
 
 .idea/
+
+.env
+space.json
