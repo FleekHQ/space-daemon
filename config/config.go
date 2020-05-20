@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	JsonConfigFileName = "space.json.example"
+	JsonConfigFileName = "space.json"
 	SpaceFolderPath = "space/folderPath"
 )
 
