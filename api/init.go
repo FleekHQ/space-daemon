@@ -6,5 +6,7 @@ func Start() {
 	setupRoutes()
 
 	logger.Info("about to start the application")
-	router.Run(":8080")
+	go func() {
+		router.Run(":8080")
+	}()
 }
