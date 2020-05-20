@@ -2,7 +2,7 @@ package spacefs
 
 import (
 	"context"
-	"github.com/FleekHQ/space-poc/examples/fleek-fs-sync/spacestore"
+	"github.com/FleekHQ/space-poc/core/spacestore"
 	format "github.com/ipfs/go-ipld-format"
 	"log"
 	"syscall"
@@ -14,8 +14,8 @@ import (
 // It implements the FSOps interface
 // And is responsible for managing file access, encryption and decryption
 type SpaceFS struct {
-	ctx       context.Context
-	store     spacestore.SpaceStore
+	ctx   context.Context
+	store spacestore.SpaceStore
 }
 
 // NewSpaceFS initializes a SpaceFS instance with IPFS peer listening

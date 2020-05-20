@@ -3,14 +3,14 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/FleekHQ/space-poc/examples/fleek-fs-sync/spacestore"
+	"github.com/FleekHQ/space-poc/core/spacestore"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
-	fuse "github.com/FleekHQ/space-poc/examples/fleek-fs-sync/libfuse"
-	"github.com/FleekHQ/space-poc/examples/fleek-fs-sync/spacefs"
+	fuse "github.com/FleekHQ/space-poc/core/libfuse"
+	"github.com/FleekHQ/space-poc/core/spacefs"
 )
 
 // DefaultMountPoint if no mount path is provided

@@ -2,7 +2,7 @@ package spacefs
 
 import (
 	"context"
-	"github.com/FleekHQ/space-poc/examples/fleek-fs-sync/spacestore"
+	"github.com/FleekHQ/space-poc/core/spacestore"
 	"testing"
 )
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/FleekHQ/space-poc/examples/fleek-fs-sync/spacefs"
+	"github.com/FleekHQ/space-poc/core/spacefs"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"

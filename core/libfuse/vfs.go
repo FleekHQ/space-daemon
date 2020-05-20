@@ -7,7 +7,7 @@ import (
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
-	"github.com/FleekHQ/space-poc/examples/fleek-fs-sync/spacefs"
+	"github.com/FleekHQ/space-poc/core/spacefs"
 )
 
 var _ fs.FS = (*VFS)(nil)
