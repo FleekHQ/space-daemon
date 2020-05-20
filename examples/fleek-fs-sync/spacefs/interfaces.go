@@ -1,6 +1,8 @@
-package filesystem
+package spacefs
 
 import (
+	"github.com/ipfs/go-cid"
+	"io"
 	"os"
 	"time"
 )
@@ -15,31 +17,42 @@ type DirEntryAttribute interface {
 	IsDir() bool
 }
 
-// Implements the DirEntryOps
-type DirEntry struct {
-	attr DirEntryAttribute
-	path string
-}
-
 // DirEntryOps are the list of actions to be invoked on a directry entry
 // A directory entry is either a file or a folder.
 // See DirOps and FileOps for operations specific to those types
 type DirEntryOps interface {
-	// Path should return the absolute path string for directory
+	Cid() cid.Cid
+	// Path should return the absolute path string for directory or file
+	// Directory path's should end in `/`
 	Path() string
 	// Attribute should return the metadata information for the file
-	Attribute() DirEntryAttribute
+	Attribute() (DirEntryAttribute, error)
 }
 
 // DirOps are the list of actions that can be done on a directory
 type DirOps interface {
+	DirEntryOps
+	ReadDir() ([]DirEntryOps, error)
+}
+
+// FileHandler is in charge of reading, writing and closing access to a file
+// It should handle locking and track read and write offsets till it is closed
+type FileHandler interface {
+	io.ReadWriteCloser
+	SetReadOffset(int64) error
+	SetWriteOffset(int64) error
 }
 
 // FileOps are the list of actions that can be done on a file
 type FileOps interface {
+	DirEntryOps
+	Open() (FileHandler, error)
 }
 
 // FSOps represents the filesystem operations
 type FSOps interface {
+	// Root should return the root directory entry
+	Root() (DirEntryOps, error)
+	// LookupPath should return the directory entry at that particular path
 	LookupPath(path string) (DirEntryOps, error)
 }

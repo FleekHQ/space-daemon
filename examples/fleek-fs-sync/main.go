@@ -1,38 +1,53 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"github.com/FleekHQ/space-poc/examples/fleek-fs-sync/spacestore"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	fuse "github.com/FleekHQ/space-poc/examples/fleek-fs-sync/libfuse"
+	"github.com/FleekHQ/space-poc/examples/fleek-fs-sync/spacefs"
 )
 
 // DefaultMountPoint if no mount path is provided
-const DefaultMountPoint = "~/.fleek-store"
+const DefaultMountPoint = "/FleekSpace"
 
 // This program accepts a mount point as input argument or else defaults to ~/.fleek-store
-// - It should mount that directory virtually
-// - It should be able to determine when a user adds a new file to the point
-// - It should be able to modify the new file added
-// - It should be able to determine when a user edits a file
-// - It should be able to modify the edited file
-// - It should know when a file is deleted
-// - It should be able to add a file programmatically
+// - [x] It should mount that directory virtually
+// - [ ] It should be able to determine when a user adds a new file to the point
+// - [ ] It should be able to modify the new file added
+// - [ ] It should be able to determine when a user edits a file
+// - [ ] It should be able to modify the edited file
+// - [ ] It should know when a file is deleted
+// - [ ] It should be able to add a file programmatically
 func main() {
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	mountPoint := flag.String("mount", userHomeDir + "/FleekSpace", "Directory on filesystem to mount SpaceFS")
 	flag.Parse()
 
-	mountPoint := DefaultMountPoint
-	if flag.NArg() > 0 {
-		mountPoint = flag.Arg(0)
+	ctx := context.Background()
+	store, err := spacestore.NewMemoryStore(ctx)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	sfs, err := spacefs.NewSpaceFS(ctx, store)
+	if err != nil {
+		log.Fatal(err)
+		return
 	}
 
 	log.Printf("Mounting at %s\n", mountPoint)
-	mirrorPath := "/Users/perfect/Terminal/mirror-path"
-
-	vfs := fuse.NewVFileSystem(mountPoint, mirrorPath)
+	vfs := fuse.NewVFileSystem(ctx, *mountPoint, sfs)
 	if err := vfs.Mount(); err != nil {
 		log.Fatal(err)
 		return

@@ -1,10 +1,13 @@
 package libfuse
 
 import (
+	"context"
 	"errors"
+	"log"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
+	"github.com/FleekHQ/space-poc/examples/fleek-fs-sync/spacefs"
 )
 
 var _ fs.FS = (*VFS)(nil)
@@ -15,16 +18,18 @@ var (
 
 // VFS represent Virtual System
 type VFS struct {
+	ctx             context.Context
 	mountPath       string
-	mirrorPath      string
+	fsOps           spacefs.FSOps
 	mountConnection *fuse.Conn
 }
 
 // NewVFileSystem creates a new Virtual FileSystem object
-func NewVFileSystem(mountPath, mirrorPath string) VFS {
+func NewVFileSystem(ctx context.Context, mountPath string, fsOps spacefs.FSOps) VFS {
 	return VFS{
+		ctx:             ctx,
 		mountPath:       mountPath,
-		mirrorPath:      mirrorPath,
+		fsOps:           fsOps,
 		mountConnection: nil,
 	}
 }
@@ -78,9 +83,20 @@ func (vfs *VFS) Unmount() error {
 
 // Root complies with the Fuse Interface that returns the Root Node of our file system
 func (vfs *VFS) Root() (fs.Node, error) {
+	rootDirEntry, err := vfs.fsOps.Root()
+	if err != nil {
+		return nil, err
+	}
+
+	rootDir, ok := rootDirEntry.(spacefs.DirOps)
+	if !ok {
+		log.Fatal("Root directory is not a spacefs.DirOps")
+		return nil, errors.New("Root directory is not a spacefs.DirOps")
+	}
+
 	node := &VFSDir{
-		vfs:  vfs,
-		path: "/",
+		vfs:    vfs,
+		dirOps: rootDir,
 	}
 	return node, nil
 }
