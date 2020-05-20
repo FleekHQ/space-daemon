@@ -18,6 +18,7 @@ structure as much as possible following standards
 `/cmd` Entry point directory for all binaries this repo handles. E.g cmd/{binary-name}/main.go
 `/config` Global Config code
 `/core` Directory for core stuff like watcher service and threads watcher
+`/logger` Directory for app logging 
 `/examples` Directory playground for general examples and drafts
 
 Other Potential directories to consider adding

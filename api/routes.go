@@ -12,4 +12,5 @@ var (
 
 func setupRoutes() {
 	router.GET("/health", health.Ping)
+
 }
