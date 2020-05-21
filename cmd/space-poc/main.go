@@ -16,7 +16,7 @@ func main() {
 	cfg := config.New(env)
 
 	// setup logger
-	log.New(&env)
+	log.New(env)
 	// setup context
 	ctx := context.Background()
 

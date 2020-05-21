@@ -17,10 +17,16 @@ type logger struct {
 }
 
 func init() {
-	log = New(nil)
+	log = new("")
 }
 
-func New(env *env.SpaceEnv) *logger {
+func New(env env.SpaceEnv) *logger {
+	// TODO: check for log level in config and pass it to new
+	return new("")
+}
+
+
+func new(logLevel string) *logger {
 	logLevelConf := "Debug"
 	level, err := logrus.ParseLevel(logLevelConf)
 	if err != nil {
@@ -28,14 +34,13 @@ func New(env *env.SpaceEnv) *logger {
 	}
 	log = &logger{
 		log: &logrus.Logger{
-		Level: level,
-		Out:   os.Stdout,
-		Formatter: &logrus.TextFormatter{},
-	}}
+			Level: level,
+			Out:   os.Stdout,
+			Formatter: &logrus.TextFormatter{},
+		}}
 
 	return log
 }
-
 // METHODS
 
 func (l *logger) Info(msg string, tags ...string) {

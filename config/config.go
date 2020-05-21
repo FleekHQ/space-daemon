@@ -42,6 +42,8 @@ func New(env env.SpaceEnv) Config {
 
 	return c
 }
+
+
 // Gets the configuration value given a path in the json config file
 func (c Config) GetString(key string, defaultValue interface{}) (string, error) {
 	if c.cfg == nil {
