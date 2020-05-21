@@ -23,8 +23,7 @@ type serverOptions struct {
 
 type grpcServer struct {
 	opts *serverOptions
-	s *grpc.Server
-
+	s    *grpc.Server
 }
 
 func (sv *grpcServer) GetPathInfo(ctx context.Context, request *pb.PathInfoRequest) (*pb.PathInfoResponse, error) {
@@ -62,17 +61,16 @@ func (sv *grpcServer) Start(ctx context.Context) {
 	sv.s = grpc.NewServer()
 	pb.RegisterSpaceApiServer(sv.s, sv)
 
-	go func(){
+	go func() {
 		log.Info(fmt.Sprintf("grpc server starting in Port %v", sv.opts.port))
 		sv.s.Serve(lis)
 	}()
 }
 
-
 // Helper function for setting port
 func WithPort(port int) ServerOption {
 	return func(o *serverOptions) {
-		if  port != 0 {
+		if port != 0 {
 			o.port = port
 		}
 	}

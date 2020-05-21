@@ -59,7 +59,6 @@ func (fw *FolderWatcher) Close() {
 	fw.w.Close()
 }
 
-
 func Start(ctx context.Context, config cfg.Config) {
 	path := config.GetString(cfg.SpaceFolderPath, "")
 
@@ -104,28 +103,28 @@ func (fw *FolderWatcher) Watch() {
 				}
 				log.Printf("Event Object: %+v", event)
 				if event.Op&fsnotify.Create == fsnotify.Create {
-					log.Info("created file:",  "eventName:" + event.Name)
+					log.Info("created file:", "eventName:"+event.Name)
 
 					if err := fw.onCreate(event.Name); err != nil {
 						log.Printf("error when calling onCreate for %s", event.Name)
 					}
 				}
 				if event.Op&fsnotify.Remove == fsnotify.Remove {
-					log.Info("onRemove file:",  "eventName:" + event.Name)
+					log.Info("onRemove file:", "eventName:"+event.Name)
 
 					if err := fw.onCreate(event.Name); err != nil {
 						log.Printf("error when calling onRemove for %s", event.Name)
 					}
 				}
 				if event.Op&fsnotify.Write == fsnotify.Write {
-					log.Info("write file:", "eventName:" + event.Name)
+					log.Info("write file:", "eventName:"+event.Name)
 
 					if err := fw.onCreate(event.Name); err != nil {
 						log.Printf("error when calling onWrite for %s", event.Name)
 					}
 				}
 				if event.Op&fsnotify.Rename == fsnotify.Rename {
-					log.Info("renaming file:", "eventName:" + event.Name)
+					log.Info("renaming file:", "eventName:"+event.Name)
 
 					if err := fw.onCreate(event.Name); err != nil {
 						log.Printf("error when calling OnRename for %s", event.Name)

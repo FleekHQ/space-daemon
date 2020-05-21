@@ -25,7 +25,6 @@ func New(env env.SpaceEnv) *logger {
 	return new("")
 }
 
-
 func new(logLevel string) *logger {
 	logLevelConf := "Debug"
 	level, err := logrus.ParseLevel(logLevelConf)
@@ -34,13 +33,14 @@ func new(logLevel string) *logger {
 	}
 	log = &logger{
 		log: &logrus.Logger{
-			Level: level,
-			Out:   os.Stdout,
+			Level:     level,
+			Out:       os.Stdout,
 			Formatter: &logrus.TextFormatter{},
 		}}
 
 	return log
 }
+
 // METHODS
 
 func (l *logger) Info(msg string, tags ...string) {

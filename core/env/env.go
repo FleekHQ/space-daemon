@@ -8,7 +8,7 @@ import (
 
 const (
 	SpaceWorkingDir = "SPACE_APP_DIR"
-	LogLevel = "LOG_LEVEL"
+	LogLevel        = "LOG_LEVEL"
 )
 
 type SpaceEnv interface {
@@ -18,7 +18,6 @@ type SpaceEnv interface {
 }
 
 type spaceEnv struct {
-
 }
 
 func New() SpaceEnv {

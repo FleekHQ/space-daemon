@@ -21,8 +21,8 @@ type SpaceFS struct {
 // NewSpaceFS initializes a SpaceFS instance with IPFS peer listening
 func NewSpaceFS(ctx context.Context, store spacestore.SpaceStore) (*SpaceFS, error) {
 	return &SpaceFS{
-		ctx:       ctx,
-		store:     store,
+		ctx:   ctx,
+		store: store,
 	}, nil
 }
 
@@ -60,7 +60,7 @@ func (fs *SpaceFS) LookupPath(path string) (DirEntryOps, error) {
 	log.Printf("Error: %+v", err)
 
 	return &SpaceDirectory{
-		cid: node.Cid(),
+		cid:  node.Cid(),
 		node: node,
 		name: stats.String(),
 		path: path,
@@ -69,10 +69,10 @@ func (fs *SpaceFS) LookupPath(path string) (DirEntryOps, error) {
 
 // SpaceDirectory is a directory managed by space
 type SpaceDirectory struct {
-	cid   cid.Cid
+	cid  cid.Cid
 	node format.Node
 	name string
-	path  string
+	path string
 }
 
 func (dir *SpaceDirectory) Cid() cid.Cid {

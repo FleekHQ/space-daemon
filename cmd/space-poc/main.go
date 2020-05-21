@@ -22,4 +22,3 @@ func main() {
 
 	app.Start(ctx, cfg)
 }
-

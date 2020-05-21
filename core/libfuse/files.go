@@ -52,7 +52,7 @@ func (vfile *VFSFile) Open(ctx context.Context, req *fuse.OpenRequest, resp *fus
 	}
 
 	return &VFSFileHandler{
-		path:   path,
+		path:         path,
 		readWriteOps: reader,
 	}, nil
 }

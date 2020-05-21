@@ -11,8 +11,8 @@ import (
 
 const (
 	JsonConfigFileName = "space.json"
-	SpaceFolderPath = "space/folderPath"
-	SpaceServerPort = "space/rpcPort"
+	SpaceFolderPath    = "space/folderPath"
+	SpaceServerPort    = "space/rpcPort"
 	SpaceStorePath     = "space/storePath"
 )
 
@@ -50,7 +50,7 @@ func (c Config) GetString(key string, defaultValue interface{}) string {
 	if c.cfg == nil {
 		return ""
 	}
-	v, err:= c.cfg.GetString(key, defaultValue)
+	v, err := c.cfg.GetString(key, defaultValue)
 	if err != nil {
 		log.Error(fmt.Sprintf("error getting key %s from config", key), err)
 		return ""
@@ -64,7 +64,7 @@ func (c Config) GetInt(key string, defaultValue interface{}) int {
 	if c.cfg == nil {
 		return 00
 	}
-	v, err:= c.cfg.GetInt(key, defaultValue)
+	v, err := c.cfg.GetInt(key, defaultValue)
 	if err != nil {
 		log.Error(fmt.Sprintf("error getting key %s from config", key), err)
 		return 0
