@@ -1,10 +1,25 @@
 package main
 
-import "github.com/FleekHQ/space-poc/app"
+import (
+	"context"
+	"github.com/FleekHQ/space-poc/app"
+	"github.com/FleekHQ/space-poc/config"
+	"github.com/FleekHQ/space-poc/core/env"
+	"github.com/FleekHQ/space-poc/log"
+)
 
 func main() {
 	// env
-	// config context
-	app.Start()
+	env := env.New()
+
+	// load configs
+	cfg := config.New(env)
+
+	// setup logger
+	log.New(env)
+	// setup context
+	ctx := context.Background()
+
+	app.Start(ctx, cfg)
 }
 

@@ -5,6 +5,7 @@ import (
 	s "strings"
 
 	badger "github.com/dgraph-io/badger/v2"
+	homedir "github.com/mitchellh/go-homedir"
 )
 
 const DefaultRootDir = "~/.fleek-space"
@@ -26,8 +27,16 @@ func New(appRootDir ...string) *Store {
 }
 
 func (store *Store) getDb() (*badger.DB, error) {
-	os.MkdirAll(store.rootDir, os.ModePerm)
-	db, err := badger.Open(badger.DefaultOptions(s.Join([]string{store.rootDir, BadgerFileName}, "/")))
+	rootDir := s.Join([]string{store.rootDir, BadgerFileName}, "/")
+
+	if home, err := homedir.Dir(); err == nil {
+		// If the root directory contains ~, we replace it with the actual home directory
+		rootDir = s.Replace(rootDir, "~", home, -1)
+	}
+
+	// We create the directory in case it doesn't exist yet
+	os.MkdirAll(rootDir, os.ModePerm)
+	db, err := badger.Open(badger.DefaultOptions(rootDir))
 
 	if err != nil {
 		// Could not open the local database file

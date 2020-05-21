@@ -1,25 +1,39 @@
 package api
 
 import (
+	"context"
+
+	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/store"
-	"github.com/FleekHQ/space-poc/logger"
+	"github.com/FleekHQ/space-poc/log"
 )
 
-func Start() {
+func Start(ctx context.Context, cfg config.Config) {
 	setupRoutes()
-	s := store.New()
-	if err := s.Set([]byte("A"), []byte("B")); err != nil {
-		logger.Error("error", err)
+
+	var db *store.Store
+
+	if storePath, err := cfg.GetString("space.storePath", nil); err != nil {
+		log.Info("space.storePath not found in space.json. Defaulting store folder.")
+		db = store.New()
+	} else {
+		db = store.New(storePath)
+	}
+
+	if err := db.Set([]byte("A"), []byte("B")); err != nil {
+		log.Error("error", err)
 		return
 	}
 
-	if val, err := s.Get([]byte("A")); err != nil {
-		logger.Error("error", err)
+	if val, err := db.Get([]byte("A")); err != nil {
+		log.Error("error", err)
 	} else {
-		logger.Info("Got store response")
-		logger.Info(string(val))
+		log.Info("Got store response")
+		log.Info(string(val))
 	}
 
-	logger.Info("about to start the application")
-	router.Run(":8080")
+	log.Info("about to start the application")
+	go func() {
+		router.Run(":8080")
+	}()
 }
