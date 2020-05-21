@@ -13,6 +13,7 @@ const (
 	JsonConfigFileName = "space.json"
 	SpaceFolderPath = "space/folderPath"
 	SpaceServerPort = "space/rpcPort"
+	SpaceStorePath     = "space/storePath"
 )
 
 var (
@@ -22,7 +23,6 @@ var (
 type Config struct {
 	cfg gonfig.Gonfig
 }
-
 
 func New(env env.SpaceEnv) Config {
 	wd := env.WorkingFolder()
@@ -44,7 +44,6 @@ func New(env env.SpaceEnv) Config {
 
 	return c
 }
-
 
 // Gets the configuration value given a path in the json config file
 func (c Config) GetString(key string, defaultValue interface{}) string {
@@ -73,5 +72,3 @@ func (c Config) GetInt(key string, defaultValue interface{}) int {
 
 	return v
 }
-
-
