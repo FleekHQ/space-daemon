@@ -28,6 +28,7 @@ type FolderWatcher struct {
 	closed  bool
 }
 
+// TODO: refactor watcher factory method to add variadic Options pattern
 func New(path string, onCreate Handler) (*FolderWatcher, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
