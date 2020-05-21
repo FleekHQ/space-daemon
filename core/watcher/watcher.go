@@ -61,11 +61,7 @@ func (fw *FolderWatcher) Close() {
 
 
 func Start(ctx context.Context, config cfg.Config) {
-	path, err := config.GetString(cfg.SpaceFolderPath, "")
-	if err != nil {
-		log.Fatal(err)
-		panic(err)
-	}
+	path := config.GetString(cfg.SpaceFolderPath, "")
 
 	if path == "" {
 		log.Fatal(ErrFolderPathNotFound)

@@ -1,0 +1,16 @@
+syntax = "proto3";
+package space;
+
+service SpaceApi {
+  rpc GetPathInfo(PathInfoRequest) returns (PathInfoResponse) {}
+}
+
+message PathInfoRequest {
+  string path = 1;
+}
+
+message PathInfoResponse {
+  string path = 1;
+  string ipfsHash = 2;
+  bool isDir = 3;
+}

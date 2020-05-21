@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"github.com/FleekHQ/space-poc/core/env"
 	"github.com/FleekHQ/space-poc/log"
 	"github.com/creamdog/gonfig"
@@ -11,6 +12,7 @@ import (
 const (
 	JsonConfigFileName = "space.json"
 	SpaceFolderPath = "space/folderPath"
+	SpaceServerPort = "space/rpcPort"
 )
 
 var (
@@ -45,11 +47,31 @@ func New(env env.SpaceEnv) Config {
 
 
 // Gets the configuration value given a path in the json config file
-func (c Config) GetString(key string, defaultValue interface{}) (string, error) {
+func (c Config) GetString(key string, defaultValue interface{}) string {
 	if c.cfg == nil {
-		return "", ErrConfigNotLoaded
+		return ""
 	}
-	return c.cfg.GetString(key, defaultValue)
+	v, err:= c.cfg.GetString(key, defaultValue)
+	if err != nil {
+		log.Error(fmt.Sprintf("error getting key %s from config", key), err)
+		return ""
+	}
+
+	return v
+}
+
+// Gets the configuration value given a path in the json config file
+func (c Config) GetInt(key string, defaultValue interface{}) int {
+	if c.cfg == nil {
+		return 00
+	}
+	v, err:= c.cfg.GetInt(key, defaultValue)
+	if err != nil {
+		log.Error(fmt.Sprintf("error getting key %s from config", key), err)
+		return 0
+	}
+
+	return v
 }
 
 
