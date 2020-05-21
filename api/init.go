@@ -16,7 +16,7 @@ func Start(ctx context.Context, cfg config.Config) {
 
 	var db *store.Store
 
-	if storePath, err := cfg.GetString("space.storePath", nil); err != nil {
+	if storePath, err := cfg.GetString(config.SpaceStorePath, nil); err != nil {
 		log.Info("space.storePath not found in space.json. Defaulting store folder.")
 		db = store.New()
 	} else {
