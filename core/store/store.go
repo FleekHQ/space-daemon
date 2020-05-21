@@ -40,7 +40,7 @@ func New(opts ...StoreOption) *Store {
 	db := &Store{
 		rootDir: o.rootDir,
 	}
-	
+
 	db.hotInit()
 	return db
 }
