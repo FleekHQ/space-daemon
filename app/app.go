@@ -18,6 +18,7 @@ func Start(ctx context.Context, cfg config.Config) {
 		store.WithPath(cfg.GetString(config.SpaceStorePath, "")),
 	)
 
+
 	// Generating key pair
 	log.Info("Generating key pair...")
 	kc := keychain.New(store)

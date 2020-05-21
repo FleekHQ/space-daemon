@@ -27,9 +27,9 @@ var defaultStoreOptions = storeOptions{
 
 // Idea taken from here https://medium.com/soon-london/variadic-configuration-functions-in-go-8cef1c97ce99
 
-type StoreOption func(o *storeOptions)
+type Option func(o *storeOptions)
 
-func New(opts ...StoreOption) *Store {
+func New(opts ...Option) *Store {
 	o := defaultStoreOptions
 	for _, opt := range opts {
 		opt(&o)
@@ -61,7 +61,7 @@ func (store *Store) hotInit() {
 }
 
 // Helper function for setting store path
-func WithPath(path string) StoreOption {
+func WithPath(path string) Option {
 	return func(o *storeOptions) {
 		if path != "" {
 			o.rootDir = path
