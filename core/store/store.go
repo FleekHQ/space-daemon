@@ -69,6 +69,10 @@ func (store *Store) Set(key []byte, value []byte) error {
 	return nil
 }
 
+func (store *Store) SetString(key string, value string) error {
+	return store.Set([]byte(key), []byte(value))
+}
+
 // Given a key, retrieves the stored value. If the key is not found returns ErrKeyNotFound.
 func (store *Store) Get(key []byte) ([]byte, error) {
 	db, err := store.getDb()

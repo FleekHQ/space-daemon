@@ -3,7 +3,10 @@ package api
 import (
 	"context"
 
+	"encoding/hex"
+
 	"github.com/FleekHQ/space-poc/config"
+	"github.com/FleekHQ/space-poc/core/keychain"
 	"github.com/FleekHQ/space-poc/core/store"
 	"github.com/FleekHQ/space-poc/log"
 )
@@ -30,6 +33,14 @@ func Start(ctx context.Context, cfg config.Config) {
 	} else {
 		log.Info("Got store response")
 		log.Info(string(val))
+	}
+
+	log.Info("Generating key pair...")
+	kc := keychain.New(db)
+	if pub, err := kc.GenerateKeyPair(); err != nil {
+		log.Error("Error while generating key pair", err)
+	} else {
+		log.Info(hex.EncodeToString(pub))
 	}
 
 	log.Info("about to start the application")
