@@ -2,15 +2,17 @@ package config
 
 import (
 	"errors"
+	"os"
+
 	"github.com/FleekHQ/space-poc/core/env"
 	"github.com/FleekHQ/space-poc/log"
 	"github.com/creamdog/gonfig"
-	"os"
 )
 
 const (
 	JsonConfigFileName = "space.json"
-	SpaceFolderPath = "space/folderPath"
+	SpaceFolderPath    = "space/folderPath"
+	SpaceStorePath     = "space/storePath"
 )
 
 var (
@@ -20,7 +22,6 @@ var (
 type Config struct {
 	cfg gonfig.Gonfig
 }
-
 
 func New(env env.SpaceEnv) Config {
 	wd := env.WorkingFolder()
@@ -43,7 +44,6 @@ func New(env env.SpaceEnv) Config {
 	return c
 }
 
-
 // Gets the configuration value given a path in the json config file
 func (c Config) GetString(key string, defaultValue interface{}) (string, error) {
 	if c.cfg == nil {
@@ -51,5 +51,3 @@ func (c Config) GetString(key string, defaultValue interface{}) (string, error) 
 	}
 	return c.cfg.GetString(key, defaultValue)
 }
-
-
