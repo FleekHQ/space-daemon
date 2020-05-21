@@ -62,7 +62,7 @@ func (c Config) GetString(key string, defaultValue interface{}) string {
 // Gets the configuration value given a path in the json config file
 func (c Config) GetInt(key string, defaultValue interface{}) int {
 	if c.cfg == nil {
-		return 00
+		return 0
 	}
 	v, err := c.cfg.GetInt(key, defaultValue)
 	if err != nil {
