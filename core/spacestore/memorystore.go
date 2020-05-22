@@ -13,9 +13,9 @@ import (
 // It uses the ipfs peer to fetch data and caches them in memory
 // on restart all in-memory updates are lost
 type MemorySpaceStore struct {
-	peer *ipfslite.Peer
+	peer      *ipfslite.Peer
 	folderCid cid.Cid
-	storage map[string]string
+	storage   map[string]string
 }
 
 func NewMemoryStore(ctx context.Context) (*MemorySpaceStore, error) {
@@ -30,9 +30,9 @@ func NewMemoryStore(ctx context.Context) (*MemorySpaceStore, error) {
 	}
 
 	return &MemorySpaceStore{
-		peer: ipfspeer,
+		peer:      ipfspeer,
 		folderCid: folderCid,
-		storage: make(map[string]string),
+		storage:   make(map[string]string),
 	}, nil
 }
 

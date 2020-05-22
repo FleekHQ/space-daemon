@@ -1,6 +1,8 @@
 package store
 
 import (
+	"fmt"
+	"github.com/FleekHQ/space-poc/log"
 	"os"
 	s "strings"
 
@@ -15,14 +17,55 @@ type Store struct {
 	rootDir string
 }
 
-func New(appRootDir ...string) *Store {
-	rootDir := DefaultRootDir
-	if appRootDir != nil {
-		rootDir = appRootDir[0]
+type storeOptions struct {
+	rootDir string
+}
+
+var defaultStoreOptions = storeOptions{
+	rootDir: DefaultRootDir,
+}
+
+// Idea taken from here https://medium.com/soon-london/variadic-configuration-functions-in-go-8cef1c97ce99
+
+type Option func(o *storeOptions)
+
+func New(opts ...Option) *Store {
+	o := defaultStoreOptions
+	for _, opt := range opts {
+		opt(&o)
 	}
 
-	return &Store{
-		rootDir: rootDir,
+	log.Info(fmt.Sprintf("using path %s for store", o.rootDir))
+
+	db := &Store{
+		rootDir: o.rootDir,
+	}
+
+	db.hotInit()
+	return db
+}
+
+// Testing that store is correctly working
+func (store *Store) hotInit() {
+	if err := store.Set([]byte("A"), []byte("B")); err != nil {
+		log.Error("error", err)
+		return
+	}
+
+	if val, err := store.Get([]byte("A")); err != nil {
+		log.Error("error", err)
+	} else {
+		log.Info("Got store response")
+		log.Info(string(val))
+	}
+}
+
+// Helper function for setting store path
+func WithPath(path string) Option {
+	return func(o *storeOptions) {
+		if path != "" {
+			o.rootDir = path
+		}
 	}
 }
 

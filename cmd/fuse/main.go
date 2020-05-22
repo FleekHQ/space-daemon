@@ -30,7 +30,7 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	mountPoint := flag.String("mount", userHomeDir + "/FleekSpace", "Directory on filesystem to mount SpaceFS")
+	mountPoint := flag.String("mount", userHomeDir+"/FleekSpace", "Directory on filesystem to mount SpaceFS")
 	flag.Parse()
 
 	ctx := context.Background()

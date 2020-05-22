@@ -8,6 +8,7 @@ require (
 	github.com/dgraph-io/badger/v2 v2.0.3
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-gonic/gin v1.6.3
+	github.com/golang/protobuf v1.4.2
 	github.com/hsanjuan/ipfs-lite v1.1.13
 	github.com/ipfs/go-cid v0.0.5
 	github.com/ipfs/go-datastore v0.4.4
@@ -20,4 +21,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.2.0
 	go.uber.org/zap v1.15.0 // indirect
+	google.golang.org/grpc v1.28.1
+	google.golang.org/protobuf v1.23.0
 )
