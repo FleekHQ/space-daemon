@@ -1,10 +1,12 @@
 package store
 
 import (
+	"errors"
 	"fmt"
-	"github.com/FleekHQ/space-poc/log"
 	"os"
 	s "strings"
+
+	"github.com/FleekHQ/space-poc/log"
 
 	badger "github.com/dgraph-io/badger/v2"
 	homedir "github.com/mitchellh/go-homedir"
@@ -15,6 +17,8 @@ const BadgerFileName = "db"
 
 type Store struct {
 	rootDir string
+	db      *badger.DB
+	isOpen  bool
 }
 
 type storeOptions struct {
@@ -37,12 +41,48 @@ func New(opts ...Option) *Store {
 
 	log.Info(fmt.Sprintf("using path %s for store", o.rootDir))
 
-	db := &Store{
+	store := &Store{
 		rootDir: o.rootDir,
+		isOpen:  false,
 	}
 
-	db.hotInit()
-	return db
+	return store
+}
+
+func (store *Store) Open() error {
+	if store.isOpen {
+		return errors.New("Tried to open already open database")
+	}
+
+	rootDir := s.Join([]string{store.rootDir, BadgerFileName}, "/")
+
+	if home, err := homedir.Dir(); err == nil {
+		// If the root directory contains ~, we replace it with the actual home directory
+		rootDir = s.Replace(rootDir, "~", home, -1)
+	}
+
+	// We create the directory in case it doesn't exist yet
+	os.MkdirAll(rootDir, os.ModePerm)
+	if db, err := badger.Open(badger.DefaultOptions(rootDir)); err != nil {
+		return err
+	} else {
+		store.db = db
+		store.isOpen = true
+	}
+
+	return nil
+}
+
+func (store *Store) Close() error {
+	if store.isOpen == false {
+		return errors.New("Tried to close a not yet opened database")
+	}
+
+	defer store.db.Close()
+
+	store.isOpen = false
+
+	return nil
 }
 
 // Testing that store is correctly working
@@ -70,23 +110,11 @@ func WithPath(path string) Option {
 }
 
 func (store *Store) getDb() (*badger.DB, error) {
-	rootDir := s.Join([]string{store.rootDir, BadgerFileName}, "/")
-
-	if home, err := homedir.Dir(); err == nil {
-		// If the root directory contains ~, we replace it with the actual home directory
-		rootDir = s.Replace(rootDir, "~", home, -1)
+	if store.isOpen == false {
+		return nil, errors.New("Database has not been opened yet")
 	}
 
-	// We create the directory in case it doesn't exist yet
-	os.MkdirAll(rootDir, os.ModePerm)
-	db, err := badger.Open(badger.DefaultOptions(rootDir))
-
-	if err != nil {
-		// Could not open the local database file
-		return nil, err
-	}
-
-	return db, nil
+	return store.db, nil
 }
 
 // Stores a key/value pair in the db.
@@ -96,8 +124,6 @@ func (store *Store) Set(key []byte, value []byte) error {
 	if err != nil {
 		return err
 	}
-
-	defer db.Close()
 
 	updateHandler := func(txn *badger.Txn) error {
 		e := badger.NewEntry(key, value)
@@ -123,8 +149,6 @@ func (store *Store) Get(key []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	defer db.Close()
 
 	var valCopy []byte
 

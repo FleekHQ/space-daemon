@@ -8,7 +8,7 @@ require (
 	github.com/dgraph-io/badger/v2 v2.0.3
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gin-gonic/gin v1.6.3
-	github.com/golang/protobuf v1.4.2
+	github.com/golang/protobuf v1.4.0
 	github.com/hsanjuan/ipfs-lite v1.1.13
 	github.com/ipfs/go-cid v0.0.5
 	github.com/ipfs/go-datastore v0.4.4
