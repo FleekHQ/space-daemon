@@ -3,10 +3,11 @@ package config
 import (
 	"errors"
 	"fmt"
+	"os"
+
 	"github.com/FleekHQ/space-poc/core/env"
 	"github.com/FleekHQ/space-poc/log"
 	"github.com/creamdog/gonfig"
-	"os"
 )
 
 const (
@@ -29,13 +30,13 @@ func New(env env.SpaceEnv) Config {
 	f, err := os.Open(wd + "/" + JsonConfigFileName)
 	if err != nil {
 		// TODO: this may turn into a fatal panic error
-		log.Info("could not find space.json.example file, using defaults")
+		log.Info("could not find space.json file in " + wd + ", using defaults")
 	}
 
 	defer f.Close()
 	config, err := gonfig.FromJson(f)
 	if err != nil {
-		log.Info("could not read space.json.example file, using defaults")
+		log.Info("could not read space.json file, using defaults")
 	}
 
 	c := Config{

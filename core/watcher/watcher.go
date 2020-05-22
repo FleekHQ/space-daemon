@@ -4,14 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	s "strings"
+	"sync"
+
 	cfg "github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/log"
 	"github.com/fsnotify/fsnotify"
-	"sync"
+	homedir "github.com/mitchellh/go-homedir"
 )
 
 var (
-	ErrFolderPathNotFound = errors.New("could not find a folder path found for watcher")
+	ErrFolderPathNotFound = errors.New("could not find a folder path for watcher")
 )
 
 type Handler func(fileName string) error
@@ -63,6 +66,11 @@ func (fw *FolderWatcher) Close() {
 
 func Start(ctx context.Context, config cfg.Config) {
 	path := config.GetString(cfg.SpaceFolderPath, "")
+
+	if home, err := homedir.Dir(); err == nil {
+		// If the root directory contains ~, we replace it with the actual home directory
+		path = s.Replace(path, "~", home, -1)
+	}
 
 	if path == "" {
 		log.Fatal(ErrFolderPathNotFound)

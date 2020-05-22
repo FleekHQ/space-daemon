@@ -22,43 +22,43 @@ func New(store *db.Store) *Keychain {
 }
 
 // Generates a public/private key pair using ed25519 algorithm.
-// It stores it in the local db and returns the public key.
+// It stores it in the local db and returns the key pair key.
 // If there's already a key pair stored, it returns an error.
 // Use GenerateKeyPairWithForce if you want to override existing keys
-func (kc *Keychain) GenerateKeyPair() ([]byte, error) {
+func (kc *Keychain) GenerateKeyPair() ([]byte, []byte, error) {
 	if val, _ := kc.store.Get([]byte(PublicKeyStoreKey)); val != nil {
 		newErr := errors.New("Error while executing GenerateKeyPair. Key pair already exists. Use GenerateKeyPairWithForce if you want to override it.")
-		return nil, newErr
+		return nil, nil, newErr
 	}
 
 	return kc.generateAndStoreKeyPair()
 }
 
 // Generates a public/private key pair using ed25519 algorithm.
-// It stores it in the local db and returns the public key.
+// It stores it in the local db and returns the key pair.
 // Warning: If there's already a key pair stored, it overrides it.
-func (kc *Keychain) GenerateKeyPairWithForce() ([]byte, error) {
+func (kc *Keychain) GenerateKeyPairWithForce() ([]byte, []byte, error) {
 	return kc.generateAndStoreKeyPair()
 }
 
-func (kc *Keychain) generateAndStoreKeyPair() ([]byte, error) {
+func (kc *Keychain) generateAndStoreKeyPair() ([]byte, []byte, error) {
 	// Compute the key from a random seed
 	pub, priv, err := ed25519.GenerateKey(nil)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Store the key pair in the db
 	if err = kc.store.Set([]byte(PublicKeyStoreKey), pub); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if err = kc.store.Set([]byte(PrivateKeyStoreKey), priv); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return pub, nil
+	return pub, priv, nil
 }
 
 // Signs a message using the stored private key.

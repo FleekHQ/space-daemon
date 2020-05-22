@@ -3,6 +3,8 @@ package space;
 
 service SpaceApi {
   rpc GetPathInfo(PathInfoRequest) returns (PathInfoResponse) {}
+  rpc GenerateKeyPair(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {}
+  rpc GenerateKeyPairWithForce(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {}
 }
 
 message PathInfoRequest {
@@ -13,4 +15,11 @@ message PathInfoResponse {
   string path = 1;
   string ipfsHash = 2;
   bool isDir = 3;
+}
+
+message GenerateKeyPairRequest {}
+
+message GenerateKeyPairResponse {
+  string publicKey = 1;
+  string privateKey = 2;
 }
