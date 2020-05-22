@@ -1,10 +1,17 @@
 package watcher
 
 import (
-	"github.com/FleekHQ/space-poc/logger"
+	"context"
+	"errors"
+	"fmt"
+	cfg "github.com/FleekHQ/space-poc/config"
+	"github.com/FleekHQ/space-poc/log"
 	"github.com/fsnotify/fsnotify"
-	"log"
 	"sync"
+)
+
+var (
+	ErrFolderPathNotFound = errors.New("could not find a folder path found for watcher")
 )
 
 type Handler func(fileName string) error
@@ -21,6 +28,8 @@ type FolderWatcher struct {
 	closed  bool
 }
 
+// TODO: refactor watcher factory method to add variadic Options pattern
+// see store and gRPC for examples
 func New(path string, onCreate Handler) (*FolderWatcher, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -52,6 +61,29 @@ func (fw *FolderWatcher) Close() {
 	fw.w.Close()
 }
 
+func Start(ctx context.Context, config cfg.Config) {
+	path := config.GetString(cfg.SpaceFolderPath, "")
+
+	if path == "" {
+		log.Fatal(ErrFolderPathNotFound)
+		panic(ErrFolderPathNotFound)
+	}
+
+	log.Info("Starting watcher in filePath", fmt.Sprintf("filePath:%s", path))
+	watcher, err := New(path, func(filename string) error {
+		return nil
+	})
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	watcher.Watch()
+	log.Info("Watcher started")
+	<-watcher.done
+	log.Info("Watcher closed/done")
+}
+
 func (fw *FolderWatcher) Watch() {
 	fw.lock.Lock()
 	defer fw.lock.Unlock()
@@ -64,18 +96,40 @@ func (fw *FolderWatcher) Watch() {
 		for {
 			select {
 			case <-fw.stopWatch:
-				logger.Info("graceful shutdown")
+				log.Info("graceful shutdown")
 				close(fw.done)
 				return
 			case event, ok := <-fw.w.Events:
 				if !ok {
 					return
 				}
+				log.Printf("Event Object: %+v", event)
 				if event.Op&fsnotify.Create == fsnotify.Create {
-					log.Println("created file:", event.Name)
+					log.Info("created file:", "eventName:"+event.Name)
 
 					if err := fw.onCreate(event.Name); err != nil {
 						log.Printf("error when calling onCreate for %s", event.Name)
+					}
+				}
+				if event.Op&fsnotify.Remove == fsnotify.Remove {
+					log.Info("onRemove file:", "eventName:"+event.Name)
+
+					if err := fw.onCreate(event.Name); err != nil {
+						log.Printf("error when calling onRemove for %s", event.Name)
+					}
+				}
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					log.Info("write file:", "eventName:"+event.Name)
+
+					if err := fw.onCreate(event.Name); err != nil {
+						log.Printf("error when calling onWrite for %s", event.Name)
+					}
+				}
+				if event.Op&fsnotify.Rename == fsnotify.Rename {
+					log.Info("renaming file:", "eventName:"+event.Name)
+
+					if err := fw.onCreate(event.Name); err != nil {
+						log.Printf("error when calling OnRename for %s", event.Name)
 					}
 				}
 			case err, ok := <-fw.w.Errors:
