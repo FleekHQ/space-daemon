@@ -2,10 +2,11 @@ package log
 
 import (
 	"fmt"
-	"github.com/FleekHQ/space-poc/core/env"
-	"github.com/sirupsen/logrus"
 	"os"
 	"strings"
+
+	"github.com/FleekHQ/space-poc/core/env"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -56,7 +57,7 @@ func (l *logger) Printf(msg string, args ...interface{}) {
 		return
 	}
 
-	l.log.Printf(msg, args)
+	l.log.Printf(msg, args...)
 }
 
 func (l *logger) Debug(msg string, tags ...string) {
@@ -88,7 +89,7 @@ func Info(msg string, tags ...string) {
 }
 
 func Printf(msg string, args ...interface{}) {
-	log.Printf(msg, args)
+	log.Printf(msg, args...)
 }
 
 func Debug(msg string, tags ...string) {

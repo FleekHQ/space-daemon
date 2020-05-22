@@ -21,7 +21,15 @@ var (
 	ErrConfigNotLoaded = errors.New("config file was not loaded correctly or it does not exist")
 )
 
-type Config struct {
+// Config used to fetch config information
+type Config interface {
+	GetString(key string, defaultValue interface{}) string
+	GetInt(key string, defaultValue interface{}) int
+}
+
+// standardConfig implements Config
+// It loads its config information from the space.json file
+type standardConfig struct {
 	cfg gonfig.Gonfig
 }
 
@@ -39,7 +47,7 @@ func New(env env.SpaceEnv) Config {
 		log.Info("could not read space.json file, using defaults")
 	}
 
-	c := Config{
+	c := standardConfig{
 		cfg: config,
 	}
 
@@ -48,7 +56,7 @@ func New(env env.SpaceEnv) Config {
 
 // Gets the configuration value given a path in the json config file
 // defaults to empty value if non is found and just logs errors
-func (c Config) GetString(key string, defaultValue interface{}) string {
+func (c standardConfig) GetString(key string, defaultValue interface{}) string {
 	if c.cfg == nil {
 		return ""
 	}
@@ -63,7 +71,7 @@ func (c Config) GetString(key string, defaultValue interface{}) string {
 
 // Gets the configuration value given a path in the json config file
 // defaults to empty value if non is found and just logs errors
-func (c Config) GetInt(key string, defaultValue interface{}) int {
+func (c standardConfig) GetInt(key string, defaultValue interface{}) int {
 	if c.cfg == nil {
 		return 0
 	}

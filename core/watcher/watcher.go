@@ -7,65 +7,55 @@ import (
 	s "strings"
 	"sync"
 
+	"os"
+	"time"
+
+	homedir "github.com/mitchellh/go-homedir"
+
+	"github.com/radovskyb/watcher"
+
 	cfg "github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/log"
-	"github.com/fsnotify/fsnotify"
-	homedir "github.com/mitchellh/go-homedir"
 )
 
 var (
 	ErrFolderPathNotFound = errors.New("could not find a folder path for watcher")
 )
 
-type Handler func(fileName string) error
+type UpdateEvent watcher.Op
+
+const (
+	Create = UpdateEvent(watcher.Create)
+	Write  = UpdateEvent(watcher.Write)
+	Rename = UpdateEvent(watcher.Rename)
+	Remove = UpdateEvent(watcher.Remove)
+	Chmod  = UpdateEvent(watcher.Chmod)
+	Move   = UpdateEvent(watcher.Move)
+)
+
+type Handler func(event UpdateEvent, fileInfo os.FileInfo, newPath, oldPath string)
+
+func (e UpdateEvent) String() string {
+	return watcher.Op(e).String()
+}
 
 type FolderWatcher struct {
-	w        *fsnotify.Watcher
-	onCreate Handler
+	w *watcher.Watcher
 
 	stopWatch chan struct{}
 	done      chan struct{}
 
-	lock    sync.Mutex
-	started bool
-	closed  bool
+	lock      sync.Mutex
+	watchPath string
+	started   bool
+	closed    bool
 }
 
-// TODO: refactor watcher factory method to add variadic Options pattern
-// see store and gRPC for examples
-func New(path string, onCreate Handler) (*FolderWatcher, error) {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err = watcher.Add(path); err != nil {
-		return nil, err
-	}
-
-	return &FolderWatcher{
-		w:         watcher,
-		onCreate:  onCreate,
-		stopWatch: make(chan struct{}),
-		done:      make(chan struct{}),
-	}, nil
-}
-
-func (fw *FolderWatcher) Close() {
-	fw.lock.Lock()
-	defer fw.lock.Unlock()
-	if !fw.started || fw.closed {
-
-		return
-	}
-	fw.closed = true
-
-	close(fw.stopWatch)
-	<-fw.done
-	fw.w.Close()
-}
-
-func Start(ctx context.Context, config cfg.Config) {
+// New creates an new instance of folder watcher
+// It listens to the path specified in the config space/folderPath
+func New(config cfg.Config) (*FolderWatcher, error) {
 	path := config.GetString(cfg.SpaceFolderPath, "")
+	w := watcher.New()
 
 	if home, err := homedir.Dir(); err == nil {
 		// If the root directory contains ~, we replace it with the actual home directory
@@ -74,73 +64,52 @@ func Start(ctx context.Context, config cfg.Config) {
 
 	if path == "" {
 		log.Fatal(ErrFolderPathNotFound)
-		panic(ErrFolderPathNotFound)
+		return nil, ErrFolderPathNotFound
 	}
 
 	log.Info("Starting watcher in filePath", fmt.Sprintf("filePath:%s", path))
-	watcher, err := New(path, func(filename string) error {
-		return nil
-	})
+	err := w.AddRecursive(path)
 	if err != nil {
-		log.Fatal(err)
-		return
+		return nil, err
 	}
 
-	watcher.Watch()
-	log.Info("Watcher started")
-	<-watcher.done
-	log.Info("Watcher closed/done")
+	return &FolderWatcher{
+		w:         w,
+		watchPath: path,
+		stopWatch: make(chan struct{}),
+	}, nil
 }
 
-func (fw *FolderWatcher) Watch() {
+// Watch will start listening of changes on the FolderWatcher path and trigger the handler with any update event
+// This is a block operation
+func (fw *FolderWatcher) Watch(ctx context.Context, handler Handler) error {
 	fw.lock.Lock()
-	defer fw.lock.Unlock()
 	if fw.started {
-		return
+		return nil
 	}
-
 	fw.started = true
+	fw.lock.Unlock()
+
 	go func() {
 		for {
 			select {
 			case <-fw.stopWatch:
 				log.Info("graceful shutdown")
-				close(fw.done)
 				return
-			case event, ok := <-fw.w.Events:
-				if !ok {
-					return
+			case <-fw.w.Closed:
+				fw.Close()
+			case <-ctx.Done():
+				fw.Close()
+			case event, ok := <-fw.w.Event:
+				if ok {
+					handler(
+						UpdateEvent(event.Op),
+						event,
+						event.Path,
+						event.OldPath,
+					)
 				}
-				log.Printf("Event Object: %+v", event)
-				if event.Op&fsnotify.Create == fsnotify.Create {
-					log.Info("created file:", "eventName:"+event.Name)
-
-					if err := fw.onCreate(event.Name); err != nil {
-						log.Printf("error when calling onCreate for %s", event.Name)
-					}
-				}
-				if event.Op&fsnotify.Remove == fsnotify.Remove {
-					log.Info("onRemove file:", "eventName:"+event.Name)
-
-					if err := fw.onCreate(event.Name); err != nil {
-						log.Printf("error when calling onRemove for %s", event.Name)
-					}
-				}
-				if event.Op&fsnotify.Write == fsnotify.Write {
-					log.Info("write file:", "eventName:"+event.Name)
-
-					if err := fw.onCreate(event.Name); err != nil {
-						log.Printf("error when calling onWrite for %s", event.Name)
-					}
-				}
-				if event.Op&fsnotify.Rename == fsnotify.Rename {
-					log.Info("renaming file:", "eventName:"+event.Name)
-
-					if err := fw.onCreate(event.Name); err != nil {
-						log.Printf("error when calling OnRename for %s", event.Name)
-					}
-				}
-			case err, ok := <-fw.w.Errors:
+			case err, ok := <-fw.w.Error:
 				if !ok {
 					return
 				}
@@ -148,4 +117,26 @@ func (fw *FolderWatcher) Watch() {
 			}
 		}
 	}()
+
+	// This is blocking
+	err := fw.w.Start(time.Millisecond * 100)
+	fw.started = false
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Close will stop the watching operation and unblock watch calls
+func (fw *FolderWatcher) Close() {
+	log.Info("Closing connection")
+	fw.lock.Lock()
+	defer fw.lock.Unlock()
+	if !fw.started || fw.closed {
+		return
+	}
+	fw.closed = true
+	close(fw.stopWatch)
+	fw.w.Close()
 }
