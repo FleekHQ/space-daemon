@@ -1,10 +1,11 @@
 package spacestore
 
 import (
-	format "github.com/ipfs/go-ipld-format"
 	"log"
 	"os"
 	"time"
+
+	format "github.com/ipfs/go-ipld-format"
 )
 
 // DirEntry implements the DirEntryOps
@@ -63,11 +64,13 @@ func (d *DirEntry) Name() string {
 
 // Size implements the DirEntryAttribute Interface and return the size of the item
 func (d *DirEntry) Size() uint64 {
-	size, err := d.node.Size()
-	if err != nil {
-		log.Printf("Error fetch size of dir %s: %s", d.Path, err.Error())
+	size := len(d.node.RawData())
+	if size > 12 {
+		// Seems there is some extra 12 bytes metadata,
+		// so removing that from rawdata
+		size -= 11
 	}
-	return size
+	return uint64(size)
 }
 
 // Mode implements the DirEntryAttribute Interface
@@ -84,7 +87,6 @@ func (d *DirEntry) Mode() os.FileMode {
 // Ctime implements the DirEntryAttribute Interface
 // It returns the time the directory was created
 func (d *DirEntry) Ctime() time.Time {
-	// TODO: Think of something
 	return time.Time{}
 }
 

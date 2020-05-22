@@ -2,6 +2,10 @@ package spacestore
 
 import (
 	"context"
+	"log"
+
+	"github.com/libp2p/go-libp2p-core/peer"
+
 	ipfslite "github.com/hsanjuan/ipfs-lite"
 	datastore "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
@@ -23,26 +27,39 @@ func createIpfsPeer(ctx context.Context) (*ipfslite.Peer, error) {
 	}
 
 	// listen on all interface
-	listen, _ := multiaddr.NewMultiaddr("/ip4/0.0.0.0/tcp/0")
+	listen := multiaddr.StringCast("/ip4/0.0.0.0/tcp/0")
 
 	host, dht, err := ipfslite.SetupLibp2p(
 		ctx,
 		hostKey,
 		nil,
 		[]multiaddr.Multiaddr{listen},
-		nil, // using in-memory datastore for now
+		nil, // using in-memory ds for now
 	)
 
 	if err != nil {
 		return nil, err
 	}
+	log.Printf("Host information:\nID: %s\nAddresses: %+v", host.ID(), host.Addrs())
 
-	datastore := dssync.MutexWrap(datastore.NewMapDatastore())
-	ipfsPeer, err := ipfslite.New(ctx, datastore, host, dht, nil)
+	ds := dssync.MutexWrap(datastore.NewMapDatastore())
+	ipfsPeer, err := ipfslite.New(ctx, ds, host, dht, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	ipfsPeer.Bootstrap(ipfslite.DefaultBootstrapPeers())
+	// These are Perfects Local host configuration
+	ipfsPeer.Bootstrap([]peer.AddrInfo{
+		{
+			ID: "QmaYPM3zNiNPxUPFZrzBiz2VCJZSBU83EkySABtbbMrf9Q",
+			Addrs: []multiaddr.Multiaddr{
+				//multiaddr.StringCast("/ip4/127.0.0.1/tcp/4001/p2p/QmaYPM3zNiNPxUPFZrzBiz2VCJZSBU83EkySABtbbMrf9Q"),
+				multiaddr.StringCast("/ip4/192.168.1.70/tcp/4001/ipfs/QmaYPM3zNiNPxUPFZrzBiz2VCJZSBU83EkySABtbbMrf9Q"),
+				//multiaddr.StringCast("/ip6/::1/tcp/4001/p2p/QmaYPM3zNiNPxUPFZrzBiz2VCJZSBU83EkySABtbbMrf9Q"),
+				//multiaddr.StringCast("/ip4/41.76.196.253/tcp/4001/p2p/QmaYPM3zNiNPxUPFZrzBiz2VCJZSBU83EkySABtbbMrf9Q"),
+			},
+		},
+	})
+	//ipfsPeer.Bootstrap(ipfslite.DefaultBootstrapPeers())
 	return ipfsPeer, nil
 }

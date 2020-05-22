@@ -6,6 +6,13 @@ import (
 	"time"
 )
 
+type FileHandlerMode uint8
+
+const (
+	ReadMode = FileHandlerMode(0)
+	WriteMode
+)
+
 // DirEntryAttribute similar to the FileInfo in the os.Package
 type DirEntryAttribute interface {
 	Name() string       // base name of the file
@@ -43,7 +50,7 @@ type FileHandler interface {
 // FileOps are the list of actions that can be done on a file
 type FileOps interface {
 	DirEntryOps
-	Open() (FileHandler, error)
+	Open(mode FileHandlerMode) (FileHandler, error)
 }
 
 // FSOps represents the filesystem operations
@@ -52,4 +59,6 @@ type FSOps interface {
 	Root() (DirEntryOps, error)
 	// LookupPath should return the directory entry at that particular path
 	LookupPath(path string) (DirEntryOps, error)
+	// Open a file at specific path, with specified mode
+	Open(path string, mode FileHandlerMode) (FileHandler, error)
 }

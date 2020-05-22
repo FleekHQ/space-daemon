@@ -46,8 +46,9 @@ func (vfile *VFSFile) Attr(ctx context.Context, attr *fuse.Attr) error {
 
 // Open create a handle responsible for reading the file and also closing the file after reading
 func (vfile *VFSFile) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fs.Handle, error) {
+	log.Printf("Opening content of file %s", vfile.fileOps.Path())
 	path := vfile.fileOps.Path()
-	reader, err := vfile.fileOps.Open()
+	reader, err := vfile.fileOps.Open(spacefs.ReadMode)
 	if err != nil {
 		return nil, err
 	}
@@ -67,15 +68,17 @@ type VFSFileHandler struct {
 // Read reads the content of the reader
 // Ideally, decryption of the content of the file should be happening here
 func (vfh *VFSFileHandler) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) error {
-	log.Printf("Reading content of file %s", vfh.path)
+	log.Printf("Reading content of file %s, and size: %d", vfh.path, req.Size)
 	_, err := vfh.readWriteOps.Seek(req.Offset, io.SeekStart)
 	if err != nil {
+		log.Printf("Seeking to %d error: %s", req.Offset, err.Error())
 		return err
 	}
 
 	buf := make([]byte, req.Size)
 	n, err := vfh.readWriteOps.Read(buf)
 	if err != nil {
+		log.Printf("Reading error: %s", err.Error())
 		return err
 	}
 
@@ -83,20 +86,22 @@ func (vfh *VFSFileHandler) Read(ctx context.Context, req *fuse.ReadRequest, resp
 	return nil
 }
 
-// Write writes content from request into the underly file. Keeping track of offset and all
+// Write writes content from request into the underlying file. Keeping track of offset and all
 // Ideally, encryption of the content of the file should be happening here
 func (vfh *VFSFileHandler) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) error {
 	log.Printf("Reading content to file %s", vfh.path)
 	_, err := vfh.readWriteOps.Seek(req.Offset, io.SeekStart)
 	if err != nil {
+
 		return err
 	}
 
-	_, err = vfh.readWriteOps.Write(req.Data)
+	n, err := vfh.readWriteOps.Write(req.Data)
 	if err != nil {
 		return err
 	}
 
+	resp.Size = n
 	return nil
 }
 

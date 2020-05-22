@@ -2,12 +2,13 @@ package spacestore
 
 import (
 	"context"
+	"log"
+	"strings"
+
 	ipfslite "github.com/hsanjuan/ipfs-lite"
 	"github.com/ipfs/go-cid"
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/pkg/errors"
-	"log"
-	"strings"
 )
 
 // EntryNotFound error when a directory is not found
@@ -125,6 +126,7 @@ func (m *MemorySpaceStore) Get(ctx context.Context, path string) (*DirEntry, err
 	return m.storage[trimmedPath], nil
 }
 
+// GetChildren returns list of entries in a path
 func (m *MemorySpaceStore) GetChildren(ctx context.Context, path string) ([]*DirEntry, error) {
 	log.Printf("Get children of path %s", path)
 	dir, err := m.Get(ctx, path)
@@ -154,4 +156,19 @@ func (m *MemorySpaceStore) GetChildren(ctx context.Context, path string) ([]*Dir
 	}
 
 	return result, nil
+}
+
+func (m *MemorySpaceStore) Open(ctx context.Context, path string) (ReadSeekCloser, error) {
+	entry, err := m.Get(ctx, path)
+	if err != nil {
+		return nil, err
+	}
+
+	reader, err := m.peer.GetFile(ctx, entry.node.Cid())
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("Gotten reader for cid: %s", entry.node.Cid())
+
+	return NewIPFSReadHandler(reader), nil
 }

@@ -13,6 +13,7 @@ require (
 	github.com/ipfs/go-cid v0.0.5
 	github.com/ipfs/go-datastore v0.4.4
 	github.com/ipfs/go-ipld-format v0.2.0
+	github.com/ipfs/go-unixfs v0.2.4
 	github.com/joho/godotenv v1.3.0
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/libp2p/go-libp2p v0.8.3

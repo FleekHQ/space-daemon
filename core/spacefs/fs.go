@@ -2,8 +2,9 @@ package spacefs
 
 import (
 	"context"
-	"github.com/FleekHQ/space-poc/core/spacestore"
 	"syscall"
+
+	"github.com/FleekHQ/space-poc/core/spacestore"
 )
 
 // SpaceFS is represents the filesystem
@@ -45,11 +46,23 @@ func (fs *SpaceFS) LookupPath(path string) (DirEntryOps, error) {
 	if err != nil {
 		return nil, syscall.ENOENT
 	}
+	if entry.IsDir() {
+		return &SpaceDirectory{
+			fs:    fs,
+			entry: entry,
+		}, nil
+	}
 
-	return &SpaceDirectory{
+	return &SpaceFile{
 		fs:    fs,
 		entry: entry,
 	}, nil
+}
+
+// Open a file at specified path
+func (fs *SpaceFS) Open(path string, mode FileHandlerMode) (FileHandler, error) {
+	result, err := fs.store.Open(fs.ctx, path)
+	return result, err
 }
 
 // SpaceDirectory is a directory managed by space
@@ -84,9 +97,8 @@ func (dir *SpaceDirectory) ReadDir() ([]DirEntryOps, error) {
 			})
 		} else {
 			result = append(result, &SpaceFile{
-				fs:     dir.fs,
-				Parent: dir,
-				entry:  entry,
+				fs:    dir.fs,
+				entry: entry,
 			})
 		}
 	}
@@ -96,9 +108,8 @@ func (dir *SpaceDirectory) ReadDir() ([]DirEntryOps, error) {
 
 // SpaceFile is a file managed by space
 type SpaceFile struct {
-	fs     *SpaceFS
-	Parent *SpaceDirectory
-	entry  *spacestore.DirEntry
+	fs    *SpaceFS
+	entry *spacestore.DirEntry
 }
 
 // Path implements DirEntryOps Path() and return the path of the directory
@@ -114,6 +125,7 @@ func (f *SpaceFile) Attribute() (DirEntryAttribute, error) {
 // Open implements FileOps Open
 // It should download/cache the content of the file and return a fileHandler
 // that can read the cached content.
-func (f *SpaceFile) Open() (FileHandler, error) {
-	return nil, nil
+func (f *SpaceFile) Open(mode FileHandlerMode) (FileHandler, error) {
+	fileHandler, err := f.fs.Open(f.entry.Path(), mode)
+	return fileHandler, err
 }
