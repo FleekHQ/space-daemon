@@ -2,6 +2,7 @@ package libfuse
 
 import (
 	"context"
+	"io"
 	"log"
 
 	"github.com/FleekHQ/space-poc/core/spacefs"
@@ -67,7 +68,7 @@ type VFSFileHandler struct {
 // Ideally, decryption of the content of the file should be happening here
 func (vfh *VFSFileHandler) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) error {
 	log.Printf("Reading content of file %s", vfh.path)
-	err := vfh.readWriteOps.SetReadOffset(req.Offset)
+	_, err := vfh.readWriteOps.Seek(req.Offset, io.SeekStart)
 	if err != nil {
 		return err
 	}
@@ -86,7 +87,7 @@ func (vfh *VFSFileHandler) Read(ctx context.Context, req *fuse.ReadRequest, resp
 // Ideally, encryption of the content of the file should be happening here
 func (vfh *VFSFileHandler) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) error {
 	log.Printf("Reading content to file %s", vfh.path)
-	err := vfh.readWriteOps.SetWriteOffset(req.Offset)
+	_, err := vfh.readWriteOps.Seek(req.Offset, io.SeekStart)
 	if err != nil {
 		return err
 	}

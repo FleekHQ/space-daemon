@@ -28,7 +28,6 @@ func (dir *VFSDir) Attr(ctx context.Context, attr *fuse.Attr) error {
 	}
 
 	attr.Mode = dirAttribute.Mode()
-	// attr.Mode = os.ModeDir | 0755
 	return nil
 }
 

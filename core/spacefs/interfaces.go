@@ -1,7 +1,6 @@
 package spacefs
 
 import (
-	"github.com/ipfs/go-cid"
 	"io"
 	"os"
 	"time"
@@ -21,7 +20,6 @@ type DirEntryAttribute interface {
 // A directory entry is either a file or a folder.
 // See DirOps and FileOps for operations specific to those types
 type DirEntryOps interface {
-	Cid() cid.Cid
 	// Path should return the absolute path string for directory or file
 	// Directory path's should end in `/`
 	Path() string
@@ -38,9 +36,8 @@ type DirOps interface {
 // FileHandler is in charge of reading, writing and closing access to a file
 // It should handle locking and track read and write offsets till it is closed
 type FileHandler interface {
-	io.ReadWriteCloser
-	SetReadOffset(int64) error
-	SetWriteOffset(int64) error
+	io.ReadWriteSeeker
+	io.Closer
 }
 
 // FileOps are the list of actions that can be done on a file

@@ -35,9 +35,14 @@ func NewVFileSystem(ctx context.Context, mountPath string, fsOps spacefs.FSOps) 
 }
 
 // Mount mounts the file system, if it is not already mounted
-// This is a blocking operation
-func (vfs *VFS) Mount() error {
-	c, err := fuse.Mount(vfs.mountPath)
+func (vfs *VFS) Mount(fsName string) error {
+	c, err := fuse.Mount(
+		vfs.mountPath,
+		fuse.FSName(fsName),
+		fuse.VolumeName(fsName),
+		fuse.NoAppleDouble(),
+		fuse.NoAppleXattr(),
+	)
 	if err != nil {
 		return err
 	}
@@ -91,8 +96,9 @@ func (vfs *VFS) Root() (fs.Node, error) {
 	rootDir, ok := rootDirEntry.(spacefs.DirOps)
 	if !ok {
 		log.Fatal("Root directory is not a spacefs.DirOps")
-		return nil, errors.New("Root directory is not a spacefs.DirOps")
 	}
+
+	log.Printf("Root Dir: %+v", rootDir)
 
 	node := &VFSDir{
 		vfs:    vfs,

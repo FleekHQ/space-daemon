@@ -33,7 +33,7 @@ func main() {
 	mountPoint := flag.String("mount", userHomeDir+"/FleekSpace", "Directory on filesystem to mount SpaceFS")
 	flag.Parse()
 
-	ctx := context.Background()
+	ctx, cancelCtx := context.WithCancel(context.Background())
 	store, err := spacestore.NewMemoryStore(ctx)
 	if err != nil {
 		log.Fatal(err)
@@ -46,9 +46,9 @@ func main() {
 		return
 	}
 
-	log.Printf("Mounting at %s\n", mountPoint)
+	log.Printf("Mounting at %s\n", *mountPoint)
 	vfs := fuse.NewVFileSystem(ctx, *mountPoint, sfs)
-	if err := vfs.Mount(); err != nil {
+	if err := vfs.Mount("FleekSpace"); err != nil {
 		log.Fatal(err)
 		return
 	}
@@ -59,10 +59,14 @@ func main() {
 	go func() {
 		sig := <-sigs
 		log.Printf("Received OS Signal %s", sig.String())
+		cancelCtx()
 		if err := vfs.Unmount(); err != nil {
 			log.Printf("Error Unmounting fuse connection: %s", err.Error())
 		}
 	}()
 
-	vfs.Serve()
+	err = vfs.Serve()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
