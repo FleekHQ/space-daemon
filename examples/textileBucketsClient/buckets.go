@@ -74,6 +74,7 @@ func initUser(threads *tc.Client, buckets *bc.Client, user string, bucketSlug st
 		log.Fatal(err)
 	}
 	ctx = common.NewThreadIDContext(ctx, dbID)
+	// create bucket
 	buck, err := buckets.Init(ctx, bucketSlug)
 
 	return buck
