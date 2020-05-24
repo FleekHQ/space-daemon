@@ -17,6 +17,7 @@ require (
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/libp2p/go-libp2p v0.8.3
 	github.com/libp2p/go-libp2p-core v0.5.3
+	github.com/libp2p/go-libp2p-crypto v0.1.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/multiformats/go-multiaddr v0.2.1
 	github.com/pkg/errors v0.9.1
