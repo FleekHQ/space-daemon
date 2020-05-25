@@ -3,6 +3,7 @@ package fs_data_source
 import (
 	"context"
 	"io"
+	"os"
 )
 
 // ReadSeekCloser implements interfaces to read, copy, seek and close.
@@ -23,4 +24,6 @@ type FSDataSource interface {
 	GetChildren(ctx context.Context, path string) ([]*DirEntry, error)
 	// OpenReader returns a file reader
 	Open(ctx context.Context, path string) (ReadSeekCloser, error)
+	// CreateEntry should create a directory or file based on the mode at the path
+	CreateEntry(ctx context.Context, path string, mode os.FileMode) (*DirEntry, error)
 }

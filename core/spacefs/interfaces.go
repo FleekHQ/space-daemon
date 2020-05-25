@@ -1,6 +1,7 @@
 package spacefs
 
 import (
+	"context"
 	"io"
 	"os"
 	"time"
@@ -37,7 +38,7 @@ type DirEntryOps interface {
 // DirOps are the list of actions that can be done on a directory
 type DirOps interface {
 	DirEntryOps
-	ReadDir() ([]DirEntryOps, error)
+	ReadDir(ctx context.Context) ([]DirEntryOps, error)
 }
 
 // FileHandler is in charge of reading, writing and closing access to a file
@@ -50,15 +51,23 @@ type FileHandler interface {
 // FileOps are the list of actions that can be done on a file
 type FileOps interface {
 	DirEntryOps
-	Open(mode FileHandlerMode) (FileHandler, error)
+	Open(ctx context.Context, mode FileHandlerMode) (FileHandler, error)
+}
+
+type CreateDirEntry struct {
+	Path string
+	Mode os.FileMode
 }
 
 // FSOps represents the filesystem operations
 type FSOps interface {
 	// Root should return the root directory entry
-	Root() (DirEntryOps, error)
+	Root(ctx context.Context) (DirEntryOps, error)
 	// LookupPath should return the directory entry at that particular path
-	LookupPath(path string) (DirEntryOps, error)
+	LookupPath(ctx context.Context, path string) (DirEntryOps, error)
 	// Open a file at specific path, with specified mode
-	Open(path string, mode FileHandlerMode) (FileHandler, error)
+	Open(ctx context.Context, path string, mode FileHandlerMode) (FileHandler, error)
+	// CreateEntry should create an directory entry and return either a FileOps or DirOps entry
+	// depending on the mode
+	CreateEntry(ctx context.Context, req CreateDirEntry) (DirEntryOps, error)
 }

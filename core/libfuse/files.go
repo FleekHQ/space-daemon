@@ -23,6 +23,13 @@ type VFSFile struct {
 	fileOps spacefs.FileOps
 }
 
+func NewVFSFile(vfs *VFS, fileOps spacefs.FileOps) *VFSFile {
+	return &VFSFile{
+		vfs:     vfs,
+		fileOps: fileOps,
+	}
+}
+
 // Attr returns fuse.Attr for the directory or file
 func (vfile *VFSFile) Attr(ctx context.Context, attr *fuse.Attr) error {
 	path := vfile.fileOps.Path()
@@ -47,22 +54,25 @@ func (vfile *VFSFile) Attr(ctx context.Context, attr *fuse.Attr) error {
 // Open create a handle responsible for reading the file and also closing the file after reading
 func (vfile *VFSFile) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fs.Handle, error) {
 	log.Printf("Opening content of file %s", vfile.fileOps.Path())
-	path := vfile.fileOps.Path()
-	reader, err := vfile.fileOps.Open(spacefs.ReadMode)
-	if err != nil {
-		return nil, err
-	}
-
-	return &VFSFileHandler{
-		path:         path,
-		readWriteOps: reader,
-	}, nil
+	return NewVFSFileHandler(ctx, vfile)
 }
 
 // VFSFileHandler manages readings and closing access to a VFSFile
 type VFSFileHandler struct {
 	path         string
 	readWriteOps spacefs.FileHandler
+}
+
+func NewVFSFileHandler(ctx context.Context, vfile *VFSFile) (*VFSFileHandler, error) {
+	readWriteOps, err := vfile.fileOps.Open(ctx, spacefs.ReadMode)
+	if err != nil {
+		return nil, err
+	}
+
+	return &VFSFileHandler{
+		path:         vfile.fileOps.Path(),
+		readWriteOps: readWriteOps,
+	}, nil
 }
 
 // Read reads the content of the reader
@@ -89,7 +99,7 @@ func (vfh *VFSFileHandler) Read(ctx context.Context, req *fuse.ReadRequest, resp
 // Write writes content from request into the underlying file. Keeping track of offset and all
 // Ideally, encryption of the content of the file should be happening here
 func (vfh *VFSFileHandler) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) error {
-	log.Printf("Reading content to file %s", vfh.path)
+	log.Printf("Writing content to file %s", vfh.path)
 	_, err := vfh.readWriteOps.Seek(req.Offset, io.SeekStart)
 	if err != nil {
 

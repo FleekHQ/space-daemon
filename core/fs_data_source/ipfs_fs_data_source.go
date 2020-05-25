@@ -3,6 +3,7 @@ package fs_data_source
 import (
 	"context"
 	"log"
+	"os"
 	"strings"
 
 	ipfslite "github.com/hsanjuan/ipfs-lite"
@@ -42,12 +43,12 @@ func NewIpfsDataSource(ctx context.Context) (*IpfsFSDataSource, error) {
 }
 
 func (m *IpfsFSDataSource) Get(ctx context.Context, path string) (*DirEntry, error) {
-	log.Printf("Get path: %s in folder %s", path, m.folderCid.String())
 	folderOrFileName := m.folderCid.String()
 	if entry, exists := m.storage[path]; exists && entry != nil {
 		return entry, nil
 	}
 
+	log.Printf("Get path: %s in folder %s", path, m.folderCid.String())
 	// walk the path upward
 	base := ""
 	currentCid := m.folderCid
@@ -97,7 +98,6 @@ func (m *IpfsFSDataSource) Get(ctx context.Context, path string) (*DirEntry, err
 				return nil, EntryNotFound
 			}
 		}
-		//log.Printf("With cid %s", currentCid.String())
 
 		// fetch from network
 		newNode, err := m.peer.Get(ctx, currentCid)
@@ -171,4 +171,9 @@ func (m *IpfsFSDataSource) Open(ctx context.Context, path string) (ReadSeekClose
 	log.Printf("Gotten reader for cid: %s", entry.node.Cid())
 
 	return NewIPFSReadHandler(reader), nil
+}
+
+// CreateEntry creates a directory or file based on the mode at the path
+func (m *IpfsFSDataSource) CreateEntry(ctx context.Context, path string, mode os.FileMode) (*DirEntry, error) {
+	return nil, nil
 }

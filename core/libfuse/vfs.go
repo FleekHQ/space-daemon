@@ -27,6 +27,8 @@ type VFS struct {
 // NewVFileSystem creates a new Virtual FileSystem object
 func NewVFileSystem(ctx context.Context, mountPath string, fsOps spacefs.FSOps) VFS {
 	return VFS{
+		// storing ctx here to be used in the Root request
+		// as FUSE doesn't provide one there
 		ctx:             ctx,
 		mountPath:       mountPath,
 		fsOps:           fsOps,
@@ -88,7 +90,7 @@ func (vfs *VFS) Unmount() error {
 
 // Root complies with the Fuse Interface that returns the Root Node of our file system
 func (vfs *VFS) Root() (fs.Node, error) {
-	rootDirEntry, err := vfs.fsOps.Root()
+	rootDirEntry, err := vfs.fsOps.Root(vfs.ctx)
 	if err != nil {
 		return nil, err
 	}

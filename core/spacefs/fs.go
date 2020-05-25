@@ -27,9 +27,8 @@ func NewSpaceFS(ctx context.Context, store fs_data_source.FSDataSource) (*SpaceF
 
 // Root implements the FSOps Root function
 // It returns the root directory of the file
-func (fs *SpaceFS) Root() (DirEntryOps, error) {
-	// TODO: fetch the root block node and cache their information locally
-	entry, err := fs.store.Get(fs.ctx, "/")
+func (fs *SpaceFS) Root(ctx context.Context) (DirEntryOps, error) {
+	entry, err := fs.store.Get(ctx, "/")
 	if err != nil {
 		return nil, err
 	}
@@ -42,8 +41,27 @@ func (fs *SpaceFS) Root() (DirEntryOps, error) {
 
 // LookupPath implements the FsOps interface for looking up information
 // in a directory
-func (fs *SpaceFS) LookupPath(path string) (DirEntryOps, error) {
-	entry, err := fs.store.Get(fs.ctx, path)
+func (fs *SpaceFS) LookupPath(ctx context.Context, path string) (DirEntryOps, error) {
+	entry, err := fs.store.Get(ctx, path)
+
+	if err != nil {
+		return nil, syscall.ENOENT
+	}
+	if entry.IsDir() {
+		return &SpaceDirectory{
+			fs:    fs,
+			entry: entry,
+		}, nil
+	}
+
+	return &SpaceFile{
+		fs:    fs,
+		entry: entry,
+	}, nil
+}
+
+func (fs *SpaceFS) CreateEntry(ctx context.Context, req CreateDirEntry) (DirEntryOps, error) {
+	entry, err := fs.store.CreateEntry(ctx, req.Path, req.Mode)
 
 	if err != nil {
 		return nil, syscall.ENOENT
@@ -62,7 +80,7 @@ func (fs *SpaceFS) LookupPath(path string) (DirEntryOps, error) {
 }
 
 // Open a file at specified path
-func (fs *SpaceFS) Open(path string, mode FileHandlerMode) (FileHandler, error) {
+func (fs *SpaceFS) Open(ctx context.Context, path string, mode FileHandlerMode) (FileHandler, error) {
 	result, err := fs.store.Open(fs.ctx, path)
 	return result, err
 }
@@ -131,7 +149,7 @@ func (f *SpaceFile) Attribute() (DirEntryAttribute, error) {
 // Open implements FileOps Open
 // It should download/cache the content of the file and return a fileHandler
 // that can read the cached content.
-func (f *SpaceFile) Open(mode FileHandlerMode) (FileHandler, error) {
-	fileHandler, err := f.fs.Open(f.entry.Path(), mode)
+func (f *SpaceFile) Open(ctx context.Context, mode FileHandlerMode) (FileHandler, error) {
+	fileHandler, err := f.fs.Open(ctx, f.entry.Path(), mode)
 	return fileHandler, err
 }
