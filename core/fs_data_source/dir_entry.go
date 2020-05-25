@@ -1,9 +1,11 @@
-package spacestore
+package fs_data_source
 
 import (
 	"log"
 	"os"
 	"time"
+
+	"github.com/FleekHQ/space-poc/core/spacefs"
 
 	format "github.com/ipfs/go-ipld-format"
 )
@@ -16,6 +18,8 @@ type DirEntry struct {
 	node  format.Node
 	stats *format.NodeStat
 }
+
+var _ = spacefs.DirEntryAttribute(&DirEntry{})
 
 func NewDirEntry(path, name string, node format.Node, stats *format.NodeStat) *DirEntry {
 	return &DirEntry{

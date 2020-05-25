@@ -3,15 +3,16 @@ package spacefs
 import (
 	"context"
 	"errors"
-	"github.com/FleekHQ/space-poc/core/spacestore"
 	"log"
 	"testing"
+
+	"github.com/FleekHQ/space-poc/core/fs_data_source"
 )
 
 //
 func TestSpaceFS_LookupPath(t *testing.T) {
 	ctx := context.Background()
-	memStore, err := spacestore.NewMemoryStore(ctx)
+	memStore, err := fs_data_source.NewIpfsDataSource(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}

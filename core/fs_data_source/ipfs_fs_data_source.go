@@ -1,4 +1,4 @@
-package spacestore
+package fs_data_source
 
 import (
 	"context"
@@ -14,16 +14,16 @@ import (
 // EntryNotFound error when a directory is not found
 var EntryNotFound = errors.New("Directory entry not found")
 
-// Memory Spacestore is an in-memory implementation fo the SpaceStore
+// IpfsFSDataSource is an in-memory implementation fo the FSDataSource
 // It uses the ipfs peer to fetch data and caches them in memory
 // on restart all in-memory updates are lost
-type MemorySpaceStore struct {
+type IpfsFSDataSource struct {
 	peer      *ipfslite.Peer
 	folderCid cid.Cid
 	storage   map[string]*DirEntry
 }
 
-func NewMemoryStore(ctx context.Context) (*MemorySpaceStore, error) {
+func NewIpfsDataSource(ctx context.Context) (*IpfsFSDataSource, error) {
 	ipfspeer, err := createIpfsPeer(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error creating ipfs-lite peer")
@@ -34,14 +34,14 @@ func NewMemoryStore(ctx context.Context) (*MemorySpaceStore, error) {
 		return nil, err
 	}
 
-	return &MemorySpaceStore{
+	return &IpfsFSDataSource{
 		peer:      ipfspeer,
 		folderCid: folderCid,
 		storage:   make(map[string]*DirEntry),
 	}, nil
 }
 
-func (m *MemorySpaceStore) Get(ctx context.Context, path string) (*DirEntry, error) {
+func (m *IpfsFSDataSource) Get(ctx context.Context, path string) (*DirEntry, error) {
 	log.Printf("Get path: %s in folder %s", path, m.folderCid.String())
 	folderOrFileName := m.folderCid.String()
 	if entry, exists := m.storage[path]; exists && entry != nil {
@@ -127,7 +127,7 @@ func (m *MemorySpaceStore) Get(ctx context.Context, path string) (*DirEntry, err
 }
 
 // GetChildren returns list of entries in a path
-func (m *MemorySpaceStore) GetChildren(ctx context.Context, path string) ([]*DirEntry, error) {
+func (m *IpfsFSDataSource) GetChildren(ctx context.Context, path string) ([]*DirEntry, error) {
 	log.Printf("Get children of path %s", path)
 	dir, err := m.Get(ctx, path)
 	if err != nil {
@@ -158,7 +158,7 @@ func (m *MemorySpaceStore) GetChildren(ctx context.Context, path string) ([]*Dir
 	return result, nil
 }
 
-func (m *MemorySpaceStore) Open(ctx context.Context, path string) (ReadSeekCloser, error) {
+func (m *IpfsFSDataSource) Open(ctx context.Context, path string) (ReadSeekCloser, error) {
 	entry, err := m.Get(ctx, path)
 	if err != nil {
 		return nil, err

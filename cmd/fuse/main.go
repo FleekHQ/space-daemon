@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/FleekHQ/space-poc/core/spacestore"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/FleekHQ/space-poc/core/fs_data_source"
 
 	fuse "github.com/FleekHQ/space-poc/core/libfuse"
 	"github.com/FleekHQ/space-poc/core/spacefs"
@@ -34,7 +35,7 @@ func main() {
 	flag.Parse()
 
 	ctx, cancelCtx := context.WithCancel(context.Background())
-	store, err := spacestore.NewMemoryStore(ctx)
+	store, err := fs_data_source.NewIpfsDataSource(ctx)
 	if err != nil {
 		log.Fatal(err)
 		return

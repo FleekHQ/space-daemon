@@ -1,4 +1,4 @@
-package spacestore
+package fs_data_source
 
 import (
 	"context"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"syscall"
 
-	"github.com/FleekHQ/space-poc/core/spacestore"
+	"github.com/FleekHQ/space-poc/core/fs_data_source"
 )
 
 // SpaceFS is represents the filesystem
@@ -12,11 +12,13 @@ import (
 // And is responsible for managing file access, encryption and decryption
 type SpaceFS struct {
 	ctx   context.Context
-	store spacestore.SpaceStore
+	store fs_data_source.FSDataSource
 }
 
+var _ = FSOps(&SpaceFS{})
+
 // NewSpaceFS initializes a SpaceFS instance with IPFS peer listening
-func NewSpaceFS(ctx context.Context, store spacestore.SpaceStore) (*SpaceFS, error) {
+func NewSpaceFS(ctx context.Context, store fs_data_source.FSDataSource) (*SpaceFS, error) {
 	return &SpaceFS{
 		ctx:   ctx,
 		store: store,
@@ -68,8 +70,10 @@ func (fs *SpaceFS) Open(path string, mode FileHandlerMode) (FileHandler, error) 
 // SpaceDirectory is a directory managed by space
 type SpaceDirectory struct {
 	fs    *SpaceFS
-	entry *spacestore.DirEntry
+	entry *fs_data_source.DirEntry
 }
+
+var _ = DirEntryOps(&SpaceDirectory{})
 
 // Path implements DirEntryOps Path() and return the path of the directory
 func (dir *SpaceDirectory) Path() string {
@@ -109,8 +113,10 @@ func (dir *SpaceDirectory) ReadDir() ([]DirEntryOps, error) {
 // SpaceFile is a file managed by space
 type SpaceFile struct {
 	fs    *SpaceFS
-	entry *spacestore.DirEntry
+	entry *fs_data_source.DirEntry
 }
+
+var _ = FileOps(&SpaceFile{})
 
 // Path implements DirEntryOps Path() and return the path of the directory
 func (f *SpaceFile) Path() string {
