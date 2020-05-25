@@ -3,7 +3,9 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"github.com/golang/protobuf/ptypes/empty"
 	"net"
+	"time"
 
 	"github.com/FleekHQ/space-poc/core/store"
 	"github.com/FleekHQ/space-poc/grpc/pb"
@@ -27,6 +29,20 @@ type grpcServer struct {
 	opts *serverOptions
 	s    *grpc.Server
 	db   *store.Store
+}
+
+func (sv *grpcServer) Subscribe(empty *empty.Empty, stream pb.SpaceApi_SubscribeServer) error {
+	// TODO: implement structure to save stream here
+	c := time.Tick(1 * time.Second)
+	for i := 0; i < 10; i++ {
+		<-c
+		log.Info("sending event to client")
+		mockFileResponse := &pb.FileEventResponse{Path: "test/path"}
+		stream.Send(mockFileResponse)
+	}
+
+	log.Info("closing stream")
+	return nil
 }
 
 func (sv *grpcServer) GetPathInfo(ctx context.Context, request *pb.PathInfoRequest) (*pb.PathInfoResponse, error) {
