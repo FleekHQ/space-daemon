@@ -26,23 +26,34 @@ type serverOptions struct {
 }
 
 type grpcServer struct {
-	opts *serverOptions
-	s    *grpc.Server
-	db   *store.Store
+	opts            *serverOptions
+	s               *grpc.Server
+	db              *store.Store
+	fileEventStream pb.SpaceApi_SubscribeServer
 }
 
 func (sv *grpcServer) Subscribe(empty *empty.Empty, stream pb.SpaceApi_SubscribeServer) error {
-	// TODO: implement structure to save stream here
+	sv.registerStream(stream)
 	c := time.Tick(1 * time.Second)
 	for i := 0; i < 10; i++ {
 		<-c
-		log.Info("sending event to client")
 		mockFileResponse := &pb.FileEventResponse{Path: "test/path"}
-		stream.Send(mockFileResponse)
+		sv.SendFileEvent(mockFileResponse)
 	}
 
 	log.Info("closing stream")
 	return nil
+}
+
+func (sv *grpcServer) registerStream(stream pb.SpaceApi_SubscribeServer) {
+	sv.fileEventStream = stream
+}
+
+func (sv *grpcServer) SendFileEvent(event *pb.FileEventResponse) {
+	if  sv.fileEventStream != nil {
+		log.Info("sending event to client")
+		sv.fileEventStream.Send(event)
+	}
 }
 
 func (sv *grpcServer) GetPathInfo(ctx context.Context, request *pb.PathInfoRequest) (*pb.PathInfoResponse, error) {
