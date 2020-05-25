@@ -14,7 +14,6 @@ import (
 
 	"github.com/radovskyb/watcher"
 
-	cfg "github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/log"
 )
 
@@ -45,37 +44,51 @@ type FolderWatcher struct {
 	stopWatch chan struct{}
 	done      chan struct{}
 
-	lock      sync.Mutex
-	watchPath string
-	started   bool
-	closed    bool
+	lock    sync.Mutex
+	options watcherOptions
+	started bool
+	closed  bool
 }
 
 // New creates an new instance of folder watcher
 // It listens to the path specified in the config space/folderPath
-func New(config cfg.Config) (*FolderWatcher, error) {
-	path := config.GetString(cfg.SpaceFolderPath, "")
+func New(configs ...Option) (*FolderWatcher, error) {
+	options := watcherOptions{}
+	for _, config := range configs {
+		config(&options)
+	}
+
+	if len(options.paths) == 0 {
+		// default watches current directory
+		cwd, err := os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+		options.paths = append(options.paths, cwd)
+	}
+
 	w := watcher.New()
 
-	if home, err := homedir.Dir(); err == nil {
-		// If the root directory contains ~, we replace it with the actual home directory
-		path = s.Replace(path, "~", home, -1)
-	}
+	for _, path := range options.paths {
+		if home, err := homedir.Dir(); err == nil {
+			// If the root directory contains ~, we replace it with the actual home directory
+			path = s.Replace(path, "~", home, -1)
+		}
 
-	if path == "" {
-		log.Fatal(ErrFolderPathNotFound)
-		return nil, ErrFolderPathNotFound
-	}
+		if path == "" {
+			log.Fatal(ErrFolderPathNotFound)
+			return nil, ErrFolderPathNotFound
+		}
 
-	log.Info("Starting watcher in filePath", fmt.Sprintf("filePath:%s", path))
-	err := w.AddRecursive(path)
-	if err != nil {
-		return nil, err
+		err := w.AddRecursive(path)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &FolderWatcher{
 		w:         w,
-		watchPath: path,
+		options:   options,
 		stopWatch: make(chan struct{}),
 	}, nil
 }
@@ -83,18 +96,13 @@ func New(config cfg.Config) (*FolderWatcher, error) {
 // Watch will start listening of changes on the FolderWatcher path and trigger the handler with any update event
 // This is a block operation
 func (fw *FolderWatcher) Watch(ctx context.Context, handler Handler) error {
-	fw.lock.Lock()
-	if fw.started {
-		return nil
-	}
-	fw.started = true
-	fw.lock.Unlock()
+	fw.setToStarted()
 
 	go func() {
 		for {
 			select {
 			case <-fw.stopWatch:
-				log.Info("graceful shutdown")
+				log.Info("Watcher graceful shutdown triggered")
 				return
 			case <-fw.w.Closed:
 				fw.Close()
@@ -118,6 +126,7 @@ func (fw *FolderWatcher) Watch(ctx context.Context, handler Handler) error {
 		}
 	}()
 
+	log.Info("Starting watcher", fmt.Sprintf("filePath:%s", fw.options.paths))
 	// This is blocking
 	err := fw.w.Start(time.Millisecond * 100)
 	fw.started = false
@@ -128,9 +137,18 @@ func (fw *FolderWatcher) Watch(ctx context.Context, handler Handler) error {
 	return nil
 }
 
+func (fw *FolderWatcher) setToStarted() {
+	fw.lock.Lock()
+	defer fw.lock.Unlock()
+	if fw.started {
+		return
+	}
+	fw.started = true
+}
+
 // Close will stop the watching operation and unblock watch calls
 func (fw *FolderWatcher) Close() {
-	log.Info("Closing connection")
+	log.Info("Stopping watcher")
 	fw.lock.Lock()
 	defer fw.lock.Unlock()
 	if !fw.started || fw.closed {

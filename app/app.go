@@ -30,7 +30,7 @@ func Start(ctx context.Context, cfg config.Config) {
 		grpc.WithPort(cfg.GetInt(config.SpaceServerPort, 0)),
 	)
 	srv.Start(ctx)
-	watcher, err := w.New(cfg)
+	watcher, err := w.New(w.WithPaths(cfg.GetString(config.SpaceFolderPath, "")))
 	if err != nil {
 		log.Fatal(err)
 		return

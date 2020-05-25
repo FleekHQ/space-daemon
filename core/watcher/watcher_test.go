@@ -7,18 +7,11 @@ import (
 	"testing"
 
 	internalWatcher "github.com/radovskyb/watcher"
-
-	"github.com/FleekHQ/space-poc/config"
 )
 
 func TestFolderWatcher_Watch_Should_Trigger_Handler(t *testing.T) {
-	// setup
-	cwd, _ := os.Getwd()
-	cfg := config.NewTestConfig(map[string]interface{}{
-		config.SpaceFolderPath: cwd, // using cwd so that it doesn't fail to find directory
-	})
 	ctx := context.Background()
-	watcher, err := New(cfg)
+	watcher, err := New()
 	if err != nil {
 		t.Fatal(err)
 		return
