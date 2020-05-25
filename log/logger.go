@@ -57,7 +57,7 @@ func (l *logger) Printf(msg string, args ...interface{}) {
 		return
 	}
 
-	l.log.Printf(msg, args)
+	l.log.Printf(msg, args...)
 }
 
 func (l *logger) Debug(msg string, tags ...string) {
