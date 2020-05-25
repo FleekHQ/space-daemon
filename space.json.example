@@ -1,7 +1,7 @@
 {
   "space": {
-    "folderPath": "/space-path/space-poc",
-    "rpcPort": 9999
+    "folderPath": "~/space-app",
+    "rpcPort": 9999,
     "storePath": "~/.fleek-space"
   }
 }

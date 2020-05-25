@@ -3,10 +3,12 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"net"
+
+	"github.com/FleekHQ/space-poc/core/store"
 	"github.com/FleekHQ/space-poc/grpc/pb"
 	"github.com/FleekHQ/space-poc/log"
 	"google.golang.org/grpc"
-	"net"
 )
 
 const (
@@ -24,6 +26,7 @@ type serverOptions struct {
 type grpcServer struct {
 	opts *serverOptions
 	s    *grpc.Server
+	db   *store.Store
 }
 
 func (sv *grpcServer) GetPathInfo(ctx context.Context, request *pb.PathInfoRequest) (*pb.PathInfoResponse, error) {
@@ -38,13 +41,14 @@ func (sv *grpcServer) GetPathInfo(ctx context.Context, request *pb.PathInfoReque
 
 type ServerOption func(o *serverOptions)
 
-func New(opts ...ServerOption) *grpcServer {
+func New(db *store.Store, opts ...ServerOption) *grpcServer {
 	o := defaultServerOptions
 	for _, opt := range opts {
 		opt(&o)
 	}
 	srv := &grpcServer{
 		opts: &o,
+		db:   db,
 	}
 
 	return srv
