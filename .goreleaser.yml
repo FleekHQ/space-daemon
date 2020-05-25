@@ -11,6 +11,10 @@ builds:
   - CGO_ENABLED=0
   main: ./cmd/space-poc/main.go
   binary: space
+  goos:
+    - darwin
+    - linux
+    - windows
 archives:
 - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
   replacements:
