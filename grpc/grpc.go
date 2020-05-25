@@ -29,6 +29,7 @@ type grpcServer struct {
 	opts            *serverOptions
 	s               *grpc.Server
 	db              *store.Store
+	// TODO: see if we need to clean this up by gc or handle an array
 	fileEventStream pb.SpaceApi_SubscribeServer
 }
 
