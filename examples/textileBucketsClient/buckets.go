@@ -3,13 +3,27 @@ package main
 import (
 	"context"
 	"crypto/rand"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
+	"net"
+	"net/http"
 	"os"
 	"time"
 
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	crypto "github.com/libp2p/go-libp2p-crypto"
+	ma "github.com/multiformats/go-multiaddr"
+	"github.com/textileio/go-threads/api"
 	tc "github.com/textileio/go-threads/api/client"
+	tpb "github.com/textileio/go-threads/api/pb"
+	tCommon "github.com/textileio/go-threads/common"
 	"github.com/textileio/go-threads/core/thread"
+	netapi "github.com/textileio/go-threads/net/api"
+	netpb "github.com/textileio/go-threads/net/api/pb"
+	"github.com/textileio/go-threads/util"
 	bc "github.com/textileio/textile/api/buckets/client"
 	pb "github.com/textileio/textile/api/buckets/pb"
 	"github.com/textileio/textile/api/common"
@@ -45,14 +59,136 @@ func getThreadID() (id thread.ID) {
 	return
 }
 
+func runThreadsLocally() {
+	hostAddr, err := ma.NewMultiaddr("/ip4/0.0.0.0/tcp/4006")
+	if err != nil {
+		log.Fatal(err)
+	}
+	apiAddr, err := ma.NewMultiaddr("/ip4/127.0.0.1/tcp/6006")
+	if err != nil {
+		log.Fatal(err)
+	}
+	apiProxyAddr, err := ma.NewMultiaddr("/ip4/127.0.0.1/tcp/6007")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	repo := ".threads"
+	debug := false
+
+	n, err := tCommon.DefaultNetwork(
+		repo,
+		tCommon.WithNetHostAddr(hostAddr),
+		tCommon.WithConnectionManager(connmgr.NewConnManager(100, 400, time.Second*20)),
+		tCommon.WithNetDebug(debug))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer n.Close()
+	n.Bootstrap(util.DefaultBoostrapPeers())
+
+	service, err := api.NewService(n, api.Config{
+		RepoPath: repo,
+		Debug:    debug,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	netService, err := netapi.NewService(n, netapi.Config{
+		Debug: debug,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	target, err := util.TCPAddrFromMultiAddr(apiAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	ptarget, err := util.TCPAddrFromMultiAddr(apiProxyAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	server := grpc.NewServer()
+	listener, err := net.Listen("tcp", target)
+	if err != nil {
+		log.Fatal(err)
+	}
+	go func() {
+		tpb.RegisterAPIServer(server, service)
+		netpb.RegisterAPIServer(server, netService)
+		if err := server.Serve(listener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+			log.Fatalf("serve error: %v", err)
+		}
+	}()
+	webrpc := grpcweb.WrapServer(
+		server,
+		grpcweb.WithOriginFunc(func(origin string) bool {
+			return true
+		}),
+		grpcweb.WithWebsockets(true),
+		grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
+			return true
+		}))
+	proxy := &http.Server{
+		Addr: ptarget,
+	}
+	proxy.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if webrpc.IsGrpcWebRequest(r) ||
+			webrpc.IsAcceptableGrpcCorsRequest(r) ||
+			webrpc.IsGrpcWebSocketRequest(r) {
+			webrpc.ServeHTTP(w, r)
+		}
+	})
+	go func() {
+		if err := proxy.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("proxy error: %v", err)
+		}
+	}()
+
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		if err := proxy.Shutdown(ctx); err != nil {
+			log.Fatal(err)
+		}
+		server.GracefulStop()
+		if err := n.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	fmt.Println("Welcome to Threads!")
+	fmt.Println("Your peer ID is " + n.Host().ID().String())
+
+	log.Println("threadsd started")
+
+	select {}
+}
+
+type Bucket struct {
+	Key       string `json:"_id"`
+	Name      string `json:"name"`
+	Path      string `json:"path"`
+	DNSRecord string `json:"dns_record,omitempty"`
+	//Archives  Archives `json:"archives"`
+	CreatedAt int64 `json:"created_at"`
+	UpdatedAt int64 `json:"updated_at"`
+}
+
 func initUser(threads *tc.Client, buckets *bc.Client, user string, bucketSlug string) *pb.InitReply {
-	// TODO: this should be happening in an auth lambda
 	// only needed for hub connections
+
+	// only done once
 	key := os.Getenv("TXL_USER_KEY")
 	secret := os.Getenv("TXL_USER_SECRET")
+	//
+
+	// TODO: this should be happening in an auth lambda
 	ctx := context.Background()
 	ctx = common.NewAPIKeyContext(ctx, key)
-	ctx, err := common.CreateAPISigContext(ctx, time.Now().Add(time.Minute), secret)
+	ctx, err := common.CreateAPISigContext(ctx, time.Now().Add(time.Minute*2), secret)
 
 	if err != nil {
 		log.Println("error creating APISigContext")
@@ -61,7 +197,9 @@ func initUser(threads *tc.Client, buckets *bc.Client, user string, bucketSlug st
 
 	// TODO: get from key manager instead
 	sk, _, err := crypto.GenerateEd25519Key(rand.Reader)
+
 	// TODO: CTX has to be made from session key received from lambda
+	// ctx on next line needs to be rebuilt from the authorization from the lambda
 	tok, err := threads.GetToken(ctx, thread.NewLibp2pIdentity(sk))
 	ctx = thread.NewTokenContext(ctx, tok)
 
@@ -73,50 +211,131 @@ func initUser(threads *tc.Client, buckets *bc.Client, user string, bucketSlug st
 		log.Println("error calling threads.NewDB")
 		log.Fatal(err)
 	}
+
 	ctx = common.NewThreadIDContext(ctx, dbID)
 	// create bucket
 	buck, err := buckets.Init(ctx, bucketSlug)
+	buckets.Init(ctx, bucketSlug+"2")
+
+	log.Println("finished creating bucket")
+
+	newCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	opt := tc.ListenOption{}
+
+	// put in go routine
+	channel, err := threads.Listen(newCtx, dbID, []tc.ListenOption{opt})
+
+	log.Println("finished creating channel")
+
+	if err != nil {
+		log.Fatal("failed to call listen: %v", err)
+	}
+
+	go func() {
+		time.Sleep(time.Second)
+		buckets.Init(ctx, bucketSlug+"3")
+	}()
+
+	// a separete go routine that keeps checking if msgs are there
+	// and calls handler function
+	val, ok := <-channel
+
+	if !ok {
+		log.Println("channel no longer active at first event")
+	} else {
+		log.Println("received from channel!!!!")
+		log.Println(val)
+		instance := &Bucket{}
+		if err = json.Unmarshal(val.Action.Instance, instance); err != nil {
+			log.Fatalf("failed to unmarshal listen result: %v", err)
+		}
+
+		log.Printf("instance: %+v", *instance)
+	}
+
+	val, ok = <-channel
+
+	if !ok {
+		log.Println("channel 2 no longer active at first event")
+	} else {
+		log.Println("received 2 from channel!!!!")
+		log.Println(val)
+	}
+
+	log.Println("finished creating channel")
+
+	if err != nil {
+		log.Fatal("failed to call listen: %v", err)
+	}
+
+	val, ok = <-channel
+
+	if !ok {
+		log.Println("channel no longer active at first event")
+	} else {
+		log.Println("received from channel!!!!")
+		log.Println(val)
+	}
+
+	val, ok = <-channel
+
+	if !ok {
+		log.Println("channel 2 no longer active at first event")
+	} else {
+		log.Println("received 2 from channel!!!!")
+		log.Println(val)
+	}
 
 	return buck
 }
 
 func main() {
-	log.Println("hello world textile!")
+	mode := os.Args[1]
 
-	var threads *tc.Client
-	var buckets *bc.Client
-	// might need these for other ops so leaving here as commented
-	// out and below
-	// var users *uc.Client
-	// var hub *hc.Client
-	var err error
-
-	auth := common.Credentials{}
-	var opts []grpc.DialOption
-	hubTarget := "127.0.0.1:3006"
-	threadstarget := "127.0.0.1:3006"
-	opts = append(opts, grpc.WithInsecure())
-	opts = append(opts, grpc.WithPerRPCCredentials(auth))
-
-	buckets, err = bc.NewClient(hubTarget, opts...)
-	if err != nil {
-		cmd.Fatal(err)
+	if mode == "threads" {
+		log.Println("running in process threads")
+		runThreadsLocally()
+		return
 	}
-	threads, err = tc.NewClient(threadstarget, opts...)
-	if err != nil {
-		cmd.Fatal(err)
+
+	if mode == "hub" {
+		var threads *tc.Client
+		var buckets *bc.Client
+		// might need these for other ops so leaving here as commented
+		// out and below
+		// var users *uc.Client
+		// var hub *hc.Client
+		var err error
+
+		auth := common.Credentials{}
+		var opts []grpc.DialOption
+		hubTarget := "127.0.0.1:3006"
+		threadstarget := "127.0.0.1:3006"
+		opts = append(opts, grpc.WithInsecure())
+		opts = append(opts, grpc.WithPerRPCCredentials(auth))
+
+		buckets, err = bc.NewClient(hubTarget, opts...)
+		if err != nil {
+			cmd.Fatal(err)
+		}
+		threads, err = tc.NewClient(threadstarget, opts...)
+		if err != nil {
+			cmd.Fatal(err)
+		}
+		// hub, err = hc.NewClient(hubTarget, opts...)
+		// if err != nil {
+		// 	cmd.Fatal(err)
+		// }
+		// users, err = uc.NewClient(hubTarget, opts...)
+		// if err != nil {
+		// 	cmd.Fatal(err)
+		// }
+
+		log.Println("Finished client init, calling user init ...")
+
+		// hub
+		res := initUser(threads, buckets, "test-user", "test-bucket")
+		log.Println(res)
 	}
-	// hub, err = hc.NewClient(hubTarget, opts...)
-	// if err != nil {
-	// 	cmd.Fatal(err)
-	// }
-	// users, err = uc.NewClient(hubTarget, opts...)
-	// if err != nil {
-	// 	cmd.Fatal(err)
-	// }
-
-	log.Println("Finished client init, calling user init ...")
-
-	res := initUser(threads, buckets, "test-user", "test-bucket")
-	log.Println(res)
 }
