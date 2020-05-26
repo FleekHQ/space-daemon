@@ -21,33 +21,15 @@ var (
 	ErrFolderPathNotFound = errors.New("could not find a folder path for watcher")
 )
 
-type UpdateEvent watcher.Op
-
-const (
-	Create = UpdateEvent(watcher.Create)
-	Write  = UpdateEvent(watcher.Write)
-	Rename = UpdateEvent(watcher.Rename)
-	Remove = UpdateEvent(watcher.Remove)
-	Chmod  = UpdateEvent(watcher.Chmod)
-	Move   = UpdateEvent(watcher.Move)
-)
-
-type Handler func(event UpdateEvent, fileInfo os.FileInfo, newPath, oldPath string)
-
-func (e UpdateEvent) String() string {
-	return watcher.Op(e).String()
-}
-
 type FolderWatcher struct {
 	w *watcher.Watcher
 
-	stopWatch chan struct{}
-	done      chan struct{}
-
-	lock    sync.Mutex
-	options watcherOptions
-	started bool
-	closed  bool
+	lock        sync.Mutex
+	publishLock sync.RWMutex
+	options     watcherOptions
+	started     bool
+	closed      bool
+	handlers    []EventHandler
 }
 
 // New creates an new instance of folder watcher
@@ -87,35 +69,37 @@ func New(configs ...Option) (*FolderWatcher, error) {
 	}
 
 	return &FolderWatcher{
-		w:         w,
-		options:   options,
-		stopWatch: make(chan struct{}),
+		w:       w,
+		options: options,
 	}, nil
+}
+
+func (fw *FolderWatcher) RegisterHandler(handler EventHandler) {
+	fw.publishLock.Lock()
+	defer fw.publishLock.Unlock()
+	fw.handlers = append(fw.handlers, handler)
 }
 
 // Watch will start listening of changes on the FolderWatcher path and trigger the handler with any update event
 // This is a block operation
-func (fw *FolderWatcher) Watch(ctx context.Context, handler Handler) error {
+func (fw *FolderWatcher) Watch(ctx context.Context) error {
 	fw.setToStarted()
 
 	go func() {
 		for {
 			select {
-			case <-fw.stopWatch:
+			case <-fw.w.Closed:
 				log.Info("Watcher graceful shutdown triggered")
 				return
-			case <-fw.w.Closed:
-				fw.Close()
 			case <-ctx.Done():
 				fw.Close()
 			case event, ok := <-fw.w.Event:
 				if ok {
-					handler(
-						UpdateEvent(event.Op),
-						event,
-						event.Path,
-						event.OldPath,
-					)
+					if len(fw.handlers) == 0 {
+						fw.publishEventToHandler(&defaultWatcherHandler{}, event)
+					} else {
+						fw.publishEvent(event)
+					}
 				}
 			case err, ok := <-fw.w.Error:
 				if !ok {
@@ -146,15 +130,39 @@ func (fw *FolderWatcher) setToStarted() {
 	fw.started = true
 }
 
+func (fw *FolderWatcher) publishEvent(event watcher.Event) {
+	fw.publishLock.RLock()
+	defer fw.publishLock.RUnlock()
+
+	for _, handler := range fw.handlers {
+		fw.publishEventToHandler(handler, event)
+	}
+}
+
+func (fw *FolderWatcher) publishEventToHandler(handler EventHandler, event watcher.Event) {
+	switch event.Op {
+	case watcher.Create:
+		handler.OnCreate(event.Path, event.FileInfo)
+	case watcher.Remove:
+		handler.OnRemove(event.Path, event.FileInfo)
+	case watcher.Write:
+		handler.OnWrite(event.Path, event.FileInfo)
+	case watcher.Rename:
+		handler.OnRename(event.Path, event.FileInfo, event.OldPath)
+	case watcher.Move:
+		handler.OnMove(event.Path, event.FileInfo, event.OldPath)
+	}
+}
+
 // Close will stop the watching operation and unblock watch calls
 func (fw *FolderWatcher) Close() {
-	log.Info("Stopping watcher")
 	fw.lock.Lock()
 	defer fw.lock.Unlock()
+
 	if !fw.started || fw.closed {
 		return
 	}
+
 	fw.closed = true
-	close(fw.stopWatch)
 	fw.w.Close()
 }

@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"log"
-	"os"
 
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/store"
@@ -33,19 +32,14 @@ func Start(ctx context.Context, cfg config.Config) {
 	watcher, err := w.New(w.WithPaths(cfg.GetString(config.SpaceFolderPath, "")))
 	if err != nil {
 		log.Fatal(err)
-		return
 	}
-	err = watcher.Watch(ctx, func(e w.UpdateEvent, fileInfo os.FileInfo, newPath, oldPath string) {
-		log.Printf(
-			"Event: %s\nNewPath: %s\nOldPath: %s\nFile Name: %s\n",
-			e.String(),
-			newPath,
-			oldPath,
-			fileInfo.Name(),
-		)
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
+
+	go func() {
+		err = watcher.Watch(ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
 	// TODO: add listener services for bucket changes
 }
