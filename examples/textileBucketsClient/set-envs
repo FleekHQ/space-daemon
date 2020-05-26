@@ -1,2 +1,3 @@
+export TXL_HUB_HOST=textile-hub-dev.fleek.co:3006
 export TXL_USER_KEY=setfromcligeneration
 export TXL_USER_SECRET=setfromcligeneration
