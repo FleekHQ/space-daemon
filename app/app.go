@@ -4,6 +4,9 @@ import (
 	"context"
 	"log"
 
+	"github.com/FleekHQ/space-poc/core/synchronizers/bucketsync"
+	tc "github.com/FleekHQ/space-poc/core/textile/client"
+
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/store"
 	w "github.com/FleekHQ/space-poc/core/watcher"
@@ -30,6 +33,23 @@ func Start(ctx context.Context, cfg config.Config) {
 	)
 	srv.Start(ctx)
 	watcher, err := w.New(w.WithPaths(cfg.GetString(config.SpaceFolderPath, "")))
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	textileClient := tc.New(store)
+
+	// Testing bucket creation here
+	if err := textileClient.CreateBucket("my-bucket"); err != nil {
+		log.Fatal("error creating bucket", err)
+	} else {
+		log.Printf("Created bucket successfully")
+	}
+
+	sync := bucketsync.New(watcher, textileClient)
+
+	err = sync.Start(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
