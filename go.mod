@@ -28,6 +28,7 @@ require (
 	github.com/stretchr/testify v1.5.1
 	github.com/textileio/go-threads v0.1.18
 	github.com/textileio/textile v1.0.3
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	google.golang.org/grpc v1.29.1
 	google.golang.org/protobuf v1.23.0
 )

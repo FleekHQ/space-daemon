@@ -83,7 +83,7 @@ func New(db *store.Store, opts ...ServerOption) *grpcServer {
 }
 
 // Start grpc server with provided options
-func (sv *grpcServer) Start(ctx context.Context) {
+func (sv *grpcServer) Start(ctx context.Context) error {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", sv.opts.port))
 	if err != nil {
 		log.Error(fmt.Sprintf("failed to listen on port : %v", sv.opts.port), err)
@@ -93,10 +93,8 @@ func (sv *grpcServer) Start(ctx context.Context) {
 	sv.s = grpc.NewServer()
 	pb.RegisterSpaceApiServer(sv.s, sv)
 
-	go func() {
-		log.Info(fmt.Sprintf("grpc server starting in Port %v", sv.opts.port))
-		sv.s.Serve(lis)
-	}()
+	log.Info(fmt.Sprintf("grpc server started in Port %v", sv.opts.port))
+	return sv.s.Serve(lis)
 }
 
 // Helper function for setting port
@@ -106,4 +104,8 @@ func WithPort(port int) ServerOption {
 			o.port = port
 		}
 	}
+}
+
+func (sv *grpcServer) ShutDown() {
+	sv.s.GracefulStop()
 }

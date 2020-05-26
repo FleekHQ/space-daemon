@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"github.com/FleekHQ/space-poc/app"
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/env"
@@ -9,6 +10,9 @@ import (
 )
 
 func main() {
+	// flags
+	flag.Parse()
+
 	// env
 	env := env.New()
 
