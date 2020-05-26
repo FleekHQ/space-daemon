@@ -88,6 +88,7 @@ func Start(ctx context.Context, cfg config.Config) {
 	_, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
 
+	// probably we can create an interface Stop/Close to loop thru all modules
 	if sync != nil {
 		log.Println("shutdown bucket sync...")
 		sync.Stop()
