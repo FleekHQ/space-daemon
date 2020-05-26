@@ -28,52 +28,17 @@ type TextileClient struct {
 	threads   *threadsClient.Client
 	buckets   *bucketsClient.Client
 	isRunning bool
+	ctx       context.Context
 }
 
 // Creates a new Textile Client
 func New(store *db.Store) *TextileClient {
-	auth := common.Credentials{}
-	var opts []grpc.DialOption
-
-	opts = append(opts, grpc.WithInsecure())
-	opts = append(opts, grpc.WithPerRPCCredentials(auth))
-
-	var threads *threadsClient.Client
-	var buckets *bucketsClient.Client
-
-	finalHubTarget := hubTarget
-	finalThreadsTarget := threadsTarget
-
-	hubTargetFromEnv := os.Getenv("TXL_HUB_TARGET")
-	threadsTargetFromEnv := os.Getenv("TXL_THREADS_TARGET")
-
-	if hubTargetFromEnv != "" {
-		finalHubTarget = hubTargetFromEnv
-	}
-
-	if threadsTargetFromEnv != "" {
-		finalThreadsTarget = threadsTargetFromEnv
-	}
-
-	log.Debug("Creating buckets client in " + finalHubTarget)
-	if b, err := bucketsClient.NewClient(finalHubTarget, opts...); err != nil {
-		cmd.Fatal(err)
-	} else {
-		buckets = b
-	}
-
-	log.Debug("Creating threads client in " + finalThreadsTarget)
-	if t, err := threadsClient.NewClient(finalThreadsTarget, opts...); err != nil {
-		cmd.Fatal(err)
-	} else {
-		threads = t
-	}
-
 	return &TextileClient{
 		store:     store,
-		threads:   threads,
-		buckets:   buckets,
+		threads:   nil,
+		buckets:   nil,
 		isRunning: false,
+		ctx:       nil,
 	}
 }
 
@@ -117,12 +82,9 @@ func (tc *TextileClient) requiresRunning() error {
 	return nil
 }
 
-// Creates a bucket.
-func (tc *TextileClient) CreateBucket(bucketSlug string) error {
+func (tc *TextileClient) initContext() error {
 	// TODO: this should be happening in an auth lambda
 	// only needed for hub connections
-	log.Debug("Creating a new bucket with slug" + bucketSlug)
-
 	key := os.Getenv("TXL_USER_KEY")
 	secret := os.Getenv("TXL_USER_SECRET")
 
@@ -144,8 +106,7 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) error {
 	log.Debug("Obtaining user key pair from local store")
 	kc := keychain.New(tc.store)
 	var privateKey crypto.PrivKey
-	var publicKey crypto.PubKey
-	if privateKey, publicKey, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
+	if privateKey, _, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
 		return err
 	}
 
@@ -157,13 +118,34 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) error {
 	}
 	ctx = thread.NewTokenContext(ctx, tok)
 
-	// create thread
+	tc.ctx = ctx
+
+	return nil
+}
+
+// Creates a bucket.
+func (tc *TextileClient) CreateBucket(bucketSlug string) error {
+	log.Debug("Creating a new bucket with slug" + bucketSlug)
+
+	if err := tc.requiresRunning(); err != nil {
+		return err
+	}
+
+	var err error
+	var publicKey crypto.PubKey
+	kc := keychain.New(tc.store)
+	if _, publicKey, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
+		return err
+	}
+
+	// create thread (each bucket belongs to a different thread)
 	log.Debug("Creating thread")
 	var pubKeyInBytes []byte
 	if pubKeyInBytes, err = publicKey.Bytes(); err != nil {
 		return err
 	}
 
+	ctx := tc.ctx
 	ctx = common.NewThreadNameContext(ctx, getThreadName(pubKeyInBytes, bucketSlug))
 
 	var dbID *thread.ID
@@ -189,9 +171,50 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) error {
 
 // Starts the Textile Client
 func (tc *TextileClient) Start() error {
+	auth := common.Credentials{}
+	var opts []grpc.DialOption
+
+	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithPerRPCCredentials(auth))
+
+	var threads *threadsClient.Client
+	var buckets *bucketsClient.Client
+
+	finalHubTarget := hubTarget
+	finalThreadsTarget := threadsTarget
+
+	hubTargetFromEnv := os.Getenv("TXL_HUB_TARGET")
+	threadsTargetFromEnv := os.Getenv("TXL_THREADS_TARGET")
+
+	if hubTargetFromEnv != "" {
+		finalHubTarget = hubTargetFromEnv
+	}
+
+	if threadsTargetFromEnv != "" {
+		finalThreadsTarget = threadsTargetFromEnv
+	}
+
+	log.Debug("Creating buckets client in " + finalHubTarget)
+	if b, err := bucketsClient.NewClient(finalHubTarget, opts...); err != nil {
+		cmd.Fatal(err)
+	} else {
+		buckets = b
+	}
+
+	log.Debug("Creating threads client in " + finalThreadsTarget)
+	if t, err := threadsClient.NewClient(finalThreadsTarget, opts...); err != nil {
+		cmd.Fatal(err)
+	} else {
+		threads = t
+	}
+
+	tc.buckets = buckets
+	tc.threads = threads
+
+	if err := tc.initContext(); err != nil {
+		return err
+	}
 
 	tc.isRunning = true
-	// TODO: Listen for changes
-
 	return nil
 }

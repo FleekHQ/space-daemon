@@ -8,6 +8,7 @@ import (
 	tc "github.com/FleekHQ/space-poc/core/textile/client"
 
 	"github.com/FleekHQ/space-poc/config"
+	"github.com/FleekHQ/space-poc/core/initializer"
 	"github.com/FleekHQ/space-poc/core/store"
 	w "github.com/FleekHQ/space-poc/core/watcher"
 	"github.com/FleekHQ/space-poc/grpc"
@@ -40,12 +41,7 @@ func Start(ctx context.Context, cfg config.Config) {
 
 	textileClient := tc.New(store)
 
-	// Testing bucket creation here
-	if err := textileClient.CreateBucket("my-bucket"); err != nil {
-		log.Fatal("error creating bucket", err)
-	} else {
-		log.Printf("Created bucket successfully")
-	}
+	initializer.InitialLoad(textileClient)
 
 	sync := bucketsync.New(watcher, textileClient)
 
