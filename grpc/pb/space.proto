@@ -1,10 +1,14 @@
 syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
 package space;
 
 service SpaceApi {
   rpc GetPathInfo(PathInfoRequest) returns (PathInfoResponse) {}
   rpc GenerateKeyPair(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {}
   rpc GenerateKeyPairWithForce(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {}
+  rpc Subscribe(google.protobuf.Empty) returns (stream FileEventResponse) {}
 }
 
 message PathInfoRequest {
@@ -22,4 +26,8 @@ message GenerateKeyPairRequest {}
 message GenerateKeyPairResponse {
   string publicKey = 1;
   string privateKey = 2;
+}
+
+message FileEventResponse {
+  string path = 1;
 }

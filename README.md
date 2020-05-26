@@ -6,6 +6,22 @@ this code later needs to be rewritten or moved to the actual
 repositories that will be used for implementation.
 
 
+# Running the Space Binary
+
+Binary should run in a folder with a space.json config file with the following settings:
+```json
+{
+  "space": {
+    "folderPath": "/path/to/shared/folder",
+    "rpcPort": 9999,
+    "storePath": "~/.fleek-space"
+  }
+}
+```
+
+If you still have issues, try setting the env var SPACE_APP_DIR
+`export SPACE_APP_DIR=/path/to/the/space/binary`
+
 # POC Package Structure
 Loosely based on these resources:
 https://github.com/golang-standards/project-layout

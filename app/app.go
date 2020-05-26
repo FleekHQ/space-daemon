@@ -2,9 +2,10 @@ package app
 
 import (
 	"context"
+	"log"
+
 	"github.com/FleekHQ/space-poc/core/synchronizers/bucketsync"
 	tc "github.com/FleekHQ/space-poc/core/textile/client"
-	"log"
 
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/store"
@@ -45,5 +46,13 @@ func Start(ctx context.Context, cfg config.Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	go func() {
+		err = watcher.Watch(ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
 	// TODO: add listener services for bucket changes
 }
