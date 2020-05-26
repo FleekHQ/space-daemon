@@ -5,7 +5,7 @@ go 1.14
 require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
 	github.com/creamdog/gonfig v0.0.0-20160810132730-80d86bfb5a37
-	github.com/dgraph-io/badger/v2 v2.0.3
+	github.com/dgraph-io/badger/v2 v2.0.1-rc1.0.20200522174526-6eaa5009af27
 	github.com/gin-gonic/gin v1.6.3 // indirect
 	github.com/golang/protobuf v1.4.0
 	github.com/hsanjuan/ipfs-lite v1.1.13

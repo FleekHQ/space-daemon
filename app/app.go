@@ -2,12 +2,12 @@ package app
 
 import (
 	"context"
+	"github.com/FleekHQ/space-poc/core/synchronizers/bucketsync"
+	tc "github.com/FleekHQ/space-poc/core/textile/client"
 	"log"
 
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/store"
-	"github.com/FleekHQ/space-poc/core/synchronizers/bucketsync"
-	tc "github.com/FleekHQ/space-poc/core/textile/client"
 	w "github.com/FleekHQ/space-poc/core/watcher"
 	"github.com/FleekHQ/space-poc/grpc"
 )
