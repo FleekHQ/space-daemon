@@ -3,10 +3,11 @@ package app
 import (
 	"context"
 	"log"
-	"os"
 
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/store"
+	"github.com/FleekHQ/space-poc/core/synchronizers/bucketsync"
+	tc "github.com/FleekHQ/space-poc/core/textile/client"
 	w "github.com/FleekHQ/space-poc/core/watcher"
 	"github.com/FleekHQ/space-poc/grpc"
 )
@@ -35,15 +36,12 @@ func Start(ctx context.Context, cfg config.Config) {
 		log.Fatal(err)
 		return
 	}
-	err = watcher.Watch(ctx, func(e w.UpdateEvent, fileInfo os.FileInfo, newPath, oldPath string) {
-		log.Printf(
-			"Event: %s\nNewPath: %s\nOldPath: %s\nFile Name: %s\n",
-			e.String(),
-			newPath,
-			oldPath,
-			fileInfo.Name(),
-		)
-	})
+
+	textileClient := tc.New(store)
+
+	sync := bucketsync.New(watcher, textileClient)
+
+	err = sync.Start(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}

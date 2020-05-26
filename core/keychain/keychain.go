@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	db "github.com/FleekHQ/space-poc/core/store"
+	"github.com/libp2p/go-libp2p-core/crypto"
 )
 
 const PrivateKeyStoreKey = "private_key"
@@ -32,6 +33,36 @@ func (kc *Keychain) GenerateKeyPair() ([]byte, []byte, error) {
 	}
 
 	return kc.generateAndStoreKeyPair()
+}
+
+// Returns the stored key pair using the same signature than libp2p's GenerateEd25519Key function
+func (kc *Keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error) {
+	var priv []byte
+	var pub []byte
+
+	if val, err := kc.store.Get([]byte(PublicKeyStoreKey)); err != nil {
+		newErr := errors.New("No key pair found in the local db.")
+		return nil, nil, newErr
+	} else {
+		pub = val
+	}
+
+	if val, err := kc.store.Get([]byte(PrivateKeyStoreKey)); err != nil {
+		newErr := errors.New("No key pair found in the local db.")
+		return nil, nil, newErr
+	} else {
+		priv = val
+	}
+
+	if unmarshalledPriv, err := crypto.UnmarshalEd25519PrivateKey(priv); err != nil {
+		return nil, nil, err
+	} else {
+		if unmarshalledPub, err := crypto.UnmarshalEd25519PublicKey(pub); err != nil {
+			return nil, nil, err
+		} else {
+			return unmarshalledPriv, unmarshalledPub, nil
+		}
+	}
 }
 
 // Generates a public/private key pair using ed25519 algorithm.
