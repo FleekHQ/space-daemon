@@ -180,10 +180,8 @@ type Bucket struct {
 func initUser(threads *tc.Client, buckets *bc.Client, user string, bucketSlug string) *pb.InitReply {
 	// only needed for hub connections
 
-	// only done once
 	key := os.Getenv("TXL_USER_KEY")
 	secret := os.Getenv("TXL_USER_SECRET")
-	//
 
 	// TODO: this should be happening in an auth lambda
 	ctx := context.Background()
@@ -308,10 +306,12 @@ func main() {
 		// var hub *hc.Client
 		var err error
 
+		host := os.Getenv("TXL_HUB_HOST")
+
 		auth := common.Credentials{}
 		var opts []grpc.DialOption
-		hubTarget := "127.0.0.1:3006"
-		threadstarget := "127.0.0.1:3006"
+		hubTarget := host
+		threadstarget := host
 		opts = append(opts, grpc.WithInsecure())
 		opts = append(opts, grpc.WithPerRPCCredentials(auth))
 

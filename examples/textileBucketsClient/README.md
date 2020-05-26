@@ -7,16 +7,17 @@ To run the in-process `threadsd` example:
 2. Run `./textileBucketsClient threads`
 
 To run the bucket creation with hub example: 
+1. Set the host, key and secret in set-envs. Use textile-hub-dev.fleek.co for the host. Key and secret should be the one shared in Slack or generated using the `tt` cli (see extra notes below)
+2. `source set-envs`
+3. `go build .`
+4. `./textileBucketsClient hub`
 
-1. Run hub development environment by cloning `https://github.com/textileio/textile` and running `docker-compose -f docker-compose-dev.yml up --build`
-2. Download the CLI at https://github.com/textileio/textile/releases
-3. Run `install` from the bundle
-4. `tt init --api=localhost:3006`
-5. Hit http://127.0.0.1:8006/confirm/textilesession in the browser to "validate" email
-6. Generate a "user" key `tt keys create` and choose user
-7. Save values in `set-envs`
-8. Build `go build .`
-9. `source set-envs` to set environment variables
-9. `./textileBucketsClient hub`
+### Textile CLI
 
-This will walk through the process of using the user key to generate a token, then using that against the hub to create bucket.
+1. Download bundle at https://github.com/textileio/textile/releases
+2. Extract
+3. Go into extracted folder and run `./install`
+4. Run `tt init --api=textile-hub-dev.fleek.co:3006`
+5. When asked for email validation, hit http://textile-hub-dev.fleek.co:8006/confirm/textilesession to auto validate
+6. Run `tt keys create --api=textile-hub-dev.fleek.co:3006` to create keys.
+7. You can also use all the other `tt` commands pointing to our dev hub by adding the flag `--api=textile-hub-dev.fleek.co:3006`
