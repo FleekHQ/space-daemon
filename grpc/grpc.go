@@ -106,6 +106,6 @@ func WithPort(port int) ServerOption {
 	}
 }
 
-func (sv *grpcServer) ShutDown() {
+func (sv *grpcServer) Stop() {
 	sv.s.GracefulStop()
 }

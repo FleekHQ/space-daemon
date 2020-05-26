@@ -63,23 +63,12 @@ func Start(ctx context.Context, cfg config.Config) {
 		log.Printf("Created bucket successfully")
 	}
 
+	// watcher is started inside bucket sync
 	sync := bucketsync.New(watcher, textileClient)
 
-	// TODO: replace this with g.Go() when we have a Close method for sync
-	go func() {
-		sync.Start(ctx)
-	}()
-
-	// TODO: put this back in when we have a sync.Close() method
-	/*g.Go(func() error {
+	g.Go(func() error {
 		return sync.Start(ctx)
-	})*/
-
-
-	// TODO: is this needed if we start watcher over at bucket sync?
-/*	g.Go(func() error {
-		return watcher.Watch(ctx)
-	})*/
+	})
 
 	// TODO: add listener services for bucket changes
 
@@ -99,14 +88,14 @@ func Start(ctx context.Context, cfg config.Config) {
 	_, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
 
-	// TODO: do bucketsync close
-	/*if watcher != nil {
-		watcher.Close()
-	}*/
+	if sync != nil {
+		log.Println("shutdown bucket sync...")
+		sync.Stop()
+	}
 
 	if srv != nil {
 		log.Println("shutdown gRPC server...")
-		srv.ShutDown()
+		srv.Stop()
 	}
 
 	if store != nil {
