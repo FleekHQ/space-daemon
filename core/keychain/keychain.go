@@ -12,6 +12,10 @@ import (
 const PrivateKeyStoreKey = "private_key"
 const PublicKeyStoreKey = "public_key"
 
+var (
+	ErrKeyPairNotFound = errors.New("No key pair found in the local db.")
+)
+
 type Keychain struct {
 	store *db.Store
 }
@@ -39,30 +43,30 @@ func (kc *Keychain) GenerateKeyPair() ([]byte, []byte, error) {
 func (kc *Keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error) {
 	var priv []byte
 	var pub []byte
+	var err error
 
-	if val, err := kc.store.Get([]byte(PublicKeyStoreKey)); err != nil {
-		newErr := errors.New("No key pair found in the local db.")
+	if pub, err = kc.store.Get([]byte(PublicKeyStoreKey)); err != nil {
+		newErr := ErrKeyPairNotFound
 		return nil, nil, newErr
-	} else {
-		pub = val
 	}
 
-	if val, err := kc.store.Get([]byte(PrivateKeyStoreKey)); err != nil {
-		newErr := errors.New("No key pair found in the local db.")
+	if priv, err = kc.store.Get([]byte(PrivateKeyStoreKey)); err != nil {
+		newErr := ErrKeyPairNotFound
 		return nil, nil, newErr
-	} else {
-		priv = val
 	}
 
-	if unmarshalledPriv, err := crypto.UnmarshalEd25519PrivateKey(priv); err != nil {
+	var unmarshalledPriv crypto.PrivKey
+	var unmarshalledPub crypto.PubKey
+
+	if unmarshalledPriv, err = crypto.UnmarshalEd25519PrivateKey(priv); err != nil {
 		return nil, nil, err
-	} else {
-		if unmarshalledPub, err := crypto.UnmarshalEd25519PublicKey(pub); err != nil {
-			return nil, nil, err
-		} else {
-			return unmarshalledPriv, unmarshalledPub, nil
-		}
 	}
+
+	if unmarshalledPub, err = crypto.UnmarshalEd25519PublicKey(pub); err != nil {
+		return nil, nil, err
+	}
+
+	return unmarshalledPriv, unmarshalledPub, nil
 }
 
 // Generates a public/private key pair using ed25519 algorithm.

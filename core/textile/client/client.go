@@ -125,48 +125,51 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) error {
 
 	key := os.Getenv("TXL_USER_KEY")
 	secret := os.Getenv("TXL_USER_SECRET")
+
+	if key == "" || secret == "" {
+		return errors.New("Couldn't get Textile key or secret from envs")
+	}
+
 	ctx := context.Background()
 	ctx = common.NewAPIKeyContext(ctx, key)
 
-	if apiSigCtx, err := common.CreateAPISigContext(ctx, time.Now().Add(time.Minute), secret); err != nil {
+	var err error
+	var apiSigCtx context.Context
+
+	if apiSigCtx, err = common.CreateAPISigContext(ctx, time.Now().Add(time.Minute), secret); err != nil {
 		return err
-	} else {
-		ctx = apiSigCtx
 	}
+	ctx = apiSigCtx
 
 	log.Debug("Obtaining user key pair from local store")
 	kc := keychain.New(tc.store)
 	var privateKey crypto.PrivKey
 	var publicKey crypto.PubKey
-	if priv, pub, err := kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
+	if privateKey, publicKey, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
 		return err
-	} else {
-		privateKey = priv
-		publicKey = pub
 	}
 
 	// TODO: CTX has to be made from session key received from lambda
 	log.Debug("Creating libp2p identity")
-	if tok, err := tc.threads.GetToken(ctx, thread.NewLibp2pIdentity(privateKey)); err != nil {
+	var tok thread.Token
+	if tok, err = tc.threads.GetToken(ctx, thread.NewLibp2pIdentity(privateKey)); err != nil {
 		return err
-	} else {
-		ctx = thread.NewTokenContext(ctx, tok)
 	}
+	ctx = thread.NewTokenContext(ctx, tok)
 
 	// create thread
 	log.Debug("Creating thread")
-	if pub, err := publicKey.Bytes(); err != nil {
+	var pubKeyInBytes []byte
+	if pubKeyInBytes, err = publicKey.Bytes(); err != nil {
 		return err
-	} else {
-		ctx = common.NewThreadNameContext(ctx, getThreadName(pub, bucketSlug))
 	}
+
+	ctx = common.NewThreadNameContext(ctx, getThreadName(pubKeyInBytes, bucketSlug))
 
 	var dbID *thread.ID
 	log.Debug("Fetching thread id from local store")
-	if val, err := tc.findOrCreateThreadID(tc.threads, bucketSlug); err != nil {
+	if dbID, err = tc.findOrCreateThreadID(tc.threads, bucketSlug); err != nil {
 		return err
-	} else {
-		dbID = val
 	}
 
 	log.Debug("Creating Thread DB")
