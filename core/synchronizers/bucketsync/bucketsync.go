@@ -2,16 +2,18 @@ package bucketsync
 
 import (
 	"context"
-	"log"
-	"os"
+
+	"github.com/FleekHQ/space-poc/log"
 
 	tc "github.com/FleekHQ/space-poc/core/textile/client"
+	textileHandler "github.com/FleekHQ/space-poc/core/textile/handler"
 	"github.com/FleekHQ/space-poc/core/watcher"
 )
 
 type BucketSynchronizer struct {
-	folderWatcher *watcher.FolderWatcher
-	textileClient *tc.TextileClient
+	folderWatcher  *watcher.FolderWatcher
+	textileClient  *tc.TextileClient
+	textileHandler *textileHandler.TextileHandler
 	// textileWatcher
 	// textileClient
 	// grpcPushNotifier
@@ -19,26 +21,13 @@ type BucketSynchronizer struct {
 
 // Creates a new BucketSynchronizer instance
 func New(folderWatcher *watcher.FolderWatcher, textileClient *tc.TextileClient /*textileWatcher, grpcPushNotifier */) *BucketSynchronizer {
+	th := textileHandler.New(textileClient)
 	return &BucketSynchronizer{
-		folderWatcher: folderWatcher,
-		textileClient: textileClient,
+		folderWatcher:  folderWatcher,
+		textileClient:  textileClient,
+		textileHandler: th,
 		// textileWatcher: textileWatcher,
 		// grpcPushNotifier
-	}
-}
-
-func (bs *BucketSynchronizer) folderEventHandler(event watcher.UpdateEvent, fileInfo os.FileInfo, newPath, oldPath string) {
-	log.Printf(
-		"Event: %s\nNewPath: %s\nOldPath: %s\nFile Name: %s\n",
-		event.String(),
-		newPath,
-		oldPath,
-		fileInfo.Name(),
-	)
-
-	switch event {
-	case watcher.Create:
-		// bs.textileClient.create(...)
 	}
 }
 
@@ -52,7 +41,8 @@ func (bs *BucketSynchronizer) folderEventHandler(event watcher.UpdateEvent, file
 
 // Starts the folder watcher and the textile watcher.
 func (bs *BucketSynchronizer) Start(ctx context.Context) error {
-	if err := bs.folderWatcher.Watch(ctx, bs.folderEventHandler); err != nil {
+	bs.folderWatcher.RegisterHandler(bs.textileHandler)
+	if err := bs.folderWatcher.Watch(ctx); err != nil {
 		log.Fatal(err)
 		return err
 	}

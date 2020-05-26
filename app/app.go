@@ -40,6 +40,13 @@ func Start(ctx context.Context, cfg config.Config) {
 
 	textileClient := tc.New(store)
 
+	// Testing bucket creation here
+	if err := textileClient.CreateBucket("my-bucket"); err != nil {
+		log.Fatal("error creating bucket", err)
+	} else {
+		log.Printf("Created bucket successfully")
+	}
+
 	sync := bucketsync.New(watcher, textileClient)
 
 	err = sync.Start(ctx)

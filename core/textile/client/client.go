@@ -9,6 +9,7 @@ import (
 
 	"github.com/FleekHQ/space-poc/core/keychain"
 	db "github.com/FleekHQ/space-poc/core/store"
+	"github.com/FleekHQ/space-poc/log"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
@@ -19,7 +20,7 @@ import (
 )
 
 const hubTarget = "127.0.0.1:3006"
-const threadstarget = "127.0.0.1:3006"
+const threadsTarget = "127.0.0.1:3006"
 const threadIDStoreKey = "thread_id"
 
 type TextileClient struct {
@@ -40,13 +41,29 @@ func New(store *db.Store) *TextileClient {
 	var threads *threadsClient.Client
 	var buckets *bucketsClient.Client
 
-	if b, err := bucketsClient.NewClient(hubTarget, opts...); err != nil {
+	finalHubTarget := hubTarget
+	finalThreadsTarget := threadsTarget
+
+	hubTargetFromEnv := os.Getenv("TXL_HUB_TARGET")
+	threadsTargetFromEnv := os.Getenv("TXL_THREADS_TARGET")
+
+	if hubTargetFromEnv != "" {
+		finalHubTarget = hubTargetFromEnv
+	}
+
+	if threadsTargetFromEnv != "" {
+		finalThreadsTarget = threadsTargetFromEnv
+	}
+
+	log.Debug("Creating buckets client in " + finalHubTarget)
+	if b, err := bucketsClient.NewClient(finalHubTarget, opts...); err != nil {
 		cmd.Fatal(err)
 	} else {
 		buckets = b
 	}
 
-	if t, err := threadsClient.NewClient(threadstarget, opts...); err != nil {
+	log.Debug("Creating threads client in " + finalThreadsTarget)
+	if t, err := threadsClient.NewClient(finalThreadsTarget, opts...); err != nil {
 		cmd.Fatal(err)
 	} else {
 		threads = t
@@ -64,11 +81,13 @@ func getThreadName(userPubKey []byte, bucketSlug string) string {
 	return hex.EncodeToString(userPubKey) + "-" + bucketSlug
 }
 
-func (tc *TextileClient) findOrCreateThreadID(threads *threadsClient.Client) (*thread.ID, error) {
-	if val, err := tc.store.Get([]byte(threadIDStoreKey)); err != nil {
-		newErr := errors.New("error while retrieving thread id: check your local space db accessibility")
-		return nil, newErr
-	} else if val != nil {
+func getThreadIDStoreKey(bucketSlug string) []byte {
+	return []byte(threadIDStoreKey + "_" + bucketSlug)
+}
+
+func (tc *TextileClient) findOrCreateThreadID(threads *threadsClient.Client, bucketSlug string) (*thread.ID, error) {
+	if val, _ := tc.store.Get([]byte(getThreadIDStoreKey(bucketSlug))); val != nil {
+		log.Debug("Thread ID found in local store")
 		// Cast the stored dbID from bytes to thread.ID
 		if dbID, err := thread.Cast(val); err != nil {
 			return nil, err
@@ -78,10 +97,11 @@ func (tc *TextileClient) findOrCreateThreadID(threads *threadsClient.Client) (*t
 	}
 
 	// thread id does not exist yet
+	log.Debug("Thread ID not found in local store. Generating a new one...")
 	dbID := thread.NewIDV1(thread.Raw, 32)
 	dbIDInBytes := dbID.Bytes()
 
-	if err := tc.store.Set([]byte(threadIDStoreKey), dbIDInBytes); err != nil {
+	if err := tc.store.Set([]byte(getThreadIDStoreKey(bucketSlug)), dbIDInBytes); err != nil {
 		newErr := errors.New("error while storing thread id: check your local space db accessibility")
 		return nil, newErr
 	}
@@ -101,6 +121,8 @@ func (tc *TextileClient) requiresRunning() error {
 func (tc *TextileClient) CreateBucket(bucketSlug string) error {
 	// TODO: this should be happening in an auth lambda
 	// only needed for hub connections
+	log.Debug("Creating a new bucket with slug" + bucketSlug)
+
 	key := os.Getenv("TXL_USER_KEY")
 	secret := os.Getenv("TXL_USER_SECRET")
 	ctx := context.Background()
@@ -112,6 +134,7 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) error {
 		ctx = apiSigCtx
 	}
 
+	log.Debug("Obtaining user key pair from local store")
 	kc := keychain.New(tc.store)
 	var privateKey crypto.PrivKey
 	var publicKey crypto.PubKey
@@ -123,6 +146,7 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) error {
 	}
 
 	// TODO: CTX has to be made from session key received from lambda
+	log.Debug("Creating libp2p identity")
 	if tok, err := tc.threads.GetToken(ctx, thread.NewLibp2pIdentity(privateKey)); err != nil {
 		return err
 	} else {
@@ -130,6 +154,7 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) error {
 	}
 
 	// create thread
+	log.Debug("Creating thread")
 	if pub, err := publicKey.Bytes(); err != nil {
 		return err
 	} else {
@@ -137,17 +162,21 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) error {
 	}
 
 	var dbID *thread.ID
-	if val, err := tc.findOrCreateThreadID(tc.threads); err != nil {
+	log.Debug("Fetching thread id from local store")
+	if val, err := tc.findOrCreateThreadID(tc.threads, bucketSlug); err != nil {
 		return err
 	} else {
 		dbID = val
 	}
+
+	log.Debug("Creating Thread DB")
 	if err := tc.threads.NewDB(ctx, *dbID); err != nil {
 		return err
 	}
 	ctx = common.NewThreadIDContext(ctx, *dbID)
 
 	// create bucket
+	log.Debug("Generating bucket")
 	if _, err := tc.buckets.Init(ctx, bucketSlug); err != nil {
 		return err
 	}
