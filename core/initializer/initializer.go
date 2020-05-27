@@ -17,7 +17,7 @@ func InitialLoad(textileClient *tc.TextileClient) {
 	}
 
 	if err := textileClient.CreateBucket(defaultPersonalBucketSlug); err != nil {
-		log.Error("Error when creating default bucket. Maybe it already exists", err)
+		panic("Error when creating default bucket. " + err.Error())
 	}
 
 	// TODO: Add other initialization logic
