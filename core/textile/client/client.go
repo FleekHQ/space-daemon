@@ -124,26 +124,22 @@ func (tc *TextileClient) initContext() error {
 	return nil
 }
 
-// Creates a bucket.
-func (tc *TextileClient) CreateBucket(bucketSlug string) error {
-	log.Debug("Creating a new bucket with slug" + bucketSlug)
-
+// Returns a context that works for accessing a bucket
+func (tc *TextileClient) GetBucketContext(bucketSlug string) (context.Context, *thread.ID, error) {
 	if err := tc.requiresRunning(); err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	var err error
 	var publicKey crypto.PubKey
 	kc := keychain.New(tc.store)
 	if _, publicKey, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	// create thread (each bucket belongs to a different thread)
-	log.Debug("Creating thread")
 	var pubKeyInBytes []byte
 	if pubKeyInBytes, err = publicKey.Bytes(); err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	ctx := tc.ctx
@@ -152,10 +148,34 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) error {
 	var dbID *thread.ID
 	log.Debug("Fetching thread id from local store")
 	if dbID, err = tc.findOrCreateThreadID(tc.threads, bucketSlug); err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	ctx = common.NewThreadIDContext(ctx, *dbID)
+
+	return ctx, dbID, nil
+}
+
+// Returns a thread client connection. Requires the client to be running.
+func (tc *TextileClient) GetThreadsConnection() (*threadsClient.Client, error) {
+	if err := tc.requiresRunning(); err != nil {
+		return nil, err
+	}
+
+	return tc.threads, nil
+}
+
+// Creates a bucket.
+func (tc *TextileClient) CreateBucket(bucketSlug string) error {
+	log.Debug("Creating a new bucket with slug" + bucketSlug)
+
+	var ctx context.Context
+	var dbID *thread.ID
+	var err error
+
+	if ctx, dbID, err = tc.GetBucketContext(bucketSlug); err != nil {
+		return err
+	}
 
 	// return if bucket aready exists
 	// TODO: see if threads.find would be faster

@@ -12,6 +12,7 @@ import (
 
 	"github.com/FleekHQ/space-poc/core/synchronizers/bucketsync"
 	tc "github.com/FleekHQ/space-poc/core/textile/client"
+	tl "github.com/FleekHQ/space-poc/core/textile/listener"
 
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/store"
@@ -64,8 +65,20 @@ func Start(ctx context.Context, cfg config.Config) {
 
 	textileClient := tc.New(store)
 
+	waitForTextileClient := make(chan bool, 1)
 	g.Go(func() error {
-		return textileClient.StartAndBootstrap()
+		if err := textileClient.StartAndBootstrap(); err != nil {
+			return err
+		}
+		waitForTextileClient <- true
+		return nil
+	})
+
+	<-waitForTextileClient
+
+	textileThreadListener := tl.New(textileClient, "personal")
+	g.Go(func() error {
+		return textileThreadListener.Listen(ctx)
 	})
 
 	// watcher is started inside bucket sync
@@ -112,6 +125,11 @@ func Start(ctx context.Context, cfg config.Config) {
 	if textileClient != nil {
 		log.Println("shutdown Textile client")
 		textileClient.Stop()
+	}
+
+	if textileThreadListener != nil {
+		log.Println("shutdown Textile thread listener")
+		textileThreadListener.Close()
 	}
 
 	log.Println("waiting for shutdown group")
