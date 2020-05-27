@@ -41,7 +41,10 @@ func Start(ctx context.Context, cfg config.Config) {
 
 	textileClient := tc.New(store)
 
-	initializer.InitialLoad(textileClient)
+	if err := initializer.InitialLoad(textileClient); err != nil {
+		log.Fatal(err)
+		return
+	}
 
 	sync := bucketsync.New(watcher, textileClient)
 
