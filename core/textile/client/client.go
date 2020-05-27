@@ -22,6 +22,7 @@ import (
 const hubTarget = "127.0.0.1:3006"
 const threadsTarget = "127.0.0.1:3006"
 const threadIDStoreKey = "thread_id"
+const defaultPersonalBucketSlug = "personal"
 
 type TextileClient struct {
 	store     *db.Store
@@ -154,10 +155,6 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) error {
 		return err
 	}
 
-	log.Debug("Creating Thread DB")
-	if err := tc.threads.NewDB(ctx, *dbID); err != nil {
-		return err
-	}
 	ctx = common.NewThreadIDContext(ctx, *dbID)
 
 	// return if bucket aready exists
@@ -168,9 +165,14 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) error {
 	}
 	for _, r := range bucketList.Roots {
 		if r.Name == bucketSlug {
-			log.Info("Bucket %s already exists", bucketSlug)
+			log.Info("Bucket '" + bucketSlug + "' already exists")
 			return nil
 		}
+	}
+
+	log.Debug("Creating Thread DB")
+	if err := tc.threads.NewDB(ctx, *dbID); err != nil {
+		return err
 	}
 
 	// create bucket
@@ -229,5 +231,51 @@ func (tc *TextileClient) Start() error {
 	}
 
 	tc.isRunning = true
+	return nil
+}
+
+// Closes connection to Textile
+func (tc *TextileClient) Stop() error {
+	tc.isRunning = false
+	if err := tc.buckets.Close(); err != nil {
+		return err
+	}
+
+	if err := tc.threads.Close(); err != nil {
+		return err
+	}
+
+	tc.buckets = nil
+	tc.threads = nil
+
+	return nil
+}
+
+// Starts a Textile Client and also initializes default resources for it like a key pair and default bucket.
+func (tc *TextileClient) StartAndBootstrap() error {
+	// Create key pair if not present
+	kc := keychain.New(tc.store)
+	log.Debug("Generating key pair...")
+	if _, _, err := kc.GenerateKeyPair(); err != nil {
+		log.Debug("Error generating key pair, key might already exist")
+		log.Debug(err.Error())
+		// Not returning err since it can error if keys already exist
+	}
+
+	// Start Textile Client
+	log.Debug("Starting Textile Client...")
+	if err := tc.Start(); err != nil {
+		log.Error("Error starting Textile Client", err)
+		return err
+	}
+
+	// Create default bucket
+	log.Debug("Creating default bucket...")
+	if err := tc.CreateBucket(defaultPersonalBucketSlug); err != nil {
+		log.Error("Error creating default bucket", err)
+		return err
+	}
+
+	log.Debug("Textile Client initialized successfully")
 	return nil
 }
