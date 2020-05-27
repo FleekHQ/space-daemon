@@ -160,6 +160,19 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) error {
 	}
 	ctx = common.NewThreadIDContext(ctx, *dbID)
 
+	// return if bucket aready exists
+	// TODO: see if threads.find would be faster
+	bucketList, err := tc.buckets.List(ctx)
+	if err != nil {
+		return err
+	}
+	for _, r := range bucketList.Roots {
+		if r.Name == bucketSlug {
+			log.Info("Bucket %s already exists", bucketSlug)
+			return nil
+		}
+	}
+
 	// create bucket
 	log.Debug("Generating bucket")
 	if _, err := tc.buckets.Init(ctx, bucketSlug); err != nil {
