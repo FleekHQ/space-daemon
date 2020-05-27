@@ -80,7 +80,7 @@ func (fw *FolderWatcher) RegisterHandler(handler EventHandler) {
 	fw.handlers = append(fw.handlers, handler)
 }
 
-// Watch will start listening of changes on the FolderWatcher path and trigger the handler with any update event
+// Watch will start listening of changes on the FolderWatcher path and trigger the handler with any update events
 // This is a block operation
 func (fw *FolderWatcher) Watch(ctx context.Context) error {
 	fw.setToStarted()
