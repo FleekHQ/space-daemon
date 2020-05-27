@@ -161,6 +161,7 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) error {
 	// TODO: see if threads.find would be faster
 	bucketList, err := tc.buckets.List(ctx)
 	if err != nil {
+		log.Error("error while fetching bucket list ", err)
 		return err
 	}
 	for _, r := range bucketList.Roots {
