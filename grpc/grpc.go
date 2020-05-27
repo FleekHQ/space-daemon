@@ -33,6 +33,15 @@ type grpcServer struct {
 	fileEventStream pb.SpaceApi_SubscribeServer
 }
 
+// TODO: implement
+func (sv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDirectoriesRequest) (*pb.ListDirectoriesResponse, error) {
+	panic("implement me")
+}
+// TODO: implement
+func (sv *grpcServer) GetConfigInfo(ctx context.Context, e *empty.Empty) (*pb.ConfigInfoResponse, error) {
+	panic("implement me")
+}
+
 func (sv *grpcServer) Subscribe(empty *empty.Empty, stream pb.SpaceApi_SubscribeServer) error {
 	sv.registerStream(stream)
 	c := time.Tick(1 * time.Second)
