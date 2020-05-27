@@ -44,6 +44,8 @@ func Start(ctx context.Context, cfg config.Config) {
 		return nil
 	})
 
+	<-waitForStore
+
 	// starting the RPC server
 	srv := grpc.New(
 		store,
@@ -63,7 +65,6 @@ func Start(ctx context.Context, cfg config.Config) {
 	textileClient := tc.New(store)
 
 	g.Go(func() error {
-		<-waitForStore
 		return textileClient.StartAndBootstrap()
 	})
 
