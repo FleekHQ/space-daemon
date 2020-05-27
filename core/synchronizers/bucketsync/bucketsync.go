@@ -54,3 +54,8 @@ func (bs *BucketSynchronizer) Start(ctx context.Context) error {
 
 	return nil
 }
+
+func (bs *BucketSynchronizer) Stop() {
+	// add shutdown logic here
+	bs.folderWatcher.Close()
+}
