@@ -330,3 +330,12 @@ func (tc *TextileClient) ListDirectory(
 
 	return (*TextileDirEntries)(result), err
 }
+
+// DeleteDirOrFile will delete file or directory at path
+func (tc *TextileClient) DeleteDirOrFile(
+	ctx context.Context,
+	bucketKey string,
+	path string,
+) error {
+	return tc.buckets.RemovePath(ctx, bucketKey, path)
+}
