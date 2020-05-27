@@ -19,10 +19,12 @@ import (
 	"google.golang.org/grpc"
 )
 
-const hubTarget = "127.0.0.1:3006"
-const threadsTarget = "127.0.0.1:3006"
-const threadIDStoreKey = "thread_id"
-const defaultPersonalBucketSlug = "personal"
+const (
+	hubTarget                 = "127.0.0.1:3006"
+	threadsTarget             = "127.0.0.1:3006"
+	threadIDStoreKey          = "thread_id"
+	defaultPersonalBucketSlug = "personal"
+)
 
 type TextileClient struct {
 	store     *db.Store
