@@ -18,6 +18,7 @@ type BucketSynchronizer struct {
 	textileClient *tc.TextileClient
 	fh            *fs.Handler
 	th            *textile.Handler
+	bucketRoot    *tc.TextileBucketRoot
 	// textileWatcher
 	// th textileHandler
 	// NOTE: not sure we need the complete grpc server here, but that could change
@@ -25,14 +26,20 @@ type BucketSynchronizer struct {
 }
 
 // Creates a new BucketSynchronizer instance
-func New(folderWatcher *watcher.FolderWatcher, textileClient *tc.TextileClient, notify func(event events.FileEvent)) *BucketSynchronizer {
-	fh := fs.NewHandler(textileClient)
+func New(
+	folderWatcher *watcher.FolderWatcher,
+	textileClient *tc.TextileClient,
+	bucketRoot *tc.TextileBucketRoot,
+	notify func(event events.FileEvent),
+) *BucketSynchronizer {
+	fh := fs.NewHandler(textileClient, bucketRoot)
 	th := textile.NewHandler()
 	return &BucketSynchronizer{
 		folderWatcher: folderWatcher,
 		textileClient: textileClient,
 		fh:            fh,
 		th:            th,
+		bucketRoot:    bucketRoot,
 		notify:        notify,
 		// textileWatcher: textileWatcher,
 	}
@@ -53,11 +60,6 @@ func (bs *BucketSynchronizer) Start(ctx context.Context) error {
 		log.Fatal(err)
 		return err
 	}
-
-	// if err := bs.textileWatcher.Watch(ctx, textileBucketEventHandler); err != nil {
-	// 	log.Fatal(err)
-	// 	return err
-	// }
 
 	return nil
 }

@@ -16,24 +16,24 @@ type handlerMock struct {
 	mock.Mock
 }
 
-func (h *handlerMock) OnCreate(path string, fileInfo os.FileInfo) {
-	h.Called(path, fileInfo)
+func (h *handlerMock) OnCreate(ctx context.Context, path string, fileInfo os.FileInfo) {
+	h.Called(ctx, path, fileInfo)
 }
 
-func (h *handlerMock) OnRemove(path string, fileInfo os.FileInfo) {
-	h.Called(path, fileInfo)
+func (h *handlerMock) OnRemove(ctx context.Context, path string, fileInfo os.FileInfo) {
+	h.Called(ctx, path, fileInfo)
 }
 
-func (h *handlerMock) OnWrite(path string, fileInfo os.FileInfo) {
-	h.Called(path, fileInfo)
+func (h *handlerMock) OnWrite(ctx context.Context, path string, fileInfo os.FileInfo) {
+	h.Called(ctx, path, fileInfo)
 }
 
-func (h *handlerMock) OnRename(path string, fileInfo os.FileInfo, oldPath string) {
-	h.Called(path, fileInfo, oldPath)
+func (h *handlerMock) OnRename(ctx context.Context, path string, fileInfo os.FileInfo, oldPath string) {
+	h.Called(ctx, path, fileInfo, oldPath)
 }
 
-func (h *handlerMock) OnMove(path string, fileInfo os.FileInfo, oldPath string) {
-	h.Called(path, fileInfo, oldPath)
+func (h *handlerMock) OnMove(ctx context.Context, path string, fileInfo os.FileInfo, oldPath string) {
+	h.Called(ctx, path, fileInfo, oldPath)
 }
 
 func isTriggeredEvent(info os.FileInfo) bool {

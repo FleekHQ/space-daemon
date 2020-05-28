@@ -2,12 +2,13 @@ package app
 
 import (
 	"context"
-	"github.com/FleekHQ/space-poc/core/sync"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/FleekHQ/space-poc/core/sync"
 
 	"golang.org/x/sync/errgroup"
 
@@ -65,13 +66,18 @@ func Start(ctx context.Context, cfg config.Config) {
 	textileClient := tc.New(store)
 
 	g.Go(func() error {
-		_, err := textileClient.StartAndBootstrap()
-		return err
+		return textileClient.StartAndBootstrap(ctx)
 	})
 
-	// watcher is started inside bucket sync
-	sync := sync.New(watcher, textileClient, srv.SendFileEvent)
+	// wait for textileClient to initialize
+	<-textileClient.Ready
+	defaultBucket, err := textileClient.CreateDefaultBucket(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	// watcher is started inside bucket sync
+	sync := sync.New(watcher, textileClient, defaultBucket, srv.SendFileEvent)
 	g.Go(func() error {
 		return sync.Start(ctx)
 	})
