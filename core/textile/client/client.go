@@ -26,10 +26,12 @@ import (
 	"google.golang.org/grpc"
 )
 
-const hubTarget = "127.0.0.1:3006"
-const threadsTarget = "127.0.0.1:3006"
-const threadIDStoreKey = "thread_id"
-const defaultPersonalBucketSlug = "personal"
+const (
+	hubTarget                 = "127.0.0.1:3006"
+	threadsTarget             = "127.0.0.1:3006"
+	threadIDStoreKey          = "thread_id"
+	defaultPersonalBucketSlug = "personal"
+)
 
 type TextileBucketRoot buckets_pb.Root
 type TextileDirEntries buckets_pb.ListPathReply
@@ -174,6 +176,7 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) (*TextileBucketRoot, er
 	// TODO: see if threads.find would be faster
 	bucketList, err := tc.buckets.List(ctx)
 	if err != nil {
+		log.Error("error while fetching bucket list ", err)
 		return nil, err
 	}
 	for _, r := range bucketList.Roots {
@@ -265,7 +268,7 @@ func (tc *TextileClient) Stop() error {
 	return nil
 }
 
-// Starts a Textile Client and also initializes default resources for it like a key pair and default bucket.
+// StartAndBootstrap starts a Textile Client and also initializes default resources for it like a key pair and default bucket.
 func (tc *TextileClient) StartAndBootstrap() (*TextileBucketRoot, error) {
 	// Create key pair if not present
 	kc := keychain.New(tc.store)
