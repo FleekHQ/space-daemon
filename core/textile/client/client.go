@@ -187,11 +187,7 @@ func (tc *TextileClient) GetThreadsConnection() (*threadsClient.Client, error) {
 }
 
 func (tc *TextileClient) ListBuckets() ([]*TextileBucketRoot, error) {
-	threadsCtx, err := tc.GetBaseThreadsContext()
-
-	if err != nil {
-		return nil, err
-	}
+	threadsCtx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
 
 	bucketList, err := tc.buckets.List(threadsCtx)
 	if err != nil {
