@@ -80,7 +80,6 @@ func (tc *TextileClient) findOrCreateThreadID(threads *threadsClient.Client, buc
 	// thread id does not exist yet
 	log.Debug("Thread ID not found in local store. Generating a new one...")
 	dbID := thread.NewIDV1(thread.Raw, 32)
-
 	dbIDInBytes := dbID.Bytes()
 
 	if err := tc.store.Set([]byte(getThreadIDStoreKey(bucketSlug)), dbIDInBytes); err != nil {
