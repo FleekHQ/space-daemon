@@ -84,7 +84,6 @@ func (tc *TextileClient) findOrCreateThreadID(ctx context.Context, threads *thre
 
 	log.Debug("Creating Thread DB")
 	if err := tc.threads.NewDB(ctx, dbID); err != nil {
-		log.Error("Error creating thread DB", err)
 		return nil, err
 	}
 
