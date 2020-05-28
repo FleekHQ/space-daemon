@@ -1,49 +1,28 @@
 package handler
 
 import (
-	"fmt"
-	"os"
-
-	tc "github.com/FleekHQ/space-poc/core/textile/client"
 	"github.com/FleekHQ/space-poc/log"
+	tc "github.com/textileio/go-threads/api/client"
 )
 
-type TextileHandler struct {
-	client *tc.TextileClient
+// EventHandler
+type EventHandler interface {
+	OnCreate(bucketData *Bucket, listenEvent *tc.ListenEvent)
+	OnRemove(bucketData *Bucket, listenEvent *tc.ListenEvent)
+	OnSave(bucketData *Bucket, listenEvent *tc.ListenEvent)
 }
 
-func New(textileClient *tc.TextileClient) *TextileHandler {
-	return &TextileHandler{
-		client: textileClient,
-	}
+// Implements EventHandler and defaults to logging actions performed
+type defaultListenerHandler struct{}
+
+func (h *defaultListenerHandler) OnCreate(bucketData *Bucket, listenEvent *tc.ListenEvent) {
+	log.Info("Default Listener Handler: OnCreate")
 }
 
-func (h *TextileHandler) OnCreate(path string, fileInfo os.FileInfo) {
-	log.Info("Textile Handler: OnCreate", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileInfo:%v", fileInfo))
+func (h *defaultListenerHandler) OnRemove(bucketData *Bucket, listenEvent *tc.ListenEvent) {
+	log.Info("Default Listener Handler: OnRemove")
 }
 
-func (h *TextileHandler) OnRemove(path string, fileInfo os.FileInfo) {
-	log.Info("Textile Handler: OnRemove", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileInfo:%v", fileInfo))
-}
-
-func (h *TextileHandler) OnWrite(path string, fileInfo os.FileInfo) {
-	log.Info("Textile Handler: OnWrite", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileInfo:%v", fileInfo))
-}
-
-func (h *TextileHandler) OnRename(path string, fileInfo os.FileInfo, oldPath string) {
-	log.Info(
-		"Textile Handler: OnRename",
-		fmt.Sprintf("path:%s", path),
-		fmt.Sprintf("fileInfo:%v", fileInfo),
-		fmt.Sprintf("path:%s", oldPath),
-	)
-}
-
-func (h *TextileHandler) OnMove(path string, fileInfo os.FileInfo, oldPath string) {
-	log.Info(
-		"Textile Handler: OnMove",
-		fmt.Sprintf("path:%s", path),
-		fmt.Sprintf("fileInfo:%v", fileInfo),
-		fmt.Sprintf("path:%s", oldPath),
-	)
+func (h *defaultListenerHandler) OnSave(bucketData *Bucket, listenEvent *tc.ListenEvent) {
+	log.Info("Default Listener Handler: OnSave")
 }

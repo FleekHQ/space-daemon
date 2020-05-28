@@ -8,11 +8,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/FleekHQ/space-poc/core/sync"
+
 	"golang.org/x/sync/errgroup"
 
-	"github.com/FleekHQ/space-poc/core/synchronizers/bucketsync"
 	tc "github.com/FleekHQ/space-poc/core/textile/client"
-	tl "github.com/FleekHQ/space-poc/core/textile/listener"
 
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/store"
@@ -67,20 +67,15 @@ func Start(ctx context.Context, cfg config.Config) {
 
 	waitForTextileClient := make(chan bool, 1)
 	g.Go(func() error {
-		if err := textileClient.StartAndBootstrap(); err != nil {
-			return err
-		}
+		_, err := textileClient.StartAndBootstrap()
 		waitForTextileClient <- true
-		return nil
+		return err
 	})
 
 	<-waitForTextileClient
 
-	// TODO: Iterate over each of the user buckets and create a listener for each one of them
-	textileThreadListener := tl.New(textileClient, tc.DefaultPersonalBucketSlug)
-
 	// watcher is started inside bucket sync
-	sync := bucketsync.New(watcher, textileClient, textileThreadListener)
+	sync := sync.New(watcher, textileClient, srv.SendFileEvent)
 
 	g.Go(func() error {
 		return sync.Start(ctx)
@@ -123,11 +118,6 @@ func Start(ctx context.Context, cfg config.Config) {
 	if textileClient != nil {
 		log.Println("shutdown Textile client")
 		textileClient.Stop()
-	}
-
-	if textileThreadListener != nil {
-		log.Println("shutdown Textile thread listener")
-		textileThreadListener.Close()
 	}
 
 	log.Println("waiting for shutdown group")

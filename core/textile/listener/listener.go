@@ -95,7 +95,7 @@ func (tl *TextileThreadListener) Listen(ctx context.Context) error {
 		}
 	}()
 
-	log.Info("Starting textile threads listener")
+	log.Debug("Starting textile threads listener")
 	// Block until we get close request
 	<-tl.waitForCloseSignal
 	return nil

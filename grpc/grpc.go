@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"github.com/FleekHQ/space-poc/core/events"
 	"github.com/golang/protobuf/ptypes/empty"
 	"net"
 	"time"
@@ -26,11 +27,20 @@ type serverOptions struct {
 }
 
 type grpcServer struct {
-	opts            *serverOptions
-	s               *grpc.Server
-	db              *store.Store
+	opts *serverOptions
+	s    *grpc.Server
+	db   *store.Store
 	// TODO: see if we need to clean this up by gc or handle an array
 	fileEventStream pb.SpaceApi_SubscribeServer
+}
+
+// TODO: implement
+func (sv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDirectoriesRequest) (*pb.ListDirectoriesResponse, error) {
+	panic("implement me")
+}
+// TODO: implement
+func (sv *grpcServer) GetConfigInfo(ctx context.Context, e *empty.Empty) (*pb.ConfigInfoResponse, error) {
+	panic("implement me")
 }
 
 func (sv *grpcServer) Subscribe(empty *empty.Empty, stream pb.SpaceApi_SubscribeServer) error {
@@ -39,7 +49,7 @@ func (sv *grpcServer) Subscribe(empty *empty.Empty, stream pb.SpaceApi_Subscribe
 	for i := 0; i < 10; i++ {
 		<-c
 		mockFileResponse := &pb.FileEventResponse{Path: "test/path"}
-		sv.SendFileEvent(mockFileResponse)
+		sv.sendFileEvent(mockFileResponse)
 	}
 
 	log.Info("closing stream")
@@ -50,11 +60,19 @@ func (sv *grpcServer) registerStream(stream pb.SpaceApi_SubscribeServer) {
 	sv.fileEventStream = stream
 }
 
-func (sv *grpcServer) SendFileEvent(event *pb.FileEventResponse) {
-	if  sv.fileEventStream != nil {
-		log.Info("sending event to client")
+func (sv *grpcServer) sendFileEvent(event *pb.FileEventResponse) {
+	if sv.fileEventStream != nil {
+		log.Info("sending events to client")
 		sv.fileEventStream.Send(event)
 	}
+}
+
+func (sv *grpcServer) SendFileEvent(event events.FileEvent) {
+	pe := &pb.FileEventResponse{
+		Path: event.Path,
+	}
+
+	sv.sendFileEvent(pe)
 }
 
 func (sv *grpcServer) GetPathInfo(ctx context.Context, request *pb.PathInfoRequest) (*pb.PathInfoResponse, error) {
