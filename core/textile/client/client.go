@@ -67,7 +67,7 @@ func getThreadIDStoreKey(bucketSlug string) []byte {
 	return []byte(threadIDStoreKey + "_" + bucketSlug)
 }
 
-func (tc *TextileClient) findOrCreateThreadID(threads *threadsClient.Client, bucketSlug string) (*thread.ID, error) {
+func (tc *TextileClient) findOrCreateThreadID(ctx context.Context, threads *threadsClient.Client, bucketSlug string) (*thread.ID, error) {
 	if val, _ := tc.store.Get([]byte(getThreadIDStoreKey(bucketSlug))); val != nil {
 		log.Debug("Thread ID found in local store")
 		// Cast the stored dbID from bytes to thread.ID
@@ -84,7 +84,7 @@ func (tc *TextileClient) findOrCreateThreadID(threads *threadsClient.Client, buc
 	dbIDInBytes := dbID.Bytes()
 
 	log.Debug("Creating Thread DB")
-	if err := tc.threads.NewDB(tc.ctx, dbID); err != nil {
+	if err := tc.threads.NewDB(ctx, dbID); err != nil {
 		return nil, err
 	}
 
@@ -169,7 +169,7 @@ func (tc *TextileClient) CreateBucket(ctx context.Context, bucketSlug string) (*
 
 	var dbID *thread.ID
 	log.Debug("Fetching thread id from local store")
-	if dbID, err = tc.findOrCreateThreadID(tc.threads, bucketSlug); err != nil {
+	if dbID, err = tc.findOrCreateThreadID(ctx, tc.threads, bucketSlug); err != nil {
 		return nil, err
 	}
 
