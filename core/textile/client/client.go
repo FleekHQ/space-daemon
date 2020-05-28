@@ -83,6 +83,11 @@ func (tc *TextileClient) findOrCreateThreadID(threads *threadsClient.Client, buc
 	dbID := thread.NewIDV1(thread.Raw, 32)
 	dbIDInBytes := dbID.Bytes()
 
+	log.Debug("Creating Thread DB")
+	if err := tc.threads.NewDB(tc.ctx, dbID); err != nil {
+		return nil, err
+	}
+
 	if err := tc.store.Set([]byte(getThreadIDStoreKey(bucketSlug)), dbIDInBytes); err != nil {
 		newErr := errors.New("error while storing thread id: check your local space db accessibility")
 		return nil, newErr
@@ -165,11 +170,6 @@ func (tc *TextileClient) CreateBucket(ctx context.Context, bucketSlug string) (*
 	var dbID *thread.ID
 	log.Debug("Fetching thread id from local store")
 	if dbID, err = tc.findOrCreateThreadID(tc.threads, bucketSlug); err != nil {
-		return nil, err
-	}
-
-	log.Debug("Creating Thread DB")
-	if err := tc.threads.NewDB(ctx, *dbID); err != nil {
 		return nil, err
 	}
 
