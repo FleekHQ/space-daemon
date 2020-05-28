@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+
 	"github.com/FleekHQ/space-poc/core/events"
 	"github.com/FleekHQ/space-poc/core/sync/fs"
 	"github.com/FleekHQ/space-poc/core/sync/textile"

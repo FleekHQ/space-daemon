@@ -1,11 +1,18 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"errors"
+	"io"
 	"os"
+	"strings"
 	"time"
+
+	"github.com/ipfs/interface-go-ipfs-core/path"
+
+	buckets_pb "github.com/textileio/textile/api/buckets/pb"
 
 	"github.com/FleekHQ/space-poc/core/keychain"
 	db "github.com/FleekHQ/space-poc/core/store"
@@ -26,6 +33,9 @@ const (
 	defaultPersonalBucketSlug = "personal"
 )
 
+type TextileBucketRoot buckets_pb.Root
+type TextileDirEntries buckets_pb.ListPathReply
+
 type TextileClient struct {
 	store     *db.Store
 	threads   *threadsClient.Client
@@ -33,6 +43,9 @@ type TextileClient struct {
 	isRunning bool
 	ctx       context.Context
 }
+
+// Keep file is added to empty directories
+var keepFileName = ".keep"
 
 // Creates a new Textile Client
 func New(store *db.Store) *TextileClient {
@@ -127,25 +140,25 @@ func (tc *TextileClient) initContext() error {
 }
 
 // Creates a bucket.
-func (tc *TextileClient) CreateBucket(bucketSlug string) error {
+func (tc *TextileClient) CreateBucket(bucketSlug string) (*TextileBucketRoot, error) {
 	log.Debug("Creating a new bucket with slug" + bucketSlug)
 
 	if err := tc.requiresRunning(); err != nil {
-		return err
+		return nil, err
 	}
 
 	var err error
 	var publicKey crypto.PubKey
 	kc := keychain.New(tc.store)
 	if _, publicKey, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
-		return err
+		return nil, err
 	}
 
 	// create thread (each bucket belongs to a different thread)
 	log.Debug("Creating thread")
 	var pubKeyInBytes []byte
 	if pubKeyInBytes, err = publicKey.Bytes(); err != nil {
-		return err
+		return nil, err
 	}
 
 	ctx := tc.ctx
@@ -154,7 +167,7 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) error {
 	var dbID *thread.ID
 	log.Debug("Fetching thread id from local store")
 	if dbID, err = tc.findOrCreateThreadID(tc.threads, bucketSlug); err != nil {
-		return err
+		return nil, err
 	}
 
 	ctx = common.NewThreadIDContext(ctx, *dbID)
@@ -164,27 +177,28 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) error {
 	bucketList, err := tc.buckets.List(ctx)
 	if err != nil {
 		log.Error("error while fetching bucket list ", err)
-		return err
+		return nil, err
 	}
 	for _, r := range bucketList.Roots {
 		if r.Name == bucketSlug {
 			log.Info("Bucket '" + bucketSlug + "' already exists")
-			return nil
+			return (*TextileBucketRoot)(r), nil
 		}
 	}
 
 	log.Debug("Creating Thread DB")
 	if err := tc.threads.NewDB(ctx, *dbID); err != nil {
-		return err
+		return nil, err
 	}
 
 	// create bucket
 	log.Debug("Generating bucket")
-	if _, err := tc.buckets.Init(ctx, bucketSlug); err != nil {
-		return err
+	bucket, err := tc.buckets.Init(ctx, bucketSlug)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	return (*TextileBucketRoot)(bucket.Root), nil
 }
 
 // Starts the Textile Client
@@ -254,8 +268,8 @@ func (tc *TextileClient) Stop() error {
 	return nil
 }
 
-// Starts a Textile Client and also initializes default resources for it like a key pair and default bucket.
-func (tc *TextileClient) StartAndBootstrap() error {
+// StartAndBootstrap starts a Textile Client and also initializes default resources for it like a key pair and default bucket.
+func (tc *TextileClient) StartAndBootstrap() (*TextileBucketRoot, error) {
 	// Create key pair if not present
 	kc := keychain.New(tc.store)
 	log.Debug("Generating key pair...")
@@ -269,16 +283,62 @@ func (tc *TextileClient) StartAndBootstrap() error {
 	log.Debug("Starting Textile Client...")
 	if err := tc.Start(); err != nil {
 		log.Error("Error starting Textile Client", err)
-		return err
+		return nil, err
 	}
 
 	// Create default bucket
 	log.Debug("Creating default bucket...")
-	if err := tc.CreateBucket(defaultPersonalBucketSlug); err != nil {
+	bucketRoot, err := tc.CreateBucket(defaultPersonalBucketSlug)
+	if err != nil {
 		log.Error("Error creating default bucket", err)
-		return err
+		return nil, err
 	}
 
 	log.Debug("Textile Client initialized successfully")
-	return nil
+	return bucketRoot, nil
+}
+
+// UploadFile uploads a file to path on textile
+// path should include the file name as the last path segment
+// also nested path not existing yet would be created automatically
+func (tc *TextileClient) UploadFile(
+	ctx context.Context,
+	bucketKey string,
+	path string,
+	reader io.Reader,
+) (result path.Resolved, root path.Path, err error) {
+	return tc.buckets.PushPath(ctx, bucketKey, path, reader)
+}
+
+// CreateDirectory creates an empty directory
+// Because textile doesn't support empty directory an empty .keep file is created
+// in the directory
+func (tc *TextileClient) CreateDirectory(
+	ctx context.Context,
+	bucketKey string,
+	path string,
+) (result path.Resolved, root path.Path, err error) {
+	// append .keep file to the end of the directory
+	emptyDirPath := strings.TrimRight(path, "/") + "/" + keepFileName
+	return tc.buckets.PushPath(ctx, bucketKey, emptyDirPath, &bytes.Buffer{})
+}
+
+// ListDirectory returns a list of items in a particular directory
+func (tc *TextileClient) ListDirectory(
+	ctx context.Context,
+	bucketKey string,
+	path string,
+) (*TextileDirEntries, error) {
+	result, err := tc.buckets.ListPath(ctx, bucketKey, path)
+
+	return (*TextileDirEntries)(result), err
+}
+
+// DeleteDirOrFile will delete file or directory at path
+func (tc *TextileClient) DeleteDirOrFile(
+	ctx context.Context,
+	bucketKey string,
+	path string,
+) error {
+	return tc.buckets.RemovePath(ctx, bucketKey, path)
 }
