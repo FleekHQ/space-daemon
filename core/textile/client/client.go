@@ -30,19 +30,18 @@ const (
 	hubTarget                 = "127.0.0.1:3006"
 	threadsTarget             = "127.0.0.1:3006"
 	threadIDStoreKey          = "thread_id"
-	defaultPersonalBucketSlug = "personal"
+	defaultPersonalBucketSlug = "personal3"
 )
 
 type TextileBucketRoot buckets_pb.Root
 type TextileDirEntries buckets_pb.ListPathReply
 
 type TextileClient struct {
-	store       *db.Store
-	threads     *threadsClient.Client
-	buckets     *bucketsClient.Client
-	threadToken thread.Token
-	isRunning   bool
-	Ready       chan bool
+	store     *db.Store
+	threads   *threadsClient.Client
+	buckets   *bucketsClient.Client
+	isRunning bool
+	Ready     chan bool
 }
 
 // Keep file is added to empty directories
@@ -104,24 +103,23 @@ func (tc *TextileClient) requiresRunning() error {
 	return nil
 }
 
-func (tc *TextileClient) initContext(ctx context.Context) error {
+func (tc *TextileClient) GetBaseThreadsContext() (context.Context, error) {
 	// TODO: this should be happening in an auth lambda
 	// only needed for hub connections
 	key := os.Getenv("TXL_USER_KEY")
 	secret := os.Getenv("TXL_USER_SECRET")
 
 	if key == "" || secret == "" {
-		return errors.New("Couldn't get Textile key or secret from envs")
+		return nil, errors.New("Couldn't get Textile key or secret from envs")
 	}
 
-	ctx = thread.NewTokenContext(ctx, tc.threadToken)
-	ctx = common.NewAPIKeyContext(ctx, key)
+	ctx := common.NewAPIKeyContext(context.Background(), key)
 
 	var err error
 	var apiSigCtx context.Context
 
 	if apiSigCtx, err = common.CreateAPISigContext(ctx, time.Now().Add(time.Minute), secret); err != nil {
-		return err
+		return nil, err
 	}
 	ctx = apiSigCtx
 
@@ -129,40 +127,40 @@ func (tc *TextileClient) initContext(ctx context.Context) error {
 	kc := keychain.New(tc.store)
 	var privateKey crypto.PrivKey
 	if privateKey, _, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
-		return err
+		return nil, err
 	}
 
 	// TODO: CTX has to be made from session key received from lambda
 	log.Debug("Creating libp2p identity")
 	tok, err := tc.threads.GetToken(ctx, thread.NewLibp2pIdentity(privateKey))
 	if err != nil {
-		return err
-	}
-	tc.threadToken = tok
-
-	return nil
-}
-
-// Creates a bucket.
-func (tc *TextileClient) CreateBucket(ctx context.Context, bucketSlug string) (*TextileBucketRoot, error) {
-	log.Debug("Creating a new bucket with slug" + bucketSlug)
-
-	if err := tc.requiresRunning(); err != nil {
 		return nil, err
 	}
 
-	var err error
+	ctx = thread.NewTokenContext(ctx, tok)
+
+	return ctx, nil
+}
+
+// Returns a context that works for accessing a bucket
+func (tc *TextileClient) GetBucketContext(bucketSlug string) (context.Context, *thread.ID, error) {
+	if err := tc.requiresRunning(); err != nil {
+		return nil, nil, err
+	}
+
+	ctx, err := tc.GetBaseThreadsContext()
+	if err != nil {
+		return nil, nil, err
+	}
 	var publicKey crypto.PubKey
 	kc := keychain.New(tc.store)
 	if _, publicKey, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	// create thread (each bucket belongs to a different thread)
-	log.Debug("Creating thread")
 	var pubKeyInBytes []byte
 	if pubKeyInBytes, err = publicKey.Bytes(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	ctx = common.NewThreadNameContext(ctx, getThreadName(pubKeyInBytes, bucketSlug))
@@ -170,10 +168,49 @@ func (tc *TextileClient) CreateBucket(ctx context.Context, bucketSlug string) (*
 	var dbID *thread.ID
 	log.Debug("Fetching thread id from local store")
 	if dbID, err = tc.findOrCreateThreadID(ctx, tc.threads, bucketSlug); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	ctx = common.NewThreadIDContext(ctx, *dbID)
+
+	return ctx, dbID, nil
+}
+
+// Returns a thread client connection. Requires the client to be running.
+func (tc *TextileClient) GetThreadsConnection() (*threadsClient.Client, error) {
+	if err := tc.requiresRunning(); err != nil {
+		return nil, err
+	}
+
+	return tc.threads, nil
+}
+
+func (tc *TextileClient) ListBuckets() ([]*TextileBucketRoot, error) {
+	threadsCtx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
+
+	bucketList, err := tc.buckets.List(threadsCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*TextileBucketRoot, 0)
+	for _, r := range bucketList.Roots {
+		result = append(result, (*TextileBucketRoot)(r))
+	}
+
+	return result, nil
+}
+
+// Creates a bucket.
+func (tc *TextileClient) CreateBucket(bucketSlug string) (*TextileBucketRoot, error) {
+	log.Debug("Creating a new bucket with slug " + bucketSlug)
+
+	ctx := context.Background()
+	var err error
+
+	if ctx, _, err = tc.GetBucketContext(bucketSlug); err != nil {
+		return nil, err
+	}
 
 	// return if bucket aready exists
 	// TODO: see if threads.find would be faster
@@ -200,7 +237,7 @@ func (tc *TextileClient) CreateBucket(ctx context.Context, bucketSlug string) (*
 }
 
 // Starts the Textile Client
-func (tc *TextileClient) Start(ctx context.Context) error {
+func (tc *TextileClient) Start() error {
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
 
@@ -241,10 +278,6 @@ func (tc *TextileClient) Start(ctx context.Context) error {
 	tc.buckets = buckets
 	tc.threads = threads
 
-	if err := tc.initContext(ctx); err != nil {
-		return err
-	}
-
 	tc.isRunning = true
 	tc.Ready <- true
 	return nil
@@ -269,7 +302,7 @@ func (tc *TextileClient) Stop() error {
 }
 
 // StartAndBootstrap starts a Textile Client and also initializes default resources for it like a key pair and default bucket.
-func (tc *TextileClient) StartAndBootstrap(ctx context.Context) error {
+func (tc *TextileClient) StartAndBootstrap() error {
 	// Create key pair if not present
 	kc := keychain.New(tc.store)
 	log.Debug("Generating key pair...")
@@ -281,24 +314,20 @@ func (tc *TextileClient) StartAndBootstrap(ctx context.Context) error {
 
 	// Start Textile Client
 	log.Debug("Starting Textile Client...")
-	if err := tc.Start(ctx); err != nil {
+	if err := tc.Start(); err != nil {
 		log.Error("Error starting Textile Client", err)
+		return err
+	}
+
+	log.Debug("Creating default bucket...")
+	_, err := tc.CreateBucket(defaultPersonalBucketSlug)
+	if err != nil {
+		log.Error("Error creating default bucket", err)
 		return err
 	}
 
 	log.Debug("Textile Client initialized successfully")
 	return nil
-}
-
-func (tc *TextileClient) CreateDefaultBucket(ctx context.Context) (*TextileBucketRoot, error) {
-	log.Debug("Creating default bucket...")
-	bucketRoot, err := tc.CreateBucket(ctx, defaultPersonalBucketSlug)
-	if err != nil {
-		log.Error("Error creating default bucket", err)
-		return nil, err
-	}
-
-	return bucketRoot, nil
 }
 
 // UploadFile uploads a file to path on textile

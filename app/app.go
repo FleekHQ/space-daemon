@@ -63,26 +63,24 @@ func Start(ctx context.Context, cfg config.Config) {
 		return
 	}
 
+	bootstrapReady := make(chan bool)
 	textileClient := tc.New(store)
-
 	g.Go(func() error {
-		return textileClient.StartAndBootstrap(ctx)
+		err := textileClient.StartAndBootstrap()
+		bootstrapReady <- true
+		return err
 	})
 
 	// wait for textileClient to initialize
 	<-textileClient.Ready
-	defaultBucket, err := textileClient.CreateDefaultBucket(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
+	<-bootstrapReady
 
 	// watcher is started inside bucket sync
-	sync := sync.New(watcher, textileClient, defaultBucket, srv.SendFileEvent)
+	sync := sync.New(watcher, textileClient, srv.SendFileEvent)
+
 	g.Go(func() error {
 		return sync.Start(ctx)
 	})
-
-	// TODO: add listener services for bucket changes
 
 	// wait for interruption or done signal
 	select {

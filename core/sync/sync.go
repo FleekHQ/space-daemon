@@ -3,6 +3,8 @@ package sync
 import (
 	"context"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/FleekHQ/space-poc/core/events"
 	"github.com/FleekHQ/space-poc/core/sync/fs"
 	"github.com/FleekHQ/space-poc/core/sync/textile"
@@ -10,17 +12,17 @@ import (
 	"github.com/FleekHQ/space-poc/log"
 
 	tc "github.com/FleekHQ/space-poc/core/textile/client"
+	tl "github.com/FleekHQ/space-poc/core/textile/listener"
 	"github.com/FleekHQ/space-poc/core/watcher"
 )
 
 type BucketSynchronizer struct {
-	folderWatcher *watcher.FolderWatcher
-	textileClient *tc.TextileClient
-	fh            *fs.Handler
-	th            *textile.Handler
-	bucketRoot    *tc.TextileBucketRoot
-	// textileWatcher
-	// th textileHandler
+	folderWatcher          *watcher.FolderWatcher
+	textileClient          *tc.TextileClient
+	fh                     *fs.Handler
+	th                     *textile.Handler
+	textileThreadListeners []*tl.TextileThreadListener
+
 	// NOTE: not sure we need the complete grpc server here, but that could change
 	notify func(event events.FileEvent)
 }
@@ -29,35 +31,57 @@ type BucketSynchronizer struct {
 func New(
 	folderWatcher *watcher.FolderWatcher,
 	textileClient *tc.TextileClient,
-	bucketRoot *tc.TextileBucketRoot,
 	notify func(event events.FileEvent),
 ) *BucketSynchronizer {
-	fh := fs.NewHandler(textileClient, bucketRoot)
-	th := textile.NewHandler()
+	textileThreadListeners := make([]*tl.TextileThreadListener, 0)
+
 	return &BucketSynchronizer{
-		folderWatcher: folderWatcher,
-		textileClient: textileClient,
-		fh:            fh,
-		th:            th,
-		bucketRoot:    bucketRoot,
-		notify:        notify,
-		// textileWatcher: textileWatcher,
+		folderWatcher:          folderWatcher,
+		textileClient:          textileClient,
+		fh:                     nil,
+		th:                     nil,
+		notify:                 notify,
+		textileThreadListeners: textileThreadListeners,
 	}
 }
 
-// func (bs *BucketSynchronizer) textileBucketEventHandler(events textileWatcher.UpdateEvent, hash, filename string) {
-// 	case watcher.Create:
-//    // NOTE: We might want to notify the FE that a file got uploaded in the bucket instead of downloading it
-//    // That way the user can decide if they want to bring it over or "leave it on the cloud".
-// 		bs.grpcPushNotifier.notify("file_creation")
-// 	}
-// }
-
 // Starts the folder watcher and the textile watcher.
 func (bs *BucketSynchronizer) Start(ctx context.Context) error {
+	buckets, err := bs.textileClient.ListBuckets()
+	if err != nil {
+		return err
+	}
+
+	// TODO: Generalize this to one per bucket
+	bs.fh = fs.NewHandler(bs.textileClient, buckets[0])
+	bs.th = textile.NewHandler()
+
+	for _, bucket := range buckets {
+		bs.textileThreadListeners = append(bs.textileThreadListeners, tl.New(bs.textileClient, bucket.Name))
+	}
+
 	bs.folderWatcher.RegisterHandler(bs.fh)
-	if err := bs.folderWatcher.Watch(ctx); err != nil {
-		log.Fatal(err)
+
+	// TODO: bs.textileThreadListener.RegisterHandler(bs.th)
+	// (Needs implementation of bs.th)
+
+	g, newCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		log.Debug("Starting watcher in bucketsync")
+		return bs.folderWatcher.Watch(newCtx)
+	})
+
+	for _, listener := range bs.textileThreadListeners {
+		g.Go(func() error {
+			log.Debug("Starting textile thread listener in bucketsync")
+			return listener.Listen(newCtx)
+		})
+	}
+
+	err = g.Wait()
+
+	if err != nil {
 		return err
 	}
 
@@ -66,5 +90,10 @@ func (bs *BucketSynchronizer) Start(ctx context.Context) error {
 
 func (bs *BucketSynchronizer) Stop() {
 	// add shutdown logic here
+	log.Debug("shutting down folder watcher in bucketsync")
 	bs.folderWatcher.Close()
+	log.Debug("shutting down textile thread listener in bucketsync")
+	for _, listener := range bs.textileThreadListeners {
+		listener.Close()
+	}
 }
