@@ -1,6 +1,7 @@
 package watcher
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -9,29 +10,46 @@ import (
 
 // EventHandler
 type EventHandler interface {
-	OnCreate(path string, fileInfo os.FileInfo)
-	OnRemove(path string, fileInfo os.FileInfo)
-	OnWrite(path string, fileInfo os.FileInfo)
-	OnRename(path string, fileInfo os.FileInfo, oldPath string)
-	OnMove(path string, fileInfo os.FileInfo, oldPath string)
+	OnCreate(ctx context.Context, path string, fileInfo os.FileInfo)
+	OnRemove(ctx context.Context, path string, fileInfo os.FileInfo)
+	OnWrite(ctx context.Context, path string, fileInfo os.FileInfo)
+	OnRename(ctx context.Context, path string, fileInfo os.FileInfo, oldPath string)
+	OnMove(ctx context.Context, path string, fileInfo os.FileInfo, oldPath string)
 }
 
 // Implements EventHandler and defaults to logging actions performed
 type defaultWatcherHandler struct{}
 
-func (h *defaultWatcherHandler) OnCreate(path string, fileInfo os.FileInfo) {
+func (h *defaultWatcherHandler) OnCreate(
+	ctx context.Context,
+	path string,
+	fileInfo os.FileInfo,
+) {
 	log.Info("Default Watcher Handler: OnCreate", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileInfo:%v", fileInfo))
 }
 
-func (h *defaultWatcherHandler) OnRemove(path string, fileInfo os.FileInfo) {
+func (h *defaultWatcherHandler) OnRemove(
+	ctx context.Context,
+	path string,
+	fileInfo os.FileInfo,
+) {
 	log.Info("Default Watcher Handler: OnRemove", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileInfo:%v", fileInfo))
 }
 
-func (h *defaultWatcherHandler) OnWrite(path string, fileInfo os.FileInfo) {
+func (h *defaultWatcherHandler) OnWrite(
+	ctx context.Context,
+	path string,
+	fileInfo os.FileInfo,
+) {
 	log.Info("Default Watcher Handler: OnWrite", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileInfo:%v", fileInfo))
 }
 
-func (h *defaultWatcherHandler) OnRename(path string, fileInfo os.FileInfo, oldPath string) {
+func (h *defaultWatcherHandler) OnRename(
+	ctx context.Context,
+	path string,
+	fileInfo os.FileInfo,
+	oldPath string,
+) {
 	log.Info(
 		"Default Watcher Handler: OnRename",
 		fmt.Sprintf("path:%s", path),
@@ -40,7 +58,12 @@ func (h *defaultWatcherHandler) OnRename(path string, fileInfo os.FileInfo, oldP
 	)
 }
 
-func (h *defaultWatcherHandler) OnMove(path string, fileInfo os.FileInfo, oldPath string) {
+func (h *defaultWatcherHandler) OnMove(
+	ctx context.Context,
+	path string,
+	fileInfo os.FileInfo,
+	oldPath string,
+) {
 	log.Info(
 		"Default Watcher Handler: OnMove",
 		fmt.Sprintf("path:%s", path),
