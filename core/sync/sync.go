@@ -3,6 +3,8 @@ package sync
 import (
 	"context"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/FleekHQ/space-poc/core/events"
 	"github.com/FleekHQ/space-poc/core/sync/fs"
 	"github.com/FleekHQ/space-poc/core/sync/textile"
@@ -45,44 +47,43 @@ func New(
 
 // Starts the folder watcher and the textile watcher.
 func (bs *BucketSynchronizer) Start(ctx context.Context) error {
-	_, err := bs.textileClient.ListBuckets()
+	buckets, err := bs.textileClient.ListBuckets()
 	if err != nil {
 		return err
 	}
 
-	// // TODO: Generalize this to one per bucket
-	// bs.fh = fs.NewHandler(bs.textileClient, buckets[0])
-	// bs.th = textile.NewHandler()
+	// TODO: Generalize this to one per bucket
+	bs.fh = fs.NewHandler(bs.textileClient, buckets[0])
+	bs.th = textile.NewHandler()
 
-	// for _, bucket := range buckets {
-	// 	bs.textileThreadListeners = append(bs.textileThreadListeners, tl.New(bs.textileClient, bucket.Name))
-	// }
+	for _, bucket := range buckets {
+		bs.textileThreadListeners = append(bs.textileThreadListeners, tl.New(bs.textileClient, bucket.Name))
+	}
 
-	// bs.folderWatcher.RegisterHandler(bs.fh)
+	bs.folderWatcher.RegisterHandler(bs.fh)
 
-	// // TODO: bs.textileThreadListener.RegisterHandler(bs.th)
-	// // (Needs implementation of bs.th)
+	// TODO: bs.textileThreadListener.RegisterHandler(bs.th)
+	// (Needs implementation of bs.th)
 
-	// g, _ := errgroup.WithContext(ctx)
+	g, newCtx := errgroup.WithContext(ctx)
 
-	// // g.Go(func() error {
-	// // 	log.Debug("Starting watcher in bucketsync")
-	// // 	return bs.folderWatcher.Watch(newCtx)
-	// // })
+	g.Go(func() error {
+		log.Debug("Starting watcher in bucketsync")
+		return bs.folderWatcher.Watch(newCtx)
+	})
 
-	// // for _, listener := range bs.textileThreadListeners {
-	// // 	g.Go(func() error {
-	// // 		log.Debug("Starting textile thread listener in bucketsync")
-	// // 		return listener.Listen(newCtx)
-	// // 	})
-	// // }
+	for _, listener := range bs.textileThreadListeners {
+		g.Go(func() error {
+			log.Debug("Starting textile thread listener in bucketsync")
+			return listener.Listen(newCtx)
+		})
+	}
 
-	// err = g.Wait()
+	err = g.Wait()
 
-	// if err != nil {
-	// 	log.Error("Error in sync", err)
-	// 	return err
-	// }
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
