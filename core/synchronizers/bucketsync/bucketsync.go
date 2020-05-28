@@ -14,18 +14,25 @@ type BucketSynchronizer struct {
 	folderWatcher  *watcher.FolderWatcher
 	textileClient  *tc.TextileClient
 	textileHandler *textileHandler.TextileHandler
+	// bucketRoot     *tc.TextileBucketRoot
 	// textileWatcher
 	// textileClient
 	// grpcPushNotifier
 }
 
 // Creates a new BucketSynchronizer instance
-func New(folderWatcher *watcher.FolderWatcher, textileClient *tc.TextileClient /*textileWatcher, grpcPushNotifier */) *BucketSynchronizer {
+func New(
+	folderWatcher *watcher.FolderWatcher,
+	textileClient *tc.TextileClient,
+	// bucketRoot *tc.TextileBucketRoot,
+	/*textileWatcher, grpcPushNotifier */
+) *BucketSynchronizer {
 	th := textileHandler.New(textileClient)
 	return &BucketSynchronizer{
 		folderWatcher:  folderWatcher,
 		textileClient:  textileClient,
 		textileHandler: th,
+		// bucketRoot:     bucketRoot,
 		// textileWatcher: textileWatcher,
 		// grpcPushNotifier
 	}
