@@ -5,11 +5,39 @@ import "google/protobuf/empty.proto";
 package space;
 
 service SpaceApi {
+  rpc ListDirectories(ListDirectoriesRequest) returns (ListDirectoriesResponse) {}
+  rpc GetConfigInfo(google.protobuf.Empty) returns (ConfigInfoResponse) {}
   rpc GetPathInfo(PathInfoRequest) returns (PathInfoResponse) {}
   rpc GenerateKeyPair(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {}
   rpc GenerateKeyPairWithForce(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {}
   rpc Subscribe(google.protobuf.Empty) returns (stream FileEventResponse) {}
 }
+
+message ListDirectoriesRequest {
+
+}
+
+message ListDirectoryEntry {
+  string path = 1;
+  bool isDir = 2;
+  string name = 3;
+  string sizeInBytes = 4;
+  string created = 5;
+  string updated = 6;
+  string fileExtension = 7;
+}
+
+
+message ListDirectoriesResponse {
+  repeated ListDirectoryEntry entries = 1;
+}
+
+message ConfigInfoResponse {
+  string folderPath = 1;
+  string port = 2;
+  string appPath = 3;
+}
+
 
 message PathInfoRequest {
   string path = 1;
