@@ -78,6 +78,7 @@ func (tl *TextileThreadListener) Listen(ctx context.Context) error {
 			select {
 			case <-ctx.Done():
 				tl.Close()
+				return
 			case val, ok := <-channel:
 				if ok {
 					listenerEventHandler(val)
@@ -89,6 +90,7 @@ func (tl *TextileThreadListener) Listen(ctx context.Context) error {
 	log.Debug("Starting textile threads listener")
 	// Block until we get close request
 	<-tl.waitForCloseSignal
+	log.Debug("Textile threads listener closed")
 	return nil
 }
 
