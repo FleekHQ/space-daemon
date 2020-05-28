@@ -22,7 +22,7 @@ import (
 const hubTarget = "127.0.0.1:3006"
 const threadsTarget = "127.0.0.1:3006"
 const threadIDStoreKey = "thread_id"
-const defaultPersonalBucketSlug = "personal"
+const DefaultPersonalBucketSlug = "personal"
 
 type TextileClient struct {
 	store     *db.Store
@@ -291,7 +291,7 @@ func (tc *TextileClient) StartAndBootstrap() error {
 
 	// Create default bucket
 	log.Debug("Creating default bucket...")
-	if err := tc.CreateBucket(defaultPersonalBucketSlug); err != nil {
+	if err := tc.CreateBucket(DefaultPersonalBucketSlug); err != nil {
 		log.Error("Error creating default bucket", err)
 		return err
 	}

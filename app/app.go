@@ -76,13 +76,11 @@ func Start(ctx context.Context, cfg config.Config) {
 
 	<-waitForTextileClient
 
-	textileThreadListener := tl.New(textileClient, "personal")
-	g.Go(func() error {
-		return textileThreadListener.Listen(ctx)
-	})
+	// TODO: Iterate over each of the user buckets and create a listener for each one of them
+	textileThreadListener := tl.New(textileClient, tc.DefaultPersonalBucketSlug)
 
 	// watcher is started inside bucket sync
-	sync := bucketsync.New(watcher, textileClient)
+	sync := bucketsync.New(watcher, textileClient, textileThreadListener)
 
 	g.Go(func() error {
 		return sync.Start(ctx)
