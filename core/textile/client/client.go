@@ -80,6 +80,7 @@ func (tc *TextileClient) findOrCreateThreadID(threads *threadsClient.Client, buc
 	// thread id does not exist yet
 	log.Debug("Thread ID not found in local store. Generating a new one...")
 	dbID := thread.NewIDV1(thread.Raw, 32)
+
 	dbIDInBytes := dbID.Bytes()
 
 	if err := tc.store.Set([]byte(getThreadIDStoreKey(bucketSlug)), dbIDInBytes); err != nil {
@@ -170,6 +171,11 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) (*TextileBucketRoot, er
 		return nil, err
 	}
 
+	log.Debug("Creating Thread DB")
+	if err := tc.threads.NewDB(ctx, *dbID); err != nil {
+		return nil, err
+	}
+
 	ctx = common.NewThreadIDContext(ctx, *dbID)
 
 	// return if bucket aready exists
@@ -184,11 +190,6 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) (*TextileBucketRoot, er
 			log.Info("Bucket '" + bucketSlug + "' already exists")
 			return (*TextileBucketRoot)(r), nil
 		}
-	}
-
-	log.Debug("Creating Thread DB")
-	if err := tc.threads.NewDB(ctx, *dbID); err != nil {
-		return nil, err
 	}
 
 	// create bucket
