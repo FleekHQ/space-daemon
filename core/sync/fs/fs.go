@@ -26,7 +26,10 @@ func NewHandler(textileClient *tc.TextileClient, bucketRoot *tc.TextileBucketRoo
 }
 
 func (h *Handler) OnCreate(ctx context.Context, path string, fileInfo os.FileInfo) {
-	log.Info("FS Handler: OnCreate", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileInfo:%v", fileInfo))
+	log.Info(
+		"FS Handler: OnCreate", fmt.Sprintf("path:%s", path),
+		fmt.Sprintf("fileName:%s", fileInfo.Name()),
+	)
 	// TODO: Synchronizer lock check should ensure that no other operation is currently ongoing
 	// with this path or its parent folder
 
@@ -66,7 +69,7 @@ func (h *Handler) OnCreate(ctx context.Context, path string, fileInfo os.FileInf
 }
 
 func (h *Handler) OnRemove(ctx context.Context, path string, fileInfo os.FileInfo) {
-	log.Info("FS Handler: OnRemove", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileInfo:%v", fileInfo))
+	log.Info("FS Handler: OnRemove", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileName:%s", fileInfo.Name()))
 	// TODO: Also synchronizer lock check here
 
 	err := h.client.DeleteDirOrFile(ctx, h.bucket.Key, path)
@@ -83,8 +86,9 @@ func (h *Handler) OnRemove(ctx context.Context, path string, fileInfo os.FileInf
 	// TODO: Update synchronizer/store (maybe in a defer function)
 }
 
+// OnWrite is invoked when a new file is created or files content is updated
 func (h *Handler) OnWrite(ctx context.Context, path string, fileInfo os.FileInfo) {
-	log.Info("FS Handler: OnWrite", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileInfo:%v", fileInfo))
+	log.Info("FS Handler: OnWrite", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileName:%s", fileInfo.Name()))
 	h.OnCreate(ctx, path, fileInfo)
 }
 
@@ -92,7 +96,7 @@ func (h *Handler) OnRename(ctx context.Context, path string, fileInfo os.FileInf
 	log.Info(
 		"Watcher Handler: OnRename",
 		fmt.Sprintf("path:%s", path),
-		fmt.Sprintf("fileInfo:%v", fileInfo),
+		fmt.Sprintf("fileName:%s", fileInfo.Name()),
 		fmt.Sprintf("path:%s", oldPath),
 	)
 	h.OnRemove(ctx, oldPath, fileInfo)
@@ -103,7 +107,7 @@ func (h *Handler) OnMove(ctx context.Context, path string, fileInfo os.FileInfo,
 	log.Info(
 		"Watcher Handler: OnMove",
 		fmt.Sprintf("path:%s", path),
-		fmt.Sprintf("fileInfo:%v", fileInfo),
+		fmt.Sprintf("fileName:%s", fileInfo.Name()),
 		fmt.Sprintf("path:%s", oldPath),
 	)
 	h.OnRemove(ctx, oldPath, fileInfo)
