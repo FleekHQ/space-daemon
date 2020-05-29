@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"github.com/FleekHQ/space-poc/core/env"
+	"github.com/FleekHQ/space-poc/core/space"
 	"log"
 	"os"
 	"os/signal"
@@ -23,7 +25,7 @@ import (
 // Shutdown logic follows this example https://gist.github.com/akhenakh/38dbfea70dc36964e23acc19777f3869
 
 // Entry point for the app
-func Start(ctx context.Context, cfg config.Config) {
+func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	// setup to detect interruption
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
@@ -47,9 +49,14 @@ func Start(ctx context.Context, cfg config.Config) {
 
 	<-waitForStore
 
-	// starting the RPC server
-	srv := grpc.New(
+	// starting the RPC server and Service
+	sv := space.NewService(
 		store,
+		cfg,
+		space.WithEnv(env),
+	)
+	srv := grpc.New(
+		sv,
 		grpc.WithPort(cfg.GetInt(config.SpaceServerPort, 0)),
 	)
 
