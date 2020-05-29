@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -220,6 +221,24 @@ func initUser(threads *tc.Client, buckets *bc.Client, user string, bucketSlug st
 	newCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	opt := tc.ListenOption{}
+
+	//listPath on a folder that doesnt exist
+	lp, err := buckets.ListPath(ctx, buck.Root.Key, "random/folderA/doesntexists")
+	if err != nil {
+		log.Println("error doing list path on non existent directoy: ", err)
+	}
+	log.Println("lp1: ", lp)
+
+	//listPath on a folder that exists
+	r := strings.NewReader("IPFS test data for reader")
+	r2 := strings.NewReader("IPFS test data for reader2")
+	buckets.PushPath(ctx, buck.Root.Key, "another/folderB/file1", r)
+	buckets.PushPath(ctx, buck.Root.Key, "another/folderB/file2", r2)
+	lp, err = buckets.ListPath(ctx, buck.Root.Key, "another/folderB")
+	if err != nil {
+		log.Println("error doing list path on non existent directoy: ", err)
+	}
+	log.Println("lp2: ", lp)
 
 	// put in go routine
 	channel, err := threads.Listen(newCtx, dbID, []tc.ListenOption{opt})

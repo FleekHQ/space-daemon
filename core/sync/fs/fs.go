@@ -35,11 +35,33 @@ func (h *Handler) OnCreate(ctx context.Context, path string, fileInfo os.FileInf
 	var err error
 
 	if fileInfo.IsDir() {
+		existsOnTextile, err := h.client.FolderExists(path)
+		if err != nil {
+			log.Error("Could not check if folder exists on textile", err)
+			return
+		}
+
+		if existsOnTextile {
+			log.Info("Folder alerady exists on textile")
+			return
+		}
+
 		result, newRoot, err = h.client.CreateDirectory(ctx, h.bucket.Key, path)
 	} else {
 		fileReader, err := os.Open(path)
 		if err != nil {
 			log.Error("Could not open file for upload", err)
+			return
+		}
+
+		existsOnTextile, err := h.client.FileExists(path, fileReader)
+		if err != nil {
+			log.Error("Could not check if folder exists on textile", err)
+			return
+		}
+
+		if existsOnTextile {
+			log.Info("Folder alerady exists on textile")
 			return
 		}
 

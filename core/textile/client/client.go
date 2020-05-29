@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
 
+	"github.com/FleekHQ/space-poc/core/ipfs"
 	"github.com/FleekHQ/space-poc/core/keychain"
 	db "github.com/FleekHQ/space-poc/core/store"
 	"github.com/FleekHQ/space-poc/log"
@@ -373,4 +375,39 @@ func (tc *TextileClient) DeleteDirOrFile(
 	path string,
 ) error {
 	return tc.buckets.RemovePath(ctx, bucketKey, path)
+}
+
+func (tc *TextileClient) FolderExists(ctx context.Context, key string, path string) (bool, error) {
+	lp, err := tc.buckets.ListPath(ctx, key, path)
+	if err != nil {
+		match, _ := regexp.MatchString("()no link named () under ()", err.Error())
+		if match {
+			return false, nil
+		}
+		log.Info("error doing list path on non existent directoy: ", err.Error())
+		// Since a nil would be interpreted as a false
+		return false, err
+	}
+	return true, nil
+}
+
+func (tc *TextileClient) FileExists(ctx context.Context, key string, path string, r io.Reader) (bool, error) {
+	lp, err := tc.buckets.ListPath(ctx, key, path)
+	if err != nil {
+		// Since a nil would be interpreted as a false
+		return false, err
+	}
+
+	var fsHash string
+	if fsHash, err := ipfs.GetFileHash(r); err != nil {
+		log.Error("Unable to get filehash: ", err)
+		return false, err
+	}
+
+	item := lp.GetItem()
+	if item.Cid == fsHash {
+		return true, nil
+	}
+
+	return false, nil
 }
