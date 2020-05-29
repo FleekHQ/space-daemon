@@ -144,6 +144,11 @@ func (fw *FolderWatcher) publishEventToHandler(
 	handler EventHandler,
 	event watcher.Event,
 ) {
+	if isBlacklisted(event.Path, event.FileInfo) {
+		log.Debug("Skipping blacklisted file/folder event")
+		return
+	}
+
 	switch event.Op {
 	case watcher.Create:
 		handler.OnCreate(ctx, event.Path, event.FileInfo)
