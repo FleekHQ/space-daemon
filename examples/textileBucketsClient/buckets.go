@@ -240,7 +240,7 @@ func initUser(threads *tc.Client, buckets *bc.Client, user string, bucketSlug st
 	val, ok := <-channel
 
 	if !ok {
-		log.Println("channel no longer active at first event")
+		log.Println("channel no longer active at first events")
 	} else {
 		log.Println("received from channel!!!!")
 		log.Println(val)
@@ -255,7 +255,7 @@ func initUser(threads *tc.Client, buckets *bc.Client, user string, bucketSlug st
 	val, ok = <-channel
 
 	if !ok {
-		log.Println("channel 2 no longer active at first event")
+		log.Println("channel 2 no longer active at first events")
 	} else {
 		log.Println("received 2 from channel!!!!")
 		log.Println(val)
@@ -270,7 +270,7 @@ func initUser(threads *tc.Client, buckets *bc.Client, user string, bucketSlug st
 	val, ok = <-channel
 
 	if !ok {
-		log.Println("channel no longer active at first event")
+		log.Println("channel no longer active at first events")
 	} else {
 		log.Println("received from channel!!!!")
 		log.Println(val)
@@ -279,7 +279,7 @@ func initUser(threads *tc.Client, buckets *bc.Client, user string, bucketSlug st
 	val, ok = <-channel
 
 	if !ok {
-		log.Println("channel 2 no longer active at first event")
+		log.Println("channel 2 no longer active at first events")
 	} else {
 		log.Println("received 2 from channel!!!!")
 		log.Println(val)

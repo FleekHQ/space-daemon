@@ -2,14 +2,16 @@ package app
 
 import (
 	"context"
-	"golang.org/x/sync/errgroup"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/FleekHQ/space-poc/core/synchronizers/bucketsync"
+	"github.com/FleekHQ/space-poc/core/sync"
+
+	"golang.org/x/sync/errgroup"
+
 	tc "github.com/FleekHQ/space-poc/core/textile/client"
 
 	"github.com/FleekHQ/space-poc/config"
@@ -34,9 +36,16 @@ func Start(ctx context.Context, cfg config.Config) {
 		store.WithPath(cfg.GetString(config.SpaceStorePath, "")),
 	)
 
+	waitForStore := make(chan bool, 1)
 	g.Go(func() error {
-		return store.Open()
+		if err := store.Open(); err != nil {
+			return err
+		}
+		waitForStore <- true
+		return nil
 	})
+
+	<-waitForStore
 
 	// starting the RPC server
 	srv := grpc.New(
@@ -54,23 +63,24 @@ func Start(ctx context.Context, cfg config.Config) {
 		return
 	}
 
+	bootstrapReady := make(chan bool)
 	textileClient := tc.New(store)
+	g.Go(func() error {
+		err := textileClient.StartAndBootstrap()
+		bootstrapReady <- true
+		return err
+	})
 
-	// Testing bucket creation here
-	if err := textileClient.CreateBucket("my-bucket"); err != nil {
-		log.Fatal("error creating bucket", err)
-	} else {
-		log.Printf("Created bucket successfully")
-	}
+	// wait for textileClient to initialize
+	<-textileClient.Ready
+	<-bootstrapReady
 
 	// watcher is started inside bucket sync
-	sync := bucketsync.New(watcher, textileClient)
+	sync := sync.New(watcher, textileClient, srv.SendFileEvent)
 
 	g.Go(func() error {
 		return sync.Start(ctx)
 	})
-
-	// TODO: add listener services for bucket changes
 
 	// wait for interruption or done signal
 	select {
@@ -102,6 +112,11 @@ func Start(ctx context.Context, cfg config.Config) {
 	if store != nil {
 		log.Println("shutdown store...")
 		store.Close()
+	}
+
+	if textileClient != nil {
+		log.Println("shutdown Textile client")
+		textileClient.Stop()
 	}
 
 	log.Println("waiting for shutdown group")

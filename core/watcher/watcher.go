@@ -80,7 +80,7 @@ func (fw *FolderWatcher) RegisterHandler(handler EventHandler) {
 	fw.handlers = append(fw.handlers, handler)
 }
 
-// Watch will start listening of changes on the FolderWatcher path and trigger the handler with any update event
+// Watch will start listening of changes on the FolderWatcher path and trigger the handler with any update events
 // This is a block operation
 func (fw *FolderWatcher) Watch(ctx context.Context) error {
 	fw.setToStarted()
@@ -96,9 +96,9 @@ func (fw *FolderWatcher) Watch(ctx context.Context) error {
 			case event, ok := <-fw.w.Event:
 				if ok {
 					if len(fw.handlers) == 0 {
-						fw.publishEventToHandler(&defaultWatcherHandler{}, event)
+						fw.publishEventToHandler(ctx, &defaultWatcherHandler{}, event)
 					} else {
-						fw.publishEvent(event)
+						fw.publishEvent(ctx, event)
 					}
 				}
 			case err, ok := <-fw.w.Error:
@@ -130,27 +130,31 @@ func (fw *FolderWatcher) setToStarted() {
 	fw.started = true
 }
 
-func (fw *FolderWatcher) publishEvent(event watcher.Event) {
+func (fw *FolderWatcher) publishEvent(ctx context.Context, event watcher.Event) {
 	fw.publishLock.RLock()
 	defer fw.publishLock.RUnlock()
 
 	for _, handler := range fw.handlers {
-		fw.publishEventToHandler(handler, event)
+		fw.publishEventToHandler(ctx, handler, event)
 	}
 }
 
-func (fw *FolderWatcher) publishEventToHandler(handler EventHandler, event watcher.Event) {
+func (fw *FolderWatcher) publishEventToHandler(
+	ctx context.Context,
+	handler EventHandler,
+	event watcher.Event,
+) {
 	switch event.Op {
 	case watcher.Create:
-		handler.OnCreate(event.Path, event.FileInfo)
+		handler.OnCreate(ctx, event.Path, event.FileInfo)
 	case watcher.Remove:
-		handler.OnRemove(event.Path, event.FileInfo)
+		handler.OnRemove(ctx, event.Path, event.FileInfo)
 	case watcher.Write:
-		handler.OnWrite(event.Path, event.FileInfo)
+		handler.OnWrite(ctx, event.Path, event.FileInfo)
 	case watcher.Rename:
-		handler.OnRename(event.Path, event.FileInfo, event.OldPath)
+		handler.OnRename(ctx, event.Path, event.FileInfo, event.OldPath)
 	case watcher.Move:
-		handler.OnMove(event.Path, event.FileInfo, event.OldPath)
+		handler.OnMove(ctx, event.Path, event.FileInfo, event.OldPath)
 	}
 }
 
