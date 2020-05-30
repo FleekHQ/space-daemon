@@ -15,10 +15,19 @@ import (
 const DefaultRootDir = "~/.fleek-space"
 const BadgerFileName = "db"
 
-type Store struct {
+type store struct {
 	rootDir string
 	db      *badger.DB
 	isOpen  bool
+}
+
+type Store interface {
+	Open() error
+	Close() error
+	Set(key []byte, value []byte) error
+	SetString(key string, value string) error
+	Get(key []byte) ([]byte, error)
+	IsOpen() bool
 }
 
 type storeOptions struct {
@@ -33,7 +42,7 @@ var defaultStoreOptions = storeOptions{
 
 type Option func(o *storeOptions)
 
-func New(opts ...Option) *Store {
+func New(opts ...Option) Store {
 	o := defaultStoreOptions
 	for _, opt := range opts {
 		opt(&o)
@@ -41,7 +50,7 @@ func New(opts ...Option) *Store {
 
 	log.Info(fmt.Sprintf("using path %s for store", o.rootDir))
 
-	store := &Store{
+	store := &store{
 		rootDir: o.rootDir,
 		isOpen:  false,
 	}
@@ -49,7 +58,7 @@ func New(opts ...Option) *Store {
 	return store
 }
 
-func (store *Store) Open() error {
+func (store *store) Open() error {
 	if store.isOpen {
 		return errors.New("Tried to open already open database")
 	}
@@ -73,7 +82,12 @@ func (store *Store) Open() error {
 	return nil
 }
 
-func (store *Store) Close() error {
+func (store store) IsOpen() bool {
+	return store.isOpen
+}
+
+
+func (store *store) Close() error {
 	if store.isOpen == false {
 		return errors.New("Tried to close a not yet opened database")
 	}
@@ -86,7 +100,7 @@ func (store *Store) Close() error {
 }
 
 // Testing that store is correctly working
-func (store *Store) hotInit() {
+func (store *store) hotInit() {
 	if err := store.Set([]byte("A"), []byte("B")); err != nil {
 		log.Error("error", err)
 		return
@@ -109,7 +123,7 @@ func WithPath(path string) Option {
 	}
 }
 
-func (store *Store) getDb() (*badger.DB, error) {
+func (store *store) getDb() (*badger.DB, error) {
 	if store.isOpen == false {
 		return nil, errors.New("Database has not been opened yet")
 	}
@@ -118,7 +132,7 @@ func (store *Store) getDb() (*badger.DB, error) {
 }
 
 // Stores a key/value pair in the db.
-func (store *Store) Set(key []byte, value []byte) error {
+func (store *store) Set(key []byte, value []byte) error {
 	db, err := store.getDb()
 
 	if err != nil {
@@ -138,12 +152,12 @@ func (store *Store) Set(key []byte, value []byte) error {
 	return nil
 }
 
-func (store *Store) SetString(key string, value string) error {
+func (store *store) SetString(key string, value string) error {
 	return store.Set([]byte(key), []byte(value))
 }
 
 // Given a key, retrieves the stored value. If the key is not found returns ErrKeyNotFound.
-func (store *Store) Get(key []byte) ([]byte, error) {
+func (store *store) Get(key []byte) ([]byte, error) {
 	db, err := store.getDb()
 
 	if err != nil {

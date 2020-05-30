@@ -29,11 +29,13 @@ type grpcServer struct {
 	sv   space.Service
 	// TODO: see if we need to clean this up by gc or handle an array
 	fileEventStream pb.SpaceApi_SubscribeServer
+	isStarted       bool
 }
 
 // Idea taken from here https://medium.com/soon-london/variadic-configuration-functions-in-go-8cef1c97ce99
 
 type ServerOption func(o *serverOptions)
+
 // gRPC server uses Service from core to handle requests
 func New(sv space.Service, opts ...ServerOption) *grpcServer {
 	o := defaultServerOptions
@@ -48,7 +50,6 @@ func New(sv space.Service, opts ...ServerOption) *grpcServer {
 	return srv
 }
 
-
 // Start grpc server with provided options
 func (srv *grpcServer) Start(ctx context.Context) error {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", srv.opts.port))
@@ -61,6 +62,7 @@ func (srv *grpcServer) Start(ctx context.Context) error {
 	pb.RegisterSpaceApiServer(srv.s, srv)
 
 	log.Info(fmt.Sprintf("grpc server started in Port %v", srv.opts.port))
+	srv.isStarted = true
 	return srv.s.Serve(lis)
 }
 
@@ -74,5 +76,7 @@ func WithPort(port int) ServerOption {
 }
 
 func (srv *grpcServer) Stop() {
-	srv.s.GracefulStop()
+	if srv.isStarted {
+		srv.s.GracefulStop()
+	}
 }

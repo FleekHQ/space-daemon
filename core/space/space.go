@@ -2,6 +2,7 @@ package space
 
 import (
 	"context"
+	"errors"
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/env"
 	"github.com/FleekHQ/space-poc/core/space/domain"
@@ -26,7 +27,10 @@ var defaultOptions = serviceOptions{}
 
 type ServiceOption func(o *serviceOptions)
 
-func NewService(store *store.Store, cfg config.Config, opts ...ServiceOption) Service {
+func NewService(store store.Store, cfg config.Config, opts ...ServiceOption) (Service, error) {
+	if !store.IsOpen() {
+		return nil, errors.New("service expects an opened store to work")
+	}
 	o := defaultOptions
 	for _, opt := range opts {
 		opt(&o)
@@ -36,7 +40,7 @@ func NewService(store *store.Store, cfg config.Config, opts ...ServiceOption) Se
 	}
 	sv := services.NewSpace(store, cfg, o.env)
 
-	return sv
+	return sv, nil
 }
 
 func WithEnv(env env.SpaceEnv) ServiceOption {

@@ -49,18 +49,23 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 
 	<-waitForStore
 
-	// starting the RPC server and Service
-	sv := space.NewService(
+	// setup the RPC server and Service
+	sv, svErr := space.NewService(
 		store,
 		cfg,
 		space.WithEnv(env),
 	)
+
 	srv := grpc.New(
 		sv,
 		grpc.WithPort(cfg.GetInt(config.SpaceServerPort, 0)),
 	)
-
+	// start the gRPC server
 	g.Go(func() error {
+		if svErr != nil {
+			log.Printf("unable to initialize service %s\n", svErr.Error())
+			return svErr
+		}
 		return srv.Start(ctx)
 	})
 
