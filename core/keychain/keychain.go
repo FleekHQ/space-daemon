@@ -17,10 +17,10 @@ var (
 )
 
 type Keychain struct {
-	store *db.Store
+	store db.Store
 }
 
-func New(store *db.Store) *Keychain {
+func New(store db.Store) *Keychain {
 	return &Keychain{
 		store: store,
 	}

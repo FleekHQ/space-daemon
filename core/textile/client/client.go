@@ -32,7 +32,7 @@ type TextileBucketRoot buckets_pb.Root
 type TextileDirEntries buckets_pb.ListPathReply
 
 type TextileClient struct {
-	store     *db.Store
+	store     db.Store
 	threads   *threadsClient.Client
 	buckets   *bucketsClient.Client
 	isRunning bool
@@ -43,7 +43,7 @@ type TextileClient struct {
 var keepFileName = ".keep"
 
 // Creates a new Textile Client
-func New(store *db.Store) *TextileClient {
+func New(store db.Store) *TextileClient {
 	return &TextileClient{
 		store:     store,
 		threads:   nil,

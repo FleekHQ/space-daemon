@@ -7,6 +7,13 @@ type AppConfig struct {
 }
 
 type DirEntry struct {
+	Path          string
+	IsDir         bool
+	Name          string
+	SizeInBytes   string
+	Created       string
+	Updated       string
+	FileExtension string
 }
 
 type PathInfo struct {
