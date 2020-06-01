@@ -19,9 +19,7 @@ func (srv *grpcServer) sendFileEvent(event *pb.FileEventResponse) {
 }
 
 func (srv *grpcServer) SendFileEvent(event events.FileEvent) {
-	pe := &pb.FileEventResponse{
-		Path: event.Path,
-	}
+	pe := &pb.FileEventResponse{}
 
 	srv.sendFileEvent(pe)
 }
@@ -88,7 +86,15 @@ func (srv *grpcServer) Subscribe(empty *empty.Empty, stream pb.SpaceApi_Subscrib
 	c := time.Tick(1 * time.Second)
 	for i := 0; i < 10; i++ {
 		<-c
-		mockFileResponse := &pb.FileEventResponse{Path: "test/path"}
+		mockFileResponse := &pb.FileEventResponse{Type: pb.EventType_ENTRY_ADDED, Entry: &pb.ListDirectoryEntry{
+			Path:          "temp/path",
+			IsDir:         false,
+			Name:          "myPath.txt",
+			SizeInBytes:   "600",
+			Created:       "",
+			Updated:       "",
+			FileExtension: "txt",
+		}}
 		srv.sendFileEvent(mockFileResponse)
 	}
 
