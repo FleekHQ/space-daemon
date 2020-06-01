@@ -56,6 +56,13 @@ message GenerateKeyPairResponse {
   string privateKey = 2;
 }
 
+enum EventType {
+  ENTRY_ADDED = 0;
+  ENTRY_DELETED = 1;
+  ENTRY_UPDATED = 2;
+}
+
 message FileEventResponse {
-  string path = 1;
+  EventType type = 1;
+  ListDirectoryEntry entry = 2;
 }
