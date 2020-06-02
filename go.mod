@@ -4,8 +4,9 @@ go 1.14
 
 require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
+	github.com/cheggaaa/pb/v3 v3.0.4 // indirect
 	github.com/creamdog/gonfig v0.0.0-20160810132730-80d86bfb5a37
-	github.com/dgraph-io/badger/v2 v2.0.1-rc1.0.20200522174526-6eaa5009af27
+	github.com/dgraph-io/badger/v2 v2.0.3
 	github.com/gin-gonic/gin v1.6.3 // indirect
 	github.com/golang/protobuf v1.4.0
 	github.com/hsanjuan/ipfs-lite v1.1.13
@@ -23,7 +24,7 @@ require (
 	github.com/ipfs/go-mfs v0.1.1
 	github.com/ipfs/go-unixfs v0.2.4
 	github.com/ipfs/interface-go-ipfs-core v0.3.0
-	github.com/ipld/go-ipld-prime v0.0.2-0.20191108012745-28a82f04c785
+	github.com/ipld/go-ipld-prime v0.0.2-0.20200428162820-8b59dc292b8e
 	github.com/joho/godotenv v1.3.0
 	github.com/libp2p/go-libp2p v0.8.3
 	github.com/libp2p/go-libp2p-connmgr v0.2.1
@@ -37,8 +38,9 @@ require (
 	github.com/radovskyb/watcher v1.0.7
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.5.1
-	github.com/textileio/go-threads v0.1.18
-	github.com/textileio/textile v1.0.3
+	github.com/textileio/filecoin v0.0.0-20200108152132-f1b938b219a6 // indirect
+	github.com/textileio/go-threads v0.1.19
+	github.com/textileio/textile v1.0.6
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20200523222454-059865788121 // indirect
