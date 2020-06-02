@@ -1,25 +1,10 @@
 package ipfs
 
 import (
-	"context"
-	"fmt"
 	"io"
-	"strings"
-	"sync"
-
-	blockservice "github.com/ipfs/go-blockservice"
-	files "github.com/ipfs/go-ipfs-files"
-	"github.com/ipfs/go-ipfs/core"
-	"github.com/ipfs/go-ipfs/core/coreunix"
-	ipld "github.com/ipfs/go-ipld-format"
-	dag "github.com/ipfs/go-merkledag"
-	dagtest "github.com/ipfs/go-merkledag/test"
-	mfs "github.com/ipfs/go-mfs"
-	ft "github.com/ipfs/go-unixfs"
-	path "github.com/ipfs/interface-go-ipfs-core/path"
 )
 
-var nilNode *core.IpfsNode
+/*var nilNode *core.IpfsNode
 var once sync.Once
 
 type syncDagService struct {
@@ -42,12 +27,12 @@ func getOrCreateNilNode() (*core.IpfsNode, error) {
 	})
 
 	return nilNode, nil
-}
+}*/
 
 // GetFileHash returns the hash of a given file without uploading it (sha2-256)
 // Stripped down version of this so we can calc hash without running a full node
 // https://github.com/ipfs/go-ipfs/blob/master/core/coreapi/unixfs.go#L57
-func GetFileHash(r io.Reader) (*string, error) {
+/*func GetFileHash(r io.Reader) (*string, error) {
 	node, err := getOrCreateNilNode()
 	if err != nil {
 		return nil, err
@@ -97,4 +82,10 @@ func GetFileHash(r io.Reader) (*string, error) {
 
 	cid := strings.Split(path.IpfsPath(nd.Cid()).String(), "/")[2]
 	return &cid, nil
+}*/
+
+
+func GetFileHash(r io.Reader) (string, error) {
+	return "", nil
+
 }

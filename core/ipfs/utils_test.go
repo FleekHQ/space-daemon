@@ -13,5 +13,5 @@ func TestIpfs_GetFileHash(t *testing.T) {
 	res, err := GetFileHash(r)
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
-	assert.Equal(t, *res, expectedHash)
+	assert.Equal(t, res, expectedHash)
 }
