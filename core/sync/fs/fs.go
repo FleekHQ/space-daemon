@@ -35,7 +35,7 @@ func (h *Handler) OnCreate(ctx context.Context, path string, fileInfo os.FileInf
 	var err error
 
 	if fileInfo.IsDir() {
-		existsOnTextile, err := h.client.FolderExists(ctx, "bucketkey", path)
+		existsOnTextile, err := h.client.FolderExists(h.bucket.Key, path)
 		if err != nil {
 			log.Error("Could not check if folder exists on textile", err)
 			return
@@ -46,7 +46,7 @@ func (h *Handler) OnCreate(ctx context.Context, path string, fileInfo os.FileInf
 			return
 		}
 
-		result, newRoot, err = h.client.CreateDirectory(ctx, h.bucket.Key, path)
+		result, newRoot, err = h.client.CreateDirectory(h.bucket.Key, path)
 	} else {
 		fileReader, err := os.Open(path)
 		if err != nil {
@@ -54,18 +54,18 @@ func (h *Handler) OnCreate(ctx context.Context, path string, fileInfo os.FileInf
 			return
 		}
 
-		existsOnTextile, err := h.client.FileExists(ctx, "bucketkey", path, fileReader)
+		existsOnTextile, err := h.client.FileExists(h.bucket.Key, path, fileReader)
 		if err != nil {
-			log.Error("Could not check if folder exists on textile", err)
+			log.Error("Could not check if file exists on textile", err)
 			return
 		}
 
 		if existsOnTextile {
-			log.Info("Folder alerady exists on textile")
+			log.Info("File alerady exists on textile")
 			return
 		}
 
-		result, newRoot, err = h.client.UploadFile(ctx, h.bucket.Key, path, fileReader)
+		result, newRoot, err = h.client.UploadFile(h.bucket.Key, path, fileReader)
 	}
 
 	if err != nil {

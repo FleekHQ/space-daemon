@@ -336,11 +336,11 @@ func (tc *TextileClient) StartAndBootstrap() error {
 // path should include the file name as the last path segment
 // also nested path not existing yet would be created automatically
 func (tc *TextileClient) UploadFile(
-	ctx context.Context,
 	bucketKey string,
 	path string,
 	reader io.Reader,
 ) (result path.Resolved, root path.Path, err error) {
+	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
 	return tc.buckets.PushPath(ctx, bucketKey, path, reader)
 }
 
@@ -348,10 +348,11 @@ func (tc *TextileClient) UploadFile(
 // Because textile doesn't support empty directory an empty .keep file is created
 // in the directory
 func (tc *TextileClient) CreateDirectory(
-	ctx context.Context,
 	bucketKey string,
 	path string,
 ) (result path.Resolved, root path.Path, err error) {
+	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
+
 	// append .keep file to the end of the directory
 	emptyDirPath := strings.TrimRight(path, "/") + "/" + keepFileName
 	return tc.buckets.PushPath(ctx, bucketKey, emptyDirPath, &bytes.Buffer{})
@@ -379,10 +380,20 @@ func (tc *TextileClient) DeleteDirOrFile(
 	return nil
 }
 
-func (tc *TextileClient) FolderExists(ctx context.Context, key string, path string) (bool, error) {
-	_, err := tc.buckets.ListPath(ctx, key, path)
+func (tc *TextileClient) FolderExists(key string, path string) (bool, error) {
+	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
 	if err != nil {
-		match, _ := regexp.MatchString("()no link named () under ()", err.Error())
+		return false, nil
+	}
+
+	_, err = tc.buckets.ListPath(ctx, key, path)
+
+	log.Info("returned from bucket call")
+
+	if err != nil {
+		// NOTE: not sure if this is the best approach but didnt
+		// want to loop over items each time
+		match, _ := regexp.MatchString(".*no link named.*under.*", err.Error())
 		if match {
 			return false, nil
 		}
@@ -393,9 +404,19 @@ func (tc *TextileClient) FolderExists(ctx context.Context, key string, path stri
 	return true, nil
 }
 
-func (tc *TextileClient) FileExists(ctx context.Context, key string, path string, r io.Reader) (bool, error) {
+func (tc *TextileClient) FileExists(key string, path string, r io.Reader) (bool, error) {
+	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
+	if err != nil {
+		return false, nil
+	}
+
 	lp, err := tc.buckets.ListPath(ctx, key, path)
 	if err != nil {
+		match, _ := regexp.MatchString(".*no link named.*under.*", err.Error())
+		if match {
+			return false, nil
+		}
+		log.Info("error doing list path on non existent directoy: ", err.Error())
 		// Since a nil would be interpreted as a false
 		return false, err
 	}
