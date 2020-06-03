@@ -35,7 +35,7 @@ func (h *Handler) OnCreate(ctx context.Context, path string, fileInfo os.FileInf
 	var err error
 
 	if fileInfo.IsDir() {
-		existsOnTextile, err := h.client.FolderExists(path)
+		existsOnTextile, err := h.client.FolderExists(ctx, "bucketkey", path)
 		if err != nil {
 			log.Error("Could not check if folder exists on textile", err)
 			return
@@ -54,7 +54,7 @@ func (h *Handler) OnCreate(ctx context.Context, path string, fileInfo os.FileInf
 			return
 		}
 
-		existsOnTextile, err := h.client.FileExists(path, fileReader)
+		existsOnTextile, err := h.client.FileExists(ctx, "bucketkey", path, fileReader)
 		if err != nil {
 			log.Error("Could not check if folder exists on textile", err)
 			return

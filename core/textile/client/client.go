@@ -374,11 +374,13 @@ func (tc *TextileClient) DeleteDirOrFile(
 	bucketKey string,
 	path string,
 ) error {
-	return tc.buckets.RemovePath(ctx, bucketKey, path)
+	tc.buckets.RemovePath(ctx, bucketKey, path)
+
+	return nil
 }
 
 func (tc *TextileClient) FolderExists(ctx context.Context, key string, path string) (bool, error) {
-	lp, err := tc.buckets.ListPath(ctx, key, path)
+	_, err := tc.buckets.ListPath(ctx, key, path)
 	if err != nil {
 		match, _ := regexp.MatchString("()no link named () under ()", err.Error())
 		if match {
@@ -399,7 +401,7 @@ func (tc *TextileClient) FileExists(ctx context.Context, key string, path string
 	}
 
 	var fsHash string
-	if fsHash, err := ipfs.GetFileHash(r); err != nil {
+	if _, err := ipfs.GetFileHash(r); err != nil {
 		log.Error("Unable to get filehash: ", err)
 		return false, err
 	}
