@@ -13,9 +13,10 @@ import (
 
 // Service Layer should not depend on gRPC dependencies
 type Service interface {
+	OpenFile(ctx context.Context, path string, bucketSlug string) (domain.OpenFileInfo, error)
 	GetConfig(ctx context.Context) domain.AppConfig
 	ListDir(ctx context.Context) ([]domain.DirEntry, error)
-	GetPathInfo(ctx context.Context, path string) (domain.PathInfo, error)
+	GetPathInfo(ctx context.Context, path string) (domain.FileInfo, error)
 	GenerateKeyPair(ctx context.Context, useForce bool) (domain.KeyPair, error)
 }
 

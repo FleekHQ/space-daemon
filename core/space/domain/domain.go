@@ -16,10 +16,13 @@ type DirEntry struct {
 	FileExtension string
 }
 
-type PathInfo struct {
-	Path     string
+type FileInfo struct {
+	DirEntry
 	IpfsHash string
-	IsDir    bool
+}
+
+type OpenFileInfo struct {
+	Location string
 }
 
 type KeyPair struct {

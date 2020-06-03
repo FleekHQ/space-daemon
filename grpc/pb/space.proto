@@ -11,6 +11,7 @@ service SpaceApi {
   rpc GenerateKeyPair(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {}
   rpc GenerateKeyPairWithForce(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {}
   rpc Subscribe(google.protobuf.Empty) returns (stream FileEventResponse) {}
+  rpc OpenFile(OpenFileRequest) returns (OpenFileResponse) {}
 }
 
 message ListDirectoriesRequest {
@@ -65,4 +66,12 @@ enum EventType {
 message FileEventResponse {
   EventType type = 1;
   ListDirectoryEntry entry = 2;
+}
+
+message OpenFileRequest {
+  string path = 1;
+}
+
+message OpenFileResponse {
+  string location = 1;
 }

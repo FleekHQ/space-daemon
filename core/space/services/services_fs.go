@@ -3,8 +3,11 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/space/domain"
+	"github.com/FleekHQ/space-poc/log"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -43,14 +46,46 @@ func (s *Space) ListDir(ctx context.Context) ([]domain.DirEntry, error) {
 }
 
 // TODO: implement this
-func (s *Space) GetPathInfo(ctx context.Context, path string) (domain.PathInfo, error) {
-	res := domain.PathInfo{
-		Path:     "test.txt",
-		IpfsHash: "testhash",
-		IsDir:    false,
-	}
+func (s *Space) GetPathInfo(ctx context.Context, path string) (domain.FileInfo, error) {
+	res := domain.FileInfo{}
 
 	return res, nil
+}
+
+func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (domain.OpenFileInfo, error) {
+	// TODO : handle bucketslug for multiple buckets. For now default to personal bucket
+	buckets, err := s.tc.ListBuckets()
+	if err != nil {
+		log.Error("error while fetching buckets in OpenFile", err)
+		return domain.OpenFileInfo{}, err
+	}
+	if len(buckets) == 0 {
+		log.Error("no buckets found in OpenFile", err)
+		return domain.OpenFileInfo{}, err
+	}
+	key := buckets[0].Key
+
+	// write file copy to temp folder
+	cfg := s.GetConfig(ctx)
+	tmpFile, err := ioutil.TempFile(cfg.FolderPath, "path")
+	if err != nil {
+		log.Error("cannot create temp file while executing OpenFile", err)
+		return domain.OpenFileInfo{}, err
+	}
+	defer tmpFile.Close()
+
+	// look for path in textile
+	err = s.tc.GetFile(ctx, key, path, tmpFile)
+	if err != nil {
+		log.Error(fmt.Sprintf("error retrieving file from bucket %s in path %s", key, path), err)
+		return domain.OpenFileInfo{}, err
+	}
+	// TODO: register temp file in watcher
+
+	// return file handle
+	return domain.OpenFileInfo{
+		Location: cfg.FolderPath + "/" + tmpFile.Name(),
+	}, nil
 }
 
 
