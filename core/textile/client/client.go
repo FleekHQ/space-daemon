@@ -1,17 +1,13 @@
 package client
 
 import (
-	"bytes"
 	"context"
 	"encoding/hex"
 	"errors"
 	"io"
 	"os"
 	"regexp"
-	"strings"
 	"time"
-
-	"github.com/ipfs/interface-go-ipfs-core/path"
 
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
 
@@ -39,7 +35,7 @@ type TextileBucketRoot buckets_pb.Root
 type TextileDirEntries buckets_pb.ListPathReply
 
 type TextileClient struct {
-	store     *db.Store
+	store     db.Store
 	threads   *threadsClient.Client
 	buckets   *bucketsClient.Client
 	isRunning bool
@@ -50,7 +46,7 @@ type TextileClient struct {
 var keepFileName = ".keep"
 
 // Creates a new Textile Client
-func New(store *db.Store) *TextileClient {
+func New(store db.Store) *TextileClient {
 	return &TextileClient{
 		store:     store,
 		threads:   nil,
@@ -332,55 +328,7 @@ func (tc *TextileClient) StartAndBootstrap() error {
 	return nil
 }
 
-// UploadFile uploads a file to path on textile
-// path should include the file name as the last path segment
-// also nested path not existing yet would be created automatically
-func (tc *TextileClient) UploadFile(
-	bucketKey string,
-	path string,
-	reader io.Reader,
-) (result path.Resolved, root path.Path, err error) {
-	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
-	return tc.buckets.PushPath(ctx, bucketKey, path, reader)
-}
-
-// CreateDirectory creates an empty directory
-// Because textile doesn't support empty directory an empty .keep file is created
-// in the directory
-func (tc *TextileClient) CreateDirectory(
-	bucketKey string,
-	path string,
-) (result path.Resolved, root path.Path, err error) {
-	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
-
-	// append .keep file to the end of the directory
-	emptyDirPath := strings.TrimRight(path, "/") + "/" + keepFileName
-	return tc.buckets.PushPath(ctx, bucketKey, emptyDirPath, &bytes.Buffer{})
-}
-
-// ListDirectory returns a list of items in a particular directory
-func (tc *TextileClient) ListDirectory(
-	ctx context.Context,
-	bucketKey string,
-	path string,
-) (*TextileDirEntries, error) {
-	result, err := tc.buckets.ListPath(ctx, bucketKey, path)
-
-	return (*TextileDirEntries)(result), err
-}
-
-// DeleteDirOrFile will delete file or directory at path
-func (tc *TextileClient) DeleteDirOrFile(
-	ctx context.Context,
-	bucketKey string,
-	path string,
-) error {
-	tc.buckets.RemovePath(ctx, bucketKey, path)
-
-	return nil
-}
-
-func (tc *TextileClient) FolderExists(key string, path string) (bool, error) {
+func (tc *TextileClient) FolderExists(ctx context.Context, key string, path string) (bool, error) {
 	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
 	if err != nil {
 		return false, nil
@@ -404,7 +352,7 @@ func (tc *TextileClient) FolderExists(key string, path string) (bool, error) {
 	return true, nil
 }
 
-func (tc *TextileClient) FileExists(key string, path string, r io.Reader) (bool, error) {
+func (tc *TextileClient) FileExists(ctx context.Context, key string, path string, r io.Reader) (bool, error) {
 	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
 	if err != nil {
 		return false, nil

@@ -1363,6 +1363,7 @@ github.com/textileio/powergate v0.0.1-beta.0.0.20200522011106-07ed24c08cc9 h1:RF
 github.com/textileio/powergate v0.0.1-beta.0.0.20200522011106-07ed24c08cc9/go.mod h1:XB4u7tL/W/r0f/sE8kcHguSBKX3N/kVhD46XXsDO2Ng=
 github.com/textileio/textile v1.0.6 h1:oCBED9+ba79aFGqSP7VrePe6Nk9bQ/JdR7O9HiSWGxE=
 github.com/textileio/textile v1.0.6/go.mod h1:aaaEWy9GLUfdCWlkcZHoDwQbLCMtbEMz3IUWwMy77sU=
+github.com/textileio/textile v1.0.7 h1:4WG1ByLHsK+eVz8+ctodsnyBdS0rsDJPOQuwj2Vl4Fc=
 github.com/textileio/uiprogress v0.0.3/go.mod h1:ijtyLXHP6vw9MbbT4tmCKZonLPE3LN4mD9C/XRJkrgg=
 github.com/texttheater/golang-levenshtein v0.0.0-20180516184445-d188e65d659e/go.mod h1:XDKHRm5ThF8YJjx001LtgelzsoaEcvnA7lVWz9EeX3g=
 github.com/tidwall/gjson v1.3.5 h1:2oW9FBNu8qt9jy5URgrzsVx/T/KSn3qn/smJQ0crlDQ=

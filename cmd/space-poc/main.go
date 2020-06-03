@@ -24,5 +24,5 @@ func main() {
 	// setup context
 	ctx := context.Background()
 
-	app.Start(ctx, cfg)
+	app.Start(ctx, cfg, env)
 }
