@@ -13,10 +13,13 @@ require (
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/ipfs/go-cid v0.0.6
 	github.com/ipfs/go-datastore v0.4.4
+	github.com/ipfs/go-ipfs-chunker v0.0.5
 	github.com/ipfs/go-ipld-format v0.2.0
 	github.com/ipfs/go-log/v2 v2.1.1 // indirect
+	github.com/ipfs/go-merkledag v0.3.2
 	github.com/ipfs/go-unixfs v0.2.4
 	github.com/ipfs/interface-go-ipfs-core v0.3.0
+	github.com/ipld/go-ipld-prime v0.0.2-0.20200428162820-8b59dc292b8e
 	github.com/joho/godotenv v1.3.0
 	github.com/libp2p/go-libp2p v0.8.3
 	github.com/libp2p/go-libp2p-connmgr v0.2.1
@@ -24,6 +27,7 @@ require (
 	github.com/libp2p/go-libp2p-crypto v0.1.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/multiformats/go-multiaddr v0.2.1
+	github.com/multiformats/go-multihash v0.0.13
 	github.com/pkg/errors v0.9.1
 	github.com/radovskyb/watcher v1.0.7
 	github.com/sirupsen/logrus v1.4.2
