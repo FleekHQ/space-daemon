@@ -13,12 +13,12 @@ import (
 
 // Implementation to handle events from FS
 type Handler struct {
-	client *tc.TextileClient
+	client tc.Client
 	bucket *tc.TextileBucketRoot
 }
 
 // Creates a New File System Handler // TODO define what is needed as options like push notifications, etc
-func NewHandler(textileClient *tc.TextileClient, bucketRoot *tc.TextileBucketRoot) *Handler {
+func NewHandler(textileClient tc.Client, bucketRoot *tc.TextileBucketRoot) *Handler {
 	return &Handler{
 		client: textileClient,
 		bucket: bucketRoot,

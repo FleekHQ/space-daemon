@@ -12,7 +12,7 @@ import (
 // UploadFile uploads a file to path on textile
 // path should include the file name as the last path segment
 // also nested path not existing yet would be created automatically
-func (tc *TextileClient) UploadFile(
+func (tc *textileClient) UploadFile(
 	ctx context.Context,
 	bucketKey string,
 	path string,
@@ -28,7 +28,7 @@ func (tc *TextileClient) UploadFile(
 // CreateDirectory creates an empty directory
 // Because textile doesn't support empty directory an empty .keep file is created
 // in the directory
-func (tc *TextileClient) CreateDirectory(
+func (tc *textileClient) CreateDirectory(
 	ctx context.Context,
 	bucketKey string,
 	path string,
@@ -43,7 +43,7 @@ func (tc *TextileClient) CreateDirectory(
 }
 
 // ListDirectory returns a list of items in a particular directory
-func (tc *TextileClient) ListDirectory(
+func (tc *textileClient) ListDirectory(
 	ctx context.Context,
 	bucketKey string,
 	path string,
@@ -58,7 +58,7 @@ func (tc *TextileClient) ListDirectory(
 }
 
 // DeleteDirOrFile will delete file or directory at path
-func (tc *TextileClient) DeleteDirOrFile(
+func (tc *textileClient) DeleteDirOrFile(
 	ctx context.Context,
 	bucketKey string,
 	path string,
