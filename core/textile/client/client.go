@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"io"
 	"os"
+	"regexp"
 	"time"
 
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
 
+	"github.com/FleekHQ/space-poc/core/ipfs"
 	"github.com/FleekHQ/space-poc/core/keychain"
 	db "github.com/FleekHQ/space-poc/core/store"
 	"github.com/FleekHQ/space-poc/log"
@@ -323,4 +326,59 @@ func (tc *TextileClient) StartAndBootstrap() error {
 
 	log.Debug("Textile Client initialized successfully")
 	return nil
+}
+
+func (tc *TextileClient) FolderExists(ctx context.Context, key string, path string) (bool, error) {
+	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
+	if err != nil {
+		return false, nil
+	}
+
+	_, err = tc.buckets.ListPath(ctx, key, path)
+
+	log.Info("returned from bucket call")
+
+	if err != nil {
+		// NOTE: not sure if this is the best approach but didnt
+		// want to loop over items each time
+		match, _ := regexp.MatchString(".*no link named.*under.*", err.Error())
+		if match {
+			return false, nil
+		}
+		log.Info("error doing list path on non existent directoy: ", err.Error())
+		// Since a nil would be interpreted as a false
+		return false, err
+	}
+	return true, nil
+}
+
+func (tc *TextileClient) FileExists(ctx context.Context, key string, path string, r io.Reader) (bool, error) {
+	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
+	if err != nil {
+		return false, nil
+	}
+
+	lp, err := tc.buckets.ListPath(ctx, key, path)
+	if err != nil {
+		match, _ := regexp.MatchString(".*no link named.*under.*", err.Error())
+		if match {
+			return false, nil
+		}
+		log.Info("error doing list path on non existent directoy: ", err.Error())
+		// Since a nil would be interpreted as a false
+		return false, err
+	}
+
+	var fsHash string
+	if _, err := ipfs.GetFileHash(r); err != nil {
+		log.Error("Unable to get filehash: ", err)
+		return false, err
+	}
+
+	item := lp.GetItem()
+	if item.Cid == fsHash {
+		return true, nil
+	}
+
+	return false, nil
 }

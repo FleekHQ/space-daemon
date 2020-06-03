@@ -38,11 +38,33 @@ func (h *Handler) OnCreate(ctx context.Context, path string, fileInfo os.FileInf
 	var err error
 
 	if fileInfo.IsDir() {
+		existsOnTextile, err := h.client.FolderExists(ctx, h.bucket.Key, path)
+		if err != nil {
+			log.Error("Could not check if folder exists on textile", err)
+			return
+		}
+
+		if existsOnTextile {
+			log.Info("Folder alerady exists on textile")
+			return
+		}
+
 		result, newRoot, err = h.client.CreateDirectory(ctx, h.bucket.Key, path)
 	} else {
 		fileReader, err := os.Open(path)
 		if err != nil {
 			log.Error("Could not open file for upload", err)
+			return
+		}
+
+		existsOnTextile, err := h.client.FileExists(ctx, h.bucket.Key, path, fileReader)
+		if err != nil {
+			log.Error("Could not check if file exists on textile", err)
+			return
+		}
+
+		if existsOnTextile {
+			log.Info("File alerady exists on textile")
 			return
 		}
 
@@ -72,7 +94,7 @@ func (h *Handler) OnRemove(ctx context.Context, path string, fileInfo os.FileInf
 	log.Info("FS Handler: OnRemove", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileName:%s", fileInfo.Name()))
 	// TODO: Also synchronizer lock check here
 
-	err := h.client.DeleteDirOrFile(ctx, h.bucket.Key, path)
+	_, err := h.client.DeleteDirOrFile(ctx, h.bucket.Key, path)
 
 	if err != nil {
 		log.Error("Deleting from textile failed", err, fmt.Sprintf("path:%s", path))

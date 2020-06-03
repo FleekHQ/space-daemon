@@ -8,7 +8,7 @@ import (
 
 	"github.com/FleekHQ/space-poc/log"
 
-	badger "github.com/dgraph-io/badger/v2"
+	badger "github.com/dgraph-io/badger"
 	homedir "github.com/mitchellh/go-homedir"
 )
 

@@ -62,10 +62,10 @@ func (tc *TextileClient) DeleteDirOrFile(
 	ctx context.Context,
 	bucketKey string,
 	path string,
-) error {
+) (path.Resolved, error) {
 	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	return tc.buckets.RemovePath(ctx, bucketKey, path)
 }
