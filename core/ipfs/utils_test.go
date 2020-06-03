@@ -24,7 +24,7 @@ func TestIpfs_GetFileHash_FromStringReader(t *testing.T) {
 // bafybeic3jetthfk7tjmewz42idwsaeek5a7myw6n46zrrxdmp5nlkc6diy
 
 func TestIpfs_GetFileHash_FromFile(t *testing.T) {
-	r, _ := os.Open("test.txt")
+	r, _ := os.Open("test1.txt")
 	expectedHash := "bafybeie4zu4wu7lexqty2aubpe36dnpd6edgb5mthhtab5hyhuju7jlcgm"
 
 	res, err := GetFileHash(r)
