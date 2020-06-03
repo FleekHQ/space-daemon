@@ -18,10 +18,10 @@ import (
 
 type BucketSynchronizer struct {
 	folderWatcher          *watcher.FolderWatcher
-	textileClient          *tc.TextileClient
+	textileClient          tc.Client
 	fh                     *fs.Handler
 	th                     *textile.Handler
-	textileThreadListeners []*tl.TextileThreadListener
+	textileThreadListeners []tl.ThreadListener
 
 	// NOTE: not sure we need the complete grpc server here, but that could change
 	notify func(event events.FileEvent)
@@ -30,10 +30,10 @@ type BucketSynchronizer struct {
 // Creates a new BucketSynchronizer instance
 func New(
 	folderWatcher *watcher.FolderWatcher,
-	textileClient *tc.TextileClient,
+	textileClient tc.Client,
 	notify func(event events.FileEvent),
 ) *BucketSynchronizer {
-	textileThreadListeners := make([]*tl.TextileThreadListener, 0)
+	textileThreadListeners := make([]tl.ThreadListener, 0)
 
 	return &BucketSynchronizer{
 		folderWatcher:          folderWatcher,

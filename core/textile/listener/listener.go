@@ -5,16 +5,22 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/FleekHQ/space-poc/core/textile/client"
+	textile "github.com/FleekHQ/space-poc/core/textile/client"
 	"github.com/FleekHQ/space-poc/core/textile/handler"
 	"github.com/FleekHQ/space-poc/log"
-	tc "github.com/textileio/go-threads/api/client"
+	threadsc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 )
 
-type TextileThreadListener struct {
+type ThreadListener interface {
+	Listen(ctx context.Context) error
+	Close()
+	RegisterHandler(handler handler.EventHandler)
+}
+
+type textileThreadListener struct {
 	bucketSlug         string
-	textileClient      *client.TextileClient
+	textileClient      textile.Client
 	started            bool
 	lock               sync.Mutex
 	publishLock        sync.RWMutex
@@ -22,8 +28,10 @@ type TextileThreadListener struct {
 	handlers           []handler.EventHandler
 }
 
-func New(textileClient *client.TextileClient, bucketSlug string) *TextileThreadListener {
-	return &TextileThreadListener{
+
+
+func New(textileClient textile.Client, bucketSlug string) ThreadListener {
+	return &textileThreadListener{
 		bucketSlug:    bucketSlug,
 		started:       false,
 		textileClient: textileClient,
@@ -31,7 +39,7 @@ func New(textileClient *client.TextileClient, bucketSlug string) *TextileThreadL
 }
 
 // Starts listening from Textile Thread
-func (tl *TextileThreadListener) Listen(ctx context.Context) error {
+func (tl *textileThreadListener) Listen(ctx context.Context) error {
 	var bucketCtx context.Context
 	var dbID *thread.ID
 	var err error
@@ -43,23 +51,23 @@ func (tl *TextileThreadListener) Listen(ctx context.Context) error {
 	var cancel context.CancelFunc
 	bucketCtx, cancel = context.WithCancel(bucketCtx)
 	defer cancel()
-	opt := tc.ListenOption{}
+	opt := threadsc.ListenOption{}
 
-	var threads *tc.Client
+	var threads *threadsc.Client
 
 	if threads, err = tl.textileClient.GetThreadsConnection(); err != nil {
 		return err
 	}
 
-	channel, err := threads.Listen(bucketCtx, *dbID, []tc.ListenOption{opt})
+	channel, err := threads.Listen(bucketCtx, *dbID, []threadsc.ListenOption{opt})
 
 	tl.setToStarted()
 
-	listenerEventHandler := func(val tc.ListenEvent) {
+	listenerEventHandler := func(val threadsc.ListenEvent) {
 		log.Debug("received from channel!!!!")
 		instance := &handler.Bucket{}
 		if val.Err != nil {
-			log.Error("error getting threads listener event", err)
+			log.Error("error getting threadsc listener event", err)
 			return
 		}
 		if err = json.Unmarshal(val.Action.Instance, instance); err != nil {
@@ -87,14 +95,14 @@ func (tl *TextileThreadListener) Listen(ctx context.Context) error {
 		}
 	}()
 
-	log.Debug("Starting textile threads listener")
+	log.Debug("Starting textile threadsc listener")
 	// Block until we get close request
 	<-tl.waitForCloseSignal
-	log.Debug("Textile threads listener closed")
+	log.Debug("Textile threadsc listener closed")
 	return nil
 }
 
-func (tl *TextileThreadListener) publishEvent(bucketData *handler.Bucket, listenEvent *tc.ListenEvent) {
+func (tl *textileThreadListener) publishEvent(bucketData *handler.Bucket, listenEvent *threadsc.ListenEvent) {
 	tl.publishLock.RLock()
 	defer tl.publishLock.RUnlock()
 
@@ -103,18 +111,18 @@ func (tl *TextileThreadListener) publishEvent(bucketData *handler.Bucket, listen
 	}
 }
 
-func (tl *TextileThreadListener) publishEventToHandler(handler handler.EventHandler, bucketData *handler.Bucket, listenEvent *tc.ListenEvent) {
+func (tl *textileThreadListener) publishEventToHandler(handler handler.EventHandler, bucketData *handler.Bucket, listenEvent *threadsc.ListenEvent) {
 	switch listenEvent.Action.Type {
-	case tc.ActionCreate:
+	case threadsc.ActionCreate:
 		handler.OnCreate(bucketData, listenEvent)
-	case tc.ActionDelete:
+	case threadsc.ActionDelete:
 		handler.OnRemove(bucketData, listenEvent)
-	case tc.ActionSave:
+	case threadsc.ActionSave:
 		handler.OnSave(bucketData, listenEvent)
 	}
 }
 
-func (tl *TextileThreadListener) setToStarted() {
+func (tl *textileThreadListener) setToStarted() {
 	tl.lock.Lock()
 	defer tl.lock.Unlock()
 	if tl.started {
@@ -125,7 +133,7 @@ func (tl *TextileThreadListener) setToStarted() {
 }
 
 // Stops listening to Textile Thread
-func (tl *TextileThreadListener) Close() {
+func (tl *textileThreadListener) Close() {
 	tl.lock.Lock()
 	defer tl.lock.Unlock()
 
@@ -137,8 +145,9 @@ func (tl *TextileThreadListener) Close() {
 }
 
 // Registers an handler.EventHandler that handles events in Textile
-func (tl *TextileThreadListener) RegisterHandler(handler handler.EventHandler) {
+func (tl *textileThreadListener) RegisterHandler(handler handler.EventHandler) {
 	tl.publishLock.Lock()
 	defer tl.publishLock.Unlock()
 	tl.handlers = append(tl.handlers, handler)
 }
+

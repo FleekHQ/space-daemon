@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"github.com/ipfs/interface-go-ipfs-core/path"
 	"io"
 	"os"
 	"regexp"
@@ -34,7 +35,43 @@ const (
 type TextileBucketRoot buckets_pb.Root
 type TextileDirEntries buckets_pb.ListPathReply
 
-type TextileClient struct {
+type Client interface {
+	GetBaseThreadsContext() (context.Context, error)
+	GetBucketContext(bucketSlug string) (context.Context, *thread.ID, error)
+	GetThreadsConnection() (*threadsClient.Client, error)
+	ListBuckets() ([]*TextileBucketRoot, error)
+	CreateBucket(bucketSlug string) (*TextileBucketRoot, error)
+	Start() error
+	Stop() error
+	WaitForReady() chan bool
+	StartAndBootstrap() error
+	FolderExists(ctx context.Context, key string, path string) (bool, error)
+	FileExists(ctx context.Context, key string, path string, r io.Reader) (bool, error)
+	UploadFile(
+		ctx context.Context,
+		bucketKey string,
+		path string,
+		reader io.Reader,
+	) (result path.Resolved, root path.Path, err error)
+	CreateDirectory(
+		ctx context.Context,
+		bucketKey string,
+		path string,
+	) (result path.Resolved, root path.Path, err error)
+	ListDirectory(
+		ctx context.Context,
+		bucketKey string,
+		path string,
+	) (*TextileDirEntries, error)
+	DeleteDirOrFile(
+		ctx context.Context,
+		bucketKey string,
+		path string,
+	) (path.Resolved, error)
+}
+
+
+type textileClient struct {
 	store     db.Store
 	threads   *threadsClient.Client
 	buckets   *bucketsClient.Client
@@ -42,12 +79,16 @@ type TextileClient struct {
 	Ready     chan bool
 }
 
+func (tc *textileClient) WaitForReady() chan bool {
+	return tc.Ready
+}
+
 // Keep file is added to empty directories
 var keepFileName = ".keep"
 
 // Creates a new Textile Client
-func New(store db.Store) *TextileClient {
-	return &TextileClient{
+func New(store db.Store) Client {
+	return &textileClient{
 		store:     store,
 		threads:   nil,
 		buckets:   nil,
@@ -64,7 +105,7 @@ func getThreadIDStoreKey(bucketSlug string) []byte {
 	return []byte(threadIDStoreKey + "_" + bucketSlug)
 }
 
-func (tc *TextileClient) findOrCreateThreadID(ctx context.Context, threads *threadsClient.Client, bucketSlug string) (*thread.ID, error) {
+func (tc *textileClient) findOrCreateThreadID(ctx context.Context, threads *threadsClient.Client, bucketSlug string) (*thread.ID, error) {
 	if val, _ := tc.store.Get([]byte(getThreadIDStoreKey(bucketSlug))); val != nil {
 		log.Debug("Thread ID found in local store")
 		// Cast the stored dbID from bytes to thread.ID
@@ -94,14 +135,14 @@ func (tc *TextileClient) findOrCreateThreadID(ctx context.Context, threads *thre
 
 }
 
-func (tc *TextileClient) requiresRunning() error {
+func (tc *textileClient) requiresRunning() error {
 	if tc.isRunning == false {
-		return errors.New("ran an operation that requires starting TextileClient first")
+		return errors.New("ran an operation that requires starting textileClient first")
 	}
 	return nil
 }
 
-func (tc *TextileClient) GetBaseThreadsContext() (context.Context, error) {
+func (tc *textileClient) GetBaseThreadsContext() (context.Context, error) {
 	// TODO: this should be happening in an auth lambda
 	// only needed for hub connections
 	key := os.Getenv("TXL_USER_KEY")
@@ -141,7 +182,7 @@ func (tc *TextileClient) GetBaseThreadsContext() (context.Context, error) {
 }
 
 // Returns a context that works for accessing a bucket
-func (tc *TextileClient) GetBucketContext(bucketSlug string) (context.Context, *thread.ID, error) {
+func (tc *textileClient) GetBucketContext(bucketSlug string) (context.Context, *thread.ID, error) {
 	if err := tc.requiresRunning(); err != nil {
 		return nil, nil, err
 	}
@@ -175,7 +216,7 @@ func (tc *TextileClient) GetBucketContext(bucketSlug string) (context.Context, *
 }
 
 // Returns a thread client connection. Requires the client to be running.
-func (tc *TextileClient) GetThreadsConnection() (*threadsClient.Client, error) {
+func (tc *textileClient) GetThreadsConnection() (*threadsClient.Client, error) {
 	if err := tc.requiresRunning(); err != nil {
 		return nil, err
 	}
@@ -183,7 +224,7 @@ func (tc *TextileClient) GetThreadsConnection() (*threadsClient.Client, error) {
 	return tc.threads, nil
 }
 
-func (tc *TextileClient) ListBuckets() ([]*TextileBucketRoot, error) {
+func (tc *textileClient) ListBuckets() ([]*TextileBucketRoot, error) {
 	threadsCtx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
 
 	bucketList, err := tc.buckets.List(threadsCtx)
@@ -200,7 +241,7 @@ func (tc *TextileClient) ListBuckets() ([]*TextileBucketRoot, error) {
 }
 
 // Creates a bucket.
-func (tc *TextileClient) CreateBucket(bucketSlug string) (*TextileBucketRoot, error) {
+func (tc *textileClient) CreateBucket(bucketSlug string) (*TextileBucketRoot, error) {
 	log.Debug("Creating a new bucket with slug " + bucketSlug)
 
 	ctx := context.Background()
@@ -235,7 +276,7 @@ func (tc *TextileClient) CreateBucket(bucketSlug string) (*TextileBucketRoot, er
 }
 
 // Starts the Textile Client
-func (tc *TextileClient) Start() error {
+func (tc *textileClient) Start() error {
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
 
@@ -282,7 +323,7 @@ func (tc *TextileClient) Start() error {
 }
 
 // Closes connection to Textile
-func (tc *TextileClient) Stop() error {
+func (tc *textileClient) Stop() error {
 	tc.isRunning = false
 	close(tc.Ready)
 	if err := tc.buckets.Close(); err != nil {
@@ -300,7 +341,7 @@ func (tc *TextileClient) Stop() error {
 }
 
 // StartAndBootstrap starts a Textile Client and also initializes default resources for it like a key pair and default bucket.
-func (tc *TextileClient) StartAndBootstrap() error {
+func (tc *textileClient) StartAndBootstrap() error {
 	// Create key pair if not present
 	kc := keychain.New(tc.store)
 	log.Debug("Generating key pair...")
@@ -328,7 +369,7 @@ func (tc *TextileClient) StartAndBootstrap() error {
 	return nil
 }
 
-func (tc *TextileClient) FolderExists(ctx context.Context, key string, path string) (bool, error) {
+func (tc *textileClient) FolderExists(ctx context.Context, key string, path string) (bool, error) {
 	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
 	if err != nil {
 		return false, nil
@@ -352,7 +393,7 @@ func (tc *TextileClient) FolderExists(ctx context.Context, key string, path stri
 	return true, nil
 }
 
-func (tc *TextileClient) FileExists(ctx context.Context, key string, path string, r io.Reader) (bool, error) {
+func (tc *textileClient) FileExists(ctx context.Context, key string, path string, r io.Reader) (bool, error) {
 	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
 	if err != nil {
 		return false, nil
@@ -382,3 +423,4 @@ func (tc *TextileClient) FileExists(ctx context.Context, key string, path string
 
 	return false, nil
 }
+

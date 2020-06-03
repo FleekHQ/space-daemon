@@ -49,25 +49,6 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 
 	<-waitForStore
 
-	// setup the RPC server and Service
-	sv, svErr := space.NewService(
-		store,
-		cfg,
-		space.WithEnv(env),
-	)
-
-	srv := grpc.New(
-		sv,
-		grpc.WithPort(cfg.GetInt(config.SpaceServerPort, 0)),
-	)
-	// start the gRPC server
-	g.Go(func() error {
-		if svErr != nil {
-			log.Printf("unable to initialize service %s\n", svErr.Error())
-			return svErr
-		}
-		return srv.Start(ctx)
-	})
 
 	watcher, err := w.New(w.WithPaths(cfg.GetString(config.SpaceFolderPath, "")))
 	if err != nil {
@@ -84,8 +65,29 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	})
 
 	// wait for textileClient to initialize
-	<-textileClient.Ready
+	<-textileClient.WaitForReady()
 	<-bootstrapReady
+
+	// setup the RPC server and Service
+	sv, svErr := space.NewService(
+		store,
+		textileClient,
+		cfg,
+		space.WithEnv(env),
+	)
+
+	srv := grpc.New(
+		sv,
+		grpc.WithPort(cfg.GetInt(config.SpaceServerPort, 0)),
+	)
+	// start the gRPC server
+	g.Go(func() error {
+		if svErr != nil {
+			log.Printf("unable to initialize service %s\n", svErr.Error())
+			return svErr
+		}
+		return srv.Start(ctx)
+	})
 
 	// watcher is started inside bucket sync
 	sync := sync.New(watcher, textileClient, srv.SendFileEvent)
