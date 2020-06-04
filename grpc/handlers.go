@@ -114,3 +114,7 @@ func (srv *grpcServer) OpenFile(ctx context.Context, request *pb.OpenFileRequest
 
 	return &pb.OpenFileResponse{Location: fi.Location}, nil
 }
+
+func (srv *grpcServer) AddFile(ctx context.Context, request *pb.AddFileRequest) (*pb.AddFileResponse, error) {
+	panic("implement me")
+}
