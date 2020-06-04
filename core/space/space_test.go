@@ -112,6 +112,8 @@ func TestService_ListDir(t *testing.T) {
 	assert.Equal(t, getDir()+"/test2.pdf", res[2].Path)
 	assert.Equal(t, "test2.pdf", res[2].Name)
 	assert.Equal(t, "pdf", res[2].FileExtension)
+	// assert mocks
+	cfg.AssertExpectations(t)
 }
 
 // NOTE: update this test when it supports multiple buckets
@@ -157,5 +159,7 @@ func TestService_OpenFile(t *testing.T) {
 	assert.FileExists(t, res.Location)
 	assert.Contains(t, res.Location, getDir())
 	assert.True(t, strings.HasSuffix(res.Location, testPath))
-
+	// assert mocks
+	cfg.AssertExpectations(t)
+	textileClient.AssertExpectations(t)
 }
