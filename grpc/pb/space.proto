@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
-package space;
+package pb;
 
 service SpaceApi {
   rpc ListDirectories(ListDirectoriesRequest) returns (ListDirectoriesResponse) {}
