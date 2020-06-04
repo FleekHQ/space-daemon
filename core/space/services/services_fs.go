@@ -67,6 +67,7 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (d
 
 	// write file copy to temp folder
 	cfg := s.GetConfig(ctx)
+	// NOTE: the pattern of the file ensures that it retains extension. e.g (rand num) + filename/path
 	tmpFile, err := ioutil.TempFile(cfg.FolderPath, "*-" + path)
 	if err != nil {
 		log.Error("cannot create temp file while executing OpenFile", err)
