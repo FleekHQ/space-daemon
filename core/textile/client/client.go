@@ -54,6 +54,12 @@ type Client interface {
 		path string,
 		reader io.Reader,
 	) (result path.Resolved, root path.Path, err error)
+	GetFile(
+		ctx context.Context,
+		bucketKey string,
+		path string,
+		w io.Writer,
+	) error
 	CreateDirectory(
 		ctx context.Context,
 		bucketKey string,

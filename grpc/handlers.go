@@ -2,13 +2,14 @@ package grpc
 
 import (
 	"context"
+	"strconv"
+	"time"
+
 	"github.com/FleekHQ/space-poc/core/events"
 	"github.com/FleekHQ/space-poc/core/space/domain"
 	"github.com/FleekHQ/space-poc/grpc/pb"
 	"github.com/FleekHQ/space-poc/log"
 	"github.com/golang/protobuf/ptypes/empty"
-	"strconv"
-	"time"
 )
 
 func (srv *grpcServer) sendFileEvent(event *pb.FileEventResponse) {
@@ -25,7 +26,7 @@ func (srv *grpcServer) SendFileEvent(event events.FileEvent) {
 }
 
 func (srv *grpcServer) GetPathInfo(ctx context.Context, req *pb.PathInfoRequest) (*pb.PathInfoResponse, error) {
-	var res domain.PathInfo
+	var res domain.FileInfo
 	var err error
 	res, err = srv.sv.GetPathInfo(ctx, req.Path)
 	if err != nil {
@@ -38,7 +39,6 @@ func (srv *grpcServer) GetPathInfo(ctx context.Context, req *pb.PathInfoRequest)
 		IsDir:    res.IsDir,
 	}, nil
 }
-
 
 func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDirectoriesRequest) (*pb.ListDirectoriesResponse, error) {
 	entries, err := srv.sv.ListDir(ctx)
@@ -57,6 +57,7 @@ func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDire
 			Created:       e.Created,
 			Updated:       e.Updated,
 			FileExtension: e.FileExtension,
+			IpfsHash:      e.IpfsHash,
 		}
 		dirEntries = append(dirEntries, dirEntry)
 	}
@@ -67,7 +68,6 @@ func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDire
 
 	return res, nil
 }
-
 
 func (srv *grpcServer) GetConfigInfo(ctx context.Context, e *empty.Empty) (*pb.ConfigInfoResponse, error) {
 	appCfg := srv.sv.GetConfig(ctx)
@@ -104,4 +104,13 @@ func (srv *grpcServer) Subscribe(empty *empty.Empty, stream pb.SpaceApi_Subscrib
 
 func (srv *grpcServer) registerStream(stream pb.SpaceApi_SubscribeServer) {
 	srv.fileEventStream = stream
+}
+
+func (srv *grpcServer) OpenFile(ctx context.Context, request *pb.OpenFileRequest) (*pb.OpenFileResponse, error) {
+	fi, err := srv.sv.OpenFile(ctx, request.Path, "")
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.OpenFileResponse{Location: fi.Location}, nil
 }

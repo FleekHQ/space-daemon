@@ -11,10 +11,10 @@ import (
 
 // Implementation for space.Service
 type Space struct {
-	store store.Store
-	cfg   config.Config
-	env   env.SpaceEnv
-	tc    tc.Client
+	store          store.Store
+	cfg            config.Config
+	env            env.SpaceEnv
+	tc             tc.Client
 }
 
 func (s *Space) GetConfig(ctx context.Context) domain.AppConfig {
@@ -28,9 +28,9 @@ func (s *Space) GetConfig(ctx context.Context) domain.AppConfig {
 
 func NewSpace(st store.Store, tc tc.Client, cfg config.Config, env env.SpaceEnv) *Space {
 	return &Space{
-		store: st,
-		cfg:   cfg,
-		env:   env,
-		tc:    tc,
+		store:          st,
+		cfg:            cfg,
+		env:            env,
+		tc:             tc,
 	}
 }

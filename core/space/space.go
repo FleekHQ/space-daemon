@@ -3,6 +3,7 @@ package space
 import (
 	"context"
 	"errors"
+
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/env"
 	"github.com/FleekHQ/space-poc/core/space/domain"
@@ -13,9 +14,10 @@ import (
 
 // Service Layer should not depend on gRPC dependencies
 type Service interface {
+	OpenFile(ctx context.Context, path string, bucketSlug string) (domain.OpenFileInfo, error)
 	GetConfig(ctx context.Context) domain.AppConfig
-	ListDir(ctx context.Context) ([]domain.DirEntry, error)
-	GetPathInfo(ctx context.Context, path string) (domain.PathInfo, error)
+	ListDir(ctx context.Context) ([]domain.FileInfo, error)
+	GetPathInfo(ctx context.Context, path string) (domain.FileInfo, error)
 	GenerateKeyPair(ctx context.Context, useForce bool) (domain.KeyPair, error)
 }
 
@@ -36,7 +38,7 @@ func NewService(store store.Store, tc tc.Client, cfg config.Config, opts ...Serv
 	for _, opt := range opts {
 		opt(&o)
 	}
-	if o.env != nil {
+	if o.env == nil {
 		o.env = env.New()
 	}
 	sv := services.NewSpace(store, tc, cfg, o.env)
