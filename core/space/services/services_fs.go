@@ -3,13 +3,52 @@ package services
 import (
 	"context"
 	"errors"
-	"github.com/FleekHQ/space-poc/config"
-	"github.com/FleekHQ/space-poc/core/space/domain"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/FleekHQ/space-poc/config"
+	"github.com/FleekHQ/space-poc/core/space/domain"
+	"github.com/FleekHQ/space-poc/log"
 )
+
+func (s *Space) listDirAtPath(
+	ctx context.Context,
+	bucketKey, path string,
+	entriesPtr *[]domain.DirEntry,
+	listSubfolderContent bool,
+) ([]domain.DirEntry, error) {
+	log.Debug("Processing dir" + path)
+	dir, err := s.tc.ListDirectory(ctx, bucketKey, path)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, item := range dir.Item.Items {
+		log.Debug("Processing file " + item.Name)
+		if item.Name == ".textileseed" || item.Name == ".textile" {
+			continue
+		}
+
+		entry := domain.DirEntry{
+			Path:          item.Path,
+			IsDir:         item.IsDir,
+			Name:          item.Name,
+			SizeInBytes:   strconv.FormatInt(item.Size, 10),
+			FileExtension: strings.Replace(filepath.Ext(item.Name), ".", "", -1),
+			// TODO: Get these fields from Textile Buckets
+			Created: "",
+			Updated: "",
+		}
+		*entriesPtr = append(*entriesPtr, entry)
+
+		if item.IsDir && listSubfolderContent {
+			s.listDirAtPath(ctx, bucketKey, path+"/"+item.Name, entriesPtr, true)
+		}
+	}
+
+	return *entriesPtr, nil
+}
 
 func (s *Space) ListDir(ctx context.Context) ([]domain.DirEntry, error) {
 	path := s.cfg.GetString(config.SpaceFolderPath, "")
@@ -17,29 +56,17 @@ func (s *Space) ListDir(ctx context.Context) ([]domain.DirEntry, error) {
 		return nil, errors.New("config does not have a valid path specified")
 	}
 
-	var files = make([]domain.DirEntry, 0)
-
-	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		entry := domain.DirEntry{
-			Path:          path,
-			IsDir:         info.IsDir(),
-			Name:          info.Name(),
-			SizeInBytes:   strconv.FormatInt(info.Size(), 10),
-			Created:       info.ModTime().String(),
-			Updated:       info.ModTime().String(),
-			FileExtension: strings.Replace(filepath.Ext(info.Name()),".", "", -1),
-		}
-		files = append(files, entry)
-		return nil
-	})
-
+	buckets, err := s.tc.ListBuckets()
 	if err != nil {
 		return nil, err
 	}
-	return files, nil
+
+	entries := make([]domain.DirEntry, 0)
+
+	// List the root directory
+	listPath := ""
+
+	return s.listDirAtPath(ctx, buckets[0].Key, listPath, &entries, true)
 }
 
 // TODO: implement this
@@ -52,6 +79,3 @@ func (s *Space) GetPathInfo(ctx context.Context, path string) (domain.PathInfo, 
 
 	return res, nil
 }
-
-
-

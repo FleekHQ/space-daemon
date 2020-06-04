@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
-	"github.com/ipfs/interface-go-ipfs-core/path"
 	"io"
 	"os"
 	"regexp"
 	"time"
+
+	"github.com/ipfs/interface-go-ipfs-core/path"
 
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
 
@@ -29,7 +30,7 @@ const (
 	hubTarget                 = "127.0.0.1:3006"
 	threadsTarget             = "127.0.0.1:3006"
 	threadIDStoreKey          = "thread_id"
-	defaultPersonalBucketSlug = "personal3"
+	defaultPersonalBucketSlug = "personal"
 )
 
 type TextileBucketRoot buckets_pb.Root
@@ -69,7 +70,6 @@ type Client interface {
 		path string,
 	) (path.Resolved, error)
 }
-
 
 type textileClient struct {
 	store     db.Store
@@ -423,4 +423,3 @@ func (tc *textileClient) FileExists(ctx context.Context, key string, path string
 
 	return false, nil
 }
-
