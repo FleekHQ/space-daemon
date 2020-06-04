@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
-package space;
+package pb;
 
 service SpaceApi {
   rpc ListDirectories(ListDirectoriesRequest) returns (ListDirectoriesResponse) {}
@@ -12,6 +12,7 @@ service SpaceApi {
   rpc GenerateKeyPairWithForce(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {}
   rpc Subscribe(google.protobuf.Empty) returns (stream FileEventResponse) {}
   rpc OpenFile(OpenFileRequest) returns (OpenFileResponse) {}
+  rpc AddFile(AddFileRequest) returns (AddFileResponse) {}
 }
 
 message ListDirectoriesRequest {
@@ -74,4 +75,12 @@ message OpenFileRequest {
 
 message OpenFileResponse {
   string location = 1;
+}
+
+message AddFileRequest {
+  string sourcePath = 1; // full path to file on FS. Needs to be a location available to the daemon
+  string targetPath = 2; // target path in bucket.
+}
+// not sure we need to return anything other than an error if we failed
+message AddFileResponse {
 }
