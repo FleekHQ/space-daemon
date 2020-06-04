@@ -67,7 +67,7 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (d
 
 	// write file copy to temp folder
 	cfg := s.GetConfig(ctx)
-	tmpFile, err := ioutil.TempFile(cfg.FolderPath, "path")
+	tmpFile, err := ioutil.TempFile(cfg.FolderPath, "*-" + path)
 	if err != nil {
 		log.Error("cannot create temp file while executing OpenFile", err)
 		return domain.OpenFileInfo{}, err
@@ -84,7 +84,7 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (d
 
 	// return file handle
 	return domain.OpenFileInfo{
-		Location: cfg.FolderPath + "/" + tmpFile.Name(),
+		Location: tmpFile.Name(),
 	}, nil
 }
 

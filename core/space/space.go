@@ -37,7 +37,7 @@ func NewService(store store.Store, tc tc.Client, cfg config.Config, opts ...Serv
 	for _, opt := range opts {
 		opt(&o)
 	}
-	if o.env != nil {
+	if o.env == nil {
 		o.env = env.New()
 	}
 	sv := services.NewSpace(store, tc, cfg, o.env)

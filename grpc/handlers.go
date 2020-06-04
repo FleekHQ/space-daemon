@@ -111,7 +111,7 @@ func (srv *grpcServer) OpenFile(ctx context.Context, request *pb.OpenFileRequest
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &pb.OpenFileResponse{Location: fi.Location}, nil
 }
 
