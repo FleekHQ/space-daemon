@@ -84,6 +84,8 @@ func TestService_ListDir(t *testing.T) {
 	sv, _, tearDown := initTestService(t)
 	defer tearDown()
 
+	bucketPath := "/ipfs/bafybeian44ntmjjfjbqt4dlkq4fiuhfzcxfunzuuzhbb7xkrnsdjb2sjha"
+
 	testKey := "bucketKey"
 	mockBuckets := []*client.TextileBucketRoot{
 		{
@@ -97,21 +99,21 @@ func TestService_ListDir(t *testing.T) {
 		Item: &buckets_pb.ListPathReply_Item{
 			Items: []*buckets_pb.ListPathReply_Item{
 				{
-					Path:  "/ipfs/bafybeian44ntmjjfjbqt4dlkq4fiuhfzcxfunzuuzhbb7xkrnsdjb2sjha/.textileseed",
+					Path:  bucketPath + "/.textileseed",
 					Name:  ".textileseed",
 					IsDir: false,
 					Size:  16,
 					Cid:   "bafkreia4q63he72sgzrn64kpa2uu5it7utmqkdby6t3xck6umy77x7p2a1",
 				},
 				{
-					Path:  "/ipfs/bafybeian44ntmjjfjbqt4dlkq4fiuhfzcxfunzuuzhbb7xkrnsdjb2sjha/somedir",
+					Path:  bucketPath + "/somedir",
 					Name:  "somedir",
 					IsDir: true,
 					Size:  0,
 					Cid:   "",
 				},
 				{
-					Path:  "/ipfs/bafybeian44ntmjjfjbqt4dlkq4fiuhfzcxfunzuuzhbb7xkrnsdjb2sjha/example.txt",
+					Path:  bucketPath + "/example.txt",
 					Name:  "example.txt",
 					IsDir: false,
 					Size:  16,
@@ -125,7 +127,7 @@ func TestService_ListDir(t *testing.T) {
 		Item: &buckets_pb.ListPathReply_Item{
 			Items: []*buckets_pb.ListPathReply_Item{
 				{
-					Path:  "/ipfs/bafybeian44ntmjjfjbqt4dlkq4fiuhfzcxfunzuuzhbb7xkrnsdjb2sjha/somedir/example.txt",
+					Path:  bucketPath + "/somedir/example.txt",
 					Name:  "example.txt",
 					IsDir: false,
 					Size:  16,
@@ -141,14 +143,14 @@ func TestService_ListDir(t *testing.T) {
 		mock.Anything,
 		testKey,
 		"",
-	).Return(mockDirItems)
+	).Return(mockDirItems, nil)
 
 	textileClient.On(
 		"ListDirectory",
 		mock.Anything,
 		testKey,
 		"/somedir",
-	).Return(mockDirItemsSubfolder)
+	).Return(mockDirItemsSubfolder, nil)
 
 	res, err := sv.ListDir(context.Background())
 
@@ -166,6 +168,13 @@ func TestService_ListDir(t *testing.T) {
 	assert.Equal(t, "example.txt", res[1].Name)
 	assert.Equal(t, "txt", res[1].FileExtension)
 	assert.Equal(t, "bafkreia4q63he72sgzrn64kpa2uu5it7utmqkdby6t3xck6umy77x7p2ae", res[1].IpfsHash)
+	assert.Equal(t, bucketPath+"/somedir/example.txt", res[1].Path)
+
+	assert.False(t, res[2].IsDir)
+	assert.Equal(t, "example.txt", res[2].Name)
+	assert.Equal(t, "txt", res[2].FileExtension)
+	assert.Equal(t, "bafkreia4q63he72sgzrn64kpa2uu5it7utmqkdby6t3xck6umy77x7p2ae", res[2].IpfsHash)
+	assert.Equal(t, bucketPath+"/example.txt", res[2].Path)
 
 	// assert mocks
 	cfg.AssertExpectations(t)
