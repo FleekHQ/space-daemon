@@ -25,7 +25,7 @@ func (srv *grpcServer) SendFileEvent(event events.FileEvent) {
 }
 
 func (srv *grpcServer) GetPathInfo(ctx context.Context, req *pb.PathInfoRequest) (*pb.PathInfoResponse, error) {
-	var res domain.PathInfo
+	var res domain.FileInfo
 	var err error
 	res, err = srv.sv.GetPathInfo(ctx, req.Path)
 	if err != nil {
@@ -105,3 +105,13 @@ func (srv *grpcServer) Subscribe(empty *empty.Empty, stream pb.SpaceApi_Subscrib
 func (srv *grpcServer) registerStream(stream pb.SpaceApi_SubscribeServer) {
 	srv.fileEventStream = stream
 }
+
+func (srv *grpcServer) OpenFile(ctx context.Context, request *pb.OpenFileRequest) (*pb.OpenFileResponse, error) {
+	fi, err := srv.sv.OpenFile(ctx, request.Path, "")
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.OpenFileResponse{Location: fi.Location}, nil
+}
+

@@ -11,7 +11,7 @@ import (
 	w "github.com/radovskyb/watcher"
 )
 
-// TODO: Use mockery to create mock interface implementations
+// TODO: Use mockery to create mocks interface implementations
 type handlerMock struct {
 	mock.Mock
 }

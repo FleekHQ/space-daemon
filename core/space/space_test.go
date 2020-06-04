@@ -3,74 +3,38 @@ package space
 import (
 	"context"
 	"github.com/FleekHQ/space-poc/config"
+	"github.com/FleekHQ/space-poc/core/space/services"
+	"github.com/FleekHQ/space-poc/core/textile/client"
+	"github.com/FleekHQ/space-poc/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
 var (
-	testMap map[string]string
-	cfg     *mockCfg
-	st      *mockStore
+	cfg           *mocks.Config
+	st            *mocks.Store
+	textileClient *mocks.TextileClient
 )
-
-type mockCfg struct {
-	mock.Mock
-	testPath string
-}
 
 type TearDown func()
 
-func (m mockCfg) GetString(key string, defaultValue interface{}) string {
-	args := m.Called(key, defaultValue)
-
-	return args.String(0)
-}
-
-func (m mockCfg) GetInt(key string, defaultValue interface{}) int {
-	panic("implement me")
-}
-
-type mockStore struct {
-	mock.Mock
-}
-
-func (s mockStore) IsOpen() bool {
-	return true
-}
-
-func (s mockStore) Open() error {
-	panic("implement me")
-}
-
-func (s mockStore) Close() error {
-	panic("implement me")
-}
-
-func (s mockStore) Set(key []byte, value []byte) error {
-	panic("implement me")
-}
-
-func (s mockStore) SetString(key string, value string) error {
-	panic("implement me")
-}
-
-func (s mockStore) Get(key []byte) ([]byte, error) {
-	panic("implement me")
-}
+type GetTestDir func() string
 
 func closeAndDelete(f *os.File) {
 	f.Close()
 	os.Remove(f.Name())
 }
 
-func initTestService(t *testing.T) (Service, TearDown) {
-	st = new(mockStore)
-	cfg = new(mockCfg)
+func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
+	st = new(mocks.Store)
+	cfg = new(mocks.Config)
+	textileClient = new(mocks.TextileClient)
 	var dir string
 	var err error
 	if dir, err = ioutil.TempDir("", "space-test-folders"); err != nil {
@@ -88,35 +52,41 @@ func initTestService(t *testing.T) (Service, TearDown) {
 		t.Fatalf("error creating temp file for tests %s", err.Error())
 	}
 
-	testMap = make(map[string]string)
-	testMap[config.SpaceFolderPath] = dir
+
+	getTestDir := func() string {
+		return dir
+	}
 
 	tearDown := func() {
 		closeAndDelete(tmpFile1)
 		closeAndDelete(tmpFile2)
 		os.RemoveAll(dir)
 	}
-	sv, err := NewService(st, cfg)
+
+	// NOTE: if we need to test without the store open we must override on each test
+	st.On("IsOpen").Return(true)
+
+	sv, err := NewService(st, textileClient, cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return sv, tearDown
+	return sv.(*services.Space), getTestDir, tearDown
 }
 
 func TestNewService(t *testing.T) {
-	sv, tearDown := initTestService(t)
+	sv, _, tearDown := initTestService(t)
 	defer tearDown()
 
 	assert.NotNil(t, sv)
 }
 
 func TestService_ListDir(t *testing.T) {
-	sv, tearDown := initTestService(t)
+	sv, getDir, tearDown := initTestService(t)
 	defer tearDown()
 
 	// setup mocks
 	cfg.On("GetString", config.SpaceFolderPath, "").Return(
-		testMap[config.SpaceFolderPath],
+		getDir(),
 		nil,
 	)
 
@@ -128,19 +98,68 @@ func TestService_ListDir(t *testing.T) {
 	if res[0].IsDir {
 		// check for dir
 		assert.True(t, res[0].IsDir)
-		assert.Equal(t, testMap[config.SpaceFolderPath], res[0].Path)
-		assert.Equal(t, filepath.Base(testMap[config.SpaceFolderPath]), res[0].Name)
+		assert.Equal(t, getDir(), res[0].Path)
+		assert.Equal(t, filepath.Base(getDir()), res[0].Name)
 		assert.Equal(t, "", res[0].FileExtension)
 	}
 
 	assert.False(t, res[1].IsDir)
-	assert.Equal(t, testMap[config.SpaceFolderPath] + "/test1.txt", res[1].Path)
+	assert.Equal(t, getDir()+"/test1.txt", res[1].Path)
 	assert.Equal(t, "test1.txt", res[1].Name)
 	assert.Equal(t, "txt", res[1].FileExtension)
 
 	assert.False(t, res[2].IsDir)
-	assert.Equal(t, testMap[config.SpaceFolderPath] + "/test2.pdf", res[2].Path)
+	assert.Equal(t, getDir()+"/test2.pdf", res[2].Path)
 	assert.Equal(t, "test2.pdf", res[2].Name)
 	assert.Equal(t, "pdf", res[2].FileExtension)
+	// assert mocks
+	cfg.AssertExpectations(t)
+}
 
+// NOTE: update this test when it supports multiple buckets
+func TestService_OpenFile(t *testing.T) {
+	sv, getDir, tearDown := initTestService(t)
+	defer tearDown()
+
+	testKey := "bucketKey"
+	testPath := "test.txt"
+
+	// setup mocks
+	cfg.On("GetString", config.SpaceFolderPath, "").Return(
+		getDir(),
+		nil,
+	)
+
+	cfg.On("GetInt", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(
+		-1,
+		nil,
+	)
+
+	mockBuckets := []*client.TextileBucketRoot{
+		{
+			Key:  testKey,
+			Name: "Personal Bucket",
+			Path: "",
+		},
+	}
+
+	textileClient.On("ListBuckets").Return(mockBuckets, nil)
+	textileClient.On(
+		"GetFile",
+		mock.Anything,
+		testKey,
+		testPath,
+		mock.Anything,
+	).Return(nil)
+
+	res, err := sv.OpenFile(context.Background(), testPath, "")
+
+	assert.Nil(t, err)
+	assert.NotEmpty(t, res)
+	assert.FileExists(t, res.Location)
+	assert.Contains(t, res.Location, getDir())
+	assert.True(t, strings.HasSuffix(res.Location, testPath))
+	// assert mocks
+	cfg.AssertExpectations(t)
+	textileClient.AssertExpectations(t)
 }

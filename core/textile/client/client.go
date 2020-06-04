@@ -53,6 +53,12 @@ type Client interface {
 		path string,
 		reader io.Reader,
 	) (result path.Resolved, root path.Path, err error)
+	GetFile(
+		ctx context.Context,
+		bucketKey string,
+		path string,
+		w io.Writer,
+	) error
 	CreateDirectory(
 		ctx context.Context,
 		bucketKey string,
@@ -69,7 +75,6 @@ type Client interface {
 		path string,
 	) (path.Resolved, error)
 }
-
 
 type textileClient struct {
 	store     db.Store
@@ -423,4 +428,3 @@ func (tc *textileClient) FileExists(ctx context.Context, key string, path string
 
 	return false, nil
 }
-
