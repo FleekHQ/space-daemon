@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -15,7 +16,6 @@ import (
 func (s *Space) listDirAtPath(
 	ctx context.Context,
 	bucketKey, path string,
-	entriesPtr *[]domain.FileInfo,
 	listSubfolderContent bool,
 ) ([]domain.FileInfo, error) {
 	dir, err := s.tc.ListDirectory(ctx, bucketKey, path)
@@ -24,6 +24,7 @@ func (s *Space) listDirAtPath(
 		return nil, err
 	}
 
+	entries := make([]domain.FileInfo, 0)
 	for _, item := range dir.Item.Items {
 		if item.Name == ".textileseed" || item.Name == ".textile" {
 			continue
@@ -42,14 +43,18 @@ func (s *Space) listDirAtPath(
 			},
 			IpfsHash: item.Cid,
 		}
-		*entriesPtr = append(*entriesPtr, entry)
+		entries = append(entries, entry)
 
 		if item.IsDir && listSubfolderContent {
-			s.listDirAtPath(ctx, bucketKey, path+"/"+item.Name, entriesPtr, true)
+			newEntries, err := s.listDirAtPath(ctx, bucketKey, path+"/"+item.Name, true)
+			if err != nil {
+				return nil, err
+			}
+			entries = append(entries, newEntries...)
 		}
 	}
 
-	return *entriesPtr, nil
+	return entries, nil
 }
 
 func (s *Space) ListDir(ctx context.Context) ([]domain.FileInfo, error) {
@@ -58,12 +63,14 @@ func (s *Space) ListDir(ctx context.Context) ([]domain.FileInfo, error) {
 		return nil, err
 	}
 
-	entries := make([]domain.FileInfo, 0)
+	if len(buckets) == 0 {
+		return nil, errors.New("Could not find buckets")
+	}
 
 	// List the root directory
 	listPath := ""
 
-	return s.listDirAtPath(ctx, buckets[0].Key, listPath, &entries, true)
+	return s.listDirAtPath(ctx, buckets[0].Key, listPath, true)
 }
 
 // TODO: implement this
