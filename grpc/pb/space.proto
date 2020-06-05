@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
-package pb;
+package space;
 
 service SpaceApi {
   rpc ListDirectories(ListDirectoriesRequest) returns (ListDirectoriesResponse) {}
@@ -27,6 +27,7 @@ message ListDirectoryEntry {
   string created = 5;
   string updated = 6;
   string fileExtension = 7;
+  string ipfsHash = 8;
 }
 
 

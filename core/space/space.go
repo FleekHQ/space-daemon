@@ -3,6 +3,7 @@ package space
 import (
 	"context"
 	"errors"
+
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/env"
 	"github.com/FleekHQ/space-poc/core/space/domain"
@@ -15,7 +16,7 @@ import (
 type Service interface {
 	OpenFile(ctx context.Context, path string, bucketSlug string) (domain.OpenFileInfo, error)
 	GetConfig(ctx context.Context) domain.AppConfig
-	ListDir(ctx context.Context) ([]domain.DirEntry, error)
+	ListDir(ctx context.Context) ([]domain.FileInfo, error)
 	GetPathInfo(ctx context.Context, path string) (domain.FileInfo, error)
 	GenerateKeyPair(ctx context.Context, useForce bool) (domain.KeyPair, error)
 }

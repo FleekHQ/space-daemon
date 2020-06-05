@@ -4,45 +4,73 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/FleekHQ/space-poc/config"
-	"github.com/FleekHQ/space-poc/core/space/domain"
-	"github.com/FleekHQ/space-poc/log"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/FleekHQ/space-poc/core/space/domain"
+	"github.com/FleekHQ/space-poc/log"
 )
 
-func (s *Space) ListDir(ctx context.Context) ([]domain.DirEntry, error) {
-	path := s.cfg.GetString(config.SpaceFolderPath, "")
-	if path == "" {
-		return nil, errors.New("config does not have a valid path specified")
+func (s *Space) listDirAtPath(
+	ctx context.Context,
+	bucketKey, path string,
+	listSubfolderContent bool,
+) ([]domain.FileInfo, error) {
+	dir, err := s.tc.ListDirectory(ctx, bucketKey, path)
+	if err != nil {
+		log.Error("Error in ListDir", err)
+		return nil, err
 	}
 
-	var files = make([]domain.DirEntry, 0)
-
-	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
+	entries := make([]domain.FileInfo, 0)
+	for _, item := range dir.Item.Items {
+		if item.Name == ".textileseed" || item.Name == ".textile" {
+			continue
 		}
-		entry := domain.DirEntry{
-			Path:          path,
-			IsDir:         info.IsDir(),
-			Name:          info.Name(),
-			SizeInBytes:   strconv.FormatInt(info.Size(), 10),
-			Created:       info.ModTime().String(),
-			Updated:       info.ModTime().String(),
-			FileExtension: strings.Replace(filepath.Ext(info.Name()),".", "", -1),
-		}
-		files = append(files, entry)
-		return nil
-	})
 
+		entry := domain.FileInfo{
+			DirEntry: domain.DirEntry{
+				Path:          item.Path,
+				IsDir:         item.IsDir,
+				Name:          item.Name,
+				SizeInBytes:   strconv.FormatInt(item.Size, 10),
+				FileExtension: strings.Replace(filepath.Ext(item.Name), ".", "", -1),
+				// TODO: Get these fields from Textile Buckets
+				Created: "",
+				Updated: "",
+			},
+			IpfsHash: item.Cid,
+		}
+		entries = append(entries, entry)
+
+		if item.IsDir && listSubfolderContent {
+			newEntries, err := s.listDirAtPath(ctx, bucketKey, path+"/"+item.Name, true)
+			if err != nil {
+				return nil, err
+			}
+			entries = append(entries, newEntries...)
+		}
+	}
+
+	return entries, nil
+}
+
+func (s *Space) ListDir(ctx context.Context) ([]domain.FileInfo, error) {
+	buckets, err := s.tc.ListBuckets()
 	if err != nil {
 		return nil, err
 	}
-	return files, nil
+
+	if len(buckets) == 0 {
+		return nil, errors.New("Could not find buckets")
+	}
+
+	// List the root directory
+	listPath := ""
+
+	return s.listDirAtPath(ctx, buckets[0].Key, listPath, true)
 }
 
 // TODO: implement this
@@ -68,7 +96,7 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (d
 	// write file copy to temp folder
 	cfg := s.GetConfig(ctx)
 	// NOTE: the pattern of the file ensures that it retains extension. e.g (rand num) + filename/path
-	tmpFile, err := ioutil.TempFile(cfg.FolderPath, "*-" + path)
+	tmpFile, err := ioutil.TempFile(cfg.FolderPath, "*-"+path)
 	if err != nil {
 		log.Error("cannot create temp file while executing OpenFile", err)
 		return domain.OpenFileInfo{}, err
@@ -88,6 +116,3 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (d
 		Location: tmpFile.Name(),
 	}, nil
 }
-
-
-
