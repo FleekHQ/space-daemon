@@ -2,18 +2,19 @@ package space
 
 import (
 	"context"
+	"io/ioutil"
+	"log"
+	"os"
+	"strings"
+	"testing"
+
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/space/services"
 	"github.com/FleekHQ/space-poc/core/textile/client"
 	"github.com/FleekHQ/space-poc/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"io/ioutil"
-	"log"
-	"os"
-	"path/filepath"
-	"strings"
-	"testing"
+	buckets_pb "github.com/textileio/textile/api/buckets/pb"
 )
 
 var (
@@ -52,7 +53,6 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 		t.Fatalf("error creating temp file for tests %s", err.Error())
 	}
 
-
 	getTestDir := func() string {
 		return dir
 	}
@@ -81,37 +81,101 @@ func TestNewService(t *testing.T) {
 }
 
 func TestService_ListDir(t *testing.T) {
-	sv, getDir, tearDown := initTestService(t)
+	sv, _, tearDown := initTestService(t)
 	defer tearDown()
 
-	// setup mocks
-	cfg.On("GetString", config.SpaceFolderPath, "").Return(
-		getDir(),
-		nil,
-	)
+	bucketPath := "/ipfs/bafybeian44ntmjjfjbqt4dlkq4fiuhfzcxfunzuuzhbb7xkrnsdjb2sjha"
+
+	testKey := "bucketKey"
+	mockBuckets := []*client.TextileBucketRoot{
+		{
+			Key:  testKey,
+			Name: "Personal Bucket",
+			Path: "",
+		},
+	}
+
+	mockDirItems := &client.TextileDirEntries{
+		Item: &buckets_pb.ListPathReply_Item{
+			Items: []*buckets_pb.ListPathReply_Item{
+				{
+					Path:  bucketPath + "/.textileseed",
+					Name:  ".textileseed",
+					IsDir: false,
+					Size:  16,
+					Cid:   "bafkreia4q63he72sgzrn64kpa2uu5it7utmqkdby6t3xck6umy77x7p2a1",
+				},
+				{
+					Path:  bucketPath + "/somedir",
+					Name:  "somedir",
+					IsDir: true,
+					Size:  0,
+					Cid:   "",
+				},
+				{
+					Path:  bucketPath + "/example.txt",
+					Name:  "example.txt",
+					IsDir: false,
+					Size:  16,
+					Cid:   "bafkreia4q63he72sgzrn64kpa2uu5it7utmqkdby6t3xck6umy77x7p2ae",
+				},
+			},
+		},
+	}
+
+	mockDirItemsSubfolder := &client.TextileDirEntries{
+		Item: &buckets_pb.ListPathReply_Item{
+			Items: []*buckets_pb.ListPathReply_Item{
+				{
+					Path:  bucketPath + "/somedir/example.txt",
+					Name:  "example.txt",
+					IsDir: false,
+					Size:  16,
+					Cid:   "bafkreia4q63he72sgzrn64kpa2uu5it7utmqkdby6t3xck6umy77x7p2ae",
+				},
+			},
+		},
+	}
+
+	textileClient.On("ListBuckets").Return(mockBuckets, nil)
+	textileClient.On(
+		"ListDirectory",
+		mock.Anything,
+		testKey,
+		"",
+	).Return(mockDirItems, nil)
+
+	textileClient.On(
+		"ListDirectory",
+		mock.Anything,
+		testKey,
+		"/somedir",
+	).Return(mockDirItemsSubfolder, nil)
 
 	res, err := sv.ListDir(context.Background())
 
 	assert.Nil(t, err)
 	assert.NotEmpty(t, res)
+	// .textileseed shouldn't be part of the reply
 	assert.Len(t, res, 3)
 	if res[0].IsDir {
 		// check for dir
 		assert.True(t, res[0].IsDir)
-		assert.Equal(t, getDir(), res[0].Path)
-		assert.Equal(t, filepath.Base(getDir()), res[0].Name)
 		assert.Equal(t, "", res[0].FileExtension)
 	}
 
 	assert.False(t, res[1].IsDir)
-	assert.Equal(t, getDir()+"/test1.txt", res[1].Path)
-	assert.Equal(t, "test1.txt", res[1].Name)
+	assert.Equal(t, "example.txt", res[1].Name)
 	assert.Equal(t, "txt", res[1].FileExtension)
+	assert.Equal(t, "bafkreia4q63he72sgzrn64kpa2uu5it7utmqkdby6t3xck6umy77x7p2ae", res[1].IpfsHash)
+	assert.Equal(t, bucketPath+"/somedir/example.txt", res[1].Path)
 
 	assert.False(t, res[2].IsDir)
-	assert.Equal(t, getDir()+"/test2.pdf", res[2].Path)
-	assert.Equal(t, "test2.pdf", res[2].Name)
-	assert.Equal(t, "pdf", res[2].FileExtension)
+	assert.Equal(t, "example.txt", res[2].Name)
+	assert.Equal(t, "txt", res[2].FileExtension)
+	assert.Equal(t, "bafkreia4q63he72sgzrn64kpa2uu5it7utmqkdby6t3xck6umy77x7p2ae", res[2].IpfsHash)
+	assert.Equal(t, bucketPath+"/example.txt", res[2].Path)
+
 	// assert mocks
 	cfg.AssertExpectations(t)
 }

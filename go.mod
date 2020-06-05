@@ -8,7 +8,7 @@ require (
 	github.com/dgraph-io/badger v1.6.1
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/gin-gonic/gin v1.6.3 // indirect
-	github.com/golang/protobuf v1.4.0
+	github.com/golang/protobuf v1.4.2
 	github.com/hsanjuan/ipfs-lite v1.1.13
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/ipfs/go-cid v0.0.6
@@ -38,6 +38,6 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20200523222454-059865788121
 	google.golang.org/grpc v1.29.1
-	google.golang.org/protobuf v1.23.0
 	grpc.go4.org v0.0.0-20170609214715-11d0a25b4919
+	google.golang.org/protobuf v1.24.0
 )

@@ -2,13 +2,14 @@ package grpc
 
 import (
 	"context"
+	"strconv"
+	"time"
+
 	"github.com/FleekHQ/space-poc/core/events"
 	"github.com/FleekHQ/space-poc/core/space/domain"
 	"github.com/FleekHQ/space-poc/grpc/pb"
 	"github.com/FleekHQ/space-poc/log"
 	"github.com/golang/protobuf/ptypes/empty"
-	"strconv"
-	"time"
 )
 
 func (srv *grpcServer) sendFileEvent(event *pb.FileEventResponse) {
@@ -39,7 +40,6 @@ func (srv *grpcServer) GetPathInfo(ctx context.Context, req *pb.PathInfoRequest)
 	}, nil
 }
 
-
 func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDirectoriesRequest) (*pb.ListDirectoriesResponse, error) {
 	entries, err := srv.sv.ListDir(ctx)
 	if err != nil {
@@ -57,6 +57,7 @@ func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDire
 			Created:       e.Created,
 			Updated:       e.Updated,
 			FileExtension: e.FileExtension,
+			IpfsHash:      e.IpfsHash,
 		}
 		dirEntries = append(dirEntries, dirEntry)
 	}
@@ -67,7 +68,6 @@ func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDire
 
 	return res, nil
 }
-
 
 func (srv *grpcServer) GetConfigInfo(ctx context.Context, e *empty.Empty) (*pb.ConfigInfoResponse, error) {
 	appCfg := srv.sv.GetConfig(ctx)
@@ -118,4 +118,3 @@ func (srv *grpcServer) OpenFile(ctx context.Context, request *pb.OpenFileRequest
 func (srv *grpcServer) AddFile(ctx context.Context, request *pb.AddFileRequest) (*pb.AddFileResponse, error) {
 	panic("implement me")
 }
-
