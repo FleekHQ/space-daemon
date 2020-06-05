@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/FleekHQ/space-poc/core/events"
-	"github.com/FleekHQ/space-poc/core/space/domain"
 	"github.com/FleekHQ/space-poc/grpc/pb"
 	"github.com/FleekHQ/space-poc/log"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -23,21 +22,6 @@ func (srv *grpcServer) SendFileEvent(event events.FileEvent) {
 	pe := &pb.FileEventResponse{}
 
 	srv.sendFileEvent(pe)
-}
-
-func (srv *grpcServer) GetPathInfo(ctx context.Context, req *pb.PathInfoRequest) (*pb.PathInfoResponse, error) {
-	var res domain.FileInfo
-	var err error
-	res, err = srv.sv.GetPathInfo(ctx, req.Path)
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.PathInfoResponse{
-		Path:     res.Path,
-		IpfsHash: res.IpfsHash,
-		IsDir:    res.IsDir,
-	}, nil
 }
 
 func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDirectoriesRequest) (*pb.ListDirectoriesResponse, error) {
@@ -115,6 +99,10 @@ func (srv *grpcServer) OpenFile(ctx context.Context, request *pb.OpenFileRequest
 	return &pb.OpenFileResponse{Location: fi.Location}, nil
 }
 
-func (srv *grpcServer) AddFile(ctx context.Context, request *pb.AddFileRequest) (*pb.AddFileResponse, error) {
+func (srv *grpcServer) AddItems(ctx context.Context, request *pb.AddItemsRequest) (*pb.AddItemsResponse, error) {
+	panic("implement me")
+}
+
+func (srv *grpcServer) CreateFolder(ctx context.Context, request *pb.CreateFolderRequest) (*pb.CreateFolderResponse, error) {
 	panic("implement me")
 }
