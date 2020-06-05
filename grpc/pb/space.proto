@@ -7,12 +7,12 @@ package space;
 service SpaceApi {
   rpc ListDirectories(ListDirectoriesRequest) returns (ListDirectoriesResponse) {}
   rpc GetConfigInfo(google.protobuf.Empty) returns (ConfigInfoResponse) {}
-  rpc GetPathInfo(PathInfoRequest) returns (PathInfoResponse) {}
   rpc GenerateKeyPair(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {}
   rpc GenerateKeyPairWithForce(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {}
   rpc Subscribe(google.protobuf.Empty) returns (stream FileEventResponse) {}
   rpc OpenFile(OpenFileRequest) returns (OpenFileResponse) {}
-  rpc AddFile(AddFileRequest) returns (AddFileResponse) {}
+  rpc AddItems(AddItemsRequest) returns (AddItemsResponse) {}
+  rpc CreateFolder(CreateFolderRequest) returns (CreateFolderResponse) {}
 }
 
 message ListDirectoriesRequest {
@@ -41,17 +41,6 @@ message ConfigInfoResponse {
   string appPath = 3;
 }
 
-
-message PathInfoRequest {
-  string path = 1;
-}
-
-message PathInfoResponse {
-  string path = 1;
-  string ipfsHash = 2;
-  bool isDir = 3;
-}
-
 message GenerateKeyPairRequest {}
 
 message GenerateKeyPairResponse {
@@ -78,10 +67,17 @@ message OpenFileResponse {
   string location = 1;
 }
 
-message AddFileRequest {
-  string sourcePath = 1; // full path to file on FS. Needs to be a location available to the daemon
+message AddItemsRequest {
+  repeated string sourcePaths = 1; // full paths to file or Folder on FS. Needs to be a location available to the daemon
   string targetPath = 2; // target path in bucket.
 }
 // not sure we need to return anything other than an error if we failed
-message AddFileResponse {
+message AddItemsResponse {
+}
+
+message CreateFolderRequest {
+  string path = 1; // target path in bucket to add new empty folder
+}
+// not sure we need to return anything other than an error if we failed
+message CreateFolderResponse {
 }
