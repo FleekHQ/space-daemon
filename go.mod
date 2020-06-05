@@ -39,4 +39,5 @@ require (
 	golang.org/x/sys v0.0.0-20200523222454-059865788121
 	google.golang.org/grpc v1.29.1
 	google.golang.org/protobuf v1.23.0
+	grpc.go4.org v0.0.0-20170609214715-11d0a25b4919
 )

@@ -2,22 +2,23 @@ package app
 
 import (
 	"context"
-	"github.com/FleekHQ/space-poc/core/env"
-	"github.com/FleekHQ/space-poc/core/space"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/FleekHQ/space-poc/core/env"
+	"github.com/FleekHQ/space-poc/core/space"
+
 	"github.com/FleekHQ/space-poc/core/sync"
 
 	"golang.org/x/sync/errgroup"
 
-	tc "github.com/FleekHQ/space-poc/core/textile/client"
-
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/store"
+	tc "github.com/FleekHQ/space-poc/core/textile/client"
+	tt "github.com/FleekHQ/space-poc/core/textile/threadsd"
 	w "github.com/FleekHQ/space-poc/core/watcher"
 	"github.com/FleekHQ/space-poc/grpc"
 )
@@ -49,7 +50,6 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 
 	<-waitForStore
 
-
 	watcher, err := w.New(w.WithPaths(cfg.GetString(config.SpaceFolderPath, "")))
 	if err != nil {
 		log.Fatal(err)
@@ -67,6 +67,19 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	// wait for textileClient to initialize
 	<-textileClient.WaitForReady()
 	<-bootstrapReady
+
+	// setup local threads
+	threadsdReady := make(chan bool)
+	threadsd := &tt.TextileThreadsd{
+		Ready: make(chan bool),
+	}
+	g.Go(func() error {
+		threadsd.Start()
+		threadsdReady <- true
+		return err
+	})
+	<-threadsd.WaitForReady()
+	<-threadsdReady
 
 	// setup the RPC server and Service
 	sv, svErr := space.NewService(
@@ -131,6 +144,11 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	if textileClient != nil {
 		log.Println("shutdown Textile client")
 		textileClient.Stop()
+	}
+
+	if threadsd != nil {
+		log.Println("shutdown Threadsd node")
+		threadsd.Stop()
 	}
 
 	log.Println("waiting for shutdown group")
