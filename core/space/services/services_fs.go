@@ -134,8 +134,13 @@ func (s *Space) CreateFolder(ctx context.Context, path string) error {
 	if err != nil {
 		return err
 	}
+
+	return s.createFolder(ctx, path, key)
+}
+
+func (s *Space) createFolder(ctx context.Context, path string, key string) error {
 	// NOTE: may need to change signature of createFolder if we need to return this info
-	_,_, err = s.tc.CreateDirectory(ctx, key, path)
+	_, _, err := s.tc.CreateDirectory(ctx, key, path)
 
 	if err != nil {
 		log.Error(fmt.Sprintf("error creating folder in bucket %s with path %s", key, path), err)
@@ -146,16 +151,20 @@ func (s *Space) CreateFolder(ctx context.Context, path string) error {
 }
 
 func (s *Space) AddItems(ctx context.Context, sourcePaths []string, targetPath string) error {
+	// TODO: add support for bucket slug
+	key, err := s.getDefaultBucketKey()
+	if err != nil {
+		return err
+	}
+	return s.addItems(ctx, sourcePaths, targetPath, key)
+}
+
+func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath string, key string) error {
 	// check if all sourcePaths exist, else return err
 	for _, sourcePath := range sourcePaths {
 		if !PathExists(sourcePath) {
 			return errors.New(fmt.Sprintf("path not found at %s", sourcePath))
 		}
-	}
-	// TODO: add support for bucket slug
-	key, err := s.getDefaultBucketKey()
-	if err != nil {
-		return err
 	}
 
 	// create wait group with amount of sourcePaths
@@ -196,11 +205,32 @@ func (s *Space) AddItems(ctx context.Context, sourcePaths []string, targetPath s
 }
 
 func (s *Space) addItem(ctx context.Context, sourcePath string, targetPath string, bucketKey string) error {
-	// TODO: implement recursive dir
 	if IsPathDir(sourcePath) {
-		// skipping dirs for now
-		return nil
+		_, folderName := filepath.Split(sourcePath)
+		targetBucketFolder := targetPath + "/" + folderName
+		err := s.createFolder(ctx, targetBucketFolder, bucketKey)
+		if err != nil {
+			return err
+		}
+
+		var folderSubPaths []string
+		err = filepath.Walk(sourcePath, func(path string, info os.FileInfo, err error) error {
+			// avoid infinite recursion by excluding folder path
+			if path != sourcePath {
+				folderSubPaths = append(folderSubPaths, path)
+			}
+			return nil
+		})
+
+		if err != nil {
+			log.Error(fmt.Sprintf("error reading folder path %s ", sourcePath), err)
+			return err
+		}
+		// recursive call to addItems
+		return s.addItems(ctx, folderSubPaths, targetPath, bucketKey)
 	}
+	// Working with a file
+
 	// get sourcePath to io.Reader
 	f, err := os.Open(sourcePath)
 	if err != nil {

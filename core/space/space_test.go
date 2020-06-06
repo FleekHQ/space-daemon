@@ -239,8 +239,7 @@ func TestService_OpenFile(t *testing.T) {
 	textileClient.AssertExpectations(t)
 }
 
-// TODO: add support for folders
-func TestService_AddItems(t *testing.T) {
+func TestService_AddItems_FilesOnly(t *testing.T) {
 	sv, getTempDir, tearDown := initTestService(t)
 	defer tearDown()
 
@@ -258,6 +257,48 @@ func TestService_AddItems(t *testing.T) {
 	}
 
 	textileClient.On("ListBuckets").Return(mockBuckets, nil)
+
+	textileClient.On(
+		"UploadFile",
+		mock.Anything,
+		testKey,
+		mock.Anything,
+		mock.Anything,
+	).Return(nil, nil, nil)
+
+
+	err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+
+	assert.Nil(t, err)
+	// assert mocks
+	textileClient.AssertExpectations(t)
+}
+
+func TestService_AddItems_Folder(t *testing.T) {
+	sv, getTempDir, tearDown := initTestService(t)
+	defer tearDown()
+
+	// setup tests
+	testKey := "bucketKey"
+	bucketPath := "/tests"
+	testSourcePaths := []string{getTempDir().dir}
+
+	mockBuckets := []*client.TextileBucketRoot{
+		{
+			Key:  testKey,
+			Name: "Personal Bucket",
+			Path: "",
+		},
+	}
+
+	textileClient.On("ListBuckets").Return(mockBuckets, nil)
+
+	textileClient.On(
+		"CreateDirectory",
+		mock.Anything,
+		testKey,
+		mock.Anything,
+	).Return(nil, nil, nil)
 
 	textileClient.On(
 		"UploadFile",
