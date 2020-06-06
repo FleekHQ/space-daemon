@@ -2,6 +2,7 @@ package space
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -25,11 +26,16 @@ var (
 
 type TearDown func()
 
-type GetTestDir func() string
+type GetTestDir func() *testDir
 
 func closeAndDelete(f *os.File) {
 	f.Close()
 	os.Remove(f.Name())
+}
+
+type testDir struct {
+	dir       string
+	fileNames []string
 }
 
 func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
@@ -53,8 +59,13 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 		t.Fatalf("error creating temp file for tests %s", err.Error())
 	}
 
-	getTestDir := func() string {
-		return dir
+	tmpFiles := []string{tmpFile1.Name(), tmpFile2.Name()}
+
+	getTestDir := func() *testDir {
+		return &testDir{
+			dir:       dir,
+			fileNames: tmpFiles,
+		}
 	}
 
 	tearDown := func() {
@@ -190,7 +201,7 @@ func TestService_OpenFile(t *testing.T) {
 
 	// setup mocks
 	cfg.On("GetString", config.SpaceFolderPath, "").Return(
-		getDir(),
+		getDir().dir,
 		nil,
 	)
 
@@ -221,9 +232,83 @@ func TestService_OpenFile(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotEmpty(t, res)
 	assert.FileExists(t, res.Location)
-	assert.Contains(t, res.Location, getDir())
+	assert.Contains(t, res.Location, getDir().dir)
 	assert.True(t, strings.HasSuffix(res.Location, testPath))
 	// assert mocks
 	cfg.AssertExpectations(t)
+	textileClient.AssertExpectations(t)
+}
+
+// TODO: add support for folders
+func TestService_AddItems(t *testing.T) {
+	sv, getTempDir, tearDown := initTestService(t)
+	defer tearDown()
+
+	// setup tests
+	testKey := "bucketKey"
+	bucketPath := "/tests"
+	testSourcePaths := getTempDir().fileNames
+
+	mockBuckets := []*client.TextileBucketRoot{
+		{
+			Key:  testKey,
+			Name: "Personal Bucket",
+			Path: "",
+		},
+	}
+
+	textileClient.On("ListBuckets").Return(mockBuckets, nil)
+
+	textileClient.On(
+		"UploadFile",
+		mock.Anything,
+		testKey,
+		mock.Anything,
+		mock.Anything,
+	).Return(nil, nil, nil)
+
+
+	err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+
+	assert.Nil(t, err)
+	// assert mocks
+	textileClient.AssertExpectations(t)
+}
+
+func TestService_AddItems_OnError(t *testing.T) {
+	sv, getTempDir, tearDown := initTestService(t)
+	defer tearDown()
+
+	// setup tests
+	testKey := "bucketKey"
+	bucketPath := "/tests"
+	testSourcePaths := getTempDir().fileNames
+
+	mockBuckets := []*client.TextileBucketRoot{
+		{
+			Key:  testKey,
+			Name: "Personal Bucket",
+			Path: "",
+		},
+	}
+
+	textileClient.On("ListBuckets").Return(mockBuckets, nil)
+
+	bucketError := errors.New("bucket failed")
+
+	textileClient.On(
+		"UploadFile",
+		mock.Anything,
+		testKey,
+		mock.Anything,
+		mock.Anything,
+	).Return(nil, nil, bucketError)
+
+
+	err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+
+	assert.NotNil(t, err)
+	assert.Equal(t, bucketError, err)
+	// assert mocks
 	textileClient.AssertExpectations(t)
 }

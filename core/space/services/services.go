@@ -17,6 +17,8 @@ type Space struct {
 	tc             tc.Client
 }
 
+
+
 func (s *Space) GetConfig(ctx context.Context) domain.AppConfig {
 	return domain.AppConfig{
 		FolderPath: s.cfg.GetString(config.SpaceFolderPath, ""),
