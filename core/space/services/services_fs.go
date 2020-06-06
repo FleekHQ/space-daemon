@@ -15,8 +15,6 @@ import (
 	"github.com/FleekHQ/space-poc/log"
 )
 
-
-
 func (s *Space) listDirAtPath(
 	ctx context.Context,
 	bucketKey, path string,
@@ -253,4 +251,3 @@ func (s *Space) addItem(ctx context.Context, sourcePath string, targetPath strin
 
 	return nil
 }
-

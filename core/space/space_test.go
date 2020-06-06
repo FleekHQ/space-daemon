@@ -266,7 +266,6 @@ func TestService_AddItems_FilesOnly(t *testing.T) {
 		mock.Anything,
 	).Return(nil, nil, nil)
 
-
 	err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
 
 	assert.Nil(t, err)
@@ -308,7 +307,6 @@ func TestService_AddItems_Folder(t *testing.T) {
 		mock.Anything,
 	).Return(nil, nil, nil)
 
-
 	err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
 
 	assert.Nil(t, err)
@@ -344,7 +342,6 @@ func TestService_AddItems_OnError(t *testing.T) {
 		mock.Anything,
 		mock.Anything,
 	).Return(nil, nil, bucketError)
-
 
 	err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
 
