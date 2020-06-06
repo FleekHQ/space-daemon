@@ -154,7 +154,7 @@ func (s *Space) AddItems(ctx context.Context, sourcePaths []string, targetPath s
 	if err != nil {
 		return err
 	}
-	return s.addItems(ctx, sourcePaths, targetPath, key)
+	return s.addItems(ctx, RemoveDuplicates(sourcePaths), targetPath, key)
 }
 
 func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath string, key string) error {
