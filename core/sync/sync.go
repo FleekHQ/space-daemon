@@ -17,7 +17,7 @@ import (
 )
 
 type BucketSynchronizer struct {
-	folderWatcher          *watcher.FolderWatcher
+	folderWatcher          watcher.FolderWatcher
 	textileClient          tc.Client
 	fh                     *fs.Handler
 	th                     *textile.Handler
@@ -29,7 +29,7 @@ type BucketSynchronizer struct {
 
 // Creates a new BucketSynchronizer instance
 func New(
-	folderWatcher *watcher.FolderWatcher,
+	folderWatcher watcher.FolderWatcher,
 	textileClient tc.Client,
 	notify func(event events.FileEvent),
 ) *BucketSynchronizer {
