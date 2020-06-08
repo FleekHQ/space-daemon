@@ -106,7 +106,8 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (d
 		log.Error(fmt.Sprintf("error retrieving file from bucket %s in path %s", key, path), err)
 		return domain.OpenFileInfo{}, err
 	}
-	// TODO: register temp file in watcher
+	// register temp file in watcher
+	s.watchFile(tmpFile.Name())
 
 	// return file handle
 	return domain.OpenFileInfo{
