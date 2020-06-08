@@ -197,7 +197,8 @@ func TestService_OpenFile(t *testing.T) {
 	defer tearDown()
 
 	testKey := "bucketKey"
-	testPath := "test.txt"
+	testPath := "/ipfs/bafybeievdakous3kamdgy6yxtmkvmibmro23kgf7xrduvwrxrlryzvu3sm/file.txt"
+	testFileName := "file.txt"
 
 	// setup mocks
 	cfg.On("GetString", config.SpaceFolderPath, "").Return(
@@ -233,7 +234,7 @@ func TestService_OpenFile(t *testing.T) {
 	assert.NotEmpty(t, res)
 	assert.FileExists(t, res.Location)
 	assert.Contains(t, res.Location, getDir().dir)
-	assert.True(t, strings.HasSuffix(res.Location, testPath))
+	assert.True(t, strings.HasSuffix(res.Location, testFileName))
 	// assert mocks
 	cfg.AssertExpectations(t)
 	textileClient.AssertExpectations(t)
