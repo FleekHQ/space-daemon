@@ -2,13 +2,14 @@ package app
 
 import (
 	"context"
-	"github.com/FleekHQ/space-poc/core/env"
-	"github.com/FleekHQ/space-poc/core/space"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/FleekHQ/space-poc/core/env"
+	"github.com/FleekHQ/space-poc/core/space"
 
 	"github.com/FleekHQ/space-poc/core/sync"
 
@@ -48,7 +49,6 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	})
 
 	<-waitForStore
-
 
 	watcher, err := w.New(w.WithPaths(cfg.GetString(config.SpaceFolderPath, "")))
 	if err != nil {
@@ -90,7 +90,7 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	})
 
 	// watcher is started inside bucket sync
-	sync := sync.New(watcher, textileClient, srv.SendFileEvent)
+	sync := sync.New(watcher, textileClient, srv)
 
 	g.Go(func() error {
 		return sync.Start(ctx)
