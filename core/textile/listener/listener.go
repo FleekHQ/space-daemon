@@ -28,8 +28,6 @@ type textileThreadListener struct {
 	handlers           []handler.EventHandler
 }
 
-
-
 func New(textileClient textile.Client, bucketSlug string) ThreadListener {
 	return &textileThreadListener{
 		bucketSlug:    bucketSlug,
@@ -44,7 +42,7 @@ func (tl *textileThreadListener) Listen(ctx context.Context) error {
 	var dbID *thread.ID
 	var err error
 
-	if bucketCtx, dbID, err = tl.textileClient.GetBucketContext(tl.bucketSlug); err != nil {
+	if bucketCtx, dbID, err = tl.textileClient.GetBucketContext(ctx, tl.bucketSlug); err != nil {
 		return err
 	}
 
@@ -150,4 +148,3 @@ func (tl *textileThreadListener) RegisterHandler(handler handler.EventHandler) {
 	defer tl.publishLock.Unlock()
 	tl.handlers = append(tl.handlers, handler)
 }
-

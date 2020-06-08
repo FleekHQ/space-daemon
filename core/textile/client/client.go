@@ -37,8 +37,8 @@ type TextileBucketRoot buckets_pb.Root
 type TextileDirEntries buckets_pb.ListPathReply
 
 type Client interface {
-	GetBaseThreadsContext() (context.Context, error)
-	GetBucketContext(bucketSlug string) (context.Context, *thread.ID, error)
+	GetBaseThreadsContext(ctx context.Context) (context.Context, error)
+	GetBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error)
 	GetThreadsConnection() (*threadsClient.Client, error)
 	ListBuckets() ([]*TextileBucketRoot, error)
 	CreateBucket(bucketSlug string) (*TextileBucketRoot, error)
@@ -148,7 +148,7 @@ func (tc *textileClient) requiresRunning() error {
 	return nil
 }
 
-func (tc *textileClient) GetBaseThreadsContext() (context.Context, error) {
+func (tc *textileClient) GetBaseThreadsContext(ctx context.Context) (context.Context, error) {
 	// TODO: this should be happening in an auth lambda
 	// only needed for hub connections
 	key := os.Getenv("TXL_USER_KEY")
@@ -158,7 +158,10 @@ func (tc *textileClient) GetBaseThreadsContext() (context.Context, error) {
 		return nil, errors.New("Couldn't get Textile key or secret from envs")
 	}
 
-	ctx := common.NewAPIKeyContext(context.Background(), key)
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	ctx = common.NewAPIKeyContext(ctx, key)
 
 	var err error
 	var apiSigCtx context.Context
@@ -188,12 +191,12 @@ func (tc *textileClient) GetBaseThreadsContext() (context.Context, error) {
 }
 
 // Returns a context that works for accessing a bucket
-func (tc *textileClient) GetBucketContext(bucketSlug string) (context.Context, *thread.ID, error) {
+func (tc *textileClient) GetBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error) {
 	if err := tc.requiresRunning(); err != nil {
 		return nil, nil, err
 	}
 
-	ctx, err := tc.GetBaseThreadsContext()
+	ctx, err := tc.GetBaseThreadsContext(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -231,7 +234,8 @@ func (tc *textileClient) GetThreadsConnection() (*threadsClient.Client, error) {
 }
 
 func (tc *textileClient) ListBuckets() ([]*TextileBucketRoot, error) {
-	threadsCtx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
+	ctx := context.Background()
+	threadsCtx, _, err := tc.GetBucketContext(ctx, defaultPersonalBucketSlug)
 
 	bucketList, err := tc.buckets.List(threadsCtx)
 	if err != nil {
@@ -253,7 +257,7 @@ func (tc *textileClient) CreateBucket(bucketSlug string) (*TextileBucketRoot, er
 	ctx := context.Background()
 	var err error
 
-	if ctx, _, err = tc.GetBucketContext(bucketSlug); err != nil {
+	if ctx, _, err = tc.GetBucketContext(ctx, bucketSlug); err != nil {
 		return nil, err
 	}
 
@@ -376,7 +380,7 @@ func (tc *textileClient) StartAndBootstrap() error {
 }
 
 func (tc *textileClient) FolderExists(ctx context.Context, key string, path string) (bool, error) {
-	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
+	ctx, _, err := tc.GetBucketContext(ctx, defaultPersonalBucketSlug)
 	if err != nil {
 		return false, nil
 	}
@@ -400,7 +404,7 @@ func (tc *textileClient) FolderExists(ctx context.Context, key string, path stri
 }
 
 func (tc *textileClient) FileExists(ctx context.Context, key string, path string, r io.Reader) (bool, error) {
-	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
+	ctx, _, err := tc.GetBucketContext(ctx, defaultPersonalBucketSlug)
 	if err != nil {
 		return false, nil
 	}

@@ -9,7 +9,7 @@ import (
 
 // GetFile pulls path from bucket writing it to writer if it's a file.
 func (tc *textileClient) GetFile(ctx context.Context, bucketKey string, path string, w io.Writer) error {
-	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
+	ctx, _, err := tc.GetBucketContext(ctx, defaultPersonalBucketSlug)
 	if err != nil {
 		return err
 	}
