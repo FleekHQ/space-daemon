@@ -18,7 +18,7 @@ func (tc *textileClient) UploadFile(
 	path string,
 	reader io.Reader,
 ) (result path.Resolved, root path.Path, err error) {
-	ctx, _, err = tc.GetBucketContext(defaultPersonalBucketSlug)
+	ctx, _, err = tc.GetBucketContext(ctx, defaultPersonalBucketSlug)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -33,7 +33,7 @@ func (tc *textileClient) CreateDirectory(
 	bucketKey string,
 	path string,
 ) (result path.Resolved, root path.Path, err error) {
-	ctx, _, err = tc.GetBucketContext(defaultPersonalBucketSlug)
+	ctx, _, err = tc.GetBucketContext(ctx, defaultPersonalBucketSlug)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -48,7 +48,7 @@ func (tc *textileClient) ListDirectory(
 	bucketKey string,
 	path string,
 ) (*TextileDirEntries, error) {
-	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
+	ctx, _, err := tc.GetBucketContext(ctx, defaultPersonalBucketSlug)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (tc *textileClient) DeleteDirOrFile(
 	bucketKey string,
 	path string,
 ) (path.Resolved, error) {
-	ctx, _, err := tc.GetBucketContext(defaultPersonalBucketSlug)
+	ctx, _, err := tc.GetBucketContext(ctx, defaultPersonalBucketSlug)
 	if err != nil {
 		return nil, err
 	}

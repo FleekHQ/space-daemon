@@ -60,7 +60,7 @@ func (s *Space) listDirAtPath(
 }
 
 func (s *Space) ListDir(ctx context.Context) ([]domain.FileInfo, error) {
-	buckets, err := s.tc.ListBuckets()
+	buckets, err := s.tc.ListBuckets(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (s *Space) GetPathInfo(ctx context.Context, path string) (domain.FileInfo, 
 
 func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (domain.OpenFileInfo, error) {
 	// TODO : handle bucketslug for multiple buckets. For now default to personal bucket
-	key, err := s.getDefaultBucketKey()
+	key, err := s.getDefaultBucketKey(ctx)
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
@@ -114,8 +114,8 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (d
 	}, nil
 }
 
-func (s *Space) getDefaultBucketKey() (string, error) {
-	buckets, err := s.tc.ListBuckets()
+func (s *Space) getDefaultBucketKey(ctx context.Context) (string, error) {
+	buckets, err := s.tc.ListBuckets(ctx)
 	if err != nil {
 		log.Error("error while fetching buckets in OpenFile", err)
 		return "", err
@@ -129,7 +129,7 @@ func (s *Space) getDefaultBucketKey() (string, error) {
 }
 
 func (s *Space) CreateFolder(ctx context.Context, path string) error {
-	key, err := s.getDefaultBucketKey()
+	key, err := s.getDefaultBucketKey(ctx)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func (s *Space) createFolder(ctx context.Context, path string, key string) error
 
 func (s *Space) AddItems(ctx context.Context, sourcePaths []string, targetPath string) error {
 	// TODO: add support for bucket slug
-	key, err := s.getDefaultBucketKey()
+	key, err := s.getDefaultBucketKey(ctx)
 	if err != nil {
 		return err
 	}
