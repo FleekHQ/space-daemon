@@ -40,12 +40,12 @@ type Client interface {
 	GetBaseThreadsContext(ctx context.Context) (context.Context, error)
 	GetBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error)
 	GetThreadsConnection() (*threadsClient.Client, error)
-	ListBuckets() ([]*TextileBucketRoot, error)
-	CreateBucket(bucketSlug string) (*TextileBucketRoot, error)
+	ListBuckets(ctx context.Context) ([]*TextileBucketRoot, error)
+	CreateBucket(ctx context.Context, bucketSlug string) (*TextileBucketRoot, error)
 	Start() error
 	Stop() error
 	WaitForReady() chan bool
-	StartAndBootstrap() error
+	StartAndBootstrap(ctx context.Context) error
 	FolderExists(ctx context.Context, key string, path string) (bool, error)
 	FileExists(ctx context.Context, key string, path string, r io.Reader) (bool, error)
 	UploadFile(
@@ -233,8 +233,7 @@ func (tc *textileClient) GetThreadsConnection() (*threadsClient.Client, error) {
 	return tc.threads, nil
 }
 
-func (tc *textileClient) ListBuckets() ([]*TextileBucketRoot, error) {
-	ctx := context.Background()
+func (tc *textileClient) ListBuckets(ctx context.Context) ([]*TextileBucketRoot, error) {
 	threadsCtx, _, err := tc.GetBucketContext(ctx, defaultPersonalBucketSlug)
 
 	bucketList, err := tc.buckets.List(threadsCtx)
@@ -251,10 +250,8 @@ func (tc *textileClient) ListBuckets() ([]*TextileBucketRoot, error) {
 }
 
 // Creates a bucket.
-func (tc *textileClient) CreateBucket(bucketSlug string) (*TextileBucketRoot, error) {
+func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (*TextileBucketRoot, error) {
 	log.Debug("Creating a new bucket with slug " + bucketSlug)
-
-	ctx := context.Background()
 	var err error
 
 	if ctx, _, err = tc.GetBucketContext(ctx, bucketSlug); err != nil {
@@ -351,7 +348,7 @@ func (tc *textileClient) Stop() error {
 }
 
 // StartAndBootstrap starts a Textile Client and also initializes default resources for it like a key pair and default bucket.
-func (tc *textileClient) StartAndBootstrap() error {
+func (tc *textileClient) StartAndBootstrap(ctx context.Context) error {
 	// Create key pair if not present
 	kc := keychain.New(tc.store)
 	log.Debug("Generating key pair...")
@@ -369,7 +366,7 @@ func (tc *textileClient) StartAndBootstrap() error {
 	}
 
 	log.Debug("Creating default bucket...")
-	_, err := tc.CreateBucket(defaultPersonalBucketSlug)
+	_, err := tc.CreateBucket(ctx, defaultPersonalBucketSlug)
 	if err != nil {
 		log.Error("Error creating default bucket", err)
 		return err
