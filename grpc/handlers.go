@@ -100,9 +100,20 @@ func (srv *grpcServer) OpenFile(ctx context.Context, request *pb.OpenFileRequest
 }
 
 func (srv *grpcServer) AddItems(ctx context.Context, request *pb.AddItemsRequest) (*pb.AddItemsResponse, error) {
-	panic("implement me")
+	err := srv.sv.AddItems(ctx, request.SourcePaths, request.TargetPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.AddItemsResponse{}, nil
+
 }
 
 func (srv *grpcServer) CreateFolder(ctx context.Context, request *pb.CreateFolderRequest) (*pb.CreateFolderResponse, error) {
-	panic("implement me")
+	err := srv.sv.CreateFolder(ctx, request.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.CreateFolderResponse{}, nil
 }
