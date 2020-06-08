@@ -10,6 +10,7 @@ service SpaceApi {
   rpc GenerateKeyPair(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {}
   rpc GenerateKeyPairWithForce(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {}
   rpc Subscribe(google.protobuf.Empty) returns (stream FileEventResponse) {}
+  rpc TxlSubscribe(google.protobuf.Empty) returns (stream TextileEventResponse) {}
   rpc OpenFile(OpenFileRequest) returns (OpenFileResponse) {}
   rpc AddItems(AddItemsRequest) returns (AddItemsResponse) {}
   rpc CreateFolder(CreateFolderRequest) returns (CreateFolderResponse) {}
@@ -57,6 +58,10 @@ enum EventType {
 message FileEventResponse {
   EventType type = 1;
   ListDirectoryEntry entry = 2;
+}
+
+message TextileEventResponse {
+  string bucket = 1;
 }
 
 message OpenFileRequest {

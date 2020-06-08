@@ -32,3 +32,13 @@ func NewFileEvent(path string, eventType FileEventType, info os.FileInfo) FileEv
 		Info: info,
 	}
 }
+
+type TextileEvent struct {
+	BucketName string
+}
+
+func NewTextileEvent(bucketname string) TextileEvent {
+	return TextileEvent{
+		BucketName: bucketname,
+	}
+}
