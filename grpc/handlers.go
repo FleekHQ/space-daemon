@@ -69,9 +69,8 @@ func (srv *grpcServer) GetConfigInfo(ctx context.Context, e *empty.Empty) (*pb.C
 	appCfg := srv.sv.GetConfig(ctx)
 
 	res := &pb.ConfigInfoResponse{
-		FolderPath: appCfg.FolderPath,
-		Port:       strconv.Itoa(appCfg.Port),
-		AppPath:    appCfg.AppPath,
+		Port:    strconv.Itoa(appCfg.Port),
+		AppPath: appCfg.AppPath,
 	}
 
 	return res, nil
@@ -139,7 +138,7 @@ func (srv *grpcServer) AddItems(ctx context.Context, request *pb.AddItemsRequest
 	for _, e := range res.Errors {
 		errors = append(errors, &pb.AddItemError{
 			SourcePath: e.SourcePath,
-			Error:     e.Error.Error(),
+			Error:      e.Error.Error(),
 		})
 	}
 

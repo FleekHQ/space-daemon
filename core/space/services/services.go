@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/env"
 	"github.com/FleekHQ/space-poc/core/space/domain"
@@ -22,9 +23,10 @@ type AddFileWatchFunc = func(path string) error
 
 func (s *Space) GetConfig(ctx context.Context) domain.AppConfig {
 	return domain.AppConfig{
-		FolderPath: s.cfg.GetString(config.SpaceFolderPath, ""),
-		Port:       s.cfg.GetInt(config.SpaceServerPort, "-1"),
-		AppPath:    s.env.WorkingFolder(),
+		Port:                 s.cfg.GetInt(config.SpaceServerPort, "-1"),
+		AppPath:              s.env.WorkingFolder(),
+		TextileHubTarget:     s.cfg.GetString(config.TextileHubTarget, ""),
+		TextileThreadsTarget: s.cfg.GetString(config.TextileThreadsTarget, ""),
 	}
 
 }

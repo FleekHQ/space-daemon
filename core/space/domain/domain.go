@@ -1,9 +1,10 @@
 package domain
 
 type AppConfig struct {
-	FolderPath string
-	Port       int
-	AppPath    string
+	Port                 int
+	AppPath              string
+	TextileHubTarget     string
+	TextileThreadsTarget string
 }
 
 type DirEntry struct {

@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	JsonConfigFileName = "space.json"
-	SpaceFolderPath    = "space/folderPath"
-	SpaceServerPort    = "space/rpcPort"
-	SpaceStorePath     = "space/storePath"
+	JsonConfigFileName   = "space.json"
+	SpaceServerPort      = "space/rpcPort"
+	SpaceStorePath       = "space/storePath"
+	TextileHubTarget     = "space/textileHubTarget"
+	TextileThreadsTarget = "space/textileThreadsTarget"
 )
 
 var (
@@ -65,6 +66,7 @@ func (c standardConfig) GetString(key string, defaultValue interface{}) string {
 		log.Error(fmt.Sprintf("error getting key %s from config", key), err)
 		return ""
 	}
+	log.Info("Getting conf " + key + ": " + v)
 
 	return v
 }

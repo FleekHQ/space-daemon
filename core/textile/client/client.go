@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/FleekHQ/space-poc/config"
+
 	"github.com/ipfs/interface-go-ipfs-core/path"
 
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
@@ -42,10 +44,10 @@ type Client interface {
 	GetThreadsConnection() (*threadsClient.Client, error)
 	ListBuckets(ctx context.Context) ([]*TextileBucketRoot, error)
 	CreateBucket(ctx context.Context, bucketSlug string) (*TextileBucketRoot, error)
-	Start() error
+	Start(cfg config.Config) error
 	Stop() error
 	WaitForReady() chan bool
-	StartAndBootstrap(ctx context.Context) error
+	StartAndBootstrap(ctx context.Context, cfg config.Config) error
 	FolderExists(ctx context.Context, key string, path string) (bool, error)
 	FileExists(ctx context.Context, key string, path string, r io.Reader) (bool, error)
 	UploadFile(
@@ -283,7 +285,7 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (*
 }
 
 // Starts the Textile Client
-func (tc *textileClient) Start() error {
+func (tc *textileClient) Start(cfg config.Config) error {
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
 
@@ -296,15 +298,15 @@ func (tc *textileClient) Start() error {
 	finalHubTarget := hubTarget
 	finalThreadsTarget := threadsTarget
 
-	hubTargetFromEnv := os.Getenv("TXL_HUB_TARGET")
-	threadsTargetFromEnv := os.Getenv("TXL_THREADS_TARGET")
+	hubTargetFromCfg := cfg.GetString(config.TextileHubTarget, "")
+	threadsTargetFromCfg := cfg.GetString(config.TextileThreadsTarget, "")
 
-	if hubTargetFromEnv != "" {
-		finalHubTarget = hubTargetFromEnv
+	if hubTargetFromCfg != "" {
+		finalHubTarget = hubTargetFromCfg
 	}
 
-	if threadsTargetFromEnv != "" {
-		finalThreadsTarget = threadsTargetFromEnv
+	if threadsTargetFromCfg != "" {
+		finalThreadsTarget = threadsTargetFromCfg
 	}
 
 	log.Debug("Creating buckets client in " + finalHubTarget)
@@ -348,7 +350,7 @@ func (tc *textileClient) Stop() error {
 }
 
 // StartAndBootstrap starts a Textile Client and also initializes default resources for it like a key pair and default bucket.
-func (tc *textileClient) StartAndBootstrap(ctx context.Context) error {
+func (tc *textileClient) StartAndBootstrap(ctx context.Context, cfg config.Config) error {
 	// Create key pair if not present
 	kc := keychain.New(tc.store)
 	log.Debug("Generating key pair...")
@@ -360,7 +362,7 @@ func (tc *textileClient) StartAndBootstrap(ctx context.Context) error {
 
 	// Start Textile Client
 	log.Debug("Starting Textile Client...")
-	if err := tc.Start(); err != nil {
+	if err := tc.Start(cfg); err != nil {
 		log.Error("Error starting Textile Client", err)
 		return err
 	}

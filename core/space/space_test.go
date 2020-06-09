@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/space/services"
 	"github.com/FleekHQ/space-poc/core/textile/client"
 	"github.com/FleekHQ/space-poc/mocks"
@@ -203,11 +202,6 @@ func TestService_OpenFile(t *testing.T) {
 	testFileName := "file.txt"
 
 	// setup mocks
-	cfg.On("GetString", config.SpaceFolderPath, "").Return(
-		getDir().dir,
-		nil,
-	)
-
 	cfg.On("GetInt", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(
 		-1,
 		nil,
@@ -309,7 +303,6 @@ func TestService_AddItems_Folder(t *testing.T) {
 		mock.Anything,
 	).Return(nil, mockPath, nil)
 
-
 	textileClient.On(
 		"UploadFile",
 		mock.Anything,
@@ -324,7 +317,7 @@ func TestService_AddItems_Folder(t *testing.T) {
 	assert.NotNil(t, res)
 
 	assert.Nil(t, err)
-	assert.Len(t, res.Results, len(testSourcePaths) + len(getTempDir().fileNames))
+	assert.Len(t, res.Results, len(testSourcePaths)+len(getTempDir().fileNames))
 	// assert mocks
 	textileClient.AssertExpectations(t)
 	textileClient.AssertNumberOfCalls(t, "UploadFile", len(getTempDir().fileNames))
