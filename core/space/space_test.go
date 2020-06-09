@@ -179,13 +179,13 @@ func TestService_ListDir(t *testing.T) {
 	assert.Equal(t, "example.txt", res[1].Name)
 	assert.Equal(t, "txt", res[1].FileExtension)
 	assert.Equal(t, "bafkreia4q63he72sgzrn64kpa2uu5it7utmqkdby6t3xck6umy77x7p2ae", res[1].IpfsHash)
-	assert.Equal(t, bucketPath+"/somedir/example.txt", res[1].Path)
+	assert.Equal(t, "/somedir/example.txt", res[1].Path)
 
 	assert.False(t, res[2].IsDir)
 	assert.Equal(t, "example.txt", res[2].Name)
 	assert.Equal(t, "txt", res[2].FileExtension)
 	assert.Equal(t, "bafkreia4q63he72sgzrn64kpa2uu5it7utmqkdby6t3xck6umy77x7p2ae", res[2].IpfsHash)
-	assert.Equal(t, bucketPath+"/example.txt", res[2].Path)
+	assert.Equal(t, "/example.txt", res[2].Path)
 
 	// assert mocks
 	cfg.AssertExpectations(t)
