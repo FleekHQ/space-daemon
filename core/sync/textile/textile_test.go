@@ -30,6 +30,7 @@ func TestTextileHandler_OnCreate(t *testing.T) {
 	n.On("SendTextileEvent", mock.Anything).Return()
 
 	th.OnCreate(buck, evt)
+	n.AssertExpectations(t)
 }
 
 func TestTextileHandler_OnRemove(t *testing.T) {
@@ -52,6 +53,7 @@ func TestTextileHandler_OnRemove(t *testing.T) {
 	n.On("SendTextileEvent", mock.Anything).Return()
 
 	th.OnRemove(buck, evt)
+	n.AssertExpectations(t)
 }
 
 func TestTextileHandler_OnSave(t *testing.T) {
@@ -74,4 +76,5 @@ func TestTextileHandler_OnSave(t *testing.T) {
 	n.On("SendTextileEvent", mock.Anything).Return()
 
 	th.OnSave(buck, evt)
+	n.AssertExpectations(t)
 }
