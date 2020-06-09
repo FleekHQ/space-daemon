@@ -3,5 +3,6 @@
     "folderPath": "~/space-app",
     "rpcPort": 9999,
     "storePath": "~/.fleek-space"
+    "tempDirPath": "~/space-app/temp"
   }
 }

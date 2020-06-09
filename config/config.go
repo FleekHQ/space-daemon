@@ -15,6 +15,7 @@ const (
 	SpaceFolderPath    = "space/folderPath"
 	SpaceServerPort    = "space/rpcPort"
 	SpaceStorePath     = "space/storePath"
+	SpaceTempDirPath   = "space/tempDirPath"
 )
 
 var (
