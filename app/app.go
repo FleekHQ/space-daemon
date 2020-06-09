@@ -90,7 +90,7 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	})
 
 	// watcher is started inside bucket sync
-	sync := sync.New(watcher, textileClient, srv.SendFileEvent)
+	sync := sync.New(watcher, textileClient, srv)
 
 	g.Go(func() error {
 		return sync.Start(ctx)

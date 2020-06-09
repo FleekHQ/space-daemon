@@ -3,7 +3,6 @@ package grpc
 import (
 	"context"
 	"strconv"
-	"time"
 
 	"github.com/FleekHQ/space-poc/core/events"
 	"github.com/FleekHQ/space-poc/grpc/pb"
@@ -22,6 +21,19 @@ func (srv *grpcServer) SendFileEvent(event events.FileEvent) {
 	pe := &pb.FileEventResponse{}
 
 	srv.sendFileEvent(pe)
+}
+
+func (srv *grpcServer) sendTextileEvent(event *pb.TextileEventResponse) {
+	if srv.txlEventStream != nil {
+		log.Info("sending events to client")
+		srv.txlEventStream.Send(event)
+	}
+}
+
+func (srv *grpcServer) SendTextileEvent(event events.TextileEvent) {
+	pe := &pb.TextileEventResponse{}
+
+	srv.sendTextileEvent(pe)
 }
 
 func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDirectoriesRequest) (*pb.ListDirectoriesResponse, error) {
@@ -67,27 +79,36 @@ func (srv *grpcServer) GetConfigInfo(ctx context.Context, e *empty.Empty) (*pb.C
 
 func (srv *grpcServer) Subscribe(empty *empty.Empty, stream pb.SpaceApi_SubscribeServer) error {
 	srv.registerStream(stream)
-	c := time.Tick(1 * time.Second)
-	for i := 0; i < 10; i++ {
-		<-c
-		mockFileResponse := &pb.FileEventResponse{Type: pb.EventType_ENTRY_ADDED, Entry: &pb.ListDirectoryEntry{
-			Path:          "temp/path",
-			IsDir:         false,
-			Name:          "myPath.txt",
-			SizeInBytes:   "600",
-			Created:       "",
-			Updated:       "",
-			FileExtension: "txt",
-		}}
-		srv.sendFileEvent(mockFileResponse)
+	// waits until request is done
+	select {
+	case <-stream.Context().Done():
+		break
 	}
-
+	// clean up stream
+	srv.registerStream(nil)
 	log.Info("closing stream")
 	return nil
 }
 
 func (srv *grpcServer) registerStream(stream pb.SpaceApi_SubscribeServer) {
 	srv.fileEventStream = stream
+}
+
+func (srv *grpcServer) TxlSubscribe(empty *empty.Empty, stream pb.SpaceApi_TxlSubscribeServer) error {
+	srv.registerTxlStream(stream)
+	// waits until request is done
+	select {
+	case <-stream.Context().Done():
+		break
+	}
+	// clean up stream
+	srv.registerTxlStream(nil)
+	log.Info("closing stream")
+	return nil
+}
+
+func (srv *grpcServer) registerTxlStream(stream pb.SpaceApi_TxlSubscribeServer) {
+	srv.txlEventStream = stream
 }
 
 func (srv *grpcServer) OpenFile(ctx context.Context, request *pb.OpenFileRequest) (*pb.OpenFileResponse, error) {

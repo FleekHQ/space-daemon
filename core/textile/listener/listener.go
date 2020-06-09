@@ -28,11 +28,12 @@ type textileThreadListener struct {
 	handlers           []handler.EventHandler
 }
 
-func New(textileClient textile.Client, bucketSlug string) ThreadListener {
+func New(textileClient textile.Client, bucketSlug string, handlers []handler.EventHandler) ThreadListener {
 	return &textileThreadListener{
 		bucketSlug:    bucketSlug,
 		started:       false,
 		textileClient: textileClient,
+		handlers:      handlers,
 	}
 }
 

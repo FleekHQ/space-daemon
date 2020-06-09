@@ -12,9 +12,15 @@ import (
 	"github.com/FleekHQ/space-poc/log"
 
 	tc "github.com/FleekHQ/space-poc/core/textile/client"
+	th "github.com/FleekHQ/space-poc/core/textile/handler"
 	tl "github.com/FleekHQ/space-poc/core/textile/listener"
 	"github.com/FleekHQ/space-poc/core/watcher"
 )
+
+type GrpcNotifier interface {
+	SendFileEvent(event events.FileEvent)
+	SendTextileEvent(event events.TextileEvent)
+}
 
 type BucketSynchronizer struct {
 	folderWatcher          *watcher.FolderWatcher
@@ -22,16 +28,14 @@ type BucketSynchronizer struct {
 	fh                     *fs.Handler
 	th                     *textile.Handler
 	textileThreadListeners []tl.ThreadListener
-
-	// NOTE: not sure we need the complete grpc server here, but that could change
-	notify func(event events.FileEvent)
+	notifier               GrpcNotifier
 }
 
-// Creates a new BucketSynchronizer instance
+// Creates a new BucketSynchronizer instancelistenerEventHandler
 func New(
 	folderWatcher *watcher.FolderWatcher,
 	textileClient tc.Client,
-	notify func(event events.FileEvent),
+	notifier GrpcNotifier,
 ) *BucketSynchronizer {
 	textileThreadListeners := make([]tl.ThreadListener, 0)
 
@@ -40,8 +44,8 @@ func New(
 		textileClient:          textileClient,
 		fh:                     nil,
 		th:                     nil,
-		notify:                 notify,
 		textileThreadListeners: textileThreadListeners,
+		notifier:               notifier,
 	}
 }
 
@@ -54,10 +58,13 @@ func (bs *BucketSynchronizer) Start(ctx context.Context) error {
 
 	// TODO: Generalize this to one per bucket
 	bs.fh = fs.NewHandler(bs.textileClient, buckets[0])
-	bs.th = textile.NewHandler()
+	bs.th = textile.NewHandler(bs.notifier)
+
+	handlers := make([]th.EventHandler, 0)
+	handlers = append(handlers, bs.th)
 
 	for _, bucket := range buckets {
-		bs.textileThreadListeners = append(bs.textileThreadListeners, tl.New(bs.textileClient, bucket.Name))
+		bs.textileThreadListeners = append(bs.textileThreadListeners, tl.New(bs.textileClient, bucket.Name, handlers))
 	}
 
 	bs.folderWatcher.RegisterHandler(bs.fh)
