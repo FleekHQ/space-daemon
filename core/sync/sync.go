@@ -51,7 +51,7 @@ func New(
 
 // Starts the folder watcher and the textile watcher.
 func (bs *BucketSynchronizer) Start(ctx context.Context) error {
-	buckets, err := bs.textileClient.ListBuckets()
+	buckets, err := bs.textileClient.ListBuckets(ctx)
 	if err != nil {
 		return err
 	}

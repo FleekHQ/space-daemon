@@ -13,9 +13,9 @@ builds:
   goos:
     - darwin
     - linux
-    - windows
 archives:
 - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
+  format: binary
   replacements:
     darwin: Darwin
     linux: Linux

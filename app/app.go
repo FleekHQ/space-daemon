@@ -59,7 +59,7 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	bootstrapReady := make(chan bool)
 	textileClient := tc.New(store)
 	g.Go(func() error {
-		err := textileClient.StartAndBootstrap()
+		err := textileClient.StartAndBootstrap(ctx)
 		bootstrapReady <- true
 		return err
 	})
