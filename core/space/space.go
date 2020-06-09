@@ -18,10 +18,9 @@ type Service interface {
 	OpenFile(ctx context.Context, path string, bucketSlug string) (domain.OpenFileInfo, error)
 	GetConfig(ctx context.Context) domain.AppConfig
 	ListDir(ctx context.Context) ([]domain.FileInfo, error)
-	GetPathInfo(ctx context.Context, path string) (domain.FileInfo, error)
 	GenerateKeyPair(ctx context.Context, useForce bool) (domain.KeyPair, error)
 	CreateFolder(ctx context.Context, path string) error
-	AddItems(ctx context.Context, sourcePaths []string, targetPath string) error
+	AddItems(ctx context.Context, sourcePaths []string, targetPath string) (domain.AddItemsResponse, error)
 }
 
 

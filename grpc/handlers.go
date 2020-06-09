@@ -121,12 +121,32 @@ func (srv *grpcServer) OpenFile(ctx context.Context, request *pb.OpenFileRequest
 }
 
 func (srv *grpcServer) AddItems(ctx context.Context, request *pb.AddItemsRequest) (*pb.AddItemsResponse, error) {
-	err := srv.sv.AddItems(ctx, request.SourcePaths, request.TargetPath)
+	res, err := srv.sv.AddItems(ctx, request.SourcePaths, request.TargetPath)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.AddItemsResponse{}, nil
+	results := make([]*pb.AddItemResult, 0)
+	errors := make([]*pb.AddItemError, 0)
+
+	for _, r := range res.Results {
+		results = append(results, &pb.AddItemResult{
+			SourcePath: r.SourcePath,
+			BucketPath: r.BucketPath,
+		})
+	}
+
+	for _, e := range res.Errors {
+		errors = append(errors, &pb.AddItemError{
+			SourcePath: e.SourcePath,
+			Error:     e.Error.Error(),
+		})
+	}
+
+	return &pb.AddItemsResponse{
+		Results: results,
+		Errors:  errors,
+	}, nil
 
 }
 

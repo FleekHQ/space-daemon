@@ -29,3 +29,18 @@ type KeyPair struct {
 	PublicKey  string
 	PrivateKey string
 }
+
+type AddItemResult struct {
+	SourcePath string
+	BucketPath string
+}
+
+type AddItemError struct {
+	SourcePath string
+	Error      error
+}
+
+type AddItemsResponse struct {
+	Results []AddItemResult
+	Errors  []AddItemError
+}
