@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -26,15 +27,19 @@ func (s *Space) listDirAtPath(
 		return nil, err
 	}
 
+	relPathRegex := regexp.MustCompile(`\/ip(f|n)s\/[^\/]*(?P<relPath>\/.*)`)
+
 	entries := make([]domain.FileInfo, 0)
 	for _, item := range dir.Item.Items {
 		if item.Name == ".textileseed" || item.Name == ".textile" {
 			continue
 		}
 
+		relPath := relPathRegex.FindStringSubmatch(item.Path)[2]
+
 		entry := domain.FileInfo{
 			DirEntry: domain.DirEntry{
-				Path:          item.Path,
+				Path:          relPath,
 				IsDir:         item.IsDir,
 				Name:          item.Name,
 				SizeInBytes:   strconv.FormatInt(item.Size, 10),
