@@ -22,6 +22,7 @@ var (
 	cfg           *mocks.Config
 	st            *mocks.Store
 	textileClient *mocks.Client
+	mockPath      *mocks.Path
 )
 
 type TearDown func()
@@ -259,19 +260,23 @@ func TestService_AddItems_FilesOnly(t *testing.T) {
 
 	textileClient.On("ListBuckets", mock.Anything).Return(mockBuckets, nil)
 
+	mockPath.On("String").Return("hash")
+
 	textileClient.On(
 		"UploadFile",
 		mock.Anything,
 		testKey,
 		mock.Anything,
 		mock.Anything,
-	).Return(nil, nil, nil)
+	).Return(nil, mockPath, nil)
 
-	err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+	res, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
 
 	assert.Nil(t, err)
+	assert.NotNil(t, res)
 	// assert mocks
 	textileClient.AssertExpectations(t)
+	textileClient.AssertNumberOfCalls(t, "UploadFile", len(testSourcePaths))
 }
 
 func TestService_AddItems_Folder(t *testing.T) {
@@ -300,19 +305,26 @@ func TestService_AddItems_Folder(t *testing.T) {
 		mock.Anything,
 	).Return(nil, nil, nil)
 
+	mockPath.On("String").Return("hash")
+
 	textileClient.On(
 		"UploadFile",
 		mock.Anything,
 		testKey,
 		mock.Anything,
 		mock.Anything,
-	).Return(nil, nil, nil)
+	).Return(nil, mockPath, nil)
 
-	err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+	res, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, res)
 
 	assert.Nil(t, err)
 	// assert mocks
 	textileClient.AssertExpectations(t)
+	textileClient.AssertNumberOfCalls(t, "UploadFile", len(getTempDir().fileNames))
+	textileClient.AssertNumberOfCalls(t, "CreateDirectory", 1)
 }
 
 func TestService_AddItems_OnError(t *testing.T) {
@@ -344,7 +356,7 @@ func TestService_AddItems_OnError(t *testing.T) {
 		mock.Anything,
 	).Return(nil, nil, bucketError)
 
-	err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+	_, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
 
 	assert.NotNil(t, err)
 	assert.Equal(t, bucketError, err)

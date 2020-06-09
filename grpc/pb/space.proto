@@ -76,8 +76,20 @@ message AddItemsRequest {
   repeated string sourcePaths = 1; // full paths to file or Folder on FS. Needs to be a location available to the daemon
   string targetPath = 2; // target path in bucket.
 }
-// not sure we need to return anything other than an error if we failed
+
+message AddItemResult {
+  string sourcePath= 1;
+  string bucketPath = 2;
+}
+
+message AddItemError {
+  string sourcePath = 1;
+  string error = 2;
+}
+
 message AddItemsResponse {
+  repeated AddItemResult results = 1;
+  repeated AddItemError errors = 2;
 }
 
 message CreateFolderRequest {
