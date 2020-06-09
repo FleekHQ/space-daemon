@@ -182,47 +182,10 @@ func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath s
 	for _, sourcePath := range sourcePaths {
 		go func(pathInFs string) {
 			if IsPathDir(pathInFs) {
-				// create folder
-				_, folderName := filepath.Split(pathInFs)
-				targetBucketFolder := targetPath + "/" + folderName
-				targetPath, err := s.createFolder(ctx, targetBucketFolder, bucketKey)
-				if err != nil {
-					workerRes <- addItemWorkerRes{
-						sourcePath: pathInFs,
-						err:        err,
-					}
-				} else {
-					workerRes <- addItemWorkerRes{
-						sourcePath: pathInFs,
-						bucketPath: targetPath,
-					}
-					res, err := s.addFolderRec(pathInFs, targetPath, ctx, bucketKey)
-					if err != nil {
-						workerRes <- addItemWorkerRes{
-							sourcePath: pathInFs,
-							err:        err,
-						}
-					} else {
-						// send results to collect channel
-						for _, r := range res.Results {
-							workerRes <- addItemWorkerRes{
-								sourcePath: r.SourcePath,
-								bucketPath: r.BucketPath,
-							}
-						}
-
-						for _, e := range res.Errors {
-							workerRes <- addItemWorkerRes{
-								sourcePath: e.SourcePath,
-								err:        e.Error,
-							}
-						}
-					}
-				}
+				s.handleAddItemFolder(ctx, pathInFs, targetPath, bucketKey, workerRes)
 			} else {
 				r, err := s.addFile(ctx, pathInFs, targetPath, bucketKey)
 				if err != nil {
-					// NOTE: we could also create a chan struct and pass path + err
 					workerRes <- addItemWorkerRes{
 						sourcePath: pathInFs,
 						err:        err,
@@ -240,6 +203,7 @@ func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath s
 	resultsDone := make(chan struct{})
 	go func() {
 		// NOTE: this go routine is the only one writing to results arrays
+		// waiting to collect all results from channel
 		for chRes := range workerRes {
 			if chRes.err != nil {
 				errors = append(errors, domain.AddItemError{
@@ -253,7 +217,7 @@ func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath s
 				})
 			}
 		}
-		resultsDone<- struct{}{}
+		resultsDone <- struct{}{}
 	}()
 
 	wg.Wait()
@@ -266,6 +230,48 @@ func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath s
 		Results: results,
 		Errors:  errors,
 	}, nil
+}
+
+func (s *Space) handleAddItemFolder(ctx context.Context, sourcePath string, targetPath string, bucketKey string, workerRes chan<- addItemWorkerRes) {
+	// create folder
+	_, folderName := filepath.Split(sourcePath)
+	targetBucketFolder := targetPath + "/" + folderName
+	folderBucketPath, err := s.createFolder(ctx, targetBucketFolder, bucketKey)
+	if err != nil {
+		workerRes <- addItemWorkerRes{
+			sourcePath: sourcePath,
+			err:        err,
+		}
+		return
+	}
+
+	workerRes <- addItemWorkerRes{
+		sourcePath: sourcePath,
+		bucketPath: folderBucketPath,
+	}
+	res, err := s.addFolderRec(sourcePath, targetPath, ctx, bucketKey)
+	if err != nil {
+		workerRes <- addItemWorkerRes{
+			sourcePath: sourcePath,
+			err:        err,
+		}
+		return
+	}
+
+	// send results to results collect channel
+	for _, r := range res.Results {
+		workerRes <- addItemWorkerRes{
+			sourcePath: r.SourcePath,
+			bucketPath: r.BucketPath,
+		}
+	}
+
+	for _, e := range res.Errors {
+		workerRes <- addItemWorkerRes{
+			sourcePath: e.SourcePath,
+			err:        e.Error,
+		}
+	}
 }
 
 func (s *Space) addFolderRec(sourcePath string, targetPath string, ctx context.Context, bucketKey string) (domain.AddItemsResponse, error) {
