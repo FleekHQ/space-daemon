@@ -43,6 +43,7 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 	st = new(mocks.Store)
 	cfg = new(mocks.Config)
 	textileClient = new(mocks.Client)
+	mockPath = new(mocks.Path)
 	var dir string
 	var err error
 	if dir, err = ioutil.TempDir("", "space-test-folders"); err != nil {
@@ -274,6 +275,7 @@ func TestService_AddItems_FilesOnly(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
+	assert.Len(t, res.Results, len(testSourcePaths))
 	// assert mocks
 	textileClient.AssertExpectations(t)
 	textileClient.AssertNumberOfCalls(t, "UploadFile", len(testSourcePaths))
@@ -298,14 +300,15 @@ func TestService_AddItems_Folder(t *testing.T) {
 
 	textileClient.On("ListBuckets", mock.Anything).Return(mockBuckets, nil)
 
+	mockPath.On("String").Return("hash")
+
 	textileClient.On(
 		"CreateDirectory",
 		mock.Anything,
 		testKey,
 		mock.Anything,
-	).Return(nil, nil, nil)
+	).Return(nil, mockPath, nil)
 
-	mockPath.On("String").Return("hash")
 
 	textileClient.On(
 		"UploadFile",
@@ -321,6 +324,7 @@ func TestService_AddItems_Folder(t *testing.T) {
 	assert.NotNil(t, res)
 
 	assert.Nil(t, err)
+	assert.Len(t, res.Results, len(testSourcePaths) + len(getTempDir().fileNames))
 	// assert mocks
 	textileClient.AssertExpectations(t)
 	textileClient.AssertNumberOfCalls(t, "UploadFile", len(getTempDir().fileNames))
@@ -356,10 +360,10 @@ func TestService_AddItems_OnError(t *testing.T) {
 		mock.Anything,
 	).Return(nil, nil, bucketError)
 
-	_, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+	res, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
 
-	assert.NotNil(t, err)
-	assert.Equal(t, bucketError, err)
+	assert.Nil(t, err)
+	assert.Len(t, res.Errors, 2)
 	// assert mocks
 	textileClient.AssertExpectations(t)
 }

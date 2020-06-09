@@ -134,19 +134,23 @@ func (s *Space) CreateFolder(ctx context.Context, path string) error {
 		return err
 	}
 
-	return s.createFolder(ctx, path, key)
-}
-
-func (s *Space) createFolder(ctx context.Context, path string, key string) error {
-	// NOTE: may need to change signature of createFolder if we need to return this info
-	_, _, err := s.tc.CreateDirectory(ctx, key, path)
-
-	if err != nil {
-		log.Error(fmt.Sprintf("error creating folder in bucket %s with path %s", key, path), err)
+	if _, err := s.createFolder(ctx, path, key); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (s *Space) createFolder(ctx context.Context, path string, key string) (string, error) {
+	// NOTE: may need to change signature of createFolder if we need to return this info
+	_, root, err := s.tc.CreateDirectory(ctx, key, path)
+
+	if err != nil {
+		log.Error(fmt.Sprintf("error creating folder in bucket %s with path %s", key, path), err)
+		return "", err
+	}
+
+	return root.String(), nil
 }
 
 func (s *Space) AddItems(ctx context.Context, sourcePaths []string, targetPath string) (domain.AddItemsResponse, error) {
@@ -181,13 +185,17 @@ func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath s
 				// create folder
 				_, folderName := filepath.Split(pathInFs)
 				targetBucketFolder := targetPath + "/" + folderName
-				err := s.createFolder(ctx, targetBucketFolder, bucketKey)
+				targetPath, err := s.createFolder(ctx, targetBucketFolder, bucketKey)
 				if err != nil {
 					workerRes <- addItemWorkerRes{
 						sourcePath: pathInFs,
 						err:        err,
 					}
 				} else {
+					workerRes <- addItemWorkerRes{
+						sourcePath: pathInFs,
+						bucketPath: targetPath,
+					}
 					res, err := s.addFolderRec(pathInFs, targetPath, ctx, bucketKey)
 					if err != nil {
 						workerRes <- addItemWorkerRes{
@@ -229,6 +237,7 @@ func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath s
 			wg.Done()
 		}(sourcePath)
 	}
+	resultsDone := make(chan struct{})
 	go func() {
 		// NOTE: this go routine is the only one writing to results arrays
 		for chRes := range workerRes {
@@ -244,11 +253,14 @@ func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath s
 				})
 			}
 		}
+		resultsDone<- struct{}{}
 	}()
 
 	wg.Wait()
-	// closing channel to close err handling goroutine
+	// closing channel to close results handling goroutine
 	close(workerRes)
+	// wait for all results to finish
+	<-resultsDone
 
 	return domain.AddItemsResponse{
 		Results: results,
