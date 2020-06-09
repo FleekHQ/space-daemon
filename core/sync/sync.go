@@ -23,7 +23,7 @@ type GrpcNotifier interface {
 }
 
 type BucketSynchronizer struct {
-	folderWatcher          *watcher.FolderWatcher
+	folderWatcher          watcher.FolderWatcher
 	textileClient          tc.Client
 	fh                     *fs.Handler
 	th                     *textile.Handler
@@ -33,7 +33,7 @@ type BucketSynchronizer struct {
 
 // Creates a new BucketSynchronizer instancelistenerEventHandler
 func New(
-	folderWatcher *watcher.FolderWatcher,
+	folderWatcher watcher.FolderWatcher,
 	textileClient tc.Client,
 	notifier GrpcNotifier,
 ) *BucketSynchronizer {

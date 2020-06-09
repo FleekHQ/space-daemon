@@ -4,13 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	fsutils "github.com/FleekHQ/space-poc/core/space/services"
+	"github.com/mitchellh/go-homedir"
 	s "strings"
 	"sync"
 
-	"os"
 	"time"
-
-	homedir "github.com/mitchellh/go-homedir"
 
 	"github.com/radovskyb/watcher"
 
@@ -21,7 +20,15 @@ var (
 	ErrFolderPathNotFound = errors.New("could not find a folder path for watcher")
 )
 
-type FolderWatcher struct {
+type FolderWatcher interface {
+	RegisterHandler(handler EventHandler)
+	AddFile(path string) error
+	Watch(ctx context.Context) error
+	Close()
+}
+
+
+type folderWatcher struct {
 	w *watcher.Watcher
 
 	lock        sync.Mutex
@@ -33,20 +40,10 @@ type FolderWatcher struct {
 }
 
 // New creates an new instance of folder watcher
-// It listens to the path specified in the config space/folderPath
-func New(configs ...Option) (*FolderWatcher, error) {
+func New(configs ...Option) (FolderWatcher, error) {
 	options := watcherOptions{}
 	for _, config := range configs {
 		config(&options)
-	}
-
-	if len(options.paths) == 0 {
-		// default watches current directory
-		cwd, err := os.Getwd()
-		if err != nil {
-			return nil, err
-		}
-		options.paths = append(options.paths, cwd)
 	}
 
 	w := watcher.New()
@@ -68,21 +65,33 @@ func New(configs ...Option) (*FolderWatcher, error) {
 		}
 	}
 
-	return &FolderWatcher{
+	return &folderWatcher{
 		w:       w,
 		options: options,
 	}, nil
 }
 
-func (fw *FolderWatcher) RegisterHandler(handler EventHandler) {
+func (fw *folderWatcher) RegisterHandler(handler EventHandler) {
 	fw.publishLock.Lock()
 	defer fw.publishLock.Unlock()
 	fw.handlers = append(fw.handlers, handler)
 }
 
-// Watch will start listening of changes on the FolderWatcher path and trigger the handler with any update events
+func (fw *folderWatcher) AddFile(path string) error {
+	if fsutils.IsPathDir(path) {
+		return errors.New(fmt.Sprintf("unable to watch path %s folder is not supporter", path))
+	}
+	err := fw.w.Add(path)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+// Watch will start listening of changes on the folderWatcher path and trigger the handler with any update events
 // This is a block operation
-func (fw *FolderWatcher) Watch(ctx context.Context) error {
+func (fw *folderWatcher) Watch(ctx context.Context) error {
 	fw.setToStarted()
 
 	go func() {
@@ -121,7 +130,7 @@ func (fw *FolderWatcher) Watch(ctx context.Context) error {
 	return nil
 }
 
-func (fw *FolderWatcher) setToStarted() {
+func (fw *folderWatcher) setToStarted() {
 	fw.lock.Lock()
 	defer fw.lock.Unlock()
 	if fw.started {
@@ -130,7 +139,7 @@ func (fw *FolderWatcher) setToStarted() {
 	fw.started = true
 }
 
-func (fw *FolderWatcher) publishEvent(ctx context.Context, event watcher.Event) {
+func (fw *folderWatcher) publishEvent(ctx context.Context, event watcher.Event) {
 	fw.publishLock.RLock()
 	defer fw.publishLock.RUnlock()
 
@@ -139,7 +148,7 @@ func (fw *FolderWatcher) publishEvent(ctx context.Context, event watcher.Event) 
 	}
 }
 
-func (fw *FolderWatcher) publishEventToHandler(
+func (fw *folderWatcher) publishEventToHandler(
 	ctx context.Context,
 	handler EventHandler,
 	event watcher.Event,
@@ -164,7 +173,7 @@ func (fw *FolderWatcher) publishEventToHandler(
 }
 
 // Close will stop the watching operation and unblock watch calls
-func (fw *FolderWatcher) Close() {
+func (fw *folderWatcher) Close() {
 	fw.lock.Lock()
 	defer fw.lock.Unlock()
 

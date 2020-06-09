@@ -21,7 +21,7 @@ import (
 var (
 	cfg           *mocks.Config
 	st            *mocks.Store
-	textileClient *mocks.TextileClient
+	textileClient *mocks.Client
 )
 
 type TearDown func()
@@ -41,7 +41,7 @@ type testDir struct {
 func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 	st = new(mocks.Store)
 	cfg = new(mocks.Config)
-	textileClient = new(mocks.TextileClient)
+	textileClient = new(mocks.Client)
 	var dir string
 	var err error
 	if dir, err = ioutil.TempDir("", "space-test-folders"); err != nil {
@@ -148,7 +148,7 @@ func TestService_ListDir(t *testing.T) {
 		},
 	}
 
-	textileClient.On("ListBuckets").Return(mockBuckets, nil)
+	textileClient.On("ListBuckets", mock.Anything).Return(mockBuckets, nil)
 	textileClient.On(
 		"ListDirectory",
 		mock.Anything,
@@ -219,7 +219,7 @@ func TestService_OpenFile(t *testing.T) {
 		},
 	}
 
-	textileClient.On("ListBuckets").Return(mockBuckets, nil)
+	textileClient.On("ListBuckets", mock.Anything).Return(mockBuckets, nil)
 	textileClient.On(
 		"GetFile",
 		mock.Anything,
@@ -257,7 +257,7 @@ func TestService_AddItems_FilesOnly(t *testing.T) {
 		},
 	}
 
-	textileClient.On("ListBuckets").Return(mockBuckets, nil)
+	textileClient.On("ListBuckets", mock.Anything).Return(mockBuckets, nil)
 
 	textileClient.On(
 		"UploadFile",
@@ -291,7 +291,7 @@ func TestService_AddItems_Folder(t *testing.T) {
 		},
 	}
 
-	textileClient.On("ListBuckets").Return(mockBuckets, nil)
+	textileClient.On("ListBuckets", mock.Anything).Return(mockBuckets, nil)
 
 	textileClient.On(
 		"CreateDirectory",
@@ -332,7 +332,7 @@ func TestService_AddItems_OnError(t *testing.T) {
 		},
 	}
 
-	textileClient.On("ListBuckets").Return(mockBuckets, nil)
+	textileClient.On("ListBuckets", mock.Anything).Return(mockBuckets, nil)
 
 	bucketError := errors.New("bucket failed")
 
