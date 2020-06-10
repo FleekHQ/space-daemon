@@ -12,7 +12,7 @@ service SpaceApi {
   rpc Subscribe(google.protobuf.Empty) returns (stream FileEventResponse) {}
   rpc TxlSubscribe(google.protobuf.Empty) returns (stream TextileEventResponse) {}
   rpc OpenFile(OpenFileRequest) returns (OpenFileResponse) {}
-  rpc AddItems(AddItemsRequest) returns (AddItemsResponse) {}
+  rpc AddItems(AddItemsRequest) returns (stream AddItemsResponse) {}
   rpc CreateFolder(CreateFolderRequest) returns (CreateFolderResponse) {}
 }
 
@@ -80,16 +80,12 @@ message AddItemsRequest {
 message AddItemResult {
   string sourcePath= 1;
   string bucketPath = 2;
-}
-
-message AddItemError {
-  string sourcePath = 1;
-  string error = 2;
+  string error = 3;
 }
 
 message AddItemsResponse {
-  repeated AddItemResult results = 1;
-  repeated AddItemError errors = 2;
+  AddItemResult result = 1;
+  uint32 progress = 2;
 }
 
 message CreateFolderRequest {
