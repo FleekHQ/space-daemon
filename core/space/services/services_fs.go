@@ -10,17 +10,10 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/FleekHQ/space-poc/core/space/domain"
 	"github.com/FleekHQ/space-poc/log"
 )
-
-type addItemWorkerRes struct {
-	sourcePath string
-	bucketPath string
-	err        error
-}
 
 func (s *Space) listDirAtPath(
 	ctx context.Context,
@@ -41,7 +34,13 @@ func (s *Space) listDirAtPath(
 			continue
 		}
 
-		relPath := relPathRegex.FindStringSubmatch(item.Path)[2]
+		paths := relPathRegex.FindStringSubmatch(item.Path)
+		var relPath string
+		if len(paths) > 2 {
+			relPath = relPathRegex.FindStringSubmatch(item.Path)[2]
+		} else {
+			relPath = item.Path
+		}
 
 		entry := domain.FileInfo{
 			DirEntry: domain.DirEntry{
@@ -158,143 +157,101 @@ func (s *Space) createFolder(ctx context.Context, path string, key string) (stri
 	return root.String(), nil
 }
 
-func (s *Space) AddItems(ctx context.Context, sourcePaths []string, targetPath string) (domain.AddItemsResponse, error) {
+func (s *Space) AddItems(ctx context.Context, sourcePaths []string, targetPath string) (<-chan domain.AddItemResult, error) {
 	// TODO: add support for bucket slug
 	key, err := s.getDefaultBucketKey(ctx)
 	if err != nil {
-		return domain.AddItemsResponse{}, err
+		return nil, err
 	}
-	return s.addItems(ctx, RemoveDuplicates(sourcePaths), targetPath, key)
+	results := make(chan domain.AddItemResult)
+	go func() {
+		s.addItems(ctx, RemoveDuplicates(sourcePaths), targetPath, key, results)
+		close(results)
+	}()
+
+	return results, nil
 }
 
-func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath string, bucketKey string) (domain.AddItemsResponse, error) {
+func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath string, bucketKey string, results chan<- domain.AddItemResult) error {
 	// check if all sourcePaths exist, else return err
 	for _, sourcePath := range sourcePaths {
 		if !PathExists(sourcePath) {
-			return domain.AddItemsResponse{}, errors.New(fmt.Sprintf("path not found at %s", sourcePath))
+			return errors.New(fmt.Sprintf("path not found at %s", sourcePath))
 		}
 	}
 
-	// create wait group with amount of sourcePaths
-	var wg sync.WaitGroup
-	wg.Add(len(sourcePaths))
-	workerRes := make(chan addItemWorkerRes)
-
-	results := make([]domain.AddItemResult, 0)
-	errors := make([]domain.AddItemError, 0)
-
-	// start parallel creation of paths
+	// NOTE: sequential upload of files and folders
 	for _, sourcePath := range sourcePaths {
-		go func(pathInFs string) {
-			if IsPathDir(pathInFs) {
-				s.handleAddItemFolder(ctx, pathInFs, targetPath, bucketKey, workerRes)
-			} else {
-				r, err := s.addFile(ctx, pathInFs, targetPath, bucketKey)
-				if err != nil {
-					workerRes <- addItemWorkerRes{
-						sourcePath: pathInFs,
-						err:        err,
-					}
-				} else {
-					workerRes <- addItemWorkerRes{
-						sourcePath: r.SourcePath,
-						bucketPath: r.BucketPath,
-					}
+		if IsPathDir(sourcePath) {
+			s.handleAddItemFolder(ctx, sourcePath, targetPath, bucketKey, results)
+		} else {
+			// add files
+			r, err := s.addFile(ctx, sourcePath, targetPath, bucketKey)
+			if err != nil {
+				results <- domain.AddItemResult{
+					SourcePath: sourcePath,
+					Error:      err,
 				}
+				// next iteration
+				continue
 			}
-			wg.Done()
-		}(sourcePath)
-	}
-	resultsDone := make(chan struct{})
-	go func() {
-		// NOTE: this go routine is the only one writing to results arrays
-		// waiting to collect all results from channel
-		for chRes := range workerRes {
-			if chRes.err != nil {
-				errors = append(errors, domain.AddItemError{
-					SourcePath: chRes.sourcePath,
-					Error:      chRes.err,
-				})
-			} else {
-				results = append(results, domain.AddItemResult{
-					SourcePath: chRes.sourcePath,
-					BucketPath: chRes.bucketPath,
-				})
+			results <- domain.AddItemResult{
+				SourcePath: sourcePath,
+				BucketPath: r.BucketPath,
 			}
 		}
-		resultsDone <- struct{}{}
-	}()
+	}
 
-	wg.Wait()
-	// closing channel to close results handling goroutine
-	close(workerRes)
-	// wait for all results to finish
-	<-resultsDone
-
-	return domain.AddItemsResponse{
-		Results: results,
-		Errors:  errors,
-	}, nil
+	return nil
 }
 
-func (s *Space) handleAddItemFolder(ctx context.Context, sourcePath string, targetPath string, bucketKey string, workerRes chan<- addItemWorkerRes) {
+func (s *Space) handleAddItemFolder(ctx context.Context, sourcePath string, targetPath string, bucketKey string, results chan<- domain.AddItemResult) {
 	// create folder
 	_, folderName := filepath.Split(sourcePath)
 	targetBucketFolder := targetPath + "/" + folderName
 	folderBucketPath, err := s.createFolder(ctx, targetBucketFolder, bucketKey)
 	if err != nil {
-		workerRes <- addItemWorkerRes{
-			sourcePath: sourcePath,
-			err:        err,
+		results <- domain.AddItemResult{
+			SourcePath: sourcePath,
+			Error:      err,
 		}
 		return
 	}
 
-	workerRes <- addItemWorkerRes{
-		sourcePath: sourcePath,
-		bucketPath: folderBucketPath,
+	results <- domain.AddItemResult{
+		SourcePath: sourcePath,
+		BucketPath: folderBucketPath,
 	}
-	res, err := s.addFolderRec(sourcePath, targetPath, ctx, bucketKey)
+	err = s.addFolderRec(sourcePath, targetBucketFolder, ctx, bucketKey, results)
 	if err != nil {
-		workerRes <- addItemWorkerRes{
-			sourcePath: sourcePath,
-			err:        err,
+		results <- domain.AddItemResult{
+			SourcePath: sourcePath,
+			Error:      err,
 		}
 		return
-	}
-
-	// send results to results collect channel
-	for _, r := range res.Results {
-		workerRes <- addItemWorkerRes{
-			sourcePath: r.SourcePath,
-			bucketPath: r.BucketPath,
-		}
-	}
-
-	for _, e := range res.Errors {
-		workerRes <- addItemWorkerRes{
-			sourcePath: e.SourcePath,
-			err:        e.Error,
-		}
 	}
 }
 
-func (s *Space) addFolderRec(sourcePath string, targetPath string, ctx context.Context, bucketKey string) (domain.AddItemsResponse, error) {
+func (s *Space) addFolderRec(sourcePath string, targetPath string, ctx context.Context, bucketKey string, results chan<- domain.AddItemResult) error {
 	var folderSubPaths []string
-	err := filepath.Walk(sourcePath, func(path string, info os.FileInfo, err error) error {
-		// avoid infinite recursion by excluding folder path
-		if path != sourcePath {
-			folderSubPaths = append(folderSubPaths, path)
-		}
-		return nil
-	})
+
+	// NOTE: only reading each folder one level deep since this function is recursive
+	// if we use Walk we would need to track source paths across recursive calls to avoid duplicates
+	files, err := ioutil.ReadDir(sourcePath)
 
 	if err != nil {
 		log.Error(fmt.Sprintf("error reading folder path %s ", sourcePath), err)
-		return domain.AddItemsResponse{}, err
+		return err
 	}
+
+	for _, file := range files {
+		if file.Name() != sourcePath {
+			folderSubPaths = append(folderSubPaths, sourcePath+"/"+file.Name())
+		}
+	}
+
 	// recursive call to addItems
-	return s.addItems(ctx, folderSubPaths, targetPath, bucketKey)
+	return s.addItems(ctx, folderSubPaths, targetPath, bucketKey, results)
 }
 
 // Working with a file

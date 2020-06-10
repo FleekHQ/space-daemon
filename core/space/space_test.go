@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -257,19 +258,32 @@ func TestService_AddItems_FilesOnly(t *testing.T) {
 
 	mockPath.On("String").Return("hash")
 
-	textileClient.On(
-		"UploadFile",
-		mock.Anything,
-		testKey,
-		mock.Anything,
-		mock.Anything,
-	).Return(nil, mockPath, nil)
+	for _, f := range testSourcePaths {
+		_, fileName := filepath.Split(f)
+		textileClient.On(
+			"UploadFile",
+			mock.Anything,
+			testKey,
+			bucketPath+"/"+fileName,
+			mock.Anything,
+		).Return(nil, mockPath, nil)
+	}
 
-	res, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+	ch, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
 
 	assert.Nil(t, err)
-	assert.NotNil(t, res)
-	assert.Len(t, res.Results, len(testSourcePaths))
+	assert.NotNil(t, ch)
+
+	count := 0
+	for res := range ch {
+		count++
+		assert.NotNil(t, res)
+		assert.Nil(t, res.Error)
+		assert.NotEmpty(t, res.BucketPath)
+		assert.NotEmpty(t, res.SourcePath)
+	}
+
+	assert.Equal(t, count, len(testSourcePaths))
 	// assert mocks
 	textileClient.AssertExpectations(t)
 	textileClient.AssertNumberOfCalls(t, "UploadFile", len(testSourcePaths))
@@ -283,6 +297,10 @@ func TestService_AddItems_Folder(t *testing.T) {
 	testKey := "bucketKey"
 	bucketPath := "/tests"
 	testSourcePaths := []string{getTempDir().dir}
+
+	_, folderName := filepath.Split(getTempDir().dir)
+
+	targetBucketPath := bucketPath + "/" + folderName
 
 	mockBuckets := []*client.TextileBucketRoot{
 		{
@@ -300,24 +318,35 @@ func TestService_AddItems_Folder(t *testing.T) {
 		"CreateDirectory",
 		mock.Anything,
 		testKey,
-		mock.Anything,
+		targetBucketPath,
 	).Return(nil, mockPath, nil)
 
-	textileClient.On(
-		"UploadFile",
-		mock.Anything,
-		testKey,
-		mock.Anything,
-		mock.Anything,
-	).Return(nil, mockPath, nil)
+	for _, f := range getTempDir().fileNames {
+		_, fileName := filepath.Split(f)
+		textileClient.On(
+			"UploadFile",
+			mock.Anything,
+			testKey,
+			targetBucketPath+"/"+fileName,
+			mock.Anything,
+		).Return(nil, mockPath, nil)
+	}
 
-	res, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+	ch, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
 
 	assert.Nil(t, err)
-	assert.NotNil(t, res)
+	assert.NotNil(t, ch)
 
-	assert.Nil(t, err)
-	assert.Len(t, res.Results, len(testSourcePaths)+len(getTempDir().fileNames))
+	count := 0
+	for res := range ch {
+		count++
+		assert.NotNil(t, res)
+		assert.Nil(t, res.Error)
+		assert.NotEmpty(t, res.BucketPath)
+		assert.NotEmpty(t, res.SourcePath)
+	}
+
+	assert.Equal(t, count, len(testSourcePaths)+len(getTempDir().fileNames))
 	// assert mocks
 	textileClient.AssertExpectations(t)
 	textileClient.AssertNumberOfCalls(t, "UploadFile", len(getTempDir().fileNames))
@@ -353,10 +382,21 @@ func TestService_AddItems_OnError(t *testing.T) {
 		mock.Anything,
 	).Return(nil, nil, bucketError)
 
-	res, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+	ch, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
 
 	assert.Nil(t, err)
-	assert.Len(t, res.Errors, 2)
+	assert.NotNil(t, ch)
+
+	count := 0
+	for res := range ch {
+		count++
+		assert.NotNil(t, res)
+		assert.NotNil(t, res.Error)
+		assert.NotEmpty(t, res.SourcePath)
+		assert.Empty(t, res.BucketPath)
+	}
+
+	assert.Equal(t, count, len(testSourcePaths))
 	// assert mocks
 	textileClient.AssertExpectations(t)
 }

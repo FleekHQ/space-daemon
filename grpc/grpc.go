@@ -34,6 +34,7 @@ type grpcServer struct {
 	isStarted       bool
 }
 
+
 // Idea taken from here https://medium.com/soon-london/variadic-configuration-functions-in-go-8cef1c97ce99
 
 type ServerOption func(o *serverOptions)

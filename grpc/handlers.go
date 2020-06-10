@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/FleekHQ/space-poc/core/events"
+	"github.com/FleekHQ/space-poc/core/space/domain"
 	"github.com/FleekHQ/space-poc/grpc/pb"
 	"github.com/FleekHQ/space-poc/log"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -119,34 +120,59 @@ func (srv *grpcServer) OpenFile(ctx context.Context, request *pb.OpenFileRequest
 	return &pb.OpenFileResponse{Location: fi.Location}, nil
 }
 
-func (srv *grpcServer) AddItems(ctx context.Context, request *pb.AddItemsRequest) (*pb.AddItemsResponse, error) {
-	res, err := srv.sv.AddItems(ctx, request.SourcePaths, request.TargetPath)
+func (srv *grpcServer) AddItems(request *pb.AddItemsRequest, stream pb.SpaceApi_AddItemsServer) error {
+	ctx := stream.Context()
+	results, err := srv.sv.AddItems(ctx, request.SourcePaths, request.TargetPath)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	results := make([]*pb.AddItemResult, 0)
-	errors := make([]*pb.AddItemError, 0)
+	notifications := make(chan domain.AddItemResult)
 
-	for _, r := range res.Results {
-		results = append(results, &pb.AddItemResult{
-			SourcePath: r.SourcePath,
-			BucketPath: r.BucketPath,
-		})
+	done := make(chan struct{})
+
+	// push notification stream from out
+	go func() {
+		for res := range notifications {
+			var r *pb.AddItemsResponse
+			if res.Error != nil {
+				r = &pb.AddItemsResponse{
+					Result: &pb.AddItemResult{
+						SourcePath: res.SourcePath,
+						Error:      res.Error.Error(),
+					},
+					Progress: 0,
+				}
+			} else {
+				r = &pb.AddItemsResponse{
+					Result: &pb.AddItemResult{
+						SourcePath: res.SourcePath,
+						BucketPath: res.BucketPath,
+					},
+					Progress: 0,
+				}
+			}
+			stream.Send(r)
+		}
+		done <- struct{}{}
+	}()
+
+	// receive results from service
+	for in := range results {
+		select {
+		case notifications <- in:
+		case <-stream.Context().Done():
+			break
+		}
 	}
 
-	for _, e := range res.Errors {
-		errors = append(errors, &pb.AddItemError{
-			SourcePath: e.SourcePath,
-			Error:      e.Error.Error(),
-		})
-	}
+	// close out channel and stream
+	close(notifications)
+	// wait for all notifications to finish
+	<-done
+	log.Printf("closing stream for addFiles")
 
-	return &pb.AddItemsResponse{
-		Results: results,
-		Errors:  errors,
-	}, nil
-
+	return nil
 }
 
 func (srv *grpcServer) CreateFolder(ctx context.Context, request *pb.CreateFolderRequest) (*pb.CreateFolderResponse, error) {
