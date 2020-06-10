@@ -1,4 +1,5 @@
-package fs
+package sync
+
 
 import (
 	"context"
@@ -7,25 +8,11 @@ import (
 
 	path2 "github.com/ipfs/interface-go-ipfs-core/path"
 
-	tc "github.com/FleekHQ/space-poc/core/textile/client"
 	"github.com/FleekHQ/space-poc/log"
 )
 
-// Implementation to handle events from FS
-type Handler struct {
-	client tc.Client
-	bucket *tc.TextileBucketRoot
-}
 
-// Creates a New File System Handler // TODO define what is needed as options like push notifications, etc
-func NewHandler(textileClient tc.Client, bucketRoot *tc.TextileBucketRoot) *Handler {
-	return &Handler{
-		client: textileClient,
-		bucket: bucketRoot,
-	}
-}
-
-func (h *Handler) OnCreate(ctx context.Context, path string, fileInfo os.FileInfo) {
+func (h *watcherHandler) OnCreate(ctx context.Context, path string, fileInfo os.FileInfo) {
 	log.Info(
 		"FS Handler: OnCreate", fmt.Sprintf("path:%s", path),
 		fmt.Sprintf("fileName:%s", fileInfo.Name()),
@@ -37,8 +24,15 @@ func (h *Handler) OnCreate(ctx context.Context, path string, fileInfo os.FileInf
 	var newRoot path2.Path
 	var err error
 
+	key, exists := h.bs.getOpenFileBucketKey(path)
+	if !exists {
+		msg := fmt.Sprintf("error: could not find path %s", path)
+		log.Error(msg, fmt.Errorf(msg))
+		return
+	}
+
 	if fileInfo.IsDir() {
-		existsOnTextile, err := h.client.FolderExists(ctx, h.bucket.Key, path)
+		existsOnTextile, err := h.client.FolderExists(ctx, key, path)
 		if err != nil {
 			log.Error("Could not check if folder exists on textile", err)
 			return
@@ -49,7 +43,7 @@ func (h *Handler) OnCreate(ctx context.Context, path string, fileInfo os.FileInf
 			return
 		}
 
-		result, newRoot, err = h.client.CreateDirectory(ctx, h.bucket.Key, path)
+		result, newRoot, err = h.client.CreateDirectory(ctx, key, path)
 	} else {
 		fileReader, err := os.Open(path)
 		if err != nil {
@@ -57,7 +51,7 @@ func (h *Handler) OnCreate(ctx context.Context, path string, fileInfo os.FileInf
 			return
 		}
 
-		existsOnTextile, err := h.client.FileExists(ctx, h.bucket.Key, path, fileReader)
+		existsOnTextile, err := h.client.FileExists(ctx, key, path, fileReader)
 		if err != nil {
 			log.Error("Could not check if file exists on textile", err)
 			return
@@ -68,7 +62,7 @@ func (h *Handler) OnCreate(ctx context.Context, path string, fileInfo os.FileInf
 			return
 		}
 
-		result, newRoot, err = h.client.UploadFile(ctx, h.bucket.Key, path, fileReader)
+		result, newRoot, err = h.client.UploadFile(ctx, key, path, fileReader)
 	}
 
 	if err != nil {
@@ -90,11 +84,18 @@ func (h *Handler) OnCreate(ctx context.Context, path string, fileInfo os.FileInf
 	// TODO: Update synchronizer/store (maybe in a defer function)
 }
 
-func (h *Handler) OnRemove(ctx context.Context, path string, fileInfo os.FileInfo) {
+func (h *watcherHandler) OnRemove(ctx context.Context, path string, fileInfo os.FileInfo) {
 	log.Info("FS Handler: OnRemove", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileName:%s", fileInfo.Name()))
 	// TODO: Also synchronizer lock check here
 
-	_, err := h.client.DeleteDirOrFile(ctx, h.bucket.Key, path)
+	key, exists := h.bs.getOpenFileBucketKey(path)
+	if !exists {
+		msg := fmt.Sprintf("error: could not find path %s", path)
+		log.Error(msg, fmt.Errorf(msg))
+		return
+	}
+
+	_, err := h.client.DeleteDirOrFile(ctx, key, path)
 
 	if err != nil {
 		log.Error("Deleting from textile failed", err, fmt.Sprintf("path:%s", path))
@@ -109,12 +110,20 @@ func (h *Handler) OnRemove(ctx context.Context, path string, fileInfo os.FileInf
 }
 
 // OnWrite is invoked when a new file is created or files content is updated
-func (h *Handler) OnWrite(ctx context.Context, path string, fileInfo os.FileInfo) {
+func (h *watcherHandler) OnWrite(ctx context.Context, path string, fileInfo os.FileInfo) {
 	log.Info("FS Handler: OnWrite", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileName:%s", fileInfo.Name()))
-	h.OnCreate(ctx, path, fileInfo)
+
+	/*key, exists := h.bs.getOpenFileBucketKey(path)
+	if !exists {
+		msg := fmt.Sprintf("error: could not find path %s", path)
+		log.Error(msg, fmt.Errorf(msg))
+		return
+	}
+	// LOCK PER BUCKET
+	h.bs.textileClient.UploadFile()*/
 }
 
-func (h *Handler) OnRename(ctx context.Context, path string, fileInfo os.FileInfo, oldPath string) {
+func (h *watcherHandler) OnRename(ctx context.Context, path string, fileInfo os.FileInfo, oldPath string) {
 	log.Info(
 		"Watcher Handler: OnRename",
 		fmt.Sprintf("path:%s", path),
@@ -125,7 +134,7 @@ func (h *Handler) OnRename(ctx context.Context, path string, fileInfo os.FileInf
 	h.OnCreate(ctx, path, fileInfo)
 }
 
-func (h *Handler) OnMove(ctx context.Context, path string, fileInfo os.FileInfo, oldPath string) {
+func (h *watcherHandler) OnMove(ctx context.Context, path string, fileInfo os.FileInfo, oldPath string) {
 	log.Info(
 		"Watcher Handler: OnMove",
 		fmt.Sprintf("path:%s", path),

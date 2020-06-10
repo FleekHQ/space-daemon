@@ -1,9 +1,8 @@
-package textile_test
+package sync
 
 import (
 	"testing"
 
-	"github.com/FleekHQ/space-poc/core/sync/textile"
 	"github.com/FleekHQ/space-poc/core/textile/handler"
 	"github.com/FleekHQ/space-poc/mocks"
 	"github.com/stretchr/testify/mock"
@@ -12,7 +11,9 @@ import (
 
 func TestTextileHandler_OnCreate(t *testing.T) {
 	n := new(mocks.TextileNotifier)
-	th := textile.NewHandler(n)
+	th := &textileHandler{
+		notifier: n,
+	}
 
 	b := []byte(`{"Key":"bafzbeid2zp544qy6ktwdlr5xxsmsioclbxj42dkbqckm35e6l5biqlo3tq","Name":"test-bucket-1"}`)
 
@@ -35,7 +36,9 @@ func TestTextileHandler_OnCreate(t *testing.T) {
 
 func TestTextileHandler_OnRemove(t *testing.T) {
 	n := new(mocks.TextileNotifier)
-	th := textile.NewHandler(n)
+	th := &textileHandler{
+		notifier: n,
+	}
 
 	b := []byte(`{"Key":"bafzbeid2zp544qy6ktwdlr5xxsmsioclbxj42dkbqckm35e6l5biqlo3tq","Name":"test-bucket-1"}`)
 
@@ -58,7 +61,9 @@ func TestTextileHandler_OnRemove(t *testing.T) {
 
 func TestTextileHandler_OnSave(t *testing.T) {
 	n := new(mocks.TextileNotifier)
-	th := textile.NewHandler(n)
+	th := &textileHandler{
+		notifier: n,
+	}
 
 	b := []byte(`{"Key":"bafzbeid2zp544qy6ktwdlr5xxsmsioclbxj42dkbqckm35e6l5biqlo3tq","Name":"test-bucket-1"}`)
 

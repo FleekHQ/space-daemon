@@ -36,6 +36,7 @@ const (
 type TextileBucketRoot buckets_pb.Root
 type TextileDirEntries buckets_pb.ListPathReply
 
+
 type Client interface {
 	GetBaseThreadsContext(ctx context.Context) (context.Context, error)
 	GetBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error)

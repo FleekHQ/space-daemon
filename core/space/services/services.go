@@ -18,7 +18,14 @@ type Space struct {
 	watchFile AddFileWatchFunc
 }
 
-type AddFileWatchFunc = func(path string) error
+
+type AddFileWatchFunc = func(addFileInfo domain.AddWatchFile) error
+
+
+func (s *Space) RegisterAddFileWatchFunc(watchFileFunc AddFileWatchFunc) {
+	s.watchFile = watchFileFunc
+}
+
 
 func (s *Space) GetConfig(ctx context.Context) domain.AppConfig {
 	return domain.AppConfig{

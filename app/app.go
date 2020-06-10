@@ -68,14 +68,18 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	<-textileClient.WaitForReady()
 	<-bootstrapReady
 
+	// watcher is started inside bucket sync
+	sync := sync.New(watcher, textileClient, nil)
+
 	// setup the RPC server and Service
 	sv, svErr := space.NewService(
 		store,
 		textileClient,
 		cfg,
 		space.WithEnv(env),
-		space.WithAddWatchFileFunc(watcher.AddFile),
+		space.WithAddWatchFileFunc(sync.AddFileWatch),
 	)
+
 
 	srv := grpc.New(
 		sv,
@@ -90,10 +94,8 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 		return srv.Start(ctx)
 	})
 
-	// watcher is started inside bucket sync
-	sync := sync.New(watcher, textileClient, srv)
-
 	g.Go(func() error {
+		sync.RegisterNotifier(srv)
 		return sync.Start(ctx)
 	})
 
@@ -114,6 +116,12 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	defer shutdownCancel()
 
 	// probably we can create an interface Stop/Close to loop thru all modules
+	// NOTE: need to make sure the order of shutdown is in sync and we dont drop events
+	if textileClient != nil {
+		log.Println("shutdown Textile client")
+		textileClient.Stop()
+	}
+
 	if sync != nil {
 		log.Println("shutdown bucket sync...")
 		sync.Stop()
@@ -127,11 +135,6 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	if store != nil {
 		log.Println("shutdown store...")
 		store.Close()
-	}
-
-	if textileClient != nil {
-		log.Println("shutdown Textile client")
-		textileClient.Stop()
 	}
 
 	log.Println("waiting for shutdown group")

@@ -110,7 +110,16 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (d
 		return domain.OpenFileInfo{}, err
 	}
 	// register temp file in watcher
-	s.watchFile(tmpFile.Name())
+	addWatchFile := domain.AddWatchFile{
+		LocalPath:  tmpFile.Name(),
+		BucketPath: path,
+		BucketKey:  key,
+	}
+	err = s.watchFile(addWatchFile)
+	if err != nil {
+		log.Error(fmt.Sprintf("error adding file to watch path %s from bucket %s in bucketpath %s", tmpFile.Name(), key, path), err)
+		return domain.OpenFileInfo{}, err
+	}
 
 	// return file handle
 	return domain.OpenFileInfo{

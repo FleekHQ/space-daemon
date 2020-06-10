@@ -2,13 +2,12 @@ package sync
 
 import (
 	"context"
-
+	"errors"
+	"github.com/FleekHQ/space-poc/core/space/domain"
 	"golang.org/x/sync/errgroup"
+	"sync"
 
 	"github.com/FleekHQ/space-poc/core/events"
-	"github.com/FleekHQ/space-poc/core/sync/fs"
-	"github.com/FleekHQ/space-poc/core/sync/textile"
-
 	"github.com/FleekHQ/space-poc/log"
 
 	tc "github.com/FleekHQ/space-poc/core/textile/client"
@@ -17,48 +16,91 @@ import (
 	"github.com/FleekHQ/space-poc/core/watcher"
 )
 
+var (
+	ErrAddFileWatch = errors.New("error adding file to watch")
+)
+
 type GrpcNotifier interface {
 	SendFileEvent(event events.FileEvent)
 	SendTextileEvent(event events.TextileEvent)
 }
 
-type BucketSynchronizer struct {
-	folderWatcher          watcher.FolderWatcher
-	textileClient          tc.Client
-	fh                     *fs.Handler
-	th                     *textile.Handler
-	textileThreadListeners []tl.ThreadListener
-	notifier               GrpcNotifier
+type BucketSynchronizer interface {
+	Start(ctx context.Context) error
+	Stop()
+	RegisterNotifier(notifier GrpcNotifier)
+	AddFileWatch(addFileInfo domain.AddWatchFile) error
 }
 
-// Creates a new BucketSynchronizer instancelistenerEventHandler
+type TextileNotifier interface {
+	SendTextileEvent(event events.TextileEvent)
+}
+
+// Implementation to handle events from FS
+type watcherHandler struct {
+	client tc.Client
+	bs     *bucketSynchronizer
+}
+
+// Implementation to handle events from textile
+type textileHandler struct {
+	notifier TextileNotifier
+	bs       *bucketSynchronizer
+}
+
+type bucketSynchronizer struct {
+	folderWatcher          watcher.FolderWatcher
+	textileClient          tc.Client
+	fh                     *watcherHandler
+	th                     *textileHandler
+	textileThreadListeners []tl.ThreadListener
+	notifier               GrpcNotifier
+
+	// lock for openFiles map
+	openFilesLock sync.RWMutex
+	openFiles     map[string]domain.AddWatchFile
+}
+
+// Creates a new bucketSynchronizer instancelistenerEventHandler
 func New(
 	folderWatcher watcher.FolderWatcher,
 	textileClient tc.Client,
 	notifier GrpcNotifier,
-) *BucketSynchronizer {
+) BucketSynchronizer {
 	textileThreadListeners := make([]tl.ThreadListener, 0)
 
-	return &BucketSynchronizer{
+	return &bucketSynchronizer{
 		folderWatcher:          folderWatcher,
 		textileClient:          textileClient,
 		fh:                     nil,
 		th:                     nil,
 		textileThreadListeners: textileThreadListeners,
 		notifier:               notifier,
+		openFiles:              make(map[string]domain.AddWatchFile),
 	}
 }
 
 // Starts the folder watcher and the textile watcher.
-func (bs *BucketSynchronizer) Start(ctx context.Context) error {
+func (bs *bucketSynchronizer) Start(ctx context.Context) error {
 	buckets, err := bs.textileClient.ListBuckets(ctx)
 	if err != nil {
 		return err
 	}
 
-	// TODO: Generalize this to one per bucket
-	bs.fh = fs.NewHandler(bs.textileClient, buckets[0])
-	bs.th = textile.NewHandler(bs.notifier)
+	if bs.notifier == nil {
+		log.Printf("using default notifier to start bucket sync")
+		bs.notifier = &defaultNotifier{}
+	}
+
+	bs.fh = &watcherHandler{
+		client: bs.textileClient,
+		bs:     bs,
+	}
+
+	bs.th = &textileHandler{
+		notifier: bs.notifier,
+		bs:       bs,
+	}
 
 	handlers := make([]th.EventHandler, 0)
 	handlers = append(handlers, bs.th)
@@ -95,7 +137,7 @@ func (bs *BucketSynchronizer) Start(ctx context.Context) error {
 	return nil
 }
 
-func (bs *BucketSynchronizer) Stop() {
+func (bs *bucketSynchronizer) Stop() {
 	// add shutdown logic here
 	log.Debug("shutting down folder watcher in bucketsync")
 	bs.folderWatcher.Close()
@@ -103,4 +145,40 @@ func (bs *BucketSynchronizer) Stop() {
 	for _, listener := range bs.textileThreadListeners {
 		listener.Close()
 	}
+}
+
+func (bs *bucketSynchronizer) RegisterNotifier(notifier GrpcNotifier) {
+	bs.notifier = notifier
+}
+
+// TODO: add GC code logic to open files to cleanup
+// Adds a file to watcher list to keep track of
+func (bs *bucketSynchronizer) AddFileWatch(addFileInfo domain.AddWatchFile) error {
+	if addFileInfo.LocalPath == "" {
+		return ErrAddFileWatch
+	}
+	if addFileInfo.BucketKey == "" {
+		return ErrAddFileWatch
+	}
+
+	if addFileInfo.BucketPath == "" {
+		return ErrAddFileWatch
+	}
+
+	bs.openFilesLock.Lock()
+	defer bs.openFilesLock.Unlock()
+	bs.openFiles[addFileInfo.LocalPath] = addFileInfo
+
+	return nil
+}
+
+
+func (bs *bucketSynchronizer) getOpenFileBucketKey(localPath string) (string, bool) {
+	bs.openFilesLock.RLock()
+	defer bs.openFilesLock.RUnlock()
+	if fi, exists := bs.openFiles[localPath]; exists {
+		return fi.BucketKey, true
+	}
+
+	return "", false
 }

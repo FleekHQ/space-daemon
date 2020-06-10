@@ -15,6 +15,7 @@ import (
 
 // Service Layer should not depend on gRPC dependencies
 type Service interface {
+	RegisterAddFileWatchFunc(watchFunc services.AddFileWatchFunc)
 	OpenFile(ctx context.Context, path string, bucketSlug string) (domain.OpenFileInfo, error)
 	GetConfig(ctx context.Context) domain.AppConfig
 	ListDir(ctx context.Context) ([]domain.FileInfo, error)
@@ -56,8 +57,8 @@ func NewService(store store.Store, tc tc.Client, cfg config.Config, opts ...Serv
 	return sv, nil
 }
 
-func defaultWatchFile(path string) error {
-	log.Println(fmt.Sprintf("WARNING: using default watch file func to add path %s. File will not be watched", path))
+func defaultWatchFile(addFile domain.AddWatchFile) error {
+	log.Println(fmt.Sprintf("WARNING: using default watch file func to add path %s. File will not be watched", addFile.LocalPath))
 	return nil
 }
 
