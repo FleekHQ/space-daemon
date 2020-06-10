@@ -1,9 +1,11 @@
 package env
 
 import (
-	"github.com/joho/godotenv"
 	syslog "log"
 	"os"
+	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 const (
@@ -35,7 +37,10 @@ func (s spaceEnv) CurrentFolder() (string, error) {
 		return "", err
 	}
 
-	return path, nil
+	pathSegments := strings.Split(path, "/")
+	wd := strings.Join(pathSegments[:len(pathSegments)-1], "/")
+
+	return wd, nil
 }
 
 func (s spaceEnv) WorkingFolder() string {
