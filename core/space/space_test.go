@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/space/services"
 	"github.com/FleekHQ/space-poc/core/textile/client"
 	"github.com/FleekHQ/space-poc/mocks"
@@ -204,11 +203,6 @@ func TestService_OpenFile(t *testing.T) {
 	testFileName := "file.txt"
 
 	// setup mocks
-	cfg.On("GetString", config.SpaceFolderPath, "").Return(
-		getDir().dir,
-		nil,
-	)
-
 	cfg.On("GetInt", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(
 		-1,
 		nil,
@@ -270,7 +264,7 @@ func TestService_AddItems_FilesOnly(t *testing.T) {
 			"UploadFile",
 			mock.Anything,
 			testKey,
-			bucketPath + "/" + fileName,
+			bucketPath+"/"+fileName,
 			mock.Anything,
 		).Return(nil, mockPath, nil)
 	}
@@ -333,11 +327,10 @@ func TestService_AddItems_Folder(t *testing.T) {
 			"UploadFile",
 			mock.Anything,
 			testKey,
-			targetBucketPath + "/" + fileName,
+			targetBucketPath+"/"+fileName,
 			mock.Anything,
 		).Return(nil, mockPath, nil)
 	}
-
 
 	ch, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
 

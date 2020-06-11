@@ -13,6 +13,13 @@ builds:
   goos:
     - darwin
     - linux
+- env:
+  - CGO_ENABLED=0
+  main: ./cmd/installer/main.go
+  binary: installer
+  goos:
+    - darwin
+    - linux
 archives:
 - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
   format: binary

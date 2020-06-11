@@ -2,12 +2,13 @@ package grpc
 
 import (
 	"context"
+	"strconv"
+
 	"github.com/FleekHQ/space-poc/core/events"
 	"github.com/FleekHQ/space-poc/core/space/domain"
 	"github.com/FleekHQ/space-poc/grpc/pb"
 	"github.com/FleekHQ/space-poc/log"
 	"github.com/golang/protobuf/ptypes/empty"
-	"strconv"
 )
 
 func (srv *grpcServer) sendFileEvent(event *pb.FileEventResponse) {
@@ -69,9 +70,8 @@ func (srv *grpcServer) GetConfigInfo(ctx context.Context, e *empty.Empty) (*pb.C
 	appCfg := srv.sv.GetConfig(ctx)
 
 	res := &pb.ConfigInfoResponse{
-		FolderPath: appCfg.FolderPath,
-		Port:       strconv.Itoa(appCfg.Port),
-		AppPath:    appCfg.AppPath,
+		Port:    strconv.Itoa(appCfg.Port),
+		AppPath: appCfg.AppPath,
 	}
 
 	return res, nil
@@ -137,7 +137,7 @@ func (srv *grpcServer) AddItems(request *pb.AddItemsRequest, stream pb.SpaceApi_
 			var r *pb.AddItemsResponse
 			if res.Error != nil {
 				r = &pb.AddItemsResponse{
-					Result:   &pb.AddItemResult{
+					Result: &pb.AddItemResult{
 						SourcePath: res.SourcePath,
 						Error:      res.Error.Error(),
 					},
@@ -145,7 +145,7 @@ func (srv *grpcServer) AddItems(request *pb.AddItemsRequest, stream pb.SpaceApi_
 				}
 			} else {
 				r = &pb.AddItemsResponse{
-					Result:   &pb.AddItemResult{
+					Result: &pb.AddItemResult{
 						SourcePath: res.SourcePath,
 						BucketPath: res.BucketPath,
 					},
@@ -154,7 +154,7 @@ func (srv *grpcServer) AddItems(request *pb.AddItemsRequest, stream pb.SpaceApi_
 			}
 			stream.Send(r)
 		}
-		done<- struct{}{}
+		done <- struct{}{}
 	}()
 
 	// receive results from service

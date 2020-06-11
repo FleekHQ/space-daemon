@@ -37,9 +37,8 @@ message ListDirectoriesResponse {
 }
 
 message ConfigInfoResponse {
-  string folderPath = 1;
-  string port = 2;
-  string appPath = 3;
+  string port = 1;
+  string appPath = 2;
 }
 
 message GenerateKeyPairRequest {}
