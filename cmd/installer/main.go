@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	tag            = "v0.0.1"
+	tag            = "v0.0.3"
 	executableName = "space"
 	binaryName     = "space-poc"
 	downloadURL    = "https://github.com/FleekHQ/space-poc/releases/download/"
