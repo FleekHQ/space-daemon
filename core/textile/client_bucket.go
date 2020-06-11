@@ -28,7 +28,11 @@ func (tc *textileClient) getBucket(slug string) Bucket {
 
 	defer tc.bucketsLock.RUnlock()
 
-	return tc.buckets[slug]
+	if b, exists := tc.buckets[slug]; exists {
+		return b
+	}
+
+	return nil
 }
 
 // NOTE: Be careful to not call this method without releasing locks first
@@ -127,6 +131,11 @@ func (tc *textileClient) GetBucketContext(ctx context.Context, bucketSlug string
 func (tc *textileClient) ListBuckets(ctx context.Context) ([]Bucket, error) {
 	threadsCtx, _, err := tc.GetBucketContext(ctx, defaultPersonalBucketSlug)
 
+	if err != nil {
+		log.Error("error in ListBuckets while fetching bucket context", err)
+		return nil, err
+	}
+
 	bucketList, err := tc.bucketsClient.List(threadsCtx)
 	if err != nil {
 		return nil, err
@@ -177,9 +186,10 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 
 	newB := tc.getNewBucket(b.Root)
 
-	return tc.setBucket(newB.Slug(), newB), nil
+	return newB, nil
 }
 
-func (tc *textileClient) getNewBucket(b *bucketsproto.Root) *bucket {
-	return newBucket(b, tc, tc.bucketsClient)
+func (tc *textileClient) getNewBucket(b *bucketsproto.Root) Bucket {
+	newB:= newBucket(b, tc, tc.bucketsClient)
+	return tc.setBucket(newB.Slug(), newB)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"github.com/FleekHQ/space-poc/config"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"os"
 	"sync"
@@ -151,7 +152,7 @@ func (tc *textileClient) GetThreadsConnection() (*threadsClient.Client, error) {
 }
 
 // Starts the Textile Client
-func (tc *textileClient) start() error {
+func (tc *textileClient) start(cfg config.Config) error {
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
 
@@ -164,18 +165,18 @@ func (tc *textileClient) start() error {
 	finalHubTarget := hubTarget
 	finalThreadsTarget := threadsTarget
 
-	hubTargetFromEnv := os.Getenv("TXL_HUB_TARGET")
-	threadsTargetFromEnv := os.Getenv("TXL_THREADS_TARGET")
+	hubTargetFromCfg := cfg.GetString(config.TextileHubTarget, "")
+	threadsTargetFromCfg := cfg.GetString(config.TextileThreadsTarget, "")
 
-	if hubTargetFromEnv != "" {
-		finalHubTarget = hubTargetFromEnv
+	if hubTargetFromCfg != "" {
+		finalHubTarget = hubTargetFromCfg
 	}
 
-	if threadsTargetFromEnv != "" {
-		finalThreadsTarget = threadsTargetFromEnv
+	if threadsTargetFromCfg != "" {
+		finalThreadsTarget = threadsTargetFromCfg
 	}
 
-	log.Debug("Creating bucketsClient client in " + finalHubTarget)
+	log.Debug("Creating buckets client in " + finalHubTarget)
 	if b, err := bucketsClient.NewClient(finalHubTarget, opts...); err != nil {
 		cmd.Fatal(err)
 	} else {
@@ -216,7 +217,7 @@ func (tc *textileClient) Stop() error {
 }
 
 // StartAndBootstrap starts a Textile Client and also initializes default resources for it like a key pair and default bucket.
-func (tc *textileClient) StartAndBootstrap(ctx context.Context) error {
+func (tc *textileClient) StartAndBootstrap(ctx context.Context, cfg config.Config) error {
 	// Create key pair if not present
 	kc := keychain.New(tc.store)
 	log.Debug("Generating key pair...")
@@ -228,7 +229,7 @@ func (tc *textileClient) StartAndBootstrap(ctx context.Context) error {
 
 	// Start Textile Client
 	log.Debug("Starting Textile Client...")
-	if err := tc.start(); err != nil {
+	if err := tc.start(cfg); err != nil {
 		log.Error("Error starting Textile Client", err)
 		return err
 	}

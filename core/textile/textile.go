@@ -2,6 +2,7 @@ package textile
 
 import (
 	"context"
+	"github.com/FleekHQ/space-poc/config"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"io"
 
@@ -73,7 +74,7 @@ type Client interface {
 	CreateBucket(ctx context.Context, bucketSlug string) (Bucket, error)
 	Stop() error
 	WaitForReady() chan bool
-	StartAndBootstrap(ctx context.Context) error
+	StartAndBootstrap(ctx context.Context, cfg config.Config) error
 }
 
 
