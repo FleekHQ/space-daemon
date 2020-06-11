@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/FleekHQ/space-poc/core/env"
 	"github.com/FleekHQ/space-poc/core/space"
+	"github.com/FleekHQ/space-poc/core/textile"
 	"log"
 	"os"
 	"os/signal"
@@ -13,8 +14,6 @@ import (
 	"github.com/FleekHQ/space-poc/core/sync"
 
 	"golang.org/x/sync/errgroup"
-
-	tc "github.com/FleekHQ/space-poc/core/textile/client"
 
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/store"
@@ -57,7 +56,7 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	}
 
 	bootstrapReady := make(chan bool)
-	textileClient := tc.New(store)
+	textileClient := textile.NewClient(store)
 	g.Go(func() error {
 		err := textileClient.StartAndBootstrap(ctx)
 		bootstrapReady <- true

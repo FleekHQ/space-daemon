@@ -1,4 +1,4 @@
-package client
+package textile
 
 import "testing"
 

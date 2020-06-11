@@ -4,15 +4,13 @@ import (
 	"context"
 	"errors"
 	"github.com/FleekHQ/space-poc/core/space/domain"
+	"github.com/FleekHQ/space-poc/core/textile"
 	"golang.org/x/sync/errgroup"
 	"sync"
 
 	"github.com/FleekHQ/space-poc/core/events"
 	"github.com/FleekHQ/space-poc/log"
 
-	tc "github.com/FleekHQ/space-poc/core/textile/client"
-	th "github.com/FleekHQ/space-poc/core/textile/handler"
-	tl "github.com/FleekHQ/space-poc/core/textile/listener"
 	"github.com/FleekHQ/space-poc/core/watcher"
 )
 
@@ -38,7 +36,7 @@ type TextileNotifier interface {
 
 // Implementation to handle events from FS
 type watcherHandler struct {
-	client tc.Client
+	client textile.Client
 	bs     *bucketSynchronizer
 }
 
@@ -50,10 +48,10 @@ type textileHandler struct {
 
 type bucketSynchronizer struct {
 	folderWatcher          watcher.FolderWatcher
-	textileClient          tc.Client
+	textileClient          textile.Client
 	fh                     *watcherHandler
 	th                     *textileHandler
-	textileThreadListeners []tl.ThreadListener
+	textileThreadListeners []textile.ThreadListener
 	notifier               GrpcNotifier
 
 	// lock for openFiles map
@@ -64,10 +62,10 @@ type bucketSynchronizer struct {
 // Creates a new bucketSynchronizer instancelistenerEventHandler
 func New(
 	folderWatcher watcher.FolderWatcher,
-	textileClient tc.Client,
+	textileClient textile.Client,
 	notifier GrpcNotifier,
 ) BucketSynchronizer {
-	textileThreadListeners := make([]tl.ThreadListener, 0)
+	textileThreadListeners := make([]textile.ThreadListener, 0)
 
 	return &bucketSynchronizer{
 		folderWatcher:          folderWatcher,
@@ -102,11 +100,11 @@ func (bs *bucketSynchronizer) Start(ctx context.Context) error {
 		bs:       bs,
 	}
 
-	handlers := make([]th.EventHandler, 0)
+	handlers := make([]textile.EventHandler, 0)
 	handlers = append(handlers, bs.th)
 
 	for _, bucket := range buckets {
-		bs.textileThreadListeners = append(bs.textileThreadListeners, tl.New(bs.textileClient, bucket.Name, handlers))
+		bs.textileThreadListeners = append(bs.textileThreadListeners, textile.NewListener(bs.textileClient, bucket.Slug(), handlers))
 	}
 
 	bs.folderWatcher.RegisterHandler(bs.fh)
@@ -171,7 +169,6 @@ func (bs *bucketSynchronizer) AddFileWatch(addFileInfo domain.AddWatchFile) erro
 
 	return nil
 }
-
 
 func (bs *bucketSynchronizer) getOpenFileBucketKey(localPath string) (string, bool) {
 	bs.openFilesLock.RLock()

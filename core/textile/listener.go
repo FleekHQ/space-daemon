@@ -1,12 +1,10 @@
-package listener
+package textile
 
 import (
 	"context"
 	"encoding/json"
 	"sync"
 
-	textile "github.com/FleekHQ/space-poc/core/textile/client"
-	"github.com/FleekHQ/space-poc/core/textile/handler"
 	"github.com/FleekHQ/space-poc/log"
 	threadsc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
@@ -15,20 +13,20 @@ import (
 type ThreadListener interface {
 	Listen(ctx context.Context) error
 	Close()
-	RegisterHandler(handler handler.EventHandler)
+	RegisterHandler(handler EventHandler)
 }
 
 type textileThreadListener struct {
 	bucketSlug         string
-	textileClient      textile.Client
+	textileClient      Client
 	started            bool
 	lock               sync.Mutex
 	publishLock        sync.RWMutex
 	waitForCloseSignal chan bool
-	handlers           []handler.EventHandler
+	handlers           []EventHandler
 }
 
-func New(textileClient textile.Client, bucketSlug string, handlers []handler.EventHandler) ThreadListener {
+func NewListener(textileClient Client, bucketSlug string, handlers []EventHandler) ThreadListener {
 	return &textileThreadListener{
 		bucketSlug:    bucketSlug,
 		started:       false,
@@ -64,7 +62,7 @@ func (tl *textileThreadListener) Listen(ctx context.Context) error {
 
 	listenerEventHandler := func(val threadsc.ListenEvent) {
 		log.Debug("received from channel!!!!")
-		instance := &handler.Bucket{}
+		instance := &BucketData{}
 		if val.Err != nil {
 			log.Error("error getting threadsc listener event", err)
 			return
@@ -75,7 +73,7 @@ func (tl *textileThreadListener) Listen(ctx context.Context) error {
 		}
 
 		if len(tl.handlers) == 0 {
-			tl.publishEventToHandler(&handler.DefaultListenerHandler{}, instance, &val)
+			tl.publishEventToHandler(&defaultListenerHandler{}, instance, &val)
 		} else {
 			tl.publishEvent(instance, &val)
 		}
@@ -101,7 +99,7 @@ func (tl *textileThreadListener) Listen(ctx context.Context) error {
 	return nil
 }
 
-func (tl *textileThreadListener) publishEvent(bucketData *handler.Bucket, listenEvent *threadsc.ListenEvent) {
+func (tl *textileThreadListener) publishEvent(bucketData *BucketData, listenEvent *threadsc.ListenEvent) {
 	tl.publishLock.RLock()
 	defer tl.publishLock.RUnlock()
 
@@ -110,7 +108,7 @@ func (tl *textileThreadListener) publishEvent(bucketData *handler.Bucket, listen
 	}
 }
 
-func (tl *textileThreadListener) publishEventToHandler(handler handler.EventHandler, bucketData *handler.Bucket, listenEvent *threadsc.ListenEvent) {
+func (tl *textileThreadListener) publishEventToHandler(handler EventHandler, bucketData *BucketData, listenEvent *threadsc.ListenEvent) {
 	switch listenEvent.Action.Type {
 	case threadsc.ActionCreate:
 		handler.OnCreate(bucketData, listenEvent)
@@ -144,7 +142,7 @@ func (tl *textileThreadListener) Close() {
 }
 
 // Registers an handler.EventHandler that handles events in Textile
-func (tl *textileThreadListener) RegisterHandler(handler handler.EventHandler) {
+func (tl *textileThreadListener) RegisterHandler(handler EventHandler) {
 	tl.publishLock.Lock()
 	defer tl.publishLock.Unlock()
 	tl.handlers = append(tl.handlers, handler)

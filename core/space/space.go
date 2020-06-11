@@ -9,7 +9,7 @@ import (
 	"github.com/FleekHQ/space-poc/core/space/domain"
 	"github.com/FleekHQ/space-poc/core/space/services"
 	"github.com/FleekHQ/space-poc/core/store"
-	tc "github.com/FleekHQ/space-poc/core/textile/client"
+	"github.com/FleekHQ/space-poc/core/textile"
 	"log"
 )
 
@@ -36,7 +36,7 @@ var defaultOptions = serviceOptions{}
 
 type ServiceOption func(o *serviceOptions)
 
-func NewService(store store.Store, tc tc.Client, cfg config.Config, opts ...ServiceOption) (Service, error) {
+func NewService(store store.Store, tc textile.Client, cfg config.Config, opts ...ServiceOption) (Service, error) {
 	if !store.IsOpen() {
 		return nil, errors.New("service expects an opened store to work")
 	}

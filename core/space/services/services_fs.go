@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/FleekHQ/space-poc/core/textile"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -17,10 +18,11 @@ import (
 
 func (s *Space) listDirAtPath(
 	ctx context.Context,
-	bucketKey, path string,
+	b textile.Bucket,
+	path string,
 	listSubfolderContent bool,
 ) ([]domain.FileInfo, error) {
-	dir, err := s.tc.ListDirectory(ctx, bucketKey, path)
+	dir, err := b.ListDirectory(ctx, path)
 	if err != nil {
 		log.Error("Error in ListDir", err)
 		return nil, err
@@ -58,7 +60,7 @@ func (s *Space) listDirAtPath(
 		entries = append(entries, entry)
 
 		if item.IsDir && listSubfolderContent {
-			newEntries, err := s.listDirAtPath(ctx, bucketKey, path+"/"+item.Name, true)
+			newEntries, err := s.listDirAtPath(ctx, b, path+"/"+item.Name, true)
 			if err != nil {
 				return nil, err
 			}
@@ -70,24 +72,25 @@ func (s *Space) listDirAtPath(
 }
 
 func (s *Space) ListDir(ctx context.Context) ([]domain.FileInfo, error) {
-	buckets, err := s.tc.ListBuckets(ctx)
+	// TODO: add support for multiple buckets
+	b, err := s.tc.GetDefaultBucket(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(buckets) == 0 {
+	if b == nil {
 		return nil, errors.New("Could not find buckets")
 	}
 
 	// List the root directory
 	listPath := ""
 
-	return s.listDirAtPath(ctx, buckets[0].Key, listPath, true)
+	return s.listDirAtPath(ctx, b, listPath, true)
 }
 
 func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (domain.OpenFileInfo, error) {
 	// TODO : handle bucketslug for multiple buckets. For now default to personal bucket
-	key, err := s.getDefaultBucketKey(ctx)
+	b, err := s.tc.GetDefaultBucket(ctx)
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
@@ -104,20 +107,20 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (d
 	defer tmpFile.Close()
 
 	// look for path in textile
-	err = s.tc.GetFile(ctx, key, path, tmpFile)
+	err = b.GetFile(ctx, path, tmpFile)
 	if err != nil {
-		log.Error(fmt.Sprintf("error retrieving file from bucket %s in path %s", key, path), err)
+		log.Error(fmt.Sprintf("error retrieving file from bucket %s in path %s", b.Key(), path), err)
 		return domain.OpenFileInfo{}, err
 	}
 	// register temp file in watcher
 	addWatchFile := domain.AddWatchFile{
 		LocalPath:  tmpFile.Name(),
 		BucketPath: path,
-		BucketKey:  key,
+		BucketKey:  b.Key(),
 	}
 	err = s.watchFile(addWatchFile)
 	if err != nil {
-		log.Error(fmt.Sprintf("error adding file to watch path %s from bucket %s in bucketpath %s", tmpFile.Name(), key, path), err)
+		log.Error(fmt.Sprintf("error adding file to watch path %s from bucket %s in bucketpath %s", tmpFile.Name(), b.Key(), path), err)
 		return domain.OpenFileInfo{}, err
 	}
 
@@ -127,39 +130,26 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (d
 	}, nil
 }
 
-func (s *Space) getDefaultBucketKey(ctx context.Context) (string, error) {
-	buckets, err := s.tc.ListBuckets(ctx)
-	if err != nil {
-		log.Error("error while fetching buckets in OpenFile", err)
-		return "", err
-	}
-	if len(buckets) == 0 {
-		log.Error("no buckets found in OpenFile", err)
-		return "", err
-	}
-	key := buckets[0].Key
-	return key, nil
-}
 
 func (s *Space) CreateFolder(ctx context.Context, path string) error {
-	key, err := s.getDefaultBucketKey(ctx)
+	b, err := s.tc.GetDefaultBucket(ctx)
 	if err != nil {
 		return err
 	}
 
-	if _, err := s.createFolder(ctx, path, key); err != nil {
+	if _, err := s.createFolder(ctx, path, b); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *Space) createFolder(ctx context.Context, path string, key string) (string, error) {
+func (s *Space) createFolder(ctx context.Context, path string, b textile.Bucket) (string, error) {
 	// NOTE: may need to change signature of createFolder if we need to return this info
-	_, root, err := s.tc.CreateDirectory(ctx, key, path)
+	_, root, err := b.CreateDirectory(ctx, path)
 
 	if err != nil {
-		log.Error(fmt.Sprintf("error creating folder in bucket %s with path %s", key, path), err)
+		log.Error(fmt.Sprintf("error creating folder in bucket %s with path %s", b.Key(), path), err)
 		return "", err
 	}
 
@@ -168,20 +158,20 @@ func (s *Space) createFolder(ctx context.Context, path string, key string) (stri
 
 func (s *Space) AddItems(ctx context.Context, sourcePaths []string, targetPath string) (<-chan domain.AddItemResult, error) {
 	// TODO: add support for bucket slug
-	key, err := s.getDefaultBucketKey(ctx)
+	b, err := s.tc.GetDefaultBucket(ctx)
 	if err != nil {
 		return nil, err
 	}
 	results := make(chan domain.AddItemResult)
 	go func() {
-		s.addItems(ctx, RemoveDuplicates(sourcePaths), targetPath, key, results)
+		s.addItems(ctx, RemoveDuplicates(sourcePaths), targetPath, b, results)
 		close(results)
 	}()
 
 	return results, nil
 }
 
-func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath string, bucketKey string, results chan<- domain.AddItemResult) error {
+func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath string, b textile.Bucket, results chan<- domain.AddItemResult) error {
 	// check if all sourcePaths exist, else return err
 	for _, sourcePath := range sourcePaths {
 		if !PathExists(sourcePath) {
@@ -192,10 +182,10 @@ func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath s
 	// NOTE: sequential upload of files and folders
 	for _, sourcePath := range sourcePaths {
 		if IsPathDir(sourcePath) {
-			s.handleAddItemFolder(ctx, sourcePath, targetPath, bucketKey, results)
+			s.handleAddItemFolder(ctx, sourcePath, targetPath, b, results)
 		} else {
 			// add files
-			r, err := s.addFile(ctx, sourcePath, targetPath, bucketKey)
+			r, err := s.addFile(ctx, sourcePath, targetPath, b)
 			if err != nil {
 				results <- domain.AddItemResult{
 					SourcePath: sourcePath,
@@ -214,11 +204,11 @@ func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath s
 	return nil
 }
 
-func (s *Space) handleAddItemFolder(ctx context.Context, sourcePath string, targetPath string, bucketKey string, results chan<- domain.AddItemResult) {
+func (s *Space) handleAddItemFolder(ctx context.Context, sourcePath string, targetPath string, b textile.Bucket, results chan<- domain.AddItemResult) {
 	// create folder
 	_, folderName := filepath.Split(sourcePath)
 	targetBucketFolder := targetPath + "/" + folderName
-	folderBucketPath, err := s.createFolder(ctx, targetBucketFolder, bucketKey)
+	folderBucketPath, err := s.createFolder(ctx, targetBucketFolder, b)
 	if err != nil {
 		results <- domain.AddItemResult{
 			SourcePath: sourcePath,
@@ -231,7 +221,7 @@ func (s *Space) handleAddItemFolder(ctx context.Context, sourcePath string, targ
 		SourcePath: sourcePath,
 		BucketPath: folderBucketPath,
 	}
-	err = s.addFolderRec(sourcePath, targetBucketFolder, ctx, bucketKey, results)
+	err = s.addFolderRec(sourcePath, targetBucketFolder, ctx, b, results)
 	if err != nil {
 		results <- domain.AddItemResult{
 			SourcePath: sourcePath,
@@ -241,7 +231,7 @@ func (s *Space) handleAddItemFolder(ctx context.Context, sourcePath string, targ
 	}
 }
 
-func (s *Space) addFolderRec(sourcePath string, targetPath string, ctx context.Context, bucketKey string, results chan<- domain.AddItemResult) error {
+func (s *Space) addFolderRec(sourcePath string, targetPath string, ctx context.Context, b textile.Bucket, results chan<- domain.AddItemResult) error {
 	var folderSubPaths []string
 
 	// NOTE: only reading each folder one level deep since this function is recursive
@@ -260,11 +250,11 @@ func (s *Space) addFolderRec(sourcePath string, targetPath string, ctx context.C
 	}
 
 	// recursive call to addItems
-	return s.addItems(ctx, folderSubPaths, targetPath, bucketKey, results)
+	return s.addItems(ctx, folderSubPaths, targetPath, b, results)
 }
 
 // Working with a file
-func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath string, bucketKey string) (domain.AddItemResult, error) {
+func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath string, b textile.Bucket) (domain.AddItemResult, error) {
 	// get sourcePath to io.Reader
 	f, err := os.Open(sourcePath)
 	if err != nil {
@@ -279,9 +269,9 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 	targetPathBucket := targetPath + "/" + fileName
 
 	// NOTE: could modify addFile to return back more info for processing
-	_, root, err := s.tc.UploadFile(ctx, bucketKey, targetPathBucket, f)
+	_, root, err := b.UploadFile(ctx, targetPathBucket, f)
 	if err != nil {
-		log.Error(fmt.Sprintf("error creating targetPath %s in bucket %s", targetPathBucket, bucketKey), err)
+		log.Error(fmt.Sprintf("error creating targetPath %s in bucket %s", targetPathBucket, b.Key()), err)
 		return domain.AddItemResult{}, err
 	}
 
