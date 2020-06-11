@@ -10,7 +10,7 @@ builds:
     env:
       - CGO_ENABLED=0
     main: ./cmd/space-poc/main.go
-    binary: space
+    binary: space-poc
     goos:
       - darwin
       - linux
@@ -23,7 +23,7 @@ builds:
       - darwin
       - linux
 archives:
-- name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
+- name_template: '{{ .Binary }}_{{ .Os }}_{{ .Arch }}'
   format: binary
   replacements:
     darwin: Darwin

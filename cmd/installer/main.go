@@ -121,7 +121,7 @@ func main() {
 	_, err = envFile.WriteString("TXL_USER_KEY=" + textileUserKey + "\nTXL_USER_SECRET=" + textileUserSecret + "\nLOG_LEVEL=DEBUG\n")
 	checkErr(err)
 
-	fmt.Println("Space Daemon installed successfully")
+	fmt.Println("Space Daemon installed successfully. Run ./space to start it.")
 }
 
 func DownloadFile(filepath string, url string) error {
