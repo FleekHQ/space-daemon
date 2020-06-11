@@ -3,6 +3,7 @@ package space
 import (
 	"context"
 	"errors"
+	"github.com/stretchr/testify/mock"
 	"io/ioutil"
 	"log"
 	"os"
@@ -14,7 +15,6 @@ import (
 	"github.com/FleekHQ/space-poc/core/textile"
 	"github.com/FleekHQ/space-poc/mocks"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
 )
 
@@ -24,6 +24,7 @@ var (
 	textileClient *mocks.Client
 	mockPath      *mocks.Path
 	mockBucket    *mocks.Bucket
+	mockEnv       *mocks.SpaceEnv
 )
 
 type TearDown func()
@@ -46,6 +47,7 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 	textileClient = new(mocks.Client)
 	mockPath = new(mocks.Path)
 	mockBucket = new(mocks.Bucket)
+	mockEnv = new(mocks.SpaceEnv)
 	var dir string
 	var err error
 	if dir, err = ioutil.TempDir("", "space-test-folders"); err != nil {
@@ -81,7 +83,7 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 	// NOTE: if we need to test without the store open we must override on each test
 	st.On("IsOpen").Return(true)
 
-	sv, err := NewService(st, textileClient, cfg)
+	sv, err := NewService(st, textileClient, cfg, WithEnv(mockEnv))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,9 +196,16 @@ func TestService_OpenFile(t *testing.T) {
 	testFileName := "file.txt"
 
 	// setup mocks
-	cfg.On("GetInt", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(
+	cfg.On("GetInt", mock.Anything, mock.Anything).Return(
 		-1,
-		nil,
+	)
+
+	cfg.On("GetString", mock.Anything, mock.Anything).Return(
+		"",
+	)
+
+	mockEnv.On("WorkingFolder").Return(
+		getDir().dir,
 	)
 
 	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)

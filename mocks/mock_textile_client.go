@@ -3,9 +3,10 @@
 package mocks
 
 import (
-	context "context"
-
+	config "github.com/FleekHQ/space-poc/config"
 	client "github.com/textileio/go-threads/api/client"
+
+	context "context"
 
 	mock "github.com/stretchr/testify/mock"
 
@@ -203,13 +204,13 @@ func (_m *Client) ListBuckets(ctx context.Context) ([]textile.Bucket, error) {
 	return r0, r1
 }
 
-// StartAndBootstrap provides a mock function with given fields: ctx
-func (_m *Client) StartAndBootstrap(ctx context.Context) error {
-	ret := _m.Called(ctx)
+// StartAndBootstrap provides a mock function with given fields: ctx, cfg
+func (_m *Client) StartAndBootstrap(ctx context.Context, cfg config.Config) error {
+	ret := _m.Called(ctx, cfg)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
-		r0 = rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, config.Config) error); ok {
+		r0 = rf(ctx, cfg)
 	} else {
 		r0 = ret.Error(0)
 	}
