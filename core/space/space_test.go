@@ -12,7 +12,7 @@ import (
 
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/space/services"
-	"github.com/FleekHQ/space-poc/core/textile/client"
+	"github.com/FleekHQ/space-poc/core/textile"
 	"github.com/FleekHQ/space-poc/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -24,6 +24,7 @@ var (
 	st            *mocks.Store
 	textileClient *mocks.Client
 	mockPath      *mocks.Path
+	mockBucket    *mocks.Bucket
 )
 
 type TearDown func()
@@ -45,6 +46,7 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 	cfg = new(mocks.Config)
 	textileClient = new(mocks.Client)
 	mockPath = new(mocks.Path)
+	mockBucket = new(mocks.Bucket)
 	var dir string
 	var err error
 	if dir, err = ioutil.TempDir("", "space-test-folders"); err != nil {
@@ -100,16 +102,7 @@ func TestService_ListDir(t *testing.T) {
 
 	bucketPath := "/ipfs/bafybeian44ntmjjfjbqt4dlkq4fiuhfzcxfunzuuzhbb7xkrnsdjb2sjha"
 
-	testKey := "bucketKey"
-	mockBuckets := []*client.TextileBucketRoot{
-		{
-			Key:  testKey,
-			Name: "Personal Bucket",
-			Path: "",
-		},
-	}
-
-	mockDirItems := &client.TextileDirEntries{
+	mockDirItems := &textile.DirEntries{
 		Item: &buckets_pb.ListPathReply_Item{
 			Items: []*buckets_pb.ListPathReply_Item{
 				{
@@ -137,7 +130,7 @@ func TestService_ListDir(t *testing.T) {
 		},
 	}
 
-	mockDirItemsSubfolder := &client.TextileDirEntries{
+	mockDirItemsSubfolder := &textile.DirEntries{
 		Item: &buckets_pb.ListPathReply_Item{
 			Items: []*buckets_pb.ListPathReply_Item{
 				{
@@ -151,18 +144,16 @@ func TestService_ListDir(t *testing.T) {
 		},
 	}
 
-	textileClient.On("ListBuckets", mock.Anything).Return(mockBuckets, nil)
-	textileClient.On(
+	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
+	mockBucket.On(
 		"ListDirectory",
 		mock.Anything,
-		testKey,
 		"",
 	).Return(mockDirItems, nil)
 
-	textileClient.On(
+	mockBucket.On(
 		"ListDirectory",
 		mock.Anything,
-		testKey,
 		"/somedir",
 	).Return(mockDirItemsSubfolder, nil)
 
@@ -214,22 +205,17 @@ func TestService_OpenFile(t *testing.T) {
 		nil,
 	)
 
-	mockBuckets := []*client.TextileBucketRoot{
-		{
-			Key:  testKey,
-			Name: "Personal Bucket",
-			Path: "",
-		},
-	}
-
-	textileClient.On("ListBuckets", mock.Anything).Return(mockBuckets, nil)
-	textileClient.On(
+	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
+	mockBucket.On(
 		"GetFile",
 		mock.Anything,
-		testKey,
 		testPath,
 		mock.Anything,
 	).Return(nil)
+
+	mockBucket.On(
+		"Key",
+	).Return(testKey)
 
 	res, err := sv.OpenFile(context.Background(), testPath, "")
 
@@ -252,25 +238,20 @@ func TestService_AddItems_FilesOnly(t *testing.T) {
 	bucketPath := "/tests"
 	testSourcePaths := getTempDir().fileNames
 
-	mockBuckets := []*client.TextileBucketRoot{
-		{
-			Key:  testKey,
-			Name: "Personal Bucket",
-			Path: "",
-		},
-	}
+	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
 
-	textileClient.On("ListBuckets", mock.Anything).Return(mockBuckets, nil)
+	mockBucket.On(
+		"Key",
+	).Return(testKey)
 
 	mockPath.On("String").Return("hash")
 
 	for _, f := range testSourcePaths {
 		_, fileName := filepath.Split(f)
-		textileClient.On(
+		mockBucket.On(
 			"UploadFile",
 			mock.Anything,
-			testKey,
-			bucketPath + "/" + fileName,
+			bucketPath+"/"+fileName,
 			mock.Anything,
 		).Return(nil, mockPath, nil)
 	}
@@ -292,7 +273,7 @@ func TestService_AddItems_FilesOnly(t *testing.T) {
 	assert.Equal(t, count, len(testSourcePaths))
 	// assert mocks
 	textileClient.AssertExpectations(t)
-	textileClient.AssertNumberOfCalls(t, "UploadFile", len(testSourcePaths))
+	mockBucket.AssertNumberOfCalls(t, "UploadFile", len(testSourcePaths))
 }
 
 func TestService_AddItems_Folder(t *testing.T) {
@@ -308,36 +289,29 @@ func TestService_AddItems_Folder(t *testing.T) {
 
 	targetBucketPath := bucketPath + "/" + folderName
 
-	mockBuckets := []*client.TextileBucketRoot{
-		{
-			Key:  testKey,
-			Name: "Personal Bucket",
-			Path: "",
-		},
-	}
+	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
 
-	textileClient.On("ListBuckets", mock.Anything).Return(mockBuckets, nil)
+	mockBucket.On(
+		"Key",
+	).Return(testKey)
 
 	mockPath.On("String").Return("hash")
 
-	textileClient.On(
+	mockBucket.On(
 		"CreateDirectory",
 		mock.Anything,
-		testKey,
 		targetBucketPath,
 	).Return(nil, mockPath, nil)
 
 	for _, f := range getTempDir().fileNames {
 		_, fileName := filepath.Split(f)
-		textileClient.On(
+		mockBucket.On(
 			"UploadFile",
 			mock.Anything,
-			testKey,
-			targetBucketPath + "/" + fileName,
+			targetBucketPath+"/"+fileName,
 			mock.Anything,
 		).Return(nil, mockPath, nil)
 	}
-
 
 	ch, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
 
@@ -356,8 +330,8 @@ func TestService_AddItems_Folder(t *testing.T) {
 	assert.Equal(t, count, len(testSourcePaths)+len(getTempDir().fileNames))
 	// assert mocks
 	textileClient.AssertExpectations(t)
-	textileClient.AssertNumberOfCalls(t, "UploadFile", len(getTempDir().fileNames))
-	textileClient.AssertNumberOfCalls(t, "CreateDirectory", 1)
+	mockBucket.AssertNumberOfCalls(t, "UploadFile", len(getTempDir().fileNames))
+	mockBucket.AssertNumberOfCalls(t, "CreateDirectory", 1)
 }
 
 func TestService_AddItems_OnError(t *testing.T) {
@@ -369,22 +343,19 @@ func TestService_AddItems_OnError(t *testing.T) {
 	bucketPath := "/tests"
 	testSourcePaths := getTempDir().fileNames
 
-	mockBuckets := []*client.TextileBucketRoot{
-		{
-			Key:  testKey,
-			Name: "Personal Bucket",
-			Path: "",
-		},
-	}
+	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
 
-	textileClient.On("ListBuckets", mock.Anything).Return(mockBuckets, nil)
+	mockBucket.On(
+		"Key",
+	).Return(testKey)
+
+	mockPath.On("String").Return("hash")
 
 	bucketError := errors.New("bucket failed")
 
-	textileClient.On(
+	mockBucket.On(
 		"UploadFile",
 		mock.Anything,
-		testKey,
 		mock.Anything,
 		mock.Anything,
 	).Return(nil, nil, bucketError)
@@ -406,4 +377,5 @@ func TestService_AddItems_OnError(t *testing.T) {
 	assert.Equal(t, count, len(testSourcePaths))
 	// assert mocks
 	textileClient.AssertExpectations(t)
+	mockBucket.AssertNumberOfCalls(t, "UploadFile", len(getTempDir().fileNames))
 }

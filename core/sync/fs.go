@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	path2 "github.com/ipfs/interface-go-ipfs-core/path"
+	ipfspath "github.com/ipfs/interface-go-ipfs-core/path"
 
 	"github.com/FleekHQ/space-poc/log"
 )
@@ -20,8 +20,8 @@ func (h *watcherHandler) OnCreate(ctx context.Context, path string, fileInfo os.
 	// TODO: Synchronizer lock check should ensure that no other operation is currently ongoing
 	// with this path or its parent folder
 
-	var result path2.Resolved
-	var newRoot path2.Path
+	var result ipfspath.Resolved
+	var newRoot ipfspath.Path
 	var err error
 
 	key, exists := h.bs.getOpenFileBucketKey(path)
@@ -152,6 +152,8 @@ func (h *watcherHandler) OnWrite(ctx context.Context, path string, fileInfo os.F
 		log.Error(msg, fmt.Errorf(msg))
 		return
 	}
+	msg := fmt.Sprintf("success syncing file at path %s to bucket %s", path, key)
+	log.Printf(msg)
 
 }
 
