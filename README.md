@@ -14,17 +14,17 @@ Loosely based on these resources:
 https://github.com/golang-standards/project-layout
 
 Note: For POC purposes the package structure is not as important but when we do migrate to a real folder we want to
-structure as much as possible following standards  
+structure as much as possible following standards
 
 * `/api` Folder structure for REST API.
 * `/cmd` Entry point directory for all binaries this repo handles. E.g cmd/{binary-name}/main.go
 * `/config` Global Config code
 * `/core` Directory for core stuff like watcher service and threads watcher
-* `/logger` Directory for app logging 
+* `/logger` Directory for app logging
 * `/examples` Directory playground for general examples and drafts
 
 Other Potential directories to consider adding
-`/shared` or  `/common` In case we want to share libs or logic among several binaries like 
+`/shared` or  `/common` In case we want to share libs or logic among several binaries like
 ipfs logic and other interactions.
 
 ### Generating Mocks
@@ -50,7 +50,8 @@ Binary should run in a folder with a space.json config file with the following s
 ```json
 {
   "space": {
-    "folderPath": "/path/to/shared/folder",
+    "textileHubTarget": "textile-hub-dev.fleek.co:3006",
+    "textileThreadsTarget": "textile-hub-dev.fleek.co:3006",
     "rpcPort": 9999,
     "storePath": "~/.fleek-space"
   }

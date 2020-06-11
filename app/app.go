@@ -2,14 +2,16 @@ package app
 
 import (
 	"context"
-	"github.com/FleekHQ/space-poc/core/env"
-	"github.com/FleekHQ/space-poc/core/space"
-	"github.com/FleekHQ/space-poc/core/textile"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/FleekHQ/space-poc/core/textile"
+
+	"github.com/FleekHQ/space-poc/core/env"
+	"github.com/FleekHQ/space-poc/core/space"
 
 	"github.com/FleekHQ/space-poc/core/sync"
 
@@ -48,7 +50,6 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 
 	<-waitForStore
 
-
 	watcher, err := w.New()
 	if err != nil {
 		log.Fatal(err)
@@ -58,7 +59,7 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	bootstrapReady := make(chan bool)
 	textileClient := textile.NewClient(store)
 	g.Go(func() error {
-		err := textileClient.StartAndBootstrap(ctx)
+		err := textileClient.StartAndBootstrap(ctx, cfg)
 		bootstrapReady <- true
 		return err
 	})
@@ -78,7 +79,6 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 		space.WithEnv(env),
 		space.WithAddWatchFileFunc(sync.AddFileWatch),
 	)
-
 
 	srv := grpc.New(
 		sv,

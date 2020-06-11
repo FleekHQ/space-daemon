@@ -1,6 +1,7 @@
 {
   "space": {
-    "folderPath": "~/space-app",
+    "textileHubTarget": "textile-hub-dev.fleek.co:3006",
+    "textileThreadsTarget": "textile-hub-dev.fleek.co:3006",
     "rpcPort": 9999,
     "storePath": "~/.fleek-space"
   }
