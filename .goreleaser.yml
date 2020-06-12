@@ -6,18 +6,18 @@ before:
     # you may remove this if you don't need go generate
     # - go generate ./...
 builds:
-  - id: space-poc
+  - id: space
     env:
       - CGO_ENABLED=0
-    main: ./cmd/space-poc/main.go
-    binary: space-poc
+    main: ./daemon/cmd/space/main.go
+    binary: space
     goos:
       - darwin
       - linux
   - id: installer
     env:
       - CGO_ENABLED=0
-    main: ./cmd/installer/main.go
+    main: ./daemon/cmd/installer/main.go
     binary: installer
     goos:
       - darwin
