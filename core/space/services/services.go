@@ -7,7 +7,7 @@ import (
 	"github.com/FleekHQ/space-poc/core/env"
 	"github.com/FleekHQ/space-poc/core/space/domain"
 	"github.com/FleekHQ/space-poc/core/store"
-	tc "github.com/FleekHQ/space-poc/core/textile/client"
+	"github.com/FleekHQ/space-poc/core/textile"
 )
 
 // Implementation for space.Service
@@ -15,11 +15,15 @@ type Space struct {
 	store     store.Store
 	cfg       config.Config
 	env       env.SpaceEnv
-	tc        tc.Client
+	tc        textile.Client
 	watchFile AddFileWatchFunc
 }
 
-type AddFileWatchFunc = func(path string) error
+type AddFileWatchFunc = func(addFileInfo domain.AddWatchFile) error
+
+func (s *Space) RegisterAddFileWatchFunc(watchFileFunc AddFileWatchFunc) {
+	s.watchFile = watchFileFunc
+}
 
 func (s *Space) GetConfig(ctx context.Context) domain.AppConfig {
 	return domain.AppConfig{
@@ -31,7 +35,7 @@ func (s *Space) GetConfig(ctx context.Context) domain.AppConfig {
 
 }
 
-func NewSpace(st store.Store, tc tc.Client, cfg config.Config, env env.SpaceEnv, watchFile AddFileWatchFunc) *Space {
+func NewSpace(st store.Store, tc textile.Client, cfg config.Config, env env.SpaceEnv, watchFile AddFileWatchFunc) *Space {
 	return &Space{
 		store:     st,
 		cfg:       cfg,

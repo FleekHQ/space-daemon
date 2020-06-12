@@ -40,7 +40,7 @@ func isTriggeredEvent(info os.FileInfo) bool {
 	return info.Name() == "triggered event"
 }
 
-func startWatcher(t *testing.T, watchPaths ...string) (context.Context, *FolderWatcher, error) {
+func startWatcher(t *testing.T, watchPaths ...string) (context.Context, FolderWatcher, error) {
 	ctx := context.Background()
 	watcher, err := New(WithPaths(watchPaths...))
 	if err != nil {
@@ -73,7 +73,7 @@ func TestFolderWatcher_Watch_Triggers_Handler_OnCreate(t *testing.T) {
 	watcher.RegisterHandler(handler)
 
 	// trigger event
-	watcher.w.TriggerEvent(w.Create, nil)
+	watcher.(*folderWatcher).w.TriggerEvent(w.Create, nil)
 
 	// wait a few ms for async event to trigger handler
 	<-time.After(time.Millisecond * 100)
@@ -98,7 +98,7 @@ func TestFolderWatcher_Watch_Triggers_Handler_OnRemove(t *testing.T) {
 	watcher.RegisterHandler(handler)
 
 	// trigger event
-	watcher.w.TriggerEvent(w.Remove, nil)
+	watcher.(*folderWatcher).w.TriggerEvent(w.Remove, nil)
 
 	// wait a few ms for async event to trigger handler
 	<-time.After(time.Millisecond * 100)

@@ -36,3 +36,9 @@ type AddItemResult struct {
 	BucketPath string
 	Error      error
 }
+
+type AddWatchFile struct {
+	LocalPath  string
+	BucketPath string
+	BucketKey  string
+}
