@@ -6,7 +6,7 @@ import (
 	"os"
 	s "strings"
 
-	"github.com/FleekHQ/space/log"
+	"github.com/FleekHQ/space/daemon/log"
 
 	badger "github.com/dgraph-io/badger"
 	homedir "github.com/mitchellh/go-homedir"

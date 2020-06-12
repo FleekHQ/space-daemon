@@ -3,10 +3,10 @@ package sync
 import (
 	"encoding/json"
 
-	"github.com/FleekHQ/space/core/textile"
+	"github.com/FleekHQ/space/daemon/core/textile"
 
-	"github.com/FleekHQ/space/core/events"
-	"github.com/FleekHQ/space/log"
+	"github.com/FleekHQ/space/daemon/core/events"
+	"github.com/FleekHQ/space/daemon/log"
 	tc "github.com/textileio/go-threads/api/client"
 )
 

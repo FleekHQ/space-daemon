@@ -4,7 +4,7 @@ import (
 	"context"
 	"syscall"
 
-	"github.com/FleekHQ/space/core/fs_data_source"
+	"github.com/FleekHQ/space/daemon/core/fs_data_source"
 )
 
 // SpaceFS is represents the filesystem

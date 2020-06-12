@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/FleekHQ/space/core/keychain"
-	"github.com/FleekHQ/space/log"
+	"github.com/FleekHQ/space/daemon/core/keychain"
+	"github.com/FleekHQ/space/daemon/log"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/textileio/go-threads/core/thread"
 	bucketsproto "github.com/textileio/textile/api/buckets/pb"

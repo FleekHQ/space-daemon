@@ -3,9 +3,9 @@ package sync
 import (
 	"testing"
 
-	"github.com/FleekHQ/space/core/textile"
+	"github.com/FleekHQ/space/daemon/core/textile"
 
-	"github.com/FleekHQ/space/mocks"
+	"github.com/FleekHQ/space/daemon/mocks"
 	"github.com/stretchr/testify/mock"
 	tc "github.com/textileio/go-threads/api/client"
 )

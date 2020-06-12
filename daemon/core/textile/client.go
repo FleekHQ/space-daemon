@@ -8,12 +8,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/FleekHQ/space/config"
+	"github.com/FleekHQ/space/daemon/config"
 	"github.com/libp2p/go-libp2p-core/crypto"
 
-	"github.com/FleekHQ/space/core/keychain"
-	db "github.com/FleekHQ/space/core/store"
-	"github.com/FleekHQ/space/log"
+	"github.com/FleekHQ/space/daemon/core/keychain"
+	db "github.com/FleekHQ/space/daemon/core/store"
+	"github.com/FleekHQ/space/daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 	bucketsClient "github.com/textileio/textile/api/buckets/client"

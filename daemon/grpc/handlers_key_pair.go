@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 
-	"github.com/FleekHQ/space/grpc/pb"
+	"github.com/FleekHQ/space/daemon/grpc/pb"
 )
 
 func (srv *grpcServer) GenerateKeyPair(ctx context.Context, request *pb.GenerateKeyPairRequest) (*pb.GenerateKeyPairResponse, error) {

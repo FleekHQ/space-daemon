@@ -3,7 +3,7 @@ package services
 import (
 	"os"
 
-	"github.com/FleekHQ/space/log"
+	"github.com/FleekHQ/space/daemon/log"
 )
 
 func PathExists(path string) bool {

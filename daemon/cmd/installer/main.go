@@ -18,7 +18,7 @@ const (
 	tag            = "v0.0.3"
 	executableName = "space"
 	binaryName     = "space"
-	downloadURL    = "https://github.com/FleekHQ/space/releases/download/"
+	downloadURL    = "https://github.com/FleekHQ/space/daemon/releases/download/"
 	spaceJsonName  = "space.json"
 )
 

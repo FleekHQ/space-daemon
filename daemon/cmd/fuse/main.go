@@ -8,10 +8,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/FleekHQ/space/core/fs_data_source"
+	"github.com/FleekHQ/space/daemon/core/fs_data_source"
 
-	fuse "github.com/FleekHQ/space/core/libfuse"
-	"github.com/FleekHQ/space/core/spacefs"
+	fuse "github.com/FleekHQ/space/daemon/core/libfuse"
+	"github.com/FleekHQ/space/daemon/core/spacefs"
 )
 
 // DefaultMountPoint if no mount path is provided

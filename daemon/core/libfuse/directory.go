@@ -5,7 +5,7 @@ import (
 	"log"
 	"syscall"
 
-	"github.com/FleekHQ/space/core/spacefs"
+	"github.com/FleekHQ/space/daemon/core/spacefs"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"

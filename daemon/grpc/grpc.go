@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/FleekHQ/space/core/space"
+	"github.com/FleekHQ/space/daemon/core/space"
 
-	"github.com/FleekHQ/space/grpc/pb"
-	"github.com/FleekHQ/space/log"
+	"github.com/FleekHQ/space/daemon/grpc/pb"
+	"github.com/FleekHQ/space/daemon/log"
 	"google.golang.org/grpc"
 )
 

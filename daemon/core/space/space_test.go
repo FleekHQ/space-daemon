@@ -12,9 +12,9 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/FleekHQ/space/core/space/services"
-	"github.com/FleekHQ/space/core/textile"
-	"github.com/FleekHQ/space/mocks"
+	"github.com/FleekHQ/space/daemon/core/space/services"
+	"github.com/FleekHQ/space/daemon/core/textile"
+	"github.com/FleekHQ/space/daemon/mocks"
 	"github.com/stretchr/testify/assert"
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
 )

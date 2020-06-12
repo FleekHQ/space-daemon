@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/FleekHQ/space/config"
-	"github.com/FleekHQ/space/core/env"
-	"github.com/FleekHQ/space/core/space/domain"
-	"github.com/FleekHQ/space/core/space/services"
-	"github.com/FleekHQ/space/core/store"
-	"github.com/FleekHQ/space/core/textile"
+	"github.com/FleekHQ/space/daemon/config"
+	"github.com/FleekHQ/space/daemon/core/env"
+	"github.com/FleekHQ/space/daemon/core/space/domain"
+	"github.com/FleekHQ/space/daemon/core/space/services"
+	"github.com/FleekHQ/space/daemon/core/store"
+	"github.com/FleekHQ/space/daemon/core/textile"
 )
 
 // Service Layer should not depend on gRPC dependencies

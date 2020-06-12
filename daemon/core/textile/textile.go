@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/FleekHQ/space/config"
+	"github.com/FleekHQ/space/daemon/config"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"

@@ -11,10 +11,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/FleekHQ/space/core/textile"
+	"github.com/FleekHQ/space/daemon/core/textile"
 
-	"github.com/FleekHQ/space/core/space/domain"
-	"github.com/FleekHQ/space/log"
+	"github.com/FleekHQ/space/daemon/core/space/domain"
+	"github.com/FleekHQ/space/daemon/log"
 )
 
 func (s *Space) listDirAtPath(

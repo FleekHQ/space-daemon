@@ -6,8 +6,8 @@ import (
 	"io"
 	"regexp"
 
-	"github.com/FleekHQ/space/core/ipfs"
-	"github.com/FleekHQ/space/log"
+	"github.com/FleekHQ/space/daemon/core/ipfs"
+	"github.com/FleekHQ/space/daemon/log"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 )
 

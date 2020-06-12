@@ -5,7 +5,7 @@ import (
 
 	"errors"
 
-	db "github.com/FleekHQ/space/core/store"
+	db "github.com/FleekHQ/space/daemon/core/store"
 	"github.com/libp2p/go-libp2p-core/crypto"
 )
 

@@ -1,7 +1,7 @@
 package sync
 
 import (
-	"github.com/FleekHQ/space/core/events"
+	"github.com/FleekHQ/space/daemon/core/events"
 )
 
 type defaultNotifier struct{}

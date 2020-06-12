@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/FleekHQ/space/log"
+	"github.com/FleekHQ/space/daemon/log"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 )
 

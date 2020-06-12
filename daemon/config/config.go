@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/FleekHQ/space/core/env"
-	"github.com/FleekHQ/space/log"
+	"github.com/FleekHQ/space/daemon/core/env"
+	"github.com/FleekHQ/space/daemon/log"
 	"github.com/creamdog/gonfig"
 )
 

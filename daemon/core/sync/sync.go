@@ -5,14 +5,14 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/FleekHQ/space/core/space/domain"
-	"github.com/FleekHQ/space/core/textile"
+	"github.com/FleekHQ/space/daemon/core/space/domain"
+	"github.com/FleekHQ/space/daemon/core/textile"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/FleekHQ/space/core/events"
-	"github.com/FleekHQ/space/log"
+	"github.com/FleekHQ/space/daemon/core/events"
+	"github.com/FleekHQ/space/daemon/log"
 
-	"github.com/FleekHQ/space/core/watcher"
+	"github.com/FleekHQ/space/daemon/core/watcher"
 )
 
 var (

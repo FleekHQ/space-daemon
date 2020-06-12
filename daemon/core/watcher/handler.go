@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/FleekHQ/space/log"
+	"github.com/FleekHQ/space/daemon/log"
 )
 
 // EventHandler

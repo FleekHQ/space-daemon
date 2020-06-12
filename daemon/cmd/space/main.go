@@ -4,10 +4,10 @@ import (
 	"context"
 	"flag"
 
-	"github.com/FleekHQ/space/app"
-	"github.com/FleekHQ/space/config"
-	"github.com/FleekHQ/space/core/env"
-	"github.com/FleekHQ/space/log"
+	"github.com/FleekHQ/space/daemon/app"
+	"github.com/FleekHQ/space/daemon/config"
+	"github.com/FleekHQ/space/daemon/core/env"
+	"github.com/FleekHQ/space/daemon/log"
 )
 
 func main() {

@@ -8,19 +8,19 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/FleekHQ/space/core/textile"
+	"github.com/FleekHQ/space/daemon/core/textile"
 
-	"github.com/FleekHQ/space/core/env"
-	"github.com/FleekHQ/space/core/space"
+	"github.com/FleekHQ/space/daemon/core/env"
+	"github.com/FleekHQ/space/daemon/core/space"
 
-	"github.com/FleekHQ/space/core/sync"
+	"github.com/FleekHQ/space/daemon/core/sync"
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/FleekHQ/space/config"
-	"github.com/FleekHQ/space/core/store"
-	w "github.com/FleekHQ/space/core/watcher"
-	"github.com/FleekHQ/space/grpc"
+	"github.com/FleekHQ/space/daemon/config"
+	"github.com/FleekHQ/space/daemon/core/store"
+	w "github.com/FleekHQ/space/daemon/core/watcher"
+	"github.com/FleekHQ/space/daemon/grpc"
 )
 
 // Shutdown logic follows this example https://gist.github.com/akhenakh/38dbfea70dc36964e23acc19777f3869
