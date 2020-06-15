@@ -84,7 +84,10 @@ message AddItemResult {
 
 message AddItemsResponse {
   AddItemResult result = 1;
-  uint32 progress = 2;
+  int64 totalFiles = 2;
+  int64 totalBytes = 3;
+  int64 completedFiles = 4;
+  int64 completedBytes = 5;
 }
 
 message CreateFolderRequest {

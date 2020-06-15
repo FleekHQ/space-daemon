@@ -21,7 +21,7 @@ type Service interface {
 	ListDir(ctx context.Context) ([]domain.FileInfo, error)
 	GenerateKeyPair(ctx context.Context, useForce bool) (domain.KeyPair, error)
 	CreateFolder(ctx context.Context, path string) error
-	AddItems(ctx context.Context, sourcePaths []string, targetPath string) (<-chan domain.AddItemResult, error)
+	AddItems(ctx context.Context, sourcePaths []string, targetPath string) (<-chan domain.AddItemResult, domain.AddItemsResponse, error)
 }
 
 
