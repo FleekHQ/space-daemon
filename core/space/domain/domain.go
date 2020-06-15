@@ -34,6 +34,13 @@ type KeyPair struct {
 type AddItemResult struct {
 	SourcePath string
 	BucketPath string
+	Bytes      int64
+	Error      error
+}
+
+type AddItemsResponse struct {
+	TotalFiles int64
+	TotalBytes int64
 	Error      error
 }
 

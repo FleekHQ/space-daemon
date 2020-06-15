@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/FleekHQ/space-poc/core/space/domain"
 	"github.com/FleekHQ/space-poc/log"
@@ -130,7 +131,6 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (d
 	}, nil
 }
 
-
 func (s *Space) CreateFolder(ctx context.Context, path string) error {
 	b, err := s.tc.GetDefaultBucket(ctx)
 	if err != nil {
@@ -156,29 +156,125 @@ func (s *Space) createFolder(ctx context.Context, path string, b textile.Bucket)
 	return root.String(), nil
 }
 
-func (s *Space) AddItems(ctx context.Context, sourcePaths []string, targetPath string) (<-chan domain.AddItemResult, error) {
+func (s *Space) AddItems(ctx context.Context, sourcePaths []string, targetPath string) (<-chan domain.AddItemResult, domain.AddItemsResponse, error) {
+	// check if all sourcePaths exist, else return err
+	for _, sourcePath := range sourcePaths {
+		if !PathExists(sourcePath) {
+			return nil, domain.AddItemsResponse{}, errors.New(fmt.Sprintf("path not found at %s", sourcePath))
+		}
+	}
 	// TODO: add support for bucket slug
 	b, err := s.tc.GetDefaultBucket(ctx)
 	if err != nil {
-		return nil, err
+		return nil, domain.AddItemsResponse{}, err
 	}
 	results := make(chan domain.AddItemResult)
+
+	totalsRes, err := getTotals(RemoveDuplicates(sourcePaths))
+	if err != nil {
+		return nil, domain.AddItemsResponse{}, err
+	}
 	go func() {
 		s.addItems(ctx, RemoveDuplicates(sourcePaths), targetPath, b, results)
 		close(results)
 	}()
 
-	return results, nil
+	return results, totalsRes, nil
+}
+
+// get totals for addItems operation
+func getTotals(sourcePaths []string) (domain.AddItemsResponse, error) {
+	var wg sync.WaitGroup
+	wg.Add(len(sourcePaths))
+	filesRes := make(chan domain.AddItemsResponse)
+	results := make([]domain.AddItemsResponse, 0)
+	for _, sourcePath := range sourcePaths {
+		go func(pathInFs string) {
+			defer wg.Done()
+			if IsPathDir(pathInFs) {
+				// counting folder as a file in total with 0 bytes
+				filesRes <- domain.AddItemsResponse{
+					TotalFiles: 1,
+					TotalBytes: 0,
+				}
+				// get recursive
+				var folderSubPaths []string
+				files, err := ioutil.ReadDir(pathInFs)
+				if err != nil {
+					log.Error(fmt.Sprintf("error reading folder path %s ", pathInFs), err)
+					filesRes <- domain.AddItemsResponse{
+						Error: err,
+					}
+					return
+				}
+				for _, file := range files {
+					subPath := pathInFs + "/" + file.Name()
+					if subPath != pathInFs {
+						folderSubPaths = append(folderSubPaths, subPath)
+					}
+				}
+				folderSubPathsRes, err := getTotals(folderSubPaths)
+				if err != nil {
+					filesRes <- domain.AddItemsResponse{
+						Error: err,
+					}
+					return
+				}
+				filesRes <- folderSubPathsRes
+			} else {
+				// get totals bytes
+				fi, err := os.Stat(pathInFs)
+				if err != nil {
+					log.Error(fmt.Sprintf("error getting file size %s ", pathInFs), err)
+					filesRes <- domain.AddItemsResponse{
+						Error: err,
+					}
+					return
+				}
+				// get the size
+				filesRes <- domain.AddItemsResponse{
+					TotalFiles: 1,
+					TotalBytes: fi.Size(),
+				}
+			}
+		}(sourcePath)
+	}
+
+	resultsDone := make(chan struct{})
+	var collectErr error
+	totalResult := domain.AddItemsResponse{}
+
+	go func() {
+		// collect results
+		for chRes := range filesRes {
+			if chRes.Error != nil {
+				collectErr = chRes.Error
+				continue
+			}
+			results = append(results, chRes)
+		}
+
+		for _, res := range results {
+			totalResult.TotalBytes += res.TotalBytes
+			totalResult.TotalFiles += res.TotalFiles
+		}
+		resultsDone <- struct{}{}
+	}()
+
+	wg.Wait()
+	// closing channel to close results handling goroutine
+	close(filesRes)
+	// wait for all results to finish
+	<-resultsDone
+
+	if collectErr != nil {
+		return totalResult, collectErr
+	}
+
+	return totalResult, nil
 }
 
 func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath string, b textile.Bucket, results chan<- domain.AddItemResult) error {
-	// check if all sourcePaths exist, else return err
-	for _, sourcePath := range sourcePaths {
-		if !PathExists(sourcePath) {
-			return errors.New(fmt.Sprintf("path not found at %s", sourcePath))
-		}
-	}
-
 	// NOTE: sequential upload of files and folders
 	for _, sourcePath := range sourcePaths {
 		if IsPathDir(sourcePath) {
@@ -197,6 +293,7 @@ func (s *Space) addItems(ctx context.Context, sourcePaths []string, targetPath s
 			results <- domain.AddItemResult{
 				SourcePath: sourcePath,
 				BucketPath: r.BucketPath,
+				Bytes:      r.Bytes,
 			}
 		}
 	}
@@ -275,8 +372,14 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 		return domain.AddItemResult{}, err
 	}
 
+	fi, _ := f.Stat()
+	var fileSize int64 = 0
+	if err == nil {
+		fileSize = fi.Size()
+	}
 	return domain.AddItemResult{
 		SourcePath: sourcePath,
 		BucketPath: root.String(),
+		Bytes:      fileSize,
 	}, err
 }
