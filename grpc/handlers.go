@@ -122,7 +122,8 @@ func (srv *grpcServer) OpenFile(ctx context.Context, request *pb.OpenFileRequest
 
 func (srv *grpcServer) AddItems(request *pb.AddItemsRequest, stream pb.SpaceApi_AddItemsServer) error {
 	ctx := stream.Context()
-	results, err := srv.sv.AddItems(ctx, request.SourcePaths, request.TargetPath)
+
+	results, totals, err := srv.sv.AddItems(ctx, request.SourcePaths, request.TargetPath)
 	if err != nil {
 		return err
 	}
@@ -133,7 +134,10 @@ func (srv *grpcServer) AddItems(request *pb.AddItemsRequest, stream pb.SpaceApi_
 
 	// push notification stream from out
 	go func() {
+		var completedBytes int64
+		var completedFiles int64
 		for res := range notifications {
+			completedFiles++
 			var r *pb.AddItemsResponse
 			if res.Error != nil {
 				r = &pb.AddItemsResponse{
@@ -141,15 +145,22 @@ func (srv *grpcServer) AddItems(request *pb.AddItemsRequest, stream pb.SpaceApi_
 						SourcePath: res.SourcePath,
 						Error:      res.Error.Error(),
 					},
-					Progress: 0,
+					TotalFiles: totals.TotalFiles,
+					TotalBytes: totals.TotalBytes,
+					CompletedFiles: completedFiles,
+					CompletedBytes: completedBytes,
 				}
 			} else {
+				completedBytes += res.Bytes
 				r = &pb.AddItemsResponse{
 					Result: &pb.AddItemResult{
 						SourcePath: res.SourcePath,
 						BucketPath: res.BucketPath,
 					},
-					Progress: 0,
+					TotalFiles: totals.TotalFiles,
+					TotalBytes: totals.TotalBytes,
+					CompletedFiles: completedFiles,
+					CompletedBytes: completedBytes,
 				}
 			}
 			stream.Send(r)
