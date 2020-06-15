@@ -372,7 +372,7 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 		return domain.AddItemResult{}, err
 	}
 
-	fi, _ := f.Stat()
+	fi, err := f.Stat()
 	var fileSize int64 = 0
 	if err == nil {
 		fileSize = fi.Size()
