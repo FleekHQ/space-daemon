@@ -1,76 +1,50 @@
-package fs_data_source
+package fsds
 
 import (
-	"log"
 	"os"
+	"strconv"
 	"time"
 
-	format "github.com/ipfs/go-ipld-format"
+	"github.com/FleekHQ/space-poc/log"
+
+	"github.com/FleekHQ/space-poc/core/space/domain"
 )
 
 // DirEntry implements the DirEntryOps
 type DirEntry struct {
-	//attr DirEntryAttribute
-	path  string
-	name  string
-	node  format.Node
-	stats *format.NodeStat
+	entry domain.DirEntry
 }
 
-func NewDirEntry(path, name string, node format.Node, stats *format.NodeStat) *DirEntry {
+func NewDirEntry(entry domain.DirEntry) *DirEntry {
 	return &DirEntry{
-		path:  path,
-		name:  name,
-		node:  node,
-		stats: stats,
+		entry: entry,
 	}
 }
 
 func (d *DirEntry) Path() string {
-	if d.path == "/" {
-		return d.path
-	}
-
-	if d.IsDir() {
-		return d.path + "/"
-	}
-
-	return d.path
-}
-
-func (d *DirEntry) Stats() *format.NodeStat {
-	if d.stats != nil {
-		return d.stats
-	}
-
-	stats, err := d.node.Stat()
-	if err != nil {
-		log.Printf("Unhandled error fetching Dir stats")
-	}
-	d.stats = stats
-	return d.stats
+	return d.entry.Path
 }
 
 // IsDir implement DirEntryAttribute
 // And returns if the directory is a boolean or not
 func (d *DirEntry) IsDir() bool {
-	return d.Stats().DataSize == 2
+	return d.entry.IsDir
 }
 
 // Name implements the DirEntryAttribute Interface
 func (d *DirEntry) Name() string {
-	return d.name
+	return d.entry.Name
 }
 
 // Size implements the DirEntryAttribute Interface and return the size of the item
 func (d *DirEntry) Size() uint64 {
-	size := len(d.node.RawData())
-	if size > 12 {
-		// Seems there is some extra 12 bytes metadata,
-		// so removing that from rawdata
-		size -= 11
+	intSize, err := strconv.ParseUint(d.entry.SizeInBytes, 10, 64)
+	if err != nil {
+		log.Error("Error getting direntry size", err)
+		// error, so returning 0 in the meantime
+		return 0
 	}
-	return uint64(size)
+	return intSize
 }
 
 // Mode implements the DirEntryAttribute Interface
@@ -87,10 +61,26 @@ func (d *DirEntry) Mode() os.FileMode {
 // Ctime implements the DirEntryAttribute Interface
 // It returns the time the directory was created
 func (d *DirEntry) Ctime() time.Time {
-	return time.Time{}
+	layout := "2006-01-02T15:04:05.000Z"
+	t, err := time.Parse(layout, d.entry.Created)
+
+	if err != nil {
+		log.Error("Error parsing direntry created time", err)
+		return time.Time{}
+	}
+
+	return t
 }
 
 // ModTime returns the modification time
 func (d *DirEntry) ModTime() time.Time {
-	return d.Ctime()
+	layout := "2006-01-02T15:04:05.000Z"
+	t, err := time.Parse(layout, d.entry.Updated)
+
+	if err != nil {
+		log.Error("Error parsing direntry updated time", err)
+		return time.Time{}
+	}
+
+	return t
 }

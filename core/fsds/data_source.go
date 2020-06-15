@@ -1,4 +1,4 @@
-package fs_data_source
+package fsds
 
 import (
 	"context"

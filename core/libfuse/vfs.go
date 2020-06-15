@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"log"
+	s "strings"
+
+	"github.com/mitchellh/go-homedir"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
@@ -25,8 +28,12 @@ type VFS struct {
 }
 
 // NewVFileSystem creates a new Virtual FileSystem object
-func NewVFileSystem(ctx context.Context, mountPath string, fsOps spacefs.FSOps) VFS {
-	return VFS{
+func NewVFileSystem(ctx context.Context, mountPath string, fsOps spacefs.FSOps) *VFS {
+	if home, err := homedir.Dir(); err == nil {
+		// If the mount directory contains ~, we replace it with the actual home directory
+		mountPath = s.Replace(mountPath, "~", home, -1)
+	}
+	return &VFS{
 		// storing ctx here to be used in the Root request
 		// as FUSE doesn't provide one there
 		ctx:             ctx,
@@ -85,6 +92,11 @@ func (vfs *VFS) Unmount() error {
 	}
 
 	err := vfs.mountConnection.Close()
+	if err != nil {
+		return err
+	}
+
+	vfs.mountConnection = nil
 	return err
 }
 

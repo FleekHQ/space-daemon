@@ -8,6 +8,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/pkg/errors"
+
+	"github.com/FleekHQ/space-poc/core/space/fuse"
+
+	"github.com/FleekHQ/space-poc/core/fsds"
+
+	"github.com/FleekHQ/space-poc/core/spacefs"
 	"github.com/FleekHQ/space-poc/core/textile"
 
 	"github.com/FleekHQ/space-poc/core/env"
@@ -80,10 +87,25 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 		space.WithEnv(env),
 	)
 
+	// setup FUSE FS Handler
+	sfs, err := spacefs.New(ctx, fsds.NewSpaceFSDataSource(sv))
+	if err != nil {
+		log.Fatal(err)
+	}
+	fuseController := fuse.NewController(ctx, cfg, store, sfs)
+	if fuseController.ShouldMount() {
+		log.Println("Mounting FUSE Drive")
+		if err := fuseController.Mount(); err != nil {
+			log.Println(errors.Wrap(err, "could not mount fuse on startup"))
+		}
+	}
+
 	srv := grpc.New(
 		sv,
+		fuseController,
 		grpc.WithPort(cfg.GetInt(config.SpaceServerPort, 0)),
 	)
+
 	// start the gRPC server
 	g.Go(func() error {
 		if svErr != nil {
@@ -124,6 +146,11 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	if sync != nil {
 		log.Println("shutdown bucket sync...")
 		sync.Stop()
+	}
+
+	err = fuseController.Unmount()
+	if err != nil {
+		log.Println(errors.Wrap(err, "error shutdown FUSE Drive"))
 	}
 
 	if srv != nil {

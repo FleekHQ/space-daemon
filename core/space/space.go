@@ -3,6 +3,7 @@ package space
 import (
 	"context"
 	"errors"
+
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/env"
 	"github.com/FleekHQ/space-poc/core/space/domain"
@@ -14,18 +15,18 @@ import (
 // Service Layer should not depend on gRPC dependencies
 type Service interface {
 	RegisterSyncer(sync services.Syncer)
-	OpenFile(ctx context.Context, path string, bucketSlug string) (domain.OpenFileInfo, error)
+	OpenFile(ctx context.Context, path string) (domain.OpenFileInfo, error)
 	GetConfig(ctx context.Context) domain.AppConfig
-	ListDir(ctx context.Context) ([]domain.FileInfo, error)
+	ListDirs(ctx context.Context, path string) ([]domain.FileInfo, error)
+	ListDir(ctx context.Context, path string) ([]domain.FileInfo, error)
 	GenerateKeyPair(ctx context.Context, useForce bool) (domain.KeyPair, error)
 	CreateFolder(ctx context.Context, path string) error
 	AddItems(ctx context.Context, sourcePaths []string, targetPath string) (<-chan domain.AddItemResult, domain.AddItemsResponse, error)
 }
 
-
 type serviceOptions struct {
-	cfg       config.Config
-	env       env.SpaceEnv
+	cfg config.Config
+	env env.SpaceEnv
 }
 
 var defaultOptions = serviceOptions{}
