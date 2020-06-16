@@ -144,6 +144,8 @@ func (bs *bucketSynchronizer) Start(ctx context.Context) error {
 			if services.PathExists(fi.LocalPath) {
 				if err := bs.folderWatcher.AddFile(fi.LocalPath); err != nil {
 					log.Error(fmt.Sprintf("error opening file at %s", fi.LocalPath), err)
+					// remove fileInfo from store for cleanup
+					bs.removeFileInfo(fi)
 				}
 			}
 		}
@@ -215,7 +217,6 @@ func (bs *bucketSynchronizer) GetOpenFilePath(bucketSlug string, bucketPath stri
 	return fi.LocalPath, true
 }
 
-
 func getOpenFileKey(localPath string) string {
 	return OpenFilesKeyPrefix + localPath
 }
@@ -254,6 +255,18 @@ func (bs *bucketSynchronizer) addFileInfoToStore(addFileInfo domain.AddWatchFile
 	return nil
 }
 
+// Helper function to remove file information from store
+func (bs *bucketSynchronizer) removeFileInfo(addFileInfo domain.AddWatchFile) error {
+	if err := bs.store.Remove([]byte(getOpenFileKey(addFileInfo.LocalPath))); err != nil {
+		return err
+	}
+	reverseKey := getOpenFileReverseKey(addFileInfo.BucketKey, addFileInfo.BucketPath)
+	if err := bs.store.Remove([]byte(reverseKey)); err != nil {
+		return err
+	}
+	return nil
+}
+
 // Helper function to retrieve open file info from store
 func (bs *bucketSynchronizer) getOpenFileInfo(key string) (domain.AddWatchFile, error) {
 	var fi []byte
@@ -271,4 +284,3 @@ func (bs *bucketSynchronizer) getOpenFileInfo(key string) (domain.AddWatchFile, 
 
 	return fileInfo, nil
 }
-
