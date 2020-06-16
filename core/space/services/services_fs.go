@@ -99,10 +99,13 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (d
 		return domain.OpenFileInfo{}, err
 	}
 	if filePath, exists := s.sync.GetOpenFilePath(b.Slug(), path); exists {
-		// return file handle
-		return domain.OpenFileInfo{
-			Location: filePath,
-		}, nil
+		// sanity check in case file was deleted or moved
+		if PathExists(filePath) {
+			// return file handle
+			return domain.OpenFileInfo{
+				Location: filePath,
+			}, nil
+		}
 	}
 
 	// else, open new file on FS
