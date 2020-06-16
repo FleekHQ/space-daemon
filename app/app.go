@@ -70,17 +70,14 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	<-bootstrapReady
 
 	// setup local threads
-	threadsdReady := make(chan bool)
 	threadsd := &tt.TextileThreadsd{
 		Ready: make(chan bool),
 	}
 	g.Go(func() error {
 		threadsd.Start()
-		threadsdReady <- true
 		return err
 	})
 	<-threadsd.WaitForReady()
-	<-threadsdReady
 
 	// watcher is started inside bucket sync
 	sync := sync.New(watcher, textileClient, nil)
