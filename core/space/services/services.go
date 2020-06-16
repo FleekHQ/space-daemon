@@ -12,17 +12,22 @@ import (
 
 // Implementation for space.Service
 type Space struct {
-	store     store.Store
-	cfg       config.Config
-	env       env.SpaceEnv
-	tc        textile.Client
-	watchFile AddFileWatchFunc
+	store store.Store
+	cfg   config.Config
+	env   env.SpaceEnv
+	tc    textile.Client
+	sync  Syncer
+}
+
+type Syncer interface {
+	AddFileWatch(addFileInfo domain.AddWatchFile) error
+	GetOpenFilePath(bucketSlug string, bucketPath string) (string, bool)
 }
 
 type AddFileWatchFunc = func(addFileInfo domain.AddWatchFile) error
 
-func (s *Space) RegisterAddFileWatchFunc(watchFileFunc AddFileWatchFunc) {
-	s.watchFile = watchFileFunc
+func (s *Space) RegisterSyncer(sync Syncer) {
+	s.sync = sync
 }
 
 func (s *Space) GetConfig(ctx context.Context) domain.AppConfig {
@@ -35,12 +40,12 @@ func (s *Space) GetConfig(ctx context.Context) domain.AppConfig {
 
 }
 
-func NewSpace(st store.Store, tc textile.Client, cfg config.Config, env env.SpaceEnv, watchFile AddFileWatchFunc) *Space {
+func NewSpace(st store.Store, tc textile.Client, syncer Syncer, cfg config.Config, env env.SpaceEnv) *Space {
 	return &Space{
-		store:     st,
-		cfg:       cfg,
-		env:       env,
-		tc:        tc,
-		watchFile: watchFile,
+		store: st,
+		cfg:   cfg,
+		env:   env,
+		tc:    tc,
+		sync:  syncer,
 	}
 }

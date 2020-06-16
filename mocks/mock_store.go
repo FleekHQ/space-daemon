@@ -60,6 +60,29 @@ func (_m *Store) IsOpen() bool {
 	return r0
 }
 
+// KeysWithPrefix provides a mock function with given fields: prefix
+func (_m *Store) KeysWithPrefix(prefix string) ([]string, error) {
+	ret := _m.Called(prefix)
+
+	var r0 []string
+	if rf, ok := ret.Get(0).(func(string) []string); ok {
+		r0 = rf(prefix)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(prefix)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Open provides a mock function with given fields:
 func (_m *Store) Open() error {
 	ret := _m.Called()
@@ -67,6 +90,20 @@ func (_m *Store) Open() error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func() error); ok {
 		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Remove provides a mock function with given fields: key
+func (_m *Store) Remove(key []byte) error {
+	ret := _m.Called(key)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]byte) error); ok {
+		r0 = rf(key)
 	} else {
 		r0 = ret.Error(0)
 	}

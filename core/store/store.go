@@ -27,7 +27,9 @@ type Store interface {
 	Set(key []byte, value []byte) error
 	SetString(key string, value string) error
 	Get(key []byte) ([]byte, error)
+	Remove(key []byte) error
 	IsOpen() bool
+	KeysWithPrefix(prefix string) ([]string, error)
 }
 
 type storeOptions struct {
@@ -85,7 +87,6 @@ func (store *store) Open() error {
 func (store store) IsOpen() bool {
 	return store.isOpen
 }
-
 
 func (store *store) Close() error {
 	if store.isOpen == false {
@@ -152,6 +153,26 @@ func (store *store) Set(key []byte, value []byte) error {
 	return nil
 }
 
+// Removes a key/value pair in the db.
+func (store *store) Remove(key []byte) error {
+	db, err := store.getDb()
+
+	if err != nil {
+		return err
+	}
+
+	removeHandler := func(txn *badger.Txn) error {
+		err := txn.Delete(key)
+		return err
+	}
+
+	if err := db.Update(removeHandler); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (store *store) SetString(key string, value string) error {
 	return store.Set([]byte(key), []byte(value))
 }
@@ -191,4 +212,28 @@ func (store *store) Get(key []byte) ([]byte, error) {
 	}
 
 	return valCopy, nil
+}
+// Returns keys in the store filtered by prefix
+func (store store) KeysWithPrefix(prefix string) ([]string, error) {
+	db, err := store.getDb()
+
+	if err != nil {
+		return nil, err
+	}
+
+	keys := make([]string, 0)
+
+	db.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+		prefix := []byte(prefix)
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			item := it.Item()
+			k := item.Key()
+			keys = append(keys, string(k))
+		}
+		return nil
+	})
+
+	return keys, nil
 }

@@ -2,20 +2,25 @@ package sync
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"github.com/FleekHQ/space-poc/core/space/domain"
-	"github.com/FleekHQ/space-poc/core/textile"
-	"golang.org/x/sync/errgroup"
-	"sync"
-
 	"github.com/FleekHQ/space-poc/core/events"
+	"github.com/FleekHQ/space-poc/core/space/domain"
+	"github.com/FleekHQ/space-poc/core/store"
+	"github.com/FleekHQ/space-poc/core/textile"
 	"github.com/FleekHQ/space-poc/log"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/FleekHQ/space-poc/core/watcher"
 )
 
 var (
 	ErrAddFileWatch = errors.New("error adding file to watch")
+)
+
+const (
+	OpenFilesKeyPrefix        = "openFiles#"
+	ReverseOpenFilesKeyPrefix = "reverseOpenFiles#"
 )
 
 type GrpcNotifier interface {
@@ -28,6 +33,7 @@ type BucketSynchronizer interface {
 	Stop()
 	RegisterNotifier(notifier GrpcNotifier)
 	AddFileWatch(addFileInfo domain.AddWatchFile) error
+	GetOpenFilePath(bucketSlug string, bucketPath string) (string, bool)
 }
 
 type TextileNotifier interface {
@@ -53,16 +59,14 @@ type bucketSynchronizer struct {
 	th                     *textileHandler
 	textileThreadListeners []textile.ThreadListener
 	notifier               GrpcNotifier
-
-	// lock for openFiles map
-	openFilesLock sync.RWMutex
-	openFiles     map[string]domain.AddWatchFile
+	store                  store.Store
 }
 
 // Creates a new bucketSynchronizer instancelistenerEventHandler
 func New(
 	folderWatcher watcher.FolderWatcher,
 	textileClient textile.Client,
+	store store.Store,
 	notifier GrpcNotifier,
 ) BucketSynchronizer {
 	textileThreadListeners := make([]textile.ThreadListener, 0)
@@ -74,7 +78,7 @@ func New(
 		th:                     nil,
 		textileThreadListeners: textileThreadListeners,
 		notifier:               notifier,
-		openFiles:              make(map[string]domain.AddWatchFile),
+		store:                  store,
 	}
 }
 
@@ -163,19 +167,84 @@ func (bs *bucketSynchronizer) AddFileWatch(addFileInfo domain.AddWatchFile) erro
 		return ErrAddFileWatch
 	}
 
-	bs.openFilesLock.Lock()
-	defer bs.openFilesLock.Unlock()
-	bs.openFiles[addFileInfo.LocalPath] = addFileInfo
+	err := bs.addFileInfoToStore(addFileInfo)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func (bs *bucketSynchronizer) getOpenFileBucketKey(localPath string) (string, bool) {
-	bs.openFilesLock.RLock()
-	defer bs.openFilesLock.RUnlock()
-	if fi, exists := bs.openFiles[localPath]; exists {
-		return fi.BucketKey, true
+func (bs *bucketSynchronizer) GetOpenFilePath(bucketSlug string, bucketPath string) (string, bool) {
+	var fi domain.AddWatchFile
+	var err error
+	reversKey := getOpenFileReverseKey(bucketSlug, bucketPath)
+
+	if fi, err = bs.getOpenFileInfo(reversKey); err != nil {
+		return "", false
 	}
 
-	return "", false
+	if fi.LocalPath == "" {
+		return "", false
+	}
+
+	return fi.LocalPath, true
 }
+
+
+func getOpenFileKey(localPath string) string {
+	return OpenFilesKeyPrefix + localPath
+}
+
+func getOpenFileReverseKey(bucketSlug string, bucketPath string) string {
+	return ReverseOpenFilesKeyPrefix + bucketSlug + ":" + bucketPath
+}
+
+func (bs *bucketSynchronizer) getOpenFileBucketKey(localPath string) (string, bool) {
+	var fi domain.AddWatchFile
+	var err error
+	if fi, err = bs.getOpenFileInfo(getOpenFileKey(localPath)); err != nil {
+		return "", false
+	}
+
+	if fi.BucketKey == "" {
+		return "", false
+	}
+
+	return fi.BucketKey, true
+}
+
+// Helper function to set open file info in the store
+func (bs *bucketSynchronizer) addFileInfoToStore(addFileInfo domain.AddWatchFile) error {
+	out, err := json.Marshal(addFileInfo)
+	if err != nil {
+		return err
+	}
+	if err := bs.store.SetString(getOpenFileKey(addFileInfo.LocalPath), string(out)); err != nil {
+		return err
+	}
+	reverseKey := getOpenFileReverseKey(addFileInfo.BucketKey, addFileInfo.BucketPath)
+	if err := bs.store.SetString(reverseKey, string(out)); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Helper function to retrieve open file info from store
+func (bs *bucketSynchronizer) getOpenFileInfo(key string) (domain.AddWatchFile, error) {
+	var fi []byte
+	var err error
+
+	if fi, err = bs.store.Get([]byte(key)); err != nil {
+		return domain.AddWatchFile{}, err
+	}
+
+	var fileInfo domain.AddWatchFile
+
+	if err := json.Unmarshal(fi, &fileInfo); err != nil {
+		return domain.AddWatchFile{}, err
+	}
+
+	return fileInfo, nil
+}
+
