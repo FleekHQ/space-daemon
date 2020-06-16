@@ -25,7 +25,7 @@ var (
 	mockPath      *mocks.Path
 	mockBucket    *mocks.Bucket
 	mockEnv       *mocks.SpaceEnv
-	mockSync	  *mocks.Syncer
+	mockSync      *mocks.Syncer
 )
 
 type TearDown func()
@@ -333,12 +333,12 @@ func TestService_AddItems_Folder(t *testing.T) {
 		).Return(nil, mockPath, nil)
 	}
 
-	ch, res, err  := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+	ch, res, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, ch)
 	assert.NotEmpty(t, res)
-	assert.Equal(t, int64(len(getTempDir().fileNames) + 1), res.TotalFiles)
+	assert.Equal(t, int64(len(getTempDir().fileNames)+1), res.TotalFiles)
 
 	count := 0
 	for res := range ch {
@@ -382,7 +382,7 @@ func TestService_AddItems_OnError(t *testing.T) {
 		mock.Anything,
 	).Return(nil, nil, bucketError)
 
-	ch, _, err  := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+	ch, _, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, ch)
