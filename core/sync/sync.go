@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/FleekHQ/space-poc/core/events"
 	"github.com/FleekHQ/space-poc/core/space/domain"
+	"github.com/FleekHQ/space-poc/core/space/services"
 	"github.com/FleekHQ/space-poc/core/store"
 	"github.com/FleekHQ/space-poc/core/textile"
 	"github.com/FleekHQ/space-poc/log"
@@ -130,7 +132,22 @@ func (bs *bucketSynchronizer) Start(ctx context.Context) error {
 		})
 	}
 
-	// TODO: add files in store to watcher on boot
+	// add open files to watcher
+	keys, err := bs.store.KeysWithPrefix(OpenFilesKeyPrefix)
+	if err != nil {
+		log.Error("error getting keys from store", err)
+		return err
+	}
+	log.Debug("start watching open files ...")
+	for _, k := range keys {
+		if fi, err := bs.getOpenFileInfo(k); err == nil {
+			if services.PathExists(fi.LocalPath) {
+				if err := bs.folderWatcher.AddFile(fi.LocalPath); err != nil {
+					log.Error(fmt.Sprintf("error opening file at %s", fi.LocalPath), err)
+				}
+			}
+		}
+	}
 
 	err = g.Wait()
 
