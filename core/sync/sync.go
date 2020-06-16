@@ -130,6 +130,8 @@ func (bs *bucketSynchronizer) Start(ctx context.Context) error {
 		})
 	}
 
+	// TODO: add files in store to watcher on boot
+
 	err = g.Wait()
 
 	if err != nil {
@@ -168,6 +170,11 @@ func (bs *bucketSynchronizer) AddFileWatch(addFileInfo domain.AddWatchFile) erro
 	}
 
 	err := bs.addFileInfoToStore(addFileInfo)
+	if err != nil {
+		return err
+	}
+
+	err = bs.folderWatcher.AddFile(addFileInfo.LocalPath)
 	if err != nil {
 		return err
 	}
