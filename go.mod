@@ -6,6 +6,7 @@ require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
 	github.com/creamdog/gonfig v0.0.0-20160810132730-80d86bfb5a37
 	github.com/dgraph-io/badger v1.6.1
+	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/gin-gonic/gin v1.6.3 // indirect
 	github.com/golang/protobuf v1.4.2

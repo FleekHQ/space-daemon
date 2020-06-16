@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/json"
@@ -229,9 +230,12 @@ func initUser(threads *tc.Client, buckets *bc.Client, user string, bucketSlug st
 	}
 	log.Println("lp1: ", lp)
 
+	emptyDirPath := strings.TrimRight("dummy", "/") + "/" + ".keep"
+	_, _, err = buckets.PushPath(ctx, buck.Root.Key, emptyDirPath, &bytes.Buffer{})
+
 	//listPath on a folder that exists
 	r := strings.NewReader("IPFS test data for reader")
-	r2 := strings.NewReader("IPFS test data for reader2")
+	r2 := strings.NewReader("IPFS test data  ./tfor reader2")
 	buckets.PushPath(ctx, buck.Root.Key, "another/folderB/file1", r)
 	buckets.PushPath(ctx, buck.Root.Key, "another/folderB/file2", r2)
 	lp, err = buckets.ListPath(ctx, buck.Root.Key, "another/folderB")

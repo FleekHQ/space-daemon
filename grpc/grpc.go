@@ -3,8 +3,9 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"github.com/FleekHQ/space-poc/core/space"
 	"net"
+
+	"github.com/FleekHQ/space-poc/core/space"
 
 	"github.com/FleekHQ/space-poc/grpc/pb"
 	"github.com/FleekHQ/space-poc/log"
@@ -29,6 +30,7 @@ type grpcServer struct {
 	sv   space.Service
 	// TODO: see if we need to clean this up by gc or handle an array
 	fileEventStream pb.SpaceApi_SubscribeServer
+	txlEventStream  pb.SpaceApi_TxlSubscribeServer
 	isStarted       bool
 }
 

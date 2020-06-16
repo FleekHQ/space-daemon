@@ -1,9 +1,10 @@
 package domain
 
 type AppConfig struct {
-	FolderPath string
-	Port       int
-	AppPath    string
+	Port                 int
+	AppPath              string
+	TextileHubTarget     string
+	TextileThreadsTarget string
 }
 
 type DirEntry struct {
@@ -28,4 +29,23 @@ type OpenFileInfo struct {
 type KeyPair struct {
 	PublicKey  string
 	PrivateKey string
+}
+
+type AddItemResult struct {
+	SourcePath string
+	BucketPath string
+	Bytes      int64
+	Error      error
+}
+
+type AddItemsResponse struct {
+	TotalFiles int64
+	TotalBytes int64
+	Error      error
+}
+
+type AddWatchFile struct {
+	LocalPath  string
+	BucketPath string
+	BucketKey  string
 }
