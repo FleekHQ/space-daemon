@@ -30,7 +30,7 @@ const (
 
 type TextileThreadsd struct {
 	isRunning bool
-	Ready     chan bool
+	ready     chan bool
 	proxy     *http.Server
 	server    *grpc.Server
 	n         tCommon.NetBoostrapper
@@ -38,7 +38,7 @@ type TextileThreadsd struct {
 
 func NewThreadsd() Threadsd {
 	return &TextileThreadsd{
-		Ready: make(chan bool),
+		ready: make(chan bool),
 	}
 }
 
@@ -107,7 +107,7 @@ func (tt *TextileThreadsd) Start() error {
 		netpb.RegisterAPIServer(tt.server, netService)
 		if err := tt.server.Serve(listener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 			tt.isRunning = false
-			tt.Ready <- false
+			tt.ready <- false
 		}
 	}()
 	webrpc := grpcweb.WrapServer(
@@ -137,17 +137,17 @@ func (tt *TextileThreadsd) Start() error {
 
 	log.Info("threadsd: Your peer ID is " + tt.n.Host().ID().String())
 	tt.isRunning = true
-	tt.Ready <- true
+	tt.ready <- true
 	return nil
 }
 
 func (tt *TextileThreadsd) WaitForReady() chan bool {
-	return tt.Ready
+	return tt.ready
 }
 
 func (tt *TextileThreadsd) Stop() error {
 	tt.isRunning = false
-	close(tt.Ready)
+	close(tt.ready)
 	defer func() {
 		tt.proxy = nil
 		tt.server = nil
