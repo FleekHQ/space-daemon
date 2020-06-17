@@ -19,3 +19,5 @@
 .env
 space.json
 bin
+
+debug/
