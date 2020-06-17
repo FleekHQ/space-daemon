@@ -80,6 +80,6 @@ type Client interface {
 
 type Threadsd interface {
 	WaitForReady() chan bool
-	Stop()
-	Start()
+	Stop() error
+	Start() error
 }

@@ -42,23 +42,23 @@ func NewThreadsd() Threadsd {
 	}
 }
 
-func (tt *TextileThreadsd) Start() {
+func (tt *TextileThreadsd) Start() error {
 	hostAddr, err := ma.NewMultiaddr(p2pMultiAddr)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	apiAddr, err := ma.NewMultiaddr(hostMultiAddr)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	apiProxyAddr, err := ma.NewMultiaddr(hostProxyMultiAddr)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	usr, err := user.Current()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	repo := filepath.Join(usr.HomeDir, ".threads")
 	debug := false
@@ -69,7 +69,7 @@ func (tt *TextileThreadsd) Start() {
 		tCommon.WithConnectionManager(connmgr.NewConnManager(100, 400, time.Second*20)),
 		tCommon.WithNetDebug(debug))
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	tt.n.Bootstrap(util.DefaultBoostrapPeers())
 
@@ -78,34 +78,36 @@ func (tt *TextileThreadsd) Start() {
 		Debug:    debug,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	netService, err := netapi.NewService(tt.n, netapi.Config{
 		Debug: debug,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	target, err := util.TCPAddrFromMultiAddr(apiAddr)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	ptarget, err := util.TCPAddrFromMultiAddr(apiProxyAddr)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	tt.server = grpc.NewServer()
 	listener, err := net.Listen("tcp", target)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	go func() {
+		log.Info("inside go func")
 		tpb.RegisterAPIServer(tt.server, service)
 		netpb.RegisterAPIServer(tt.server, netService)
 		if err := tt.server.Serve(listener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-			log.Error("Threadsd grpc server error: ", err)
+			tt.isRunning = false
+			tt.Ready <- false
 		}
 	}()
 	webrpc := grpcweb.WrapServer(
@@ -134,29 +136,32 @@ func (tt *TextileThreadsd) Start() {
 	}()
 
 	log.Info("threadsd: Your peer ID is " + tt.n.Host().ID().String())
-
 	tt.isRunning = true
 	tt.Ready <- true
+	return nil
 }
 
 func (tt *TextileThreadsd) WaitForReady() chan bool {
 	return tt.Ready
 }
 
-func (tt *TextileThreadsd) Stop() {
+func (tt *TextileThreadsd) Stop() error {
 	tt.isRunning = false
 	close(tt.Ready)
+	defer func() {
+		tt.proxy = nil
+		tt.server = nil
+		tt.n = nil
+	}()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	if err := tt.proxy.Shutdown(ctx); err != nil {
-		log.Fatal(err)
+		return err
 	}
 	tt.server.GracefulStop()
 	if err := tt.n.Close(); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	tt.proxy = nil
-	tt.server = nil
-	tt.n = nil
+	return nil
 }
