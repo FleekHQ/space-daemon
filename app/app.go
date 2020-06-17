@@ -19,7 +19,6 @@ import (
 
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/store"
-	tt "github.com/FleekHQ/space-poc/core/textile/threadsd"
 	w "github.com/FleekHQ/space-poc/core/watcher"
 	"github.com/FleekHQ/space-poc/grpc"
 )
@@ -70,9 +69,7 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	<-bootstrapReady
 
 	// setup local threads
-	threadsd := &tt.TextileThreadsd{
-		Ready: make(chan bool),
-	}
+	threadsd := textile.NewThreadsd()
 	g.Go(func() error {
 		threadsd.Start()
 		return err

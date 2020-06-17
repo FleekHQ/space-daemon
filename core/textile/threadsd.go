@@ -1,4 +1,4 @@
-package textilethreadsd
+package textile
 
 import (
 	"context"
@@ -34,6 +34,12 @@ type TextileThreadsd struct {
 	proxy     *http.Server
 	server    *grpc.Server
 	n         tCommon.NetBoostrapper
+}
+
+func NewThreadsd() Threadsd {
+	return &TextileThreadsd{
+		Ready: make(chan bool),
+	}
 }
 
 func (tt *TextileThreadsd) Start() {
@@ -136,6 +142,7 @@ func (tt *TextileThreadsd) Start() {
 func (tt *TextileThreadsd) WaitForReady() chan bool {
 	return tt.Ready
 }
+
 func (tt *TextileThreadsd) Stop() {
 	tt.isRunning = false
 	close(tt.Ready)

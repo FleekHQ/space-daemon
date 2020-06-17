@@ -77,3 +77,9 @@ type Client interface {
 	WaitForReady() chan bool
 	StartAndBootstrap(ctx context.Context, cfg config.Config) error
 }
+
+type Threadsd interface {
+	WaitForReady() chan bool
+	Stop()
+	Start()
+}
