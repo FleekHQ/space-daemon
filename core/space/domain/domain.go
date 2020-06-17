@@ -45,7 +45,7 @@ type AddItemsResponse struct {
 }
 
 type AddWatchFile struct {
-	LocalPath  string
-	BucketPath string
-	BucketKey  string
+	LocalPath  string `json:"local_path"`
+	BucketPath string `json:"bucket_path"`
+	BucketKey  string `json:"bucket_key"`
 }

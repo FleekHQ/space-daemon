@@ -90,12 +90,37 @@ func (s *Space) ListDir(ctx context.Context) ([]domain.FileInfo, error) {
 }
 
 func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (domain.OpenFileInfo, error) {
+	var filePath string
+	var err error
+	// check if file exists in sync
 	// TODO : handle bucketslug for multiple buckets. For now default to personal bucket
 	b, err := s.tc.GetDefaultBucket(ctx)
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
+	if filePath, exists := s.sync.GetOpenFilePath(b.Slug(), path); exists {
+		// sanity check in case file was deleted or moved
+		if PathExists(filePath) {
+			// return file handle
+			return domain.OpenFileInfo{
+				Location: filePath,
+			}, nil
+		}
+	}
 
+	// else, open new file on FS
+	filePath, err = s.openFileOnFs(ctx, path, b)
+	if err != nil {
+		return domain.OpenFileInfo{}, err
+	}
+
+	// return file handle
+	return domain.OpenFileInfo{
+		Location: filePath,
+	}, nil
+}
+
+func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket) (string, error) {
 	// write file copy to temp folder
 	cfg := s.GetConfig(ctx)
 	_, fileName := filepath.Split(path)
@@ -103,7 +128,7 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (d
 	tmpFile, err := ioutil.TempFile(cfg.AppPath, "*-"+fileName)
 	if err != nil {
 		log.Error("cannot create temp file while executing OpenFile", err)
-		return domain.OpenFileInfo{}, err
+		return "", err
 	}
 	defer tmpFile.Close()
 
@@ -111,7 +136,7 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (d
 	err = b.GetFile(ctx, path, tmpFile)
 	if err != nil {
 		log.Error(fmt.Sprintf("error retrieving file from bucket %s in path %s", b.Key(), path), err)
-		return domain.OpenFileInfo{}, err
+		return "", err
 	}
 	// register temp file in watcher
 	addWatchFile := domain.AddWatchFile{
@@ -119,16 +144,12 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (d
 		BucketPath: path,
 		BucketKey:  b.Key(),
 	}
-	err = s.watchFile(addWatchFile)
+	err = s.sync.AddFileWatch(addWatchFile)
 	if err != nil {
 		log.Error(fmt.Sprintf("error adding file to watch path %s from bucket %s in bucketpath %s", tmpFile.Name(), b.Key(), path), err)
-		return domain.OpenFileInfo{}, err
+		return "", err
 	}
-
-	// return file handle
-	return domain.OpenFileInfo{
-		Location: tmpFile.Name(),
-	}, nil
+	return tmpFile.Name(), nil
 }
 
 func (s *Space) CreateFolder(ctx context.Context, path string) error {

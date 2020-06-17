@@ -25,6 +25,7 @@ var (
 	mockPath      *mocks.Path
 	mockBucket    *mocks.Bucket
 	mockEnv       *mocks.SpaceEnv
+	mockSync      *mocks.Syncer
 )
 
 type TearDown func()
@@ -48,6 +49,7 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 	mockPath = new(mocks.Path)
 	mockBucket = new(mocks.Bucket)
 	mockEnv = new(mocks.SpaceEnv)
+	mockSync = new(mocks.Syncer)
 	var dir string
 	var err error
 	if dir, err = ioutil.TempDir("", "space-test-folders"); err != nil {
@@ -83,7 +85,7 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 	// NOTE: if we need to test without the store open we must override on each test
 	st.On("IsOpen").Return(true)
 
-	sv, err := NewService(st, textileClient, cfg, WithEnv(mockEnv))
+	sv, err := NewService(st, textileClient, mockSync, cfg, WithEnv(mockEnv))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -208,6 +210,15 @@ func TestService_OpenFile(t *testing.T) {
 		getDir().dir,
 	)
 
+	mockSync.On("GetOpenFilePath", testKey, testPath).Return(
+		"",
+		false,
+	)
+
+	mockSync.On("AddFileWatch", mock.Anything).Return(
+		nil,
+	)
+
 	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
 	mockBucket.On(
 		"GetFile",
@@ -218,6 +229,10 @@ func TestService_OpenFile(t *testing.T) {
 
 	mockBucket.On(
 		"Key",
+	).Return(testKey)
+
+	mockBucket.On(
+		"Slug",
 	).Return(testKey)
 
 	res, err := sv.OpenFile(context.Background(), testPath, "")
@@ -318,12 +333,12 @@ func TestService_AddItems_Folder(t *testing.T) {
 		).Return(nil, mockPath, nil)
 	}
 
-	ch, res, err  := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+	ch, res, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, ch)
 	assert.NotEmpty(t, res)
-	assert.Equal(t, int64(len(getTempDir().fileNames) + 1), res.TotalFiles)
+	assert.Equal(t, int64(len(getTempDir().fileNames)+1), res.TotalFiles)
 
 	count := 0
 	for res := range ch {
@@ -367,7 +382,7 @@ func TestService_AddItems_OnError(t *testing.T) {
 		mock.Anything,
 	).Return(nil, nil, bucketError)
 
-	ch, _, err  := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+	ch, _, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, ch)

@@ -250,7 +250,7 @@ func initUser(threads *tc.Client, buckets *bc.Client, user string, bucketSlug st
 	log.Println("finished creating channel")
 
 	if err != nil {
-		log.Fatal("failed to call listen: %v", err)
+		log.Fatalf("failed to call listen: %v", err)
 	}
 
 	go func() {
@@ -287,7 +287,7 @@ func initUser(threads *tc.Client, buckets *bc.Client, user string, bucketSlug st
 	log.Println("finished creating channel")
 
 	if err != nil {
-		log.Fatal("failed to call listen: %v", err)
+		log.Fatalf("failed to call listen: %v", err)
 	}
 
 	val, ok = <-channel
