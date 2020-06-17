@@ -69,7 +69,7 @@ func TestFolderWatcher_Watch_Triggers_Handler_OnCreate(t *testing.T) {
 	})
 
 	handler := new(handlerMock)
-	handler.On("OnCreate", "-", mock.MatchedBy(isTriggeredEvent)).Return()
+	handler.On("OnCreate", mock.Anything, "-", mock.MatchedBy(isTriggeredEvent)).Return()
 	watcher.RegisterHandler(handler)
 
 	// trigger event
@@ -94,7 +94,7 @@ func TestFolderWatcher_Watch_Triggers_Handler_OnRemove(t *testing.T) {
 	})
 
 	handler := new(handlerMock)
-	handler.On("OnRemove", "-", mock.MatchedBy(isTriggeredEvent)).Return()
+	handler.On("OnRemove", mock.Anything, "-", mock.MatchedBy(isTriggeredEvent)).Return()
 	watcher.RegisterHandler(handler)
 
 	// trigger event
