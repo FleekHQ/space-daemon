@@ -61,4 +61,15 @@ Binary should run in a folder with a space.json config file with the following s
 If you still have issues, try setting the env var SPACE_APP_DIR
 `export SPACE_APP_DIR=/path/to/the/space/binary`
 
+## Debugging Space Binary
+The following flags can be run with the binary to output profiling files for debugging. 
+Flags support a full path to a file.
+`-cpuprofile cpu.prof -memprofile mem.prof`
+
+By default, the binary runs in debug mode (this may change after release) and it boots a pprof
+server in localhost:6060. See docs how to interact with pprof server here: https://github.com/google/pprof/blob/master/doc/README.md
+
+To disable debug mode add this flag to binary arguments
+`-debug=false`
+
 
