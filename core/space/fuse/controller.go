@@ -45,7 +45,7 @@ func (s *Controller) ShouldMount() bool {
 	if err == nil {
 		return string(mountFuseDrive) == "true"
 	} else {
-		log.Printf("Error fetching mountFuseDrive state: %s\n", err.Error())
+		log.Debug("Error fetching mountFuseDrive state: %s\n", err.Error())
 	}
 
 	return s.cfg.GetString(config.MountFuseDrive, "false") == "true"

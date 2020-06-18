@@ -69,7 +69,7 @@ func (c standardConfig) GetString(key string, defaultValue interface{}) string {
 		log.Error(fmt.Sprintf("error getting key %s from config", key), err)
 		return ""
 	}
-	log.Info("Getting conf " + key + ": " + v)
+	log.Debug("Getting conf " + key + ": " + v)
 
 	return v
 }
