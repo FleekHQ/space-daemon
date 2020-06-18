@@ -69,9 +69,10 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	<-bootstrapReady
 
 	// setup local threads
+
 	threadsd := textile.NewThreadsd()
 	g.Go(func() error {
-		threadsd.Start()
+		err := threadsd.Start()
 		return err
 	})
 	<-threadsd.WaitForReady()
