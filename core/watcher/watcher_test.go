@@ -64,9 +64,6 @@ func TestFolderWatcher_Watch_Triggers_Handler_OnCreate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		watcher.Close()
-	})
 
 	handler := new(handlerMock)
 	handler.On("OnCreate", mock.Anything, "-", mock.MatchedBy(isTriggeredEvent)).Return()
@@ -81,6 +78,9 @@ func TestFolderWatcher_Watch_Triggers_Handler_OnCreate(t *testing.T) {
 	// assert
 	handler.AssertNumberOfCalls(t, "OnCreate", 1)
 	handler.AssertExpectations(t)
+
+	// cleanup
+	watcher.Close()
 }
 
 func TestFolderWatcher_Watch_Triggers_Handler_OnRemove(t *testing.T) {
@@ -89,9 +89,6 @@ func TestFolderWatcher_Watch_Triggers_Handler_OnRemove(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		watcher.Close()
-	})
 
 	handler := new(handlerMock)
 	handler.On("OnRemove", mock.Anything, "-", mock.MatchedBy(isTriggeredEvent)).Return()
@@ -106,4 +103,7 @@ func TestFolderWatcher_Watch_Triggers_Handler_OnRemove(t *testing.T) {
 	// assert
 	handler.AssertNumberOfCalls(t, "OnRemove", 1)
 	handler.AssertExpectations(t)
+
+	// cleanup
+	watcher.Close()
 }

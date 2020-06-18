@@ -16,6 +16,9 @@ const (
 	SpaceStorePath       = "space/storePath"
 	TextileHubTarget     = "space/textileHubTarget"
 	TextileThreadsTarget = "space/textileThreadsTarget"
+	MountFuseDrive       = "space/mountFuseDrive"
+	FuseMountPath        = "space/fuseMountPath"
+	FuseDriveName        = "space/fuseDriveName"
 )
 
 var (

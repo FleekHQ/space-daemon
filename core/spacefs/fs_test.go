@@ -10,12 +10,12 @@ import (
 func TestSpaceFS_LookupPath(t *testing.T) {
 	assert.Equal(t, true, true)
 	//	ctx := context.Background()
-	//	memStore, err := fs_data_source.NewIpfsDataSource(ctx)
+	//	memStore, err := fsds.NewIpfsDataSource(ctx)
 	//	if err != nil {
 	//		t.Fatal(err)
 	//	}
 	//
-	//	fs, err := NewSpaceFS(ctx, memStore)
+	//	fs, err := New(ctx, memStore)
 	//	if err != nil {
 	//		t.Fatal(err)
 	//	}

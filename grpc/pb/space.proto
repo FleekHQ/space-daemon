@@ -14,6 +14,8 @@ service SpaceApi {
   rpc OpenFile(OpenFileRequest) returns (OpenFileResponse) {}
   rpc AddItems(AddItemsRequest) returns (stream AddItemsResponse) {}
   rpc CreateFolder(CreateFolderRequest) returns (CreateFolderResponse) {}
+  rpc ToggleFuseDrive(ToggleFuseRequest) returns (FuseDriveResponse) {}
+  rpc GetFuseDriveStatus(google.protobuf.Empty) returns (FuseDriveResponse) {}
 }
 
 message ListDirectoriesRequest {
@@ -95,4 +97,12 @@ message CreateFolderRequest {
 }
 // not sure we need to return anything other than an error if we failed
 message CreateFolderResponse {
+}
+
+message ToggleFuseRequest {
+  bool mountDrive = 1;
+}
+
+message FuseDriveResponse {
+  bool fuseDriveMounted = 1;
 }

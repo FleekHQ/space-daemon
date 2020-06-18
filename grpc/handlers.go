@@ -38,7 +38,7 @@ func (srv *grpcServer) SendTextileEvent(event events.TextileEvent) {
 }
 
 func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDirectoriesRequest) (*pb.ListDirectoriesResponse, error) {
-	entries, err := srv.sv.ListDir(ctx)
+	entries, err := srv.sv.ListDirs(ctx, "")
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func (srv *grpcServer) registerTxlStream(stream pb.SpaceApi_TxlSubscribeServer) 
 }
 
 func (srv *grpcServer) OpenFile(ctx context.Context, request *pb.OpenFileRequest) (*pb.OpenFileResponse, error) {
-	fi, err := srv.sv.OpenFile(ctx, request.Path, "")
+	fi, err := srv.sv.OpenFile(ctx, request.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -145,8 +145,8 @@ func (srv *grpcServer) AddItems(request *pb.AddItemsRequest, stream pb.SpaceApi_
 						SourcePath: res.SourcePath,
 						Error:      res.Error.Error(),
 					},
-					TotalFiles: totals.TotalFiles,
-					TotalBytes: totals.TotalBytes,
+					TotalFiles:     totals.TotalFiles,
+					TotalBytes:     totals.TotalBytes,
 					CompletedFiles: completedFiles,
 					CompletedBytes: completedBytes,
 				}
@@ -157,8 +157,8 @@ func (srv *grpcServer) AddItems(request *pb.AddItemsRequest, stream pb.SpaceApi_
 						SourcePath: res.SourcePath,
 						BucketPath: res.BucketPath,
 					},
-					TotalFiles: totals.TotalFiles,
-					TotalBytes: totals.TotalBytes,
+					TotalFiles:     totals.TotalFiles,
+					TotalBytes:     totals.TotalBytes,
 					CompletedFiles: completedFiles,
 					CompletedBytes: completedBytes,
 				}

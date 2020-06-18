@@ -3,13 +3,14 @@ package space
 import (
 	"context"
 	"errors"
-	"github.com/stretchr/testify/mock"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/mock"
 
 	"github.com/FleekHQ/space-poc/core/space/services"
 	"github.com/FleekHQ/space-poc/core/textile"
@@ -99,7 +100,7 @@ func TestNewService(t *testing.T) {
 	assert.NotNil(t, sv)
 }
 
-func TestService_ListDir(t *testing.T) {
+func TestService_ListDirs(t *testing.T) {
 	sv, _, tearDown := initTestService(t)
 	defer tearDown()
 
@@ -160,7 +161,7 @@ func TestService_ListDir(t *testing.T) {
 		"/somedir",
 	).Return(mockDirItemsSubfolder, nil)
 
-	res, err := sv.ListDir(context.Background())
+	res, err := sv.ListDirs(context.Background(), "")
 
 	assert.Nil(t, err)
 	assert.NotEmpty(t, res)
@@ -235,7 +236,7 @@ func TestService_OpenFile(t *testing.T) {
 		"Slug",
 	).Return(testKey)
 
-	res, err := sv.OpenFile(context.Background(), testPath, "")
+	res, err := sv.OpenFile(context.Background(), testPath)
 
 	assert.Nil(t, err)
 	assert.NotEmpty(t, res)
