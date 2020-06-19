@@ -83,3 +83,9 @@ type Threadsd interface {
 	Stop() error
 	Start() error
 }
+
+type Buckd interface {
+	WaitForReady() chan bool
+	Stop() error
+	Start() error
+}

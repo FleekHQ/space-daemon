@@ -17,6 +17,7 @@ require (
 	github.com/ipfs/go-datastore v0.4.4
 	github.com/ipfs/go-ipfs-chunker v0.0.5
 	github.com/ipfs/go-ipld-format v0.2.0
+	github.com/ipfs/go-log v1.0.4
 	github.com/ipfs/go-log/v2 v2.1.1 // indirect
 	github.com/ipfs/go-merkledag v0.3.2
 	github.com/ipfs/go-unixfs v0.2.4
@@ -33,6 +34,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/radovskyb/watcher v1.0.7
 	github.com/sirupsen/logrus v1.4.2
+	github.com/spf13/cobra v1.0.0
+	github.com/spf13/viper v1.6.3
 	github.com/stretchr/testify v1.5.1
 	github.com/textileio/go-threads v0.1.19
 	github.com/textileio/textile v1.0.6
