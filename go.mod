@@ -9,6 +9,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/gin-gonic/gin v1.6.3 // indirect
+	github.com/go-playground/locales v0.13.0
 	github.com/golang/protobuf v1.4.2
 	github.com/hsanjuan/ipfs-lite v1.1.13
 	github.com/improbable-eng/grpc-web v0.12.0
@@ -40,4 +41,5 @@ require (
 	golang.org/x/sys v0.0.0-20200523222454-059865788121
 	google.golang.org/grpc v1.29.1
 	google.golang.org/protobuf v1.24.0
+	grpc.go4.org v0.0.0-20170609214715-11d0a25b4919
 )

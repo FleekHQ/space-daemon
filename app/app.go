@@ -75,6 +75,15 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	<-textileClient.WaitForReady()
 	<-bootstrapReady
 
+	// setup local threads
+
+	threadsd := textile.NewThreadsd()
+	g.Go(func() error {
+		err := threadsd.Start()
+		return err
+	})
+	<-threadsd.WaitForReady()
+
 	// watcher is started inside bucket sync
 	sync := sync.New(watcher, textileClient, store, nil)
 
@@ -161,6 +170,11 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	if store != nil {
 		log.Println("shutdown store...")
 		store.Close()
+	}
+
+	if threadsd != nil {
+		log.Println("shutdown Threadsd node")
+		threadsd.Stop()
 	}
 
 	log.Println("waiting for shutdown group")
