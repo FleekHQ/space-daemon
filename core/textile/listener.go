@@ -57,6 +57,10 @@ func (tl *textileThreadListener) Listen(ctx context.Context) error {
 	}
 
 	channel, err := threads.Listen(bucketCtx, *dbID, []threadsc.ListenOption{opt})
+	if err != nil {
+		log.Printf("error on threads.listen")
+		return err
+	}
 
 	tl.setToStarted()
 
@@ -64,6 +68,7 @@ func (tl *textileThreadListener) Listen(ctx context.Context) error {
 		log.Debug("received from channel!!!!")
 		instance := &BucketData{}
 		if val.Err != nil {
+			log.Printf("error from threads event " + val.Err.Error())
 			log.Error("error getting threadsc listener event", err)
 			return
 		}
@@ -87,6 +92,9 @@ func (tl *textileThreadListener) Listen(ctx context.Context) error {
 			case val, ok := <-channel:
 				if ok {
 					listenerEventHandler(val)
+				} else {
+					tl.Close()
+					return
 				}
 			}
 		}
