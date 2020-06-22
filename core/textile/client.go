@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
-	"github.com/FleekHQ/space-poc/config"
-	"github.com/libp2p/go-libp2p-core/crypto"
+	"fmt"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/FleekHQ/space-poc/config"
+	"github.com/libp2p/go-libp2p-core/crypto"
 
 	"github.com/FleekHQ/space-poc/core/keychain"
 	db "github.com/FleekHQ/space-poc/core/store"
@@ -28,8 +30,8 @@ type textileClient struct {
 	isRunning     bool
 	Ready         chan bool
 
-	bucketsLock   sync.RWMutex
-	buckets 	  map[string]*bucket
+	bucketsLock sync.RWMutex
+	buckets     map[string]*bucket
 }
 
 func (tc *textileClient) WaitForReady() chan bool {
@@ -227,6 +229,12 @@ func (tc *textileClient) StartAndBootstrap(ctx context.Context, cfg config.Confi
 		// Not returning err since it can error if keys already exist
 	}
 
+	_, pub, _ := kc.GetStoredKeyPairInLibP2PFormat()
+	if bytes, err := pub.Bytes(); err == nil {
+		pubInHex := hex.EncodeToString(bytes)
+		log.Debug(fmt.Sprintf("Using public key: %s", pubInHex))
+	}
+
 	// Start Textile Client
 	log.Debug("Starting Textile Client...")
 	if err := tc.start(cfg); err != nil {
@@ -244,4 +252,3 @@ func (tc *textileClient) StartAndBootstrap(ctx context.Context, cfg config.Confi
 	log.Debug("Textile Client initialized successfully")
 	return nil
 }
-

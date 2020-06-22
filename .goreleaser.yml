@@ -6,22 +6,20 @@ before:
     # you may remove this if you don't need go generate
     # - go generate ./...
 builds:
-  - id: space-poc
+  - id: space
     env:
       - CGO_ENABLED=0
     main: ./cmd/space-poc/main.go
-    binary: space-poc
+    binary: space
     goos:
-      - darwin
       - linux
-  - id: installer
+  - id: space-darwin
     env:
       - CGO_ENABLED=0
-    main: ./cmd/installer/main.go
-    binary: installer
+    main: ./cmd/space-poc/main.go
+    binary: space
     goos:
       - darwin
-      - linux
 archives:
 - name_template: '{{ .Binary }}_{{ .Os }}_{{ .Arch }}'
   format: binary
@@ -31,6 +29,14 @@ archives:
     windows: Windows
     386: i386
     amd64: x86_64
+signs:
+- signature: "${artifact}.dmg"
+  ids:
+  - space-darwin
+  cmd: gon
+  args:
+  - gon.hcl
+  artifacts: all
 checksum:
   name_template: 'checksums.txt'
 snapshot:
