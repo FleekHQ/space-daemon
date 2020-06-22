@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/FleekHQ/space-poc/core/textile"
 
@@ -54,8 +55,8 @@ func (s *Space) listDirAtPath(
 				SizeInBytes:   strconv.FormatInt(item.Size, 10),
 				FileExtension: strings.Replace(filepath.Ext(item.Name), ".", "", -1),
 				// TODO: Get these fields from Textile Buckets
-				Created: "",
-				Updated: "",
+				Created: time.Now().Format(time.RFC3339),
+				Updated: time.Now().Format(time.RFC3339),
 			},
 			IpfsHash: item.Cid,
 		}
