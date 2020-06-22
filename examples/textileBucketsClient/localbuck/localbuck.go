@@ -1,4 +1,4 @@
-package textile
+package main
 
 import (
 	"context"
@@ -7,8 +7,13 @@ import (
 	"os/user"
 
 	"github.com/FleekHQ/space-poc/log"
+	tc "github.com/textileio/go-threads/api/client"
+	"github.com/textileio/go-threads/core/thread"
+	bc "github.com/textileio/textile/api/buckets/client"
+	"github.com/textileio/textile/api/common"
 	"github.com/textileio/textile/cmd"
 	"github.com/textileio/textile/core"
+	"google.golang.org/grpc"
 )
 
 var IpfsAddr string
@@ -16,20 +21,8 @@ var MongoUsr string
 var MongoPw string
 var MongoHost string
 
-type TextileBuckd struct {
-	textile   *core.Textile
-	isRunning bool
-	ready     chan bool
-}
+func main() {
 
-func NewBuckd() Buckd {
-	return &TextileBuckd{
-		ready: make(chan bool),
-	}
-}
-
-func (tb *TextileBuckd) Start() error {
-	// TODO: get value from build time instead
 	IpfsAddr = os.Getenv("IPFS_ADDR")
 	MongoUsr = os.Getenv("MONGO_USR")
 	MongoPw = os.Getenv("MONGO_PW")
@@ -39,6 +32,7 @@ func (tb *TextileBuckd) Start() error {
 	addrAPIProxy := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/3007")
 	addrThreadsHost := cmd.AddrFromStr("/ip4/0.0.0.0/tcp/4006")
 	// TODO: replace with local blockstore
+	// TODO: get value from build time
 	addrIpfsAPI := cmd.AddrFromStr(IpfsAddr)
 
 	addrGatewayHost := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/8006")
@@ -47,6 +41,8 @@ func (tb *TextileBuckd) Start() error {
 	// PLACEHOLDER: filecoin settings
 
 	// TODO: replace with embedded store
+	// TODO: get value from build time
+	pw := os.Getenv("MONGOPW")
 	addrMongoURI := "mongodb+srv://" + MongoUsr + ":" + MongoPw + "@" + MongoHost
 
 	// TODO: setup logging
@@ -87,25 +83,45 @@ func (tb *TextileBuckd) Start() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	defer textile.Close()
 	textile.Bootstrap()
 
 	fmt.Println("Welcome to Buckets!")
 	fmt.Println("Your peer ID is " + textile.HostID().String())
-	tb.textile = textile
-	tb.isRunning = true
-	tb.ready <- true
-	return nil
-}
 
-func (tb *TextileBuckd) WaitForReady() chan bool {
-	return tb.ready
-}
+	// now create a bucket on that thread
+	var threads *tc.Client
+	var buckets *bc.Client
+	host := "127.0.0.1:3006"
+	auth := common.Credentials{}
+	var opts []grpc.DialOption
+	hubTarget := host
+	threadstarget := host
+	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithPerRPCCredentials(auth))
 
-func (tb *TextileBuckd) Stop() error {
-	tb.isRunning = false
-	tb.textile.Close()
-	close(tb.ready)
-	// TODO: what else
-	return nil
+	buckets, err = bc.NewClient(hubTarget, opts...)
+	if err != nil {
+		cmd.Fatal(err)
+	}
+	threads, err = tc.NewClient(threadstarget, opts...)
+	if err != nil {
+		cmd.Fatal(err)
+	}
+
+	log.Info("Finished client init, calling user init ...")
+
+	threadCtx := context.Background()
+	threadCtx = common.NewThreadNameContext(threadCtx, "testthreadname")
+	dbID := thread.NewIDV1(thread.Raw, 32)
+	// TODO: store threadid in config
+	if err := threads.NewDB(threadCtx, dbID); err != nil {
+		log.Info("error calling threads.NewDB")
+		log.Fatal(err)
+	}
+
+	ctx = common.NewThreadIDContext(threadCtx, dbID)
+	// create bucket
+	buck, err := buckets.Init(ctx, "personal")
+	fmt.Println("info: %v", buck)
 }

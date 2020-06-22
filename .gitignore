@@ -21,3 +21,5 @@ space.json
 bin
 
 debug/
+
+.build-envs

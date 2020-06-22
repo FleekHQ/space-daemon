@@ -63,6 +63,15 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 		return
 	}
 
+	// setup local buckets
+	buckd := textile.NewBuckd()
+	g.Go(func() error {
+		err := buckd.Start()
+		return err
+	})
+	<-buckd.WaitForReady()
+
+	// setup textile client
 	bootstrapReady := make(chan bool)
 	textileClient := textile.NewClient(store)
 	g.Go(func() error {
@@ -74,24 +83,6 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	// wait for textileClient to initialize
 	<-textileClient.WaitForReady()
 	<-bootstrapReady
-
-	// setup local threads
-
-	// threadsd := textile.NewThreadsd()
-	// g.Go(func() error {
-	// 	err := threadsd.Start()
-	// 	return err
-	// })
-	// <-threadsd.WaitForReady()
-
-	// setup local buckd
-
-	buckd := textile.NewBuckd()
-	g.Go(func() error {
-		err := buckd.Start()
-		return err
-	})
-	<-buckd.WaitForReady()
 
 	// watcher is started inside bucket sync
 	sync := sync.New(watcher, textileClient, store, nil)
@@ -180,11 +171,6 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 		log.Println("shutdown store...")
 		store.Close()
 	}
-
-	// if threadsd != nil {
-	// 	log.Println("shutdown Threadsd node")
-	// 	threadsd.Stop()
-	// }
 
 	if buckd != nil {
 		log.Println("shutdown Buckd node")
