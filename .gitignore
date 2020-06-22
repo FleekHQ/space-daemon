@@ -15,6 +15,7 @@
 # vendor/
 
 .idea/
+debug/
 
 .env
 space.json
