@@ -11,3 +11,8 @@ apple_id {
 sign {
   application_identity = "Mac Developer: Daniel Merrill (8257VLCFL7)"
 }
+
+dmg {
+  output_path = "dist/space-macos.dmg"
+  volume_name = "Space"
+}

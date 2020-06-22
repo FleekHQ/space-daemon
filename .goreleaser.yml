@@ -35,7 +35,7 @@ signs:
   - space-darwin
   cmd: gon
   args:
-  - gon.hcl
+  - ci/gon.hcl
   artifacts: all
 checksum:
   name_template: 'checksums.txt'
