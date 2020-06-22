@@ -28,7 +28,7 @@ func NewBuckd() Buckd {
 	}
 }
 
-func (tb *TextileBuckd) Start() error {
+func (tb *TextileBuckd) Start(ctx context.Context) error {
 	// TODO: get value from build time instead
 	IpfsAddr = os.Getenv("IPFS_ADDR")
 	MongoUsr = os.Getenv("MONGO_USR")
@@ -65,8 +65,6 @@ func (tb *TextileBuckd) Start() error {
 		log.Fatal(err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	textile, err := core.NewTextile(ctx, core.Config{
 		RepoPath:        usr.HomeDir + "/.buckd/repo",
 		AddrAPI:         addrAPI,

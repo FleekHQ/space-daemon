@@ -88,5 +88,5 @@ type Threadsd interface {
 type Buckd interface {
 	WaitForReady() chan bool
 	Stop() error
-	Start() error
+	Start(ctx context.Context) error
 }
