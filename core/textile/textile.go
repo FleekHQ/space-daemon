@@ -70,6 +70,7 @@ type Client interface {
 	GetBucket(ctx context.Context, slug string) (Bucket, error)
 	GetBaseThreadsContext(ctx context.Context) (context.Context, error)
 	GetBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error)
+	GetLocalBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error)
 	GetThreadsConnection() (*threadsClient.Client, error)
 	ListBuckets(ctx context.Context) ([]Bucket, error)
 	CreateBucket(ctx context.Context, bucketSlug string) (Bucket, error)
