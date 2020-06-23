@@ -1,6 +1,6 @@
 # The path follows a pattern
 # ./dist/BUILD-ID_TARGET/BINARY-NAME
-source = ["./dist/space-darwin_darwin_386/space"]
+source = ["./dist/space-darwin_darwin_i386/space"]
 bundle_id = "co.fleek.space"
 
 apple_id {

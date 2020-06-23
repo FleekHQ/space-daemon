@@ -49,7 +49,7 @@ archives:
     - README*
     - CHANGELOG*
     - dist/space-macos-i386.dmg
-    - dist/space-macos-amd64.dmg
+    - dist/space-macos-x86_64.dmg
   replacements:
     darwin: Darwin
     linux: Linux
