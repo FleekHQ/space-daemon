@@ -1,6 +1,6 @@
 # The path follows a pattern
 # ./dist/BUILD-ID_TARGET/BINARY-NAME
-source = ["./dist/space-darwin_darwin_amd64/space", "./dist/space-darwin_darwin_386/space"]
+source = ["./dist/space-darwin_darwin_386/space"]
 bundle_id = "co.fleek.space"
 
 apple_id {
@@ -13,6 +13,6 @@ sign {
 }
 
 dmg {
-  output_path = "dist/space-macos.dmg"
+  output_path = "dist/space-macos-i386.dmg"
   volume_name = "Space"
 }

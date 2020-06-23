@@ -6,6 +6,7 @@ before:
     # you may remove this if you don't need go generate
     # - go generate ./...
 builds:
+  # Builds everything except macos
   - id: space
     env:
       - CGO_ENABLED=0
@@ -13,7 +14,13 @@ builds:
     binary: space
     goos:
       - linux
-  - id: space-darwin
+
+  # Using separate builds for each macos chipset since each uses a different gon config
+
+  # Builds macos for amd64 chips
+  - id: space-darwin-amd64
+    goarch:
+        - amd64
     env:
       - CGO_ENABLED=0
     main: ./cmd/space-poc/main.go
@@ -21,7 +28,19 @@ builds:
     goos:
       - darwin
     hooks:
-      post: gon -log-level debug ci/gon.hcl
+      post: gon -log-level debug ci/gon-amd64.hcl
+  # Builds macos for i386 chips
+  - id: space-darwin-386
+    goarch:
+        - "386"
+    env:
+      - CGO_ENABLED=0
+    main: ./cmd/space-poc/main.go
+    binary: space
+    goos:
+      - darwin
+    hooks:
+      post: gon -log-level debug ci/gon-386.hcl
 archives:
 - name_template: '{{ .Binary }}_{{ .Os }}_{{ .Arch }}'
   format: binary
@@ -29,7 +48,8 @@ archives:
     - LICENSE*
     - README*
     - CHANGELOG*
-    - dist/space-macos.dmg
+    - dist/space-macos-i386.dmg
+    - dist/space-macos-amd64.dmg
   replacements:
     darwin: Darwin
     linux: Linux
