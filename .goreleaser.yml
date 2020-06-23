@@ -20,24 +20,22 @@ builds:
     binary: space
     goos:
       - darwin
+    hooks:
+      post: gon -log-level debug ci/gon.hcl
 archives:
 - name_template: '{{ .Binary }}_{{ .Os }}_{{ .Arch }}'
   format: binary
+  files:
+    - LICENSE*
+    - README*
+    - CHANGELOG*
+    - dist/space-macos.dmg
   replacements:
     darwin: Darwin
     linux: Linux
     windows: Windows
     386: i386
     amd64: x86_64
-signs:
-- signature: "${artifact}.dmg"
-  ids:
-  - space-darwin
-  cmd: gon
-  args:
-  - -log-level debug
-  - ci/gon.hcl
-  artifacts: all
 checksum:
   name_template: 'checksums.txt'
 snapshot:
