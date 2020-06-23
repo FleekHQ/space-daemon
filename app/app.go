@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -115,6 +116,13 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 		grpc.WithPort(cfg.GetInt(config.SpaceServerPort, 0)),
 	)
 
+	g.Go(func() error {
+		sync.RegisterNotifier(srv)
+		return sync.Start(ctx)
+	})
+
+	<-sync.WaitForReady()
+
 	// start the gRPC server
 	g.Go(func() error {
 		if svErr != nil {
@@ -124,10 +132,7 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 		return srv.Start(ctx)
 	})
 
-	g.Go(func() error {
-		sync.RegisterNotifier(srv)
-		return sync.Start(ctx)
-	})
+	fmt.Println("daemon ready")
 
 	// wait for interruption or done signal
 	select {
