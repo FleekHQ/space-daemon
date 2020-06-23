@@ -31,6 +31,7 @@ type GrpcNotifier interface {
 }
 
 type BucketSynchronizer interface {
+	WaitForReady() chan bool
 	Start(ctx context.Context) error
 	Stop()
 	RegisterNotifier(notifier GrpcNotifier)
@@ -62,6 +63,7 @@ type bucketSynchronizer struct {
 	textileThreadListeners []textile.ThreadListener
 	notifier               GrpcNotifier
 	store                  store.Store
+	ready                  chan bool
 }
 
 // Creates a new bucketSynchronizer instancelistenerEventHandler
@@ -81,6 +83,7 @@ func New(
 		textileThreadListeners: textileThreadListeners,
 		notifier:               notifier,
 		store:                  store,
+		ready:                  make(chan bool),
 	}
 }
 
@@ -151,13 +154,23 @@ func (bs *bucketSynchronizer) Start(ctx context.Context) error {
 		}
 	}
 
+	go func() {
+		bs.ready <- true
+	}()
+
 	err = g.Wait()
 
 	if err != nil {
 		return err
 	}
 
+
+
 	return nil
+}
+
+func (bs *bucketSynchronizer) WaitForReady() chan bool {
+	return bs.ready
 }
 
 func (bs *bucketSynchronizer) Stop() {
@@ -168,6 +181,8 @@ func (bs *bucketSynchronizer) Stop() {
 	for _, listener := range bs.textileThreadListeners {
 		listener.Close()
 	}
+
+	close(bs.ready)
 }
 
 func (bs *bucketSynchronizer) RegisterNotifier(notifier GrpcNotifier) {
