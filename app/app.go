@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -128,6 +129,8 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 		sync.RegisterNotifier(srv)
 		return sync.Start(ctx)
 	})
+
+	fmt.Println("daemon ready")
 
 	// wait for interruption or done signal
 	select {
