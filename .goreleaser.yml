@@ -35,6 +35,7 @@ signs:
   - space-darwin
   cmd: gon
   args:
+  - -log-level debug
   - ci/gon.hcl
   artifacts: all
 checksum:
