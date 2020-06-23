@@ -25,3 +25,5 @@ jobs:
           args: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Test gon
+        run: gon ci/gon.hcl

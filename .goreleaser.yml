@@ -29,14 +29,14 @@ archives:
     windows: Windows
     386: i386
     amd64: x86_64
-signs:
-- signature: "${artifact}.dmg"
-  ids:
-  - space-darwin
-  cmd: gon
-  args:
-  - ci/gon.hcl
-  artifacts: all
+# signs:
+# - signature: "${artifact}.dmg"
+#   ids:
+#   - space-darwin
+#   cmd: gon
+#   args:
+#   - ci/gon.hcl
+#   artifacts: all
 checksum:
   name_template: 'checksums.txt'
 snapshot:
