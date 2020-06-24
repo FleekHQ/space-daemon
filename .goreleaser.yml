@@ -28,8 +28,8 @@ builds:
     binary: space
     goos:
       - darwin
-    hooks:
-      post: gon -log-level debug ci/gon-amd64.hcl
+    # hooks:
+    #   post: gon -log-level debug ci/gon-amd64.hcl
   # Builds macos for i386 chips
   - id: space-darwin-386
     goarch:
@@ -40,8 +40,8 @@ builds:
     binary: space
     goos:
       - darwin
-    hooks:
-      post: gon -log-level debug -log-json ci/gon-386.hcl
+    # hooks:
+      # post: gon -log-level debug -log-json ci/gon-386.hcl
 archives:
 - name_template: '{{ .Binary }}_{{ .Os }}_{{ .Arch }}'
   format: binary
