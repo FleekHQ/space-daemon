@@ -5,6 +5,7 @@ before:
     - go mod download
     # you may remove this if you don't need go generate
     # - go generate ./...
+project_name: space
 builds:
   # Builds everything except macos
   - id: space
