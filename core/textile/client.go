@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
-	"github.com/FleekHQ/space-poc/config"
-	"github.com/libp2p/go-libp2p-core/crypto"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/FleekHQ/space-poc/config"
+	"github.com/libp2p/go-libp2p-core/crypto"
 
 	"github.com/FleekHQ/space-poc/core/keychain"
 	db "github.com/FleekHQ/space-poc/core/store"
@@ -28,8 +29,8 @@ type textileClient struct {
 	isRunning     bool
 	Ready         chan bool
 
-	bucketsLock   sync.RWMutex
-	buckets 	  map[string]*bucket
+	bucketsLock sync.RWMutex
+	buckets     map[string]*bucket
 }
 
 func (tc *textileClient) WaitForReady() chan bool {
@@ -244,4 +245,3 @@ func (tc *textileClient) StartAndBootstrap(ctx context.Context, cfg config.Confi
 	log.Debug("Textile Client initialized successfully")
 	return nil
 }
-

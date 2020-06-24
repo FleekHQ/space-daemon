@@ -22,3 +22,5 @@ space.json
 bin
 
 debug/
+dist/
+main
