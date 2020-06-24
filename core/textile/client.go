@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -227,12 +226,6 @@ func (tc *textileClient) StartAndBootstrap(ctx context.Context, cfg config.Confi
 		log.Debug("Error generating key pair, key might already exist")
 		log.Debug(err.Error())
 		// Not returning err since it can error if keys already exist
-	}
-
-	_, pub, _ := kc.GetStoredKeyPairInLibP2PFormat()
-	if bytes, err := pub.Bytes(); err == nil {
-		pubInHex := hex.EncodeToString(bytes)
-		log.Debug(fmt.Sprintf("Using public key: %s", pubInHex))
 	}
 
 	// Start Textile Client
