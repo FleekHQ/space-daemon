@@ -41,7 +41,7 @@ builds:
     goos:
       - darwin
     hooks:
-      post: gon -log-level debug ci/gon-386.hcl
+      post: gon -log-level debug -log-json ci/gon-386.hcl
 archives:
 - name_template: '{{ .Binary }}_{{ .Os }}_{{ .Arch }}'
   format: binary
