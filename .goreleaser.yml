@@ -17,31 +17,39 @@ builds:
       - linux
 
   # Using separate builds for each macos chipset since each uses a different gon config
-
+  - id: space-darwin
+    env:
+      - CGO_ENABLED=0
+    main: ./cmd/space-poc/main.go
+    binary: space
+    goos:
+      - darwin
+    hooks:
+      post: gon -log-level debug ci/gon.hcl
   # Builds macos for amd64 chips
-  - id: space-darwin-amd64
-    goarch:
-        - amd64
-    env:
-      - CGO_ENABLED=0
-    main: ./cmd/space-poc/main.go
-    binary: space
-    goos:
-      - darwin
-    # hooks:
-    #   post: gon -log-level debug ci/gon-amd64.hcl
-  # Builds macos for i386 chips
-  - id: space-darwin-386
-    goarch:
-        - "386"
-    env:
-      - CGO_ENABLED=0
-    main: ./cmd/space-poc/main.go
-    binary: space
-    goos:
-      - darwin
-    # hooks:
-      # post: gon -log-level debug -log-json ci/gon-386.hcl
+  # - id: space-darwin-amd64
+  #   goarch:
+  #       - amd64
+  #   env:
+  #     - CGO_ENABLED=0
+  #   main: ./cmd/space-poc/main.go
+  #   binary: space
+  #   goos:
+  #     - darwin
+  #   hooks:
+  #     post: gon -log-level debug ci/gon-amd64.hcl
+  # # Builds macos for i386 chips
+  # - id: space-darwin-386
+  #   goarch:
+  #       - "386"
+  #   env:
+  #     - CGO_ENABLED=0
+  #   main: ./cmd/space-poc/main.go
+  #   binary: space
+  #   goos:
+  #     - darwin
+  #   hooks:
+  #     post: gon -log-level debug -log-json ci/gon-386.hcl
 archives:
 - name_template: '{{ .Binary }}_{{ .Os }}_{{ .Arch }}'
   format: binary
