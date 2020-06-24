@@ -2,12 +2,20 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/pkg/errors"
+
+	"github.com/FleekHQ/space-poc/core/space/fuse"
+
+	"github.com/FleekHQ/space-poc/core/fsds"
+
+	"github.com/FleekHQ/space-poc/core/spacefs"
 	"github.com/FleekHQ/space-poc/core/textile"
 
 	"github.com/FleekHQ/space-poc/core/env"
@@ -68,6 +76,15 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	<-textileClient.WaitForReady()
 	<-bootstrapReady
 
+	// setup local threads
+
+	threadsd := textile.NewThreadsd()
+	g.Go(func() error {
+		err := threadsd.Start()
+		return err
+	})
+	<-threadsd.WaitForReady()
+
 	// watcher is started inside bucket sync
 	sync := sync.New(watcher, textileClient, store, nil)
 
@@ -80,10 +97,32 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 		space.WithEnv(env),
 	)
 
+	// setup FUSE FS Handler
+	sfs, err := spacefs.New(ctx, fsds.NewSpaceFSDataSource(sv))
+	if err != nil {
+		log.Fatal(err)
+	}
+	fuseController := fuse.NewController(ctx, cfg, store, sfs)
+	if fuseController.ShouldMount() {
+		log.Println("Mounting FUSE Drive")
+		if err := fuseController.Mount(); err != nil {
+			log.Println(errors.Wrap(err, "could not mount fuse on startup"))
+		}
+	}
+
 	srv := grpc.New(
 		sv,
+		fuseController,
 		grpc.WithPort(cfg.GetInt(config.SpaceServerPort, 0)),
 	)
+
+	g.Go(func() error {
+		sync.RegisterNotifier(srv)
+		return sync.Start(ctx)
+	})
+
+	<-sync.WaitForReady()
+
 	// start the gRPC server
 	g.Go(func() error {
 		if svErr != nil {
@@ -93,10 +132,7 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 		return srv.Start(ctx)
 	})
 
-	g.Go(func() error {
-		sync.RegisterNotifier(srv)
-		return sync.Start(ctx)
-	})
+	fmt.Println("daemon ready")
 
 	// wait for interruption or done signal
 	select {
@@ -126,6 +162,11 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 		sync.Stop()
 	}
 
+	err = fuseController.Unmount()
+	if err != nil {
+		log.Println(errors.Wrap(err, "error shutdown FUSE Drive"))
+	}
+
 	if srv != nil {
 		log.Println("shutdown gRPC server...")
 		srv.Stop()
@@ -134,6 +175,11 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	if store != nil {
 		log.Println("shutdown store...")
 		store.Close()
+	}
+
+	if threadsd != nil {
+		log.Println("shutdown Threadsd node")
+		threadsd.Stop()
 	}
 
 	log.Println("waiting for shutdown group")

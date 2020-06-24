@@ -4,21 +4,21 @@ import (
 	"context"
 	"syscall"
 
-	"github.com/FleekHQ/space-poc/core/fs_data_source"
+	"github.com/FleekHQ/space-poc/core/fsds"
 )
 
-// SpaceFS is represents the filesystem
+// SpaceFS is represents the filesystem that FUSE Interacts with
 // It implements the FSOps interface
 // And is responsible for managing file access, encryption and decryption
 type SpaceFS struct {
 	ctx   context.Context
-	store fs_data_source.FSDataSource
+	store fsds.FSDataSource
 }
 
 var _ = FSOps(&SpaceFS{})
 
-// NewSpaceFS initializes a SpaceFS instance with IPFS peer listening
-func NewSpaceFS(ctx context.Context, store fs_data_source.FSDataSource) (*SpaceFS, error) {
+// New initializes a SpaceFS instance using store as it source of informatioin
+func New(ctx context.Context, store fsds.FSDataSource) (*SpaceFS, error) {
 	return &SpaceFS{
 		ctx:   ctx,
 		store: store,
@@ -88,7 +88,7 @@ func (fs *SpaceFS) Open(ctx context.Context, path string, mode FileHandlerMode) 
 // SpaceDirectory is a directory managed by space
 type SpaceDirectory struct {
 	fs    *SpaceFS
-	entry *fs_data_source.DirEntry
+	entry *fsds.DirEntry
 }
 
 var _ = DirEntryOps(&SpaceDirectory{})
@@ -131,7 +131,7 @@ func (dir *SpaceDirectory) ReadDir() ([]DirEntryOps, error) {
 // SpaceFile is a file managed by space
 type SpaceFile struct {
 	fs    *SpaceFS
-	entry *fs_data_source.DirEntry
+	entry *fsds.DirEntry
 }
 
 var _ = FileOps(&SpaceFile{})

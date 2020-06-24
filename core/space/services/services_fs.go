@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/FleekHQ/space-poc/core/textile"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -12,6 +11,9 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
+
+	"github.com/FleekHQ/space-poc/core/textile"
 
 	"github.com/FleekHQ/space-poc/core/space/domain"
 	"github.com/FleekHQ/space-poc/log"
@@ -53,8 +55,8 @@ func (s *Space) listDirAtPath(
 				SizeInBytes:   strconv.FormatInt(item.Size, 10),
 				FileExtension: strings.Replace(filepath.Ext(item.Name), ".", "", -1),
 				// TODO: Get these fields from Textile Buckets
-				Created: "",
-				Updated: "",
+				Created: time.Now().Format(time.RFC3339),
+				Updated: time.Now().Format(time.RFC3339),
 			},
 			IpfsHash: item.Cid,
 		}
@@ -72,7 +74,23 @@ func (s *Space) listDirAtPath(
 	return entries, nil
 }
 
-func (s *Space) ListDir(ctx context.Context) ([]domain.FileInfo, error) {
+// ListDir returns children entries at path in a bucket
+func (s *Space) ListDir(ctx context.Context, path string) ([]domain.FileInfo, error) {
+	b, err := s.tc.GetDefaultBucket(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if b == nil {
+		return nil, errors.New("Could not find buckets")
+	}
+
+	return s.listDirAtPath(ctx, b, path, false)
+}
+
+// ListDirs lists all children entries at path in a bucket
+// Unlike ListDir, it includes all subfolders children recursively
+func (s *Space) ListDirs(ctx context.Context, path string) ([]domain.FileInfo, error) {
 	// TODO: add support for multiple buckets
 	b, err := s.tc.GetDefaultBucket(ctx)
 	if err != nil {
@@ -83,13 +101,10 @@ func (s *Space) ListDir(ctx context.Context) ([]domain.FileInfo, error) {
 		return nil, errors.New("Could not find buckets")
 	}
 
-	// List the root directory
-	listPath := ""
-
-	return s.listDirAtPath(ctx, b, listPath, true)
+	return s.listDirAtPath(ctx, b, path, true)
 }
 
-func (s *Space) OpenFile(ctx context.Context, path string, bucketSlug string) (domain.OpenFileInfo, error) {
+func (s *Space) OpenFile(ctx context.Context, path string) (domain.OpenFileInfo, error) {
 	var filePath string
 	var err error
 	// check if file exists in sync

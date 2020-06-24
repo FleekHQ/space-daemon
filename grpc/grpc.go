@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net"
 
+	fuse "github.com/FleekHQ/space-poc/core/space/fuse"
+
 	"github.com/FleekHQ/space-poc/core/space"
 
 	"github.com/FleekHQ/space-poc/grpc/pb"
@@ -28,19 +30,19 @@ type grpcServer struct {
 	opts *serverOptions
 	s    *grpc.Server
 	sv   space.Service
+	fc   *fuse.Controller
 	// TODO: see if we need to clean this up by gc or handle an array
 	fileEventStream pb.SpaceApi_SubscribeServer
 	txlEventStream  pb.SpaceApi_TxlSubscribeServer
 	isStarted       bool
 }
 
-
 // Idea taken from here https://medium.com/soon-london/variadic-configuration-functions-in-go-8cef1c97ce99
 
 type ServerOption func(o *serverOptions)
 
 // gRPC server uses Service from core to handle requests
-func New(sv space.Service, opts ...ServerOption) *grpcServer {
+func New(sv space.Service, fc *fuse.Controller, opts ...ServerOption) *grpcServer {
 	o := defaultServerOptions
 	for _, opt := range opts {
 		opt(&o)
@@ -48,6 +50,7 @@ func New(sv space.Service, opts ...ServerOption) *grpcServer {
 	srv := &grpcServer{
 		opts: &o,
 		sv:   sv,
+		fc:   fc,
 	}
 
 	return srv

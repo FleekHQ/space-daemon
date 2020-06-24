@@ -3,10 +3,11 @@ package textile
 import (
 	"bytes"
 	"context"
-	"github.com/FleekHQ/space-poc/log"
-	"github.com/ipfs/interface-go-ipfs-core/path"
 	"regexp"
 	"strings"
+
+	"github.com/FleekHQ/space-poc/log"
+	"github.com/ipfs/interface-go-ipfs-core/path"
 )
 
 func (b *bucket) DirExists(ctx context.Context, path string) (bool, error) {
@@ -59,7 +60,6 @@ func (b *bucket) ListDirectory(ctx context.Context, path string) (*DirEntries, e
 		return nil, err
 	}
 	result, err := b.bucketsClient.ListPath(ctx, b.Key(), path)
-
 	return (*DirEntries)(result), err
 }
 
