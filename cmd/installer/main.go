@@ -2,10 +2,8 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"runtime"
@@ -19,19 +17,8 @@ const (
 	executableName = "space"
 	binaryName     = "space-poc"
 	downloadURL    = "https://github.com/FleekHQ/space-poc/releases/download/"
-	spaceJsonName  = "space.json"
 )
 
-type defaultSpaceJson struct {
-	TextileHubTarget     string `json:"textileHubTarget"`
-	TextileThreadsTarget string `json:"textileThreadsTarget"`
-	RPCPort              int    `json:"rpcPort"`
-	StorePath            string `json:"storePath"`
-}
-
-type defaultJson struct {
-	Space defaultSpaceJson `json:"space"`
-}
 
 type WriteCounter struct {
 	Total uint64
@@ -84,26 +71,9 @@ func main() {
 	err = os.Chmod(executablePath, 0755)
 	checkErr(err)
 
-	fmt.Println("Generating default config file")
-	spaceJson := defaultSpaceJson{
-		TextileHubTarget:     "textile-hub-dev.fleek.co:3006",
-		TextileThreadsTarget: "textile-hub-dev.fleek.co:3006",
-		RPCPort:              9999,
-		StorePath:            "~/.fleek-space",
-	}
-
-	finalJson := defaultJson{
-		Space: spaceJson,
-	}
-
-	jsonPath := wd + "/" + spaceJsonName
-	marshalled, err := json.MarshalIndent(finalJson, "", "  ")
-	checkErr(err)
-
-	err = ioutil.WriteFile(jsonPath, marshalled, 0644)
-	checkErr(err)
-
-	fmt.Println("Default config file generated")
+	// Uncomment if we need to use config JSON
+	//err = config.CreateConfigJson()
+	//checkErr(err)
 
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("\nEnter your Textile User Key> ")
