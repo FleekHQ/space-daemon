@@ -11,6 +11,10 @@ import (
 var errNotImplemented = errors.New("Not implemented")
 
 func (srv *grpcServer) GetIdentityByUsername(ctx context.Context, request *pb.GetIdentityByUsernameRequest) (*pb.GetIdentityByUsernameResponse, error) {
+	if request.Username == "" {
+		return nil, errors.New("Username is required")
+	}
+
 	result, err := srv.sv.GetIdentityByUsername(ctx, request.Username)
 	if err != nil {
 		return nil, err
@@ -26,6 +30,10 @@ func (srv *grpcServer) GetIdentityByUsername(ctx context.Context, request *pb.Ge
 }
 
 func (srv *grpcServer) CreateUsernameAndEmail(ctx context.Context, request *pb.CreateUsernameAndEmailRequest) (*pb.CreateUsernameAndEmailResponse, error) {
+	if request.Username == "" {
+		return nil, errors.New("Username is required")
+	}
+
 	_, err := srv.sv.CreateIdentity(ctx, request.Username)
 	if err != nil {
 		return nil, err
