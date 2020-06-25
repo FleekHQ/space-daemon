@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/FleekHQ/space-poc/core/keychain"
 	"github.com/FleekHQ/space-poc/log"
 	"github.com/libp2p/go-libp2p-core/crypto"
@@ -20,7 +21,7 @@ func NotFound(slug string) error {
   bucket concurrent methods are helpers that try to keep
   track of a set of the buckets we have, the goal is for all buckets to be singletons
   at the client level so we are always working with unique locks per bucket
- */
+*/
 
 // NOTE: Be careful to not call this method without releasing locks first
 func (tc *textileClient) getBucket(slug string) Bucket {
@@ -65,9 +66,8 @@ func (tc *textileClient) setBuckets(buckets []Bucket) []Bucket {
 	return results
 }
 
-
 func (tc *textileClient) GetBucket(ctx context.Context, slug string) (Bucket, error) {
-	if  b := tc.getBucket(slug); b != nil {
+	if b := tc.getBucket(slug); b != nil {
 		return b, nil
 	}
 
@@ -89,9 +89,31 @@ func (tc *textileClient) GetBucket(ctx context.Context, slug string) (Bucket, er
 	return nil, NotFound(slug)
 }
 
-
 func (tc *textileClient) GetDefaultBucket(ctx context.Context) (Bucket, error) {
 	return tc.GetBucket(ctx, defaultPersonalBucketSlug)
+}
+
+func (tc *textileClient) GetLocalBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error) {
+	var publicKey crypto.PubKey
+	var err error
+	kc := keychain.New(tc.store)
+	if _, publicKey, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
+		return nil, nil, err
+	}
+
+	var pubKeyInBytes []byte
+	if pubKeyInBytes, err = publicKey.Bytes(); err != nil {
+		return nil, nil, err
+	}
+	ctx = common.NewThreadNameContext(ctx, getThreadName(pubKeyInBytes, bucketSlug))
+	var dbID *thread.ID
+	log.Debug("Fetching thread id from local store")
+	if dbID, err = tc.findOrCreateThreadID(ctx, tc.threads, bucketSlug); err != nil {
+		return nil, nil, err
+	}
+
+	ctx = common.NewThreadIDContext(ctx, *dbID)
+	return ctx, dbID, nil
 }
 
 // Returns a context that works for accessing a bucket
@@ -129,7 +151,7 @@ func (tc *textileClient) GetBucketContext(ctx context.Context, bucketSlug string
 }
 
 func (tc *textileClient) ListBuckets(ctx context.Context) ([]Bucket, error) {
-	threadsCtx, _, err := tc.GetBucketContext(ctx, defaultPersonalBucketSlug)
+	threadsCtx, _, err := tc.GetLocalBucketContext(ctx, defaultPersonalBucketSlug)
 
 	if err != nil {
 		log.Error("error in ListBuckets while fetching bucket context", err)
@@ -155,11 +177,11 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 	log.Debug("Creating a new bucket with slug " + bucketSlug)
 	var err error
 
-	if b := tc.getBucket(bucketSlug); b!= nil {
+	if b := tc.getBucket(bucketSlug); b != nil {
 		return b, nil
 	}
 
-	if ctx, _, err = tc.GetBucketContext(ctx, bucketSlug); err != nil {
+	if ctx, _, err = tc.GetLocalBucketContext(ctx, bucketSlug); err != nil {
 		return nil, err
 	}
 
@@ -190,6 +212,6 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 }
 
 func (tc *textileClient) getNewBucket(b *bucketsproto.Root) Bucket {
-	newB:= newBucket(b, tc, tc.bucketsClient)
+	newB := newBucket(b, tc, tc.bucketsClient)
 	return tc.setBucket(newB.Slug(), newB)
 }
