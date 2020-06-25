@@ -13,6 +13,7 @@ const (
 	MountFuseDrive       = "space/mountFuseDrive"
 	FuseMountPath        = "space/fuseMountPath"
 	FuseDriveName        = "space/fuseDriveName"
+	SpaceServicesAPIURL  = "space/servicesApiUrl"
 )
 
 var (

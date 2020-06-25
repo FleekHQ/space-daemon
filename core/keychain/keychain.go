@@ -2,10 +2,12 @@ package keychain
 
 import (
 	"crypto/ed25519"
+	"fmt"
 
 	"errors"
 
 	db "github.com/FleekHQ/space-poc/core/store"
+	"github.com/FleekHQ/space-poc/log"
 	"github.com/libp2p/go-libp2p-core/crypto"
 )
 
@@ -16,12 +18,19 @@ var (
 	ErrKeyPairNotFound = errors.New("No key pair found in the local db.")
 )
 
-type Keychain struct {
+type keychain struct {
 	store db.Store
 }
 
-func New(store db.Store) *Keychain {
-	return &Keychain{
+type Keychain interface {
+	GenerateKeyPair() ([]byte, []byte, error)
+	GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error)
+	GenerateKeyPairWithForce() ([]byte, []byte, error)
+	Sign([]byte) ([]byte, error)
+}
+
+func New(store db.Store) *keychain {
+	return &keychain{
 		store: store,
 	}
 }
@@ -30,7 +39,7 @@ func New(store db.Store) *Keychain {
 // It stores it in the local db and returns the key pair key.
 // If there's already a key pair stored, it returns an error.
 // Use GenerateKeyPairWithForce if you want to override existing keys
-func (kc *Keychain) GenerateKeyPair() ([]byte, []byte, error) {
+func (kc *keychain) GenerateKeyPair() ([]byte, []byte, error) {
 	if val, _ := kc.store.Get([]byte(PublicKeyStoreKey)); val != nil {
 		newErr := errors.New("Error while executing GenerateKeyPair. Key pair already exists. Use GenerateKeyPairWithForce if you want to override it.")
 		return nil, nil, newErr
@@ -40,7 +49,7 @@ func (kc *Keychain) GenerateKeyPair() ([]byte, []byte, error) {
 }
 
 // Returns the stored key pair using the same signature than libp2p's GenerateEd25519Key function
-func (kc *Keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error) {
+func (kc *keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error) {
 	var priv []byte
 	var pub []byte
 	var err error
@@ -72,11 +81,11 @@ func (kc *Keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.Pub
 // Generates a public/private key pair using ed25519 algorithm.
 // It stores it in the local db and returns the key pair.
 // Warning: If there's already a key pair stored, it overrides it.
-func (kc *Keychain) GenerateKeyPairWithForce() ([]byte, []byte, error) {
+func (kc *keychain) GenerateKeyPairWithForce() ([]byte, []byte, error) {
 	return kc.generateAndStoreKeyPair()
 }
 
-func (kc *Keychain) generateAndStoreKeyPair() ([]byte, []byte, error) {
+func (kc *keychain) generateAndStoreKeyPair() ([]byte, []byte, error) {
 	// Compute the key from a random seed
 	pub, priv, err := ed25519.GenerateKey(nil)
 
@@ -84,6 +93,8 @@ func (kc *Keychain) generateAndStoreKeyPair() ([]byte, []byte, error) {
 		return nil, nil, err
 	}
 
+	log.Info(fmt.Sprintf("Got pub key size %d", len(pub)))
+	log.Info(fmt.Sprintf("Got priv key size %d", len(priv)))
 	// Store the key pair in the db
 	if err = kc.store.Set([]byte(PublicKeyStoreKey), pub); err != nil {
 		return nil, nil, err
@@ -98,7 +109,7 @@ func (kc *Keychain) generateAndStoreKeyPair() ([]byte, []byte, error) {
 
 // Signs a message using the stored private key.
 // Returns an error if the private key cannot be found.
-func (kc *Keychain) Sign(message []byte) ([]byte, error) {
+func (kc *keychain) Sign(message []byte) ([]byte, error) {
 	if priv, err := kc.store.Get([]byte(PrivateKeyStoreKey)); err != nil {
 		return nil, err
 	} else {

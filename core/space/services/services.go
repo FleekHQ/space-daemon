@@ -5,6 +5,7 @@ import (
 
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/env"
+	"github.com/FleekHQ/space-poc/core/keychain"
 	"github.com/FleekHQ/space-poc/core/space/domain"
 	"github.com/FleekHQ/space-poc/core/store"
 	"github.com/FleekHQ/space-poc/core/textile"
@@ -12,11 +13,12 @@ import (
 
 // Implementation for space.Service
 type Space struct {
-	store store.Store
-	cfg   config.Config
-	env   env.SpaceEnv
-	tc    textile.Client
-	sync  Syncer
+	store    store.Store
+	cfg      config.Config
+	env      env.SpaceEnv
+	tc       textile.Client
+	sync     Syncer
+	keychain keychain.Keychain
 }
 
 type Syncer interface {
@@ -40,12 +42,13 @@ func (s *Space) GetConfig(ctx context.Context) domain.AppConfig {
 
 }
 
-func NewSpace(st store.Store, tc textile.Client, syncer Syncer, cfg config.Config, env env.SpaceEnv) *Space {
+func NewSpace(st store.Store, tc textile.Client, syncer Syncer, cfg config.Config, env env.SpaceEnv, kc keychain.Keychain) *Space {
 	return &Space{
-		store: st,
-		cfg:   cfg,
-		env:   env,
-		tc:    tc,
-		sync:  syncer,
+		store:    st,
+		cfg:      cfg,
+		env:      env,
+		tc:       tc,
+		sync:     syncer,
+		keychain: kc,
 	}
 }
