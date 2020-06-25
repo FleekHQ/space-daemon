@@ -15,6 +15,7 @@
 # vendor/
 
 .idea/
+debug/
 
 .env
 space.json
@@ -22,4 +23,5 @@ bin
 
 debug/
 
-.build-envs
+dist/
+main

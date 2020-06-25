@@ -4,15 +4,16 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/FleekHQ/space-poc/app"
-	"github.com/FleekHQ/space-poc/config"
-	"github.com/FleekHQ/space-poc/core/env"
-	spacelog "github.com/FleekHQ/space-poc/log"
 	"log"
 	"net/http"
 	"os"
 	"runtime"
 	"runtime/pprof"
+
+	"github.com/FleekHQ/space-poc/app"
+	"github.com/FleekHQ/space-poc/config"
+	"github.com/FleekHQ/space-poc/core/env"
+	spacelog "github.com/FleekHQ/space-poc/log"
 
 	_ "net/http/pprof"
 )

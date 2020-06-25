@@ -16,11 +16,22 @@ service SpaceApi {
   rpc CreateFolder(CreateFolderRequest) returns (CreateFolderResponse) {}
   rpc ToggleFuseDrive(ToggleFuseRequest) returns (FuseDriveResponse) {}
   rpc GetFuseDriveStatus(google.protobuf.Empty) returns (FuseDriveResponse) {}
+
+  // Identities
+  rpc GetIdentityByUsername(GetIdentityByUsernameRequest) returns (GetIdentityByUsernameResponse) {}
+  rpc CreateUsernameAndEmail(CreateUsernameAndEmailRequest) returns (CreateUsernameAndEmailResponse) {}
+
+  // Vault
+  rpc BackupKeysByPassphrase(BackupKeysByPassphraseRequest) returns (BackupKeysByPassphraseResponse) {}
+  rpc RecoverKeysByPassphrase(RecoverKeysByPassphraseRequest) returns (RecoverKeysByPassphraseResponse) {}
+
+  // Sharing
+  rpc ShareBucketViaEmail(ShareBucketViaEmailRequest) returns (ShareBucketViaEmailResponse) {}
+  rpc ShareBucketViaIdentity(ShareBucketViaIdentityRequest) returns (ShareBucketViaIdentityResponse) {}
+  rpc GenerateFileShareLink(GenerateFileShareLinkRequest) returns (GenerateFileShareLinkResponse) {}
 }
 
-message ListDirectoriesRequest {
-
-}
+message ListDirectoriesRequest {}
 
 message ListDirectoryEntry {
   string path = 1;
@@ -97,6 +108,68 @@ message CreateFolderRequest {
 }
 // not sure we need to return anything other than an error if we failed
 message CreateFolderResponse {
+}
+
+message GetIdentityByUsernameRequest {
+  string username = 1;
+}
+
+message Identity {
+  string address = 1;
+  string publicKey = 2;
+  string username = 3;
+}
+
+message GetIdentityByUsernameResponse {
+  Identity identity = 1;
+}
+
+message CreateUsernameAndEmailRequest {
+  string username = 1;
+  string email = 2; // Optional. Send "" to skip.
+}
+
+message CreateUsernameAndEmailResponse {}
+
+message BackupKeysByPassphraseRequest {
+  string passphrase = 1;
+}
+
+message BackupKeysByPassphraseResponse {}
+
+message RecoverKeysByPassphraseRequest {
+  string passphrase = 1;
+}
+
+message RecoverKeysByPassphraseResponse {}
+
+message ShareBucketViaEmailRequest {
+  string bucket = 1;
+  string email = 2;
+}
+
+message ShareBucketViaEmailResponse {}
+
+enum IdentityType {
+  USERNAME = 0;
+  EMAIL = 1;
+}
+
+message ShareBucketViaIdentityRequest {
+  IdentityType identityType = 1;
+  string identityValue = 2; // E.g. if identityType is USERNAME, identityValue is the actual username
+  string bucket = 3;
+}
+
+message ShareBucketViaIdentityResponse {}
+
+message GenerateFileShareLinkRequest {
+  string bucket = 1;
+  string filePath = 2;
+}
+
+message GenerateFileShareLinkResponse {
+  string link = 1;
 }
 
 message ToggleFuseRequest {
