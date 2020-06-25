@@ -123,5 +123,5 @@ func main() {
 	ctx = common.NewThreadIDContext(threadCtx, dbID)
 	// create bucket
 	buck, err := buckets.Init(ctx, "personal")
-	fmt.Println("info: %v", buck)
+	fmt.Println("info: ", buck)
 }
