@@ -20,7 +20,7 @@ builds:
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -X main.ipfsaddr={{secrets.IPFS_ADDR}}
+      - -s -w -X main.ipfsaddr={{ .Env.IPFS_ADDR }}
     main: ./cmd/space-poc/main.go
     binary: space
     goos:
