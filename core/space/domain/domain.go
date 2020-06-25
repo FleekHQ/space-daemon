@@ -49,3 +49,13 @@ type AddWatchFile struct {
 	BucketPath string `json:"bucket_path"`
 	BucketKey  string `json:"bucket_key"`
 }
+
+type Identity struct {
+	Address   string `json:"address"`
+	PublicKey string `json:"publicKey"`
+	Username  string `json:"username"`
+}
+
+type APIError struct {
+	Message string `json:"message"`
+}
