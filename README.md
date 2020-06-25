@@ -46,6 +46,20 @@ Run the generation:
 
 ## Running the Space Binary
 
+### Building
+
+Set the required env variables:
+```
+IPFS_ADDR=/ip4/127.0.0.1/tcp/5001
+MONGO_PW=mongpw
+MONGO_USR=mongousr
+MONGO_HOST=mongohost
+```
+
+Run `make`. This will put the binary in the `bin` folder.
+
+### Running
+
 Binary should run in a folder with a space.json config file with the following settings:
 ```json
 {

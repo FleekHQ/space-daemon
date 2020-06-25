@@ -41,7 +41,7 @@ func (tl *textileThreadListener) Listen(ctx context.Context) error {
 	var dbID *thread.ID
 	var err error
 
-	if bucketCtx, dbID, err = tl.textileClient.GetBucketContext(ctx, tl.bucketSlug); err != nil {
+	if bucketCtx, dbID, err = tl.textileClient.GetLocalBucketContext(ctx, tl.bucketSlug); err != nil {
 		return err
 	}
 

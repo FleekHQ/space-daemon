@@ -3,9 +3,9 @@ package textile
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/user"
 
+	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/log"
 	"github.com/textileio/textile/cmd"
 	"github.com/textileio/textile/core"
@@ -20,20 +20,21 @@ type TextileBuckd struct {
 	textile   *core.Textile
 	isRunning bool
 	ready     chan bool
+	cfg       config.Config
 }
 
-func NewBuckd() Buckd {
+func NewBuckd(cfg config.Config) Buckd {
 	return &TextileBuckd{
 		ready: make(chan bool),
+		cfg:   cfg,
 	}
 }
 
 func (tb *TextileBuckd) Start(ctx context.Context) error {
-	// TODO: get value from build time instead
-	IpfsAddr = os.Getenv("IPFS_ADDR")
-	MongoUsr = os.Getenv("MONGO_USR")
-	MongoPw = os.Getenv("MONGO_PW")
-	MongoHost = os.Getenv("MONGO_HOST")
+	IpfsAddr = tb.cfg.GetString(config.Ipfsaddr, "/ip4/127.0.0.1/tcp/5001")
+	MongoUsr = tb.cfg.GetString(config.Mongousr, "")
+	MongoPw = tb.cfg.GetString(config.Mongopw, "")
+	MongoHost = tb.cfg.GetString(config.Mongohost, "")
 
 	addrAPI := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/3006")
 	addrAPIProxy := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/3007")

@@ -66,7 +66,7 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	}
 
 	// setup local buckets
-	buckd := textile.NewBuckd()
+	buckd := textile.NewBuckd(cfg)
 	g.Go(func() error {
 		err := buckd.Start(ctx)
 		return err

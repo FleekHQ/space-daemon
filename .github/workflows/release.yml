@@ -29,3 +29,7 @@ jobs:
           args: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IPFS_ADDR: ${{ secrets.IPFS_ADDR }}
+          MONGO_USR: ${{ secrets.MONGO_USR }}
+          MONGO_PW: ${{ secrets.MONGO_PW }}
+          MONGO_HOST: ${{ secrets.MONGO_HOST }}
