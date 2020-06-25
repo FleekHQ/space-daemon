@@ -1,5 +1,9 @@
 build:
-	go build -o bin/space cmd/space-poc/main.go
+	go build \
+	-o bin/space \
+	-ldflags \
+	"-X 'main.ipfsaddr=${IPFS_ADDR}'" \
+	cmd/space-poc/main.go
 
 test:
 	go test ./...

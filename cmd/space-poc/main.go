@@ -22,11 +22,13 @@ var (
 	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to `file`")
 	memprofile = flag.String("memprofile", "", "write memory profile to `file`")
 	debugMode  = flag.Bool("debug", true, "run daemon with debug mode for profiling")
+	ipfsaddr   string
 )
 
 func main() {
-	// flags
 	flag.Parse()
+	fmt.Println("ipfsAddr: ", ipfsaddr)
+	// flags
 
 	// CPU profiling
 	if *debugMode == true {

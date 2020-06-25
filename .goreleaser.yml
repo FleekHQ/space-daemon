@@ -19,6 +19,8 @@ builds:
   - id: space-darwin
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X main.ipfsaddr={{secrets.IPFS_ADDR}}
     main: ./cmd/space-poc/main.go
     binary: space
     goos:
