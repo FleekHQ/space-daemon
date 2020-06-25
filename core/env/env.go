@@ -4,8 +4,6 @@ import (
 	syslog "log"
 	"os"
 	"strings"
-
-	"github.com/joho/godotenv"
 )
 
 const (
@@ -19,19 +17,11 @@ type SpaceEnv interface {
 	LogLevel() string
 }
 
-type spaceEnv struct {
+type defaultEnv struct {
+
 }
 
-func New() SpaceEnv {
-	err := godotenv.Load()
-	if err != nil {
-		syslog.Println("Error loading .env file. Using defaults")
-	}
-
-	return spaceEnv{}
-}
-
-func (s spaceEnv) CurrentFolder() (string, error) {
+func (d defaultEnv) CurrentFolder() (string, error) {
 	path, err := os.Executable()
 	if err != nil {
 		return "", err
@@ -43,27 +33,21 @@ func (s spaceEnv) CurrentFolder() (string, error) {
 	return wd, nil
 }
 
-func (s spaceEnv) WorkingFolder() string {
-	var wd = os.Getenv(SpaceWorkingDir)
-	// use default
-	if wd == "" {
-		cf, err := s.CurrentFolder()
-		if err != nil {
-			syslog.Fatal("unable to get working folder", err)
-			panic(err)
-		}
-		wd = cf
-	}
 
-	return wd
+func (d defaultEnv) WorkingFolder() string {
+	cf, err := d.CurrentFolder()
+	if err != nil {
+		syslog.Fatal("unable to get working folder", err)
+		panic(err)
+	}
+	return cf
 }
 
-func (s spaceEnv) LogLevel() string {
-	var ll = os.Getenv(LogLevel)
+func (d defaultEnv) LogLevel() string {
+	return "Info"
+}
 
-	if ll == "" {
-		return "Info"
-	}
-
-	return ll
+// TODO: use this one after figuring textile keys
+func NewDefault() SpaceEnv {
+	return defaultEnv{}
 }

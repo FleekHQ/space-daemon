@@ -52,7 +52,7 @@ func main() {
 	env := env.New()
 
 	// load configs
-	cfg := config.New(env)
+	cfg := config.NewMap(env)
 
 	// setup logger
 	spacelog.New(env)
