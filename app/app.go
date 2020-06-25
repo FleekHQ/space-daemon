@@ -21,6 +21,7 @@ import (
 	"github.com/FleekHQ/space-poc/core/env"
 	"github.com/FleekHQ/space-poc/core/space"
 
+	"github.com/FleekHQ/space-poc/core/keychain"
 	"github.com/FleekHQ/space-poc/core/sync"
 
 	"golang.org/x/sync/errgroup"
@@ -87,6 +88,7 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 
 	// watcher is started inside bucket sync
 	sync := sync.New(watcher, textileClient, store, nil)
+	kc := keychain.New(store)
 
 	// setup the RPC server and Service
 	sv, svErr := space.NewService(
@@ -94,6 +96,7 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 		textileClient,
 		sync,
 		cfg,
+		kc,
 		space.WithEnv(env),
 	)
 

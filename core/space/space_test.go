@@ -2,14 +2,18 @@ package space
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"io/ioutil"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/FleekHQ/space-poc/core/space/services"
@@ -27,6 +31,7 @@ var (
 	mockBucket    *mocks.Bucket
 	mockEnv       *mocks.SpaceEnv
 	mockSync      *mocks.Syncer
+	mockKeychain  *mocks.Keychain
 )
 
 type TearDown func()
@@ -51,6 +56,7 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 	mockBucket = new(mocks.Bucket)
 	mockEnv = new(mocks.SpaceEnv)
 	mockSync = new(mocks.Syncer)
+	mockKeychain = new(mocks.Keychain)
 	var dir string
 	var err error
 	if dir, err = ioutil.TempDir("", "space-test-folders"); err != nil {
@@ -86,7 +92,7 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 	// NOTE: if we need to test without the store open we must override on each test
 	st.On("IsOpen").Return(true)
 
-	sv, err := NewService(st, textileClient, mockSync, cfg, WithEnv(mockEnv))
+	sv, err := NewService(st, textileClient, mockSync, cfg, mockKeychain, WithEnv(mockEnv))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -401,4 +407,165 @@ func TestService_AddItems_OnError(t *testing.T) {
 	// assert mocks
 	textileClient.AssertExpectations(t)
 	mockBucket.AssertNumberOfCalls(t, "UploadFile", len(getTempDir().fileNames))
+}
+
+func TestService_CreateIdentity(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	defer tearDown()
+
+	createIdentityMock := func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{ "address": "0xd606f05a2a980f58737aa913553c8d6eac8b", "username": "dmerrill", "publicKey": "67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"}`))
+	}
+
+	serverMock := func() *httptest.Server {
+		handler := http.NewServeMux()
+		handler.HandleFunc("/identities", createIdentityMock)
+
+		srv := httptest.NewServer(handler)
+
+		return srv
+	}
+
+	server := serverMock()
+	defer server.Close()
+	cfg.On("GetString", mock.Anything, mock.Anything).Return(
+		// "https://td4uiovozc.execute-api.us-west-2.amazonaws.com/dev", // UNCOMMENT TO TEST REAL SERVER
+		server.URL,
+	)
+
+	testUsername := "dmerrill"
+
+	mockPubKey := "67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
+	mockPrivKey := "dd55f8921f90fdf31c6ef9ad86bd90605602fd7d32dc8ea66ab72deb6a82821c67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
+
+	pubKeyBytes, _ := hex.DecodeString(mockPubKey)
+	privKeyBytes, _ := hex.DecodeString(mockPrivKey)
+	unmarshalledPub, _ := crypto.UnmarshalEd25519PublicKey(pubKeyBytes)
+	unmarshalledPriv, _ := crypto.UnmarshalEd25519PrivateKey(privKeyBytes)
+
+	mockKeychain.On(
+		"GetStoredKeyPairInLibP2PFormat",
+	).Return(unmarshalledPriv, unmarshalledPub, nil)
+
+	identity, err := sv.CreateIdentity(context.Background(), testUsername)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, identity)
+	assert.Equal(t, identity.PublicKey, mockPubKey)
+	assert.Equal(t, identity.Username, testUsername)
+}
+
+func TestService_CreateIdentity_OnError(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	defer tearDown()
+
+	createIdentityMock := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{ "message": "Validation Error: An identity with the given username already exists"}`))
+	}
+
+	serverMock := func() *httptest.Server {
+		handler := http.NewServeMux()
+		handler.HandleFunc("/identities", createIdentityMock)
+
+		srv := httptest.NewServer(handler)
+
+		return srv
+	}
+
+	server := serverMock()
+	defer server.Close()
+	cfg.On("GetString", mock.Anything, mock.Anything).Return(
+		// "https://td4uiovozc.execute-api.us-west-2.amazonaws.com/dev", // UNCOMMENT TO TEST REAL SERVER
+		server.URL,
+	)
+
+	testUsername := "dmerrill"
+
+	mockPubKey := "67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
+	mockPrivKey := "dd55f8921f90fdf31c6ef9ad86bd90605602fd7d32dc8ea66ab72deb6a82821c67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
+
+	pubKeyBytes, _ := hex.DecodeString(mockPubKey)
+	privKeyBytes, _ := hex.DecodeString(mockPrivKey)
+	unmarshalledPub, _ := crypto.UnmarshalEd25519PublicKey(pubKeyBytes)
+	unmarshalledPriv, _ := crypto.UnmarshalEd25519PrivateKey(privKeyBytes)
+
+	mockKeychain.On(
+		"GetStoredKeyPairInLibP2PFormat",
+	).Return(unmarshalledPriv, unmarshalledPub, nil)
+
+	identity, err := sv.CreateIdentity(context.Background(), testUsername)
+
+	assert.Nil(t, identity)
+	assert.NotNil(t, err)
+	assert.Equal(t, err, errors.New("Validation Error: An identity with the given username already exists"))
+}
+
+func TestService_GetIdentityByUsername(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	defer tearDown()
+
+	createIdentityMock := func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{ "address": "0xd606f05a2a980f58737aa913553c8d6eac8b", "username": "dmerrill", "publicKey": "67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"}`))
+	}
+
+	serverMock := func() *httptest.Server {
+		handler := http.NewServeMux()
+		handler.HandleFunc("/identities/username/dmerrill", createIdentityMock)
+
+		srv := httptest.NewServer(handler)
+
+		return srv
+	}
+
+	server := serverMock()
+	defer server.Close()
+	cfg.On("GetString", mock.Anything, mock.Anything).Return(
+		// "https://td4uiovozc.execute-api.us-west-2.amazonaws.com/dev", // UNCOMMENT TO TEST REAL SERVER
+		server.URL,
+	)
+
+	testUsername := "dmerrill"
+
+	identity, err := sv.GetIdentityByUsername(context.Background(), testUsername)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, identity)
+	assert.NotNil(t, identity.Address)
+	assert.NotNil(t, identity.PublicKey)
+	assert.Equal(t, identity.Username, testUsername)
+}
+
+func TestService_GetIdentityByUsername_OnError(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	defer tearDown()
+
+	createIdentityMock := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{ "message": "Not Found Error: Identity with username dmerrill1 not found." }`))
+	}
+
+	serverMock := func() *httptest.Server {
+		handler := http.NewServeMux()
+		handler.HandleFunc("/identities/username/dmerrill1", createIdentityMock)
+
+		srv := httptest.NewServer(handler)
+
+		return srv
+	}
+
+	server := serverMock()
+	defer server.Close()
+	cfg.On("GetString", mock.Anything, mock.Anything).Return(
+		// "https://td4uiovozc.execute-api.us-west-2.amazonaws.com/dev", // UNCOMMENT TO TEST REAL SERVER
+		server.URL,
+	)
+
+	testUsername := "dmerrill1"
+
+	identity, err := sv.GetIdentityByUsername(context.Background(), testUsername)
+
+	assert.Nil(t, identity)
+	assert.NotNil(t, err)
+	assert.Equal(t, err, errors.New("Not Found Error: Identity with username dmerrill1 not found."))
 }

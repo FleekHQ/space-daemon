@@ -6,6 +6,7 @@ import (
 
 	"github.com/FleekHQ/space-poc/config"
 	"github.com/FleekHQ/space-poc/core/env"
+	"github.com/FleekHQ/space-poc/core/keychain"
 	"github.com/FleekHQ/space-poc/core/space/domain"
 	"github.com/FleekHQ/space-poc/core/space/services"
 	"github.com/FleekHQ/space-poc/core/store"
@@ -22,6 +23,8 @@ type Service interface {
 	GenerateKeyPair(ctx context.Context, useForce bool) (domain.KeyPair, error)
 	CreateFolder(ctx context.Context, path string) error
 	AddItems(ctx context.Context, sourcePaths []string, targetPath string) (<-chan domain.AddItemResult, domain.AddItemsResponse, error)
+	CreateIdentity(ctx context.Context, username string) (*domain.Identity, error)
+	GetIdentityByUsername(ctx context.Context, username string) (*domain.Identity, error)
 }
 
 type serviceOptions struct {
@@ -33,7 +36,7 @@ var defaultOptions = serviceOptions{}
 
 type ServiceOption func(o *serviceOptions)
 
-func NewService(store store.Store, tc textile.Client, sync services.Syncer, cfg config.Config, opts ...ServiceOption) (Service, error) {
+func NewService(store store.Store, tc textile.Client, sync services.Syncer, cfg config.Config, kc keychain.Keychain, opts ...ServiceOption) (Service, error) {
 	if !store.IsOpen() {
 		return nil, errors.New("service expects an opened store to work")
 	}
@@ -45,7 +48,7 @@ func NewService(store store.Store, tc textile.Client, sync services.Syncer, cfg 
 		o.env = env.New()
 	}
 
-	sv := services.NewSpace(store, tc, sync, cfg, o.env)
+	sv := services.NewSpace(store, tc, sync, cfg, o.env, kc)
 
 	return sv, nil
 }
