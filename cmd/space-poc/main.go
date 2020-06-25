@@ -23,12 +23,21 @@ var (
 	memprofile = flag.String("memprofile", "", "write memory profile to `file`")
 	debugMode  = flag.Bool("debug", true, "run daemon with debug mode for profiling")
 	ipfsaddr   string
+	mongousr   string
+	mongopw    string
+	mongohost  string
 )
 
 func main() {
-	flag.Parse()
-	fmt.Println("ipfsAddr: ", ipfsaddr)
 	// flags
+	flag.Parse()
+
+	cf := &config.Flags{
+		Ipfsaddr:  ipfsaddr,
+		Mongousr:  mongousr,
+		Mongopw:   mongopw,
+		Mongohost: mongohost,
+	}
 
 	// CPU profiling
 	if *debugMode == true {
@@ -54,7 +63,7 @@ func main() {
 	env := env.New()
 
 	// load configs
-	cfg := config.NewMap(env)
+	cfg := config.NewMap(env, cf)
 
 	// setup logger
 	spacelog.New(env)

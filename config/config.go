@@ -14,16 +14,25 @@ const (
 	FuseMountPath        = "space/fuseMountPath"
 	FuseDriveName        = "space/fuseDriveName"
 	SpaceServicesAPIURL  = "space/servicesApiUrl"
+	Ipfsaddr             = "space/ipfsAddr"
+	Mongousr             = "space/mongoUsr"
+	Mongopw              = "space/mongoPw"
+	Mongohost            = "space/mongoHost"
 )
 
 var (
 	ErrConfigNotLoaded = errors.New("config file was not loaded correctly or it does not exist")
 )
 
+type Flags struct {
+	Ipfsaddr  string
+	Mongousr  string
+	Mongopw   string
+	Mongohost string
+}
+
 // Config used to fetch config information
 type Config interface {
 	GetString(key string, defaultValue interface{}) string
 	GetInt(key string, defaultValue interface{}) int
 }
-
-

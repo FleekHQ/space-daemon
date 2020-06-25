@@ -9,7 +9,7 @@ type mapConfig struct {
 	configInt map[string]int
 }
 
-func NewMap(env env.SpaceEnv) Config {
+func NewMap(env env.SpaceEnv, flags *Flags) Config {
 	configStr := make(map[string]string)
 	configInt := make(map[string]int)
 
@@ -21,6 +21,10 @@ func NewMap(env env.SpaceEnv) Config {
 	configStr[FuseMountPath] = "~/"
 	configStr[FuseDriveName] = "FleekSpace"
 	configInt[SpaceServerPort] = 9999
+	configStr[Ipfsaddr] = flags.Ipfsaddr
+	configStr[Mongousr] = flags.Mongousr
+	configStr[Mongopw] = flags.Mongopw
+	configStr[Mongohost] = flags.Mongohost
 
 	c := mapConfig{
 		configStr: configStr,
