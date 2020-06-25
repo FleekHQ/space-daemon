@@ -70,9 +70,9 @@ func (s *Space) CreateIdentity(ctx context.Context, username string) (*domain.Id
 	if err != nil {
 		return nil, err
 	}
-
+	apiURL := s.cfg.GetString(config.SpaceServicesAPIURL, "")
 	resp, err := http.Post(
-		s.cfg.GetString(config.SpaceServicesAPIURL, "")+"/identities",
+		s.cfg.GetString(apiURL, "")+"/identities",
 		"application/json",
 		bytes.NewBuffer(identityJSON),
 	)
@@ -86,7 +86,8 @@ func (s *Space) CreateIdentity(ctx context.Context, username string) (*domain.Id
 
 // Gets an identity from Space cloud services given a username
 func (s *Space) GetIdentityByUsername(ctx context.Context, username string) (*domain.Identity, error) {
-	resp, err := http.Get(s.cfg.GetString(config.SpaceServicesAPIURL, "") + "/identities/username/" + username)
+	apiURL := s.cfg.GetString(config.SpaceServicesAPIURL, "")
+	resp, err := http.Get(apiURL + "/identities/username/" + username)
 	if err != nil {
 		return nil, err
 	}
