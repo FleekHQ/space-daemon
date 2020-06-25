@@ -2,12 +2,13 @@ package textile
 
 import (
 	"context"
+	"io"
+	"sync"
+
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/textileio/go-threads/core/thread"
 	bucketsClient "github.com/textileio/textile/api/buckets/client"
 	bucketsproto "github.com/textileio/textile/api/buckets/pb"
-	"io"
-	"sync"
 )
 
 type BucketsClient interface {
@@ -55,5 +56,5 @@ func (b *bucket) GetData() BucketData {
 }
 
 func (b *bucket) GetContext(ctx context.Context) (context.Context, *thread.ID, error) {
-	return b.client.GetBucketContext(ctx, b.Slug())
+	return b.client.GetLocalBucketContext(ctx, b.Slug())
 }

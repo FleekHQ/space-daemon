@@ -163,29 +163,18 @@ func (tc *textileClient) start(cfg config.Config) error {
 	var threads *threadsClient.Client
 	var buckets *bucketsClient.Client
 
-	finalHubTarget := hubTarget
-	finalThreadsTarget := threadsTarget
+	// by default it goes to local threads now
+	host := "127.0.0.1:3006"
 
-	hubTargetFromCfg := cfg.GetString(config.TextileHubTarget, "")
-	threadsTargetFromCfg := cfg.GetString(config.TextileThreadsTarget, "")
-
-	if hubTargetFromCfg != "" {
-		finalHubTarget = hubTargetFromCfg
-	}
-
-	if threadsTargetFromCfg != "" {
-		finalThreadsTarget = threadsTargetFromCfg
-	}
-
-	log.Debug("Creating buckets client in " + finalHubTarget)
-	if b, err := bucketsClient.NewClient(finalHubTarget, opts...); err != nil {
+	log.Debug("Creating buckets client in " + host)
+	if b, err := bucketsClient.NewClient(host, opts...); err != nil {
 		cmd.Fatal(err)
 	} else {
 		buckets = b
 	}
 
-	log.Debug("Creating threads client in " + finalThreadsTarget)
-	if t, err := threadsClient.NewClient(finalThreadsTarget, opts...); err != nil {
+	log.Debug("Creating threads client in " + host)
+	if t, err := threadsClient.NewClient(host, opts...); err != nil {
 		cmd.Fatal(err)
 	} else {
 		threads = t
