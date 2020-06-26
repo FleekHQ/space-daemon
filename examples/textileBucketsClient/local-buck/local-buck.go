@@ -124,4 +124,11 @@ func main() {
 	// create bucket
 	buck, err := buckets.Init(ctx, "personal")
 	fmt.Println("info: ", buck)
+
+	db, err := threads.ListDBs(ctx)
+
+	for k, v := range db {
+		fmt.Println("looping through thread id: ", k)
+		fmt.Println("db info: ", v)
+	}
 }
