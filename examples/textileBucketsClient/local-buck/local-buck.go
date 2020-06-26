@@ -42,7 +42,7 @@ func main() {
 
 	// TODO: replace with embedded store
 	// TODO: get value from build time
-	// pw := os.Getenv("MONGOPW")
+	fmt.Println("mongo host: ", MongoHost)
 	addrMongoURI := "mongodb+srv://" + MongoUsr + ":" + MongoPw + "@" + MongoHost
 
 	// TODO: setup logging
