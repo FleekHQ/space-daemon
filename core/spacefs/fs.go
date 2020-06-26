@@ -11,16 +11,14 @@ import (
 // It implements the FSOps interface
 // And is responsible for managing file access, encryption and decryption
 type SpaceFS struct {
-	ctx   context.Context
 	store fsds.FSDataSource
 }
 
 var _ = FSOps(&SpaceFS{})
 
 // New initializes a SpaceFS instance using store as it source of informatioin
-func New(ctx context.Context, store fsds.FSDataSource) (*SpaceFS, error) {
+func New(store fsds.FSDataSource) (*SpaceFS, error) {
 	return &SpaceFS{
-		ctx:   ctx,
 		store: store,
 	}, nil
 }
@@ -81,7 +79,7 @@ func (fs *SpaceFS) CreateEntry(ctx context.Context, req CreateDirEntry) (DirEntr
 
 // Open a file at specified path
 func (fs *SpaceFS) Open(ctx context.Context, path string, mode FileHandlerMode) (FileHandler, error) {
-	result, err := fs.store.Open(fs.ctx, path)
+	result, err := fs.store.Open(ctx, path)
 	return result, err
 }
 
@@ -92,6 +90,7 @@ type SpaceDirectory struct {
 }
 
 var _ = DirEntryOps(&SpaceDirectory{})
+var _ = DirOps(&SpaceDirectory{})
 
 // Path implements DirEntryOps Path() and return the path of the directory
 func (dir *SpaceDirectory) Path() string {
@@ -104,8 +103,8 @@ func (dir *SpaceDirectory) Attribute() (DirEntryAttribute, error) {
 }
 
 // ReadDir implements DirOps ReadDir and returns the list of entries in a directory
-func (dir *SpaceDirectory) ReadDir() ([]DirEntryOps, error) {
-	childrenEntries, err := dir.fs.store.GetChildren(dir.fs.ctx, dir.entry.Path())
+func (dir *SpaceDirectory) ReadDir(ctx context.Context) ([]DirEntryOps, error) {
+	childrenEntries, err := dir.fs.store.GetChildren(ctx, dir.entry.Path())
 	if err != nil {
 		return nil, syscall.ENOENT
 	}

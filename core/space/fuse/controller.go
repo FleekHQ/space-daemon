@@ -2,6 +2,7 @@ package fuse
 
 import (
 	"context"
+	"os"
 	"sync"
 
 	"github.com/FleekHQ/space-poc/core/spacefs"
@@ -20,7 +21,10 @@ type Controller struct {
 	store     store.Store
 	isServed  bool
 	mountLock sync.RWMutex
+	mountPath string
 }
+
+var DefaultFuseDriveName = "Space"
 
 func NewController(
 	ctx context.Context,
@@ -28,8 +32,8 @@ func NewController(
 	store store.Store,
 	sfs *spacefs.SpaceFS,
 ) *Controller {
-	mountPath := cfg.GetString(config.FuseMountPath, "~/")
-	vfs := libfuse.NewVFileSystem(ctx, mountPath, sfs)
+	vfs := libfuse.NewVFileSystem(ctx, sfs)
+
 	return &Controller{
 		cfg:       cfg,
 		store:     store,
@@ -61,8 +65,16 @@ func (s *Controller) Mount() error {
 		return nil
 	}
 
+	mountPath, err := getMountPath(s.cfg)
+	if err != nil {
+		return err
+	}
+
+	s.mountPath = mountPath
+
 	if err := s.vfs.Mount(
-		s.cfg.GetString(config.FuseDriveName, "FleekSpace"),
+		mountPath,
+		s.cfg.GetString(config.FuseDriveName, DefaultFuseDriveName),
 	); err != nil {
 		return err
 	}
@@ -109,9 +121,15 @@ func (s *Controller) Unmount() error {
 		return nil
 	}
 
-	// persist mount state to store to trigger remount on restart
+	// persist umount state to store to prevent remount on restart
 	if err := s.store.Set([]byte(config.MountFuseDrive), []byte("false")); err != nil {
 		return err
+	}
+
+	// remove mounted path directory
+	if s.mountPath != "" {
+		err := os.RemoveAll(s.mountPath)
+		log.Error("Failed to delete mount directory on unmount", err)
 	}
 
 	return s.vfs.Unmount()

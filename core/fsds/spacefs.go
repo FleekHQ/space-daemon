@@ -2,9 +2,12 @@ package fsds
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/FleekHQ/space-poc/log"
 
 	"github.com/pkg/errors"
 
@@ -30,6 +33,7 @@ func NewSpaceFSDataSource(service space.Service) *SpaceFSDataSource {
 
 // Get returns the DirEntry information for item at path
 func (d *SpaceFSDataSource) Get(ctx context.Context, path string) (*DirEntry, error) {
+	log.Debug("FSDS.Get", "path="+path)
 	// handle quick lookup of home directory
 	if path == "/" {
 		return d.baseDirEntry(), nil
@@ -41,6 +45,8 @@ func (d *SpaceFSDataSource) Get(ctx context.Context, path string) (*DirEntry, er
 	if err != nil {
 		return nil, err
 	}
+
+	log.Debug(fmt.Sprintf("Parent Entries: %+v", parentEntries))
 
 	for _, entry := range parentEntries {
 		if entry.Name == baseName {
@@ -54,7 +60,7 @@ func (d *SpaceFSDataSource) Get(ctx context.Context, path string) (*DirEntry, er
 // Helper function to construct entry for the home directory
 func (d *SpaceFSDataSource) baseDirEntry() *DirEntry {
 	return NewDirEntry(domain.DirEntry{
-		Path:        filepath.Base("/"),
+		Path:        "", // filepath.Base("/"),
 		IsDir:       true,
 		Name:        "",
 		SizeInBytes: "0",
