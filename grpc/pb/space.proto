@@ -16,6 +16,7 @@ service SpaceApi {
   rpc CreateFolder(CreateFolderRequest) returns (CreateFolderResponse) {}
   rpc ToggleFuseDrive(ToggleFuseRequest) returns (FuseDriveResponse) {}
   rpc GetFuseDriveStatus(google.protobuf.Empty) returns (FuseDriveResponse) {}
+  rpc CreateBucket(CreateBucketRequest) returns (CreateBucketResponse) {}
 
   // Identities
   rpc GetIdentityByUsername(GetIdentityByUsernameRequest) returns (GetIdentityByUsernameResponse) {}
@@ -52,6 +53,14 @@ message ListDirectoriesResponse {
 message ConfigInfoResponse {
   string port = 1;
   string appPath = 2;
+}
+
+message CreateBucketRequest {
+  string name = 1;
+}
+
+message CreateBucketResponse {
+  bool success = 1
 }
 
 message GenerateKeyPairRequest {}
