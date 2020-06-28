@@ -70,10 +70,14 @@ func (store *store) Open() error {
 	if home, err := homedir.Dir(); err == nil {
 		// If the root directory contains ~, we replace it with the actual home directory
 		rootDir = s.Replace(rootDir, "~", home, -1)
+	} else {
+		return err
 	}
 
 	// We create the directory in case it doesn't exist yet
-	os.MkdirAll(rootDir, os.ModePerm)
+	if err := os.MkdirAll(rootDir, os.ModePerm); err != nil {
+		return err
+	}
 	if db, err := badger.Open(badger.DefaultOptions(rootDir)); err != nil {
 		return err
 	} else {

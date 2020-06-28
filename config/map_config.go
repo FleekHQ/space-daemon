@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/FleekHQ/space-poc/core/env"
+	"os"
 )
 
 type mapConfig struct {
@@ -9,7 +10,7 @@ type mapConfig struct {
 	configInt map[string]int
 }
 
-func NewMap(env env.SpaceEnv, flags *Flags) Config {
+func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 	configStr := make(map[string]string)
 	configInt := make(map[string]int)
 
@@ -21,10 +22,17 @@ func NewMap(env env.SpaceEnv, flags *Flags) Config {
 	configStr[FuseMountPath] = "~/"
 	configStr[FuseDriveName] = "FleekSpace"
 	configInt[SpaceServerPort] = 9999
-	configStr[Ipfsaddr] = flags.Ipfsaddr
-	configStr[Mongousr] = flags.Mongousr
-	configStr[Mongopw] = flags.Mongopw
-	configStr[Mongohost] = flags.Mongohost
+	if flags.DevMode {
+		configStr[Ipfsaddr] = os.Getenv(env.IpfsAddr)
+		configStr[Mongousr] = os.Getenv(env.MongoUsr)
+		configStr[Mongopw] = os.Getenv(env.MongoPw)
+		configStr[Mongohost] = os.Getenv(env.MongoHost)
+	} else {
+		configStr[Ipfsaddr] = flags.Ipfsaddr
+		configStr[Mongousr] = flags.Mongousr
+		configStr[Mongopw] = flags.Mongopw
+		configStr[Mongohost] = flags.Mongohost
+	}
 
 	c := mapConfig{
 		configStr: configStr,
