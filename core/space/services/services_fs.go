@@ -19,6 +19,15 @@ import (
 	"github.com/FleekHQ/space-poc/log"
 )
 
+func (s *Space) CreateBucket(ctx context.Context, slug string) (textile.Bucket, error) {
+	b, err := s.tc.CreateBucket(ctx, slug)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
 func (s *Space) listDirAtPath(
 	ctx context.Context,
 	b textile.Bucket,

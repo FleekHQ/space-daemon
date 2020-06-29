@@ -106,6 +106,42 @@ func TestNewService(t *testing.T) {
 	assert.NotNil(t, sv)
 }
 
+func TestService_CreateBucket(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	defer tearDown()
+
+	slug := "testbucketslug"
+	key := "testkey"
+	path := "testpath"
+	d1 := int64(1593405100)
+	d2 := int64(1593405100)
+
+	mb := &textile.BucketData{
+		Key:       key,
+		Name:      slug,
+		Path:      path,
+		CreatedAt: d1,
+		UpdatedAt: d2,
+	}
+
+	textileClient.On("CreateBucket", mock.Anything, mock.Anything).Return(mockBucket, nil)
+
+	mockBucket.On(
+		"GetData",
+		mock.Anything,
+	).Return(*mb, nil)
+
+	res, err := sv.CreateBucket(context.Background(), "slug")
+
+	assert.Nil(t, err)
+	assert.NotEmpty(t, res)
+	assert.Equal(t, key, res.GetData().Key)
+	assert.Equal(t, slug, res.GetData().Name)
+	assert.Equal(t, path, res.GetData().Path)
+	assert.Equal(t, d1, res.GetData().CreatedAt)
+	assert.Equal(t, d2, res.GetData().UpdatedAt)
+}
+
 func TestService_ListDirs(t *testing.T) {
 	sv, _, tearDown := initTestService(t)
 	defer tearDown()
