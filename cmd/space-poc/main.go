@@ -22,6 +22,7 @@ var (
 	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to `file`")
 	memprofile = flag.String("memprofile", "", "write memory profile to `file`")
 	debugMode  = flag.Bool("debug", true, "run daemon with debug mode for profiling")
+	devMode    = flag.Bool("dev", false, "run daemon in dev mode to use .env file")
 	ipfsaddr   string
 	mongousr   string
 	mongopw    string
@@ -32,11 +33,14 @@ func main() {
 	// flags
 	flag.Parse()
 
+	log.Printf("INFO: dev mode %v", *devMode)
+
 	cf := &config.Flags{
 		Ipfsaddr:  ipfsaddr,
 		Mongousr:  mongousr,
 		Mongopw:   mongopw,
 		Mongohost: mongohost,
+		DevMode: *devMode == true,
 	}
 
 	// CPU profiling

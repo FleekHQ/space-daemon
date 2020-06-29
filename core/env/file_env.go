@@ -10,7 +10,7 @@ import (
 type spaceEnv struct {
 }
 
-// Deprecated for default values
+// Loads environment from .env file for dev mode
 func New() SpaceEnv {
 	err := godotenv.Load()
 	if err != nil {

@@ -29,6 +29,7 @@ type Flags struct {
 	Mongousr  string
 	Mongopw   string
 	Mongohost string
+	DevMode   bool
 }
 
 // Config used to fetch config information
