@@ -1,0 +1,334 @@
+syntax = "proto3";
+
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+
+package space;
+
+option go_package = ".;pb";
+
+//See here for more info about the google.api.http spec: https://github.com/googleapis/googleapis/blob/master/google/api/http.proto#L46
+
+// SpaceApi service
+service SpaceApi {
+  // Get list of all directories in the default bucket
+  rpc ListDirectories(ListDirectoriesRequest) returns (ListDirectoriesResponse) {
+    option (google.api.http) = {
+      get: "/v1/directories"
+    };
+  }
+
+  // Get Config information installed daemon
+  rpc GetConfigInfo(google.protobuf.Empty) returns (ConfigInfoResponse) {
+    option (google.api.http) = {
+      get: "/v1/configs"
+    };
+  }
+
+  // Generate Key Pair for current account.
+  // This will return error if daemon account already has keypairs
+  rpc GenerateKeyPair(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {
+    option (google.api.http) = {
+      post: "/v1/keypairs/generate"
+      body: "*"
+    };
+  }
+
+  // Force Generation of KeyPair. This will override existing keys stored in daemon.
+  rpc GenerateKeyPairWithForce(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {
+    option (google.api.http) = {
+      post: "/v1/keypairs/forceGenerate"
+      body: "*"
+    };
+  }
+
+  // Subscribe to file events. This streams responses to the caller
+  rpc Subscribe(google.protobuf.Empty) returns (stream FileEventResponse) {
+    option (google.api.http) = {
+      get: "/v1/subscriptions/file"
+    };
+  }
+
+  // Subscribe to textile events. This streams responses to the caller
+  rpc TxlSubscribe(google.protobuf.Empty) returns (stream TextileEventResponse) {
+    option (google.api.http) = {
+      get: "/v1/subscriptions/textile"
+    };
+  }
+
+  // Open a file in the daemon.
+  // Daemon keeps track of all open files and closes them if no activity is noticed after a while
+  rpc OpenFile(OpenFileRequest) returns (OpenFileResponse) {
+    option (google.api.http) = {
+      post: "/v1/files/open"
+      body: "*"
+    };
+  }
+
+  // Adds items (files/folders) to be uploaded to the bucket.
+  rpc AddItems(AddItemsRequest) returns (stream AddItemsResponse) {
+    option (google.api.http) = {
+      post: "/v1/files"
+      body: "*"
+    };
+  }
+
+  // Creates a folder/directory at the specified path
+  rpc CreateFolder(CreateFolderRequest) returns (CreateFolderResponse) {
+    option (google.api.http) = {
+      post: "/v1/directories"
+      body: "*"
+    };
+  }
+
+  // Toggle FUSE drive to be mounted or unmounted
+  rpc ToggleFuseDrive(ToggleFuseRequest) returns (FuseDriveResponse) {
+    option (google.api.http) = {
+      post: "/v1/fuse"
+      body: "*"
+    };
+  }
+
+  // Get status of FUSE drive. If mounted or unmounted
+  rpc GetFuseDriveStatus(google.protobuf.Empty) returns (FuseDriveResponse) {
+    option (google.api.http) = {
+      get: "/v1/fuse"
+    };
+  }
+
+  // Create a new bucket owned by current user (aka keypair)
+  rpc CreateBucket(CreateBucketRequest) returns (CreateBucketResponse) {
+    option (google.api.http) = {
+      post: "/v1/buckets"
+      body: "*"
+    };
+  }
+
+  // Get Identity by Username
+  rpc GetIdentityByUsername(GetIdentityByUsernameRequest) returns (GetIdentityByUsernameResponse) {
+    option (google.api.http) = {
+      get: "/v1/identities/{username}"
+    };
+  }
+
+  // Create a new user identity. Username and Email required.
+  rpc CreateUsernameAndEmail(CreateUsernameAndEmailRequest) returns (CreateUsernameAndEmailResponse) {
+    option (google.api.http) = {
+      post: "/v1/identities"
+      body: "*"
+    };
+  }
+
+  // Backup Key by Passphrase
+  rpc BackupKeysByPassphrase(BackupKeysByPassphraseRequest) returns (BackupKeysByPassphraseResponse) {
+    option (google.api.http) = {
+      post: "/v1/passphrases/backup"
+      body: "*"
+    };
+  }
+
+  // Recover Keys by Passphrase
+  rpc RecoverKeysByPassphrase(RecoverKeysByPassphraseRequest) returns (RecoverKeysByPassphraseResponse) {
+    option (google.api.http) = {
+      post: "/v1/passphrases/recover"
+      body: "*"
+    };
+  }
+
+  // Share bucket via email
+  rpc ShareBucketViaEmail(ShareBucketViaEmailRequest) returns (ShareBucketViaEmailResponse) {
+    option (google.api.http) = {
+      post: "/v1/buckets/{bucket}/shareViaEmail"
+      body: "*"
+    };
+  }
+
+  // Share bucket via identity information
+  rpc ShareBucketViaIdentity(ShareBucketViaIdentityRequest) returns (ShareBucketViaIdentityResponse) {
+    option (google.api.http) = {
+      post: "/v1/buckets/{bucket}/shareViaIdentity"
+      body: "*"
+    };
+  }
+
+  // Generate sharing link for file in bucket
+  rpc GenerateFileShareLink(GenerateFileShareLinkRequest) returns (GenerateFileShareLinkResponse) {
+    option (google.api.http) = {
+      post: "/v1/buckets/{bucket}/generateLink"
+      body: "*"
+    };
+  }
+}
+
+message ListDirectoriesRequest {}
+
+message ListDirectoryEntry {
+  string path = 1;
+  bool isDir = 2;
+  string name = 3;
+  string sizeInBytes = 4;
+  string created = 5;
+  string updated = 6;
+  string fileExtension = 7;
+  string ipfsHash = 8;
+}
+
+
+message ListDirectoriesResponse {
+  repeated ListDirectoryEntry entries = 1;
+}
+
+message ConfigInfoResponse {
+  string port = 1;
+  string appPath = 2;
+}
+
+message CreateBucketRequest {
+  string slug = 1;
+}
+
+// TODO: import from textile instead
+message Bucket {
+  string key = 1;
+  string name = 2;
+  string path = 3;
+  int64 createdAt = 4;
+  int64 updatedAt = 5;
+}
+
+message CreateBucketResponse {
+  Bucket bucket = 1;
+}
+
+message GenerateKeyPairRequest {}
+
+message GenerateKeyPairResponse {
+  string publicKey = 1;
+  string privateKey = 2;
+}
+
+enum EventType {
+  ENTRY_ADDED = 0;
+  ENTRY_DELETED = 1;
+  ENTRY_UPDATED = 2;
+}
+
+message FileEventResponse {
+  EventType type = 1;
+  ListDirectoryEntry entry = 2;
+}
+
+message TextileEventResponse {
+  string bucket = 1;
+}
+
+message OpenFileRequest {
+  string path = 1;
+}
+
+message OpenFileResponse {
+  string location = 1;
+}
+
+message AddItemsRequest {
+  // full paths to file or Folder on FS. Needs to be a location available to the daemon
+  repeated string sourcePaths = 1;
+  // target path in bucket.
+  string targetPath = 2;
+}
+
+message AddItemResult {
+  string sourcePath= 1;
+  string bucketPath = 2;
+  string error = 3;
+}
+
+message AddItemsResponse {
+  AddItemResult result = 1;
+  int64 totalFiles = 2;
+  int64 totalBytes = 3;
+  int64 completedFiles = 4;
+  int64 completedBytes = 5;
+}
+
+message CreateFolderRequest {
+  // target path in bucket to add new empty folder
+  string path = 1;
+}
+// not sure we need to return anything other than an error if we failed
+message CreateFolderResponse {
+}
+
+message GetIdentityByUsernameRequest {
+  string username = 1;
+}
+
+message Identity {
+  string address = 1;
+  string publicKey = 2;
+  string username = 3;
+}
+
+message GetIdentityByUsernameResponse {
+  Identity identity = 1;
+}
+
+message CreateUsernameAndEmailRequest {
+  string username = 1;
+  // Optional. Send "" to skip.
+  string email = 2;
+}
+
+message CreateUsernameAndEmailResponse {}
+
+message BackupKeysByPassphraseRequest {
+  string passphrase = 1;
+}
+
+message BackupKeysByPassphraseResponse {}
+
+message RecoverKeysByPassphraseRequest {
+  string passphrase = 1;
+}
+
+message RecoverKeysByPassphraseResponse {}
+
+message ShareBucketViaEmailRequest {
+  string bucket = 1;
+  string email = 2;
+}
+
+message ShareBucketViaEmailResponse {}
+
+enum IdentityType {
+  USERNAME = 0;
+  EMAIL = 1;
+}
+
+message ShareBucketViaIdentityRequest {
+  // identityType is either USERNAME or EMAIL
+  IdentityType identityType = 1;
+  // E.g. if identityType is USERNAME, identityValue is the actual username
+  string identityValue = 2;
+  string bucket = 3;
+}
+
+message ShareBucketViaIdentityResponse {}
+
+message GenerateFileShareLinkRequest {
+  string bucket = 1;
+  string filePath = 2;
+}
+
+message GenerateFileShareLinkResponse {
+  string link = 1;
+}
+
+message ToggleFuseRequest {
+  bool mountDrive = 1;
+}
+
+message FuseDriveResponse {
+  bool fuseDriveMounted = 1;
+}

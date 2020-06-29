@@ -1,0 +1,1044 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "space.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/buckets": {
+      "post": {
+        "summary": "Create a new bucket owned by current user (aka keypair)",
+        "operationId": "SpaceApi_CreateBucket",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceCreateBucketResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceCreateBucketRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/buckets/{bucket}/generateLink": {
+      "post": {
+        "summary": "Generate sharing link for file in bucket",
+        "operationId": "SpaceApi_GenerateFileShareLink",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceGenerateFileShareLinkResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "bucket",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceGenerateFileShareLinkRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/buckets/{bucket}/shareViaEmail": {
+      "post": {
+        "summary": "Share bucket via email",
+        "operationId": "SpaceApi_ShareBucketViaEmail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceShareBucketViaEmailResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "bucket",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceShareBucketViaEmailRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/buckets/{bucket}/shareViaIdentity": {
+      "post": {
+        "summary": "Share bucket via identity information",
+        "operationId": "SpaceApi_ShareBucketViaIdentity",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceShareBucketViaIdentityResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "bucket",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceShareBucketViaIdentityRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/configs": {
+      "get": {
+        "summary": "Get Config information installed daemon",
+        "operationId": "SpaceApi_GetConfigInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceConfigInfoResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/directories": {
+      "get": {
+        "summary": "Get list of all directories in the default bucket",
+        "operationId": "SpaceApi_ListDirectories",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceListDirectoriesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "SpaceApi"
+        ]
+      },
+      "post": {
+        "summary": "Creates a folder/directory at the specified path",
+        "operationId": "SpaceApi_CreateFolder",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceCreateFolderResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceCreateFolderRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/files": {
+      "post": {
+        "summary": "Adds items (files/folders) to be uploaded to the bucket.",
+        "operationId": "SpaceApi_AddItems",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/spaceAddItemsResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/runtimeStreamError"
+                }
+              },
+              "title": "Stream result of spaceAddItemsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceAddItemsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/files/open": {
+      "post": {
+        "summary": "Open a file in the daemon.\nDaemon keeps track of all open files and closes them if no activity is noticed after a while",
+        "operationId": "SpaceApi_OpenFile",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceOpenFileResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceOpenFileRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/fuse": {
+      "get": {
+        "summary": "Get status of FUSE drive. If mounted or unmounted",
+        "operationId": "SpaceApi_GetFuseDriveStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceFuseDriveResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "SpaceApi"
+        ]
+      },
+      "post": {
+        "summary": "Toggle FUSE drive to be mounted or unmounted",
+        "operationId": "SpaceApi_ToggleFuseDrive",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceFuseDriveResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceToggleFuseRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/identities": {
+      "post": {
+        "summary": "Create a new user identity. Username and Email required.",
+        "operationId": "SpaceApi_CreateUsernameAndEmail",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceCreateUsernameAndEmailResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceCreateUsernameAndEmailRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/identities/{username}": {
+      "get": {
+        "summary": "Get Identity by Username",
+        "operationId": "SpaceApi_GetIdentityByUsername",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceGetIdentityByUsernameResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/keypairs/forceGenerate": {
+      "post": {
+        "summary": "Force Generation of KeyPair. This will override existing keys stored in daemon.",
+        "operationId": "SpaceApi_GenerateKeyPairWithForce",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceGenerateKeyPairResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceGenerateKeyPairRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/keypairs/generate": {
+      "post": {
+        "summary": "Generate Key Pair for current account.\nThis will return error if daemon account already has keypairs",
+        "operationId": "SpaceApi_GenerateKeyPair",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceGenerateKeyPairResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceGenerateKeyPairRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/passphrases/backup": {
+      "post": {
+        "summary": "Backup Key by Passphrase",
+        "operationId": "SpaceApi_BackupKeysByPassphrase",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceBackupKeysByPassphraseResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceBackupKeysByPassphraseRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/passphrases/recover": {
+      "post": {
+        "summary": "Recover Keys by Passphrase",
+        "operationId": "SpaceApi_RecoverKeysByPassphrase",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceRecoverKeysByPassphraseResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceRecoverKeysByPassphraseRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/subscriptions/file": {
+      "get": {
+        "summary": "Subscribe to file events. This streams responses to the caller",
+        "operationId": "SpaceApi_Subscribe",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/spaceFileEventResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/runtimeStreamError"
+                }
+              },
+              "title": "Stream result of spaceFileEventResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/subscriptions/textile": {
+      "get": {
+        "summary": "Subscribe to textile events. This streams responses to the caller",
+        "operationId": "SpaceApi_TxlSubscribe",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/spaceTextileEventResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/runtimeStreamError"
+                }
+              },
+              "title": "Stream result of spaceTextileEventResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "runtimeError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "runtimeStreamError": {
+      "type": "object",
+      "properties": {
+        "grpc_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "http_code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "http_status": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "spaceAddItemResult": {
+      "type": "object",
+      "properties": {
+        "sourcePath": {
+          "type": "string"
+        },
+        "bucketPath": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceAddItemsRequest": {
+      "type": "object",
+      "properties": {
+        "sourcePaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "full paths to file or Folder on FS. Needs to be a location available to the daemon"
+        },
+        "targetPath": {
+          "type": "string",
+          "description": "target path in bucket."
+        }
+      }
+    },
+    "spaceAddItemsResponse": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/spaceAddItemResult"
+        },
+        "totalFiles": {
+          "type": "string",
+          "format": "int64"
+        },
+        "totalBytes": {
+          "type": "string",
+          "format": "int64"
+        },
+        "completedFiles": {
+          "type": "string",
+          "format": "int64"
+        },
+        "completedBytes": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "spaceBackupKeysByPassphraseRequest": {
+      "type": "object",
+      "properties": {
+        "passphrase": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceBackupKeysByPassphraseResponse": {
+      "type": "object"
+    },
+    "spaceBucket": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "int64"
+        }
+      },
+      "title": "TODO: import from textile instead"
+    },
+    "spaceConfigInfoResponse": {
+      "type": "object",
+      "properties": {
+        "port": {
+          "type": "string"
+        },
+        "appPath": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceCreateBucketRequest": {
+      "type": "object",
+      "properties": {
+        "slug": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceCreateBucketResponse": {
+      "type": "object",
+      "properties": {
+        "bucket": {
+          "$ref": "#/definitions/spaceBucket"
+        }
+      }
+    },
+    "spaceCreateFolderRequest": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "title": "target path in bucket to add new empty folder"
+        }
+      }
+    },
+    "spaceCreateFolderResponse": {
+      "type": "object",
+      "title": "not sure we need to return anything other than an error if we failed"
+    },
+    "spaceCreateUsernameAndEmailRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "description": "Optional. Send \"\" to skip."
+        }
+      }
+    },
+    "spaceCreateUsernameAndEmailResponse": {
+      "type": "object"
+    },
+    "spaceEventType": {
+      "type": "string",
+      "enum": [
+        "ENTRY_ADDED",
+        "ENTRY_DELETED",
+        "ENTRY_UPDATED"
+      ],
+      "default": "ENTRY_ADDED"
+    },
+    "spaceFileEventResponse": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/spaceEventType"
+        },
+        "entry": {
+          "$ref": "#/definitions/spaceListDirectoryEntry"
+        }
+      }
+    },
+    "spaceFuseDriveResponse": {
+      "type": "object",
+      "properties": {
+        "fuseDriveMounted": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    },
+    "spaceGenerateFileShareLinkRequest": {
+      "type": "object",
+      "properties": {
+        "bucket": {
+          "type": "string"
+        },
+        "filePath": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceGenerateFileShareLinkResponse": {
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceGenerateKeyPairRequest": {
+      "type": "object"
+    },
+    "spaceGenerateKeyPairResponse": {
+      "type": "object",
+      "properties": {
+        "publicKey": {
+          "type": "string"
+        },
+        "privateKey": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceGetIdentityByUsernameResponse": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "$ref": "#/definitions/spaceIdentity"
+        }
+      }
+    },
+    "spaceIdentity": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "publicKey": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceIdentityType": {
+      "type": "string",
+      "enum": [
+        "USERNAME",
+        "EMAIL"
+      ],
+      "default": "USERNAME"
+    },
+    "spaceListDirectoriesResponse": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/spaceListDirectoryEntry"
+          }
+        }
+      }
+    },
+    "spaceListDirectoryEntry": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "isDir": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "sizeInBytes": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string"
+        },
+        "fileExtension": {
+          "type": "string"
+        },
+        "ipfsHash": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceOpenFileRequest": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceOpenFileResponse": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceRecoverKeysByPassphraseRequest": {
+      "type": "object",
+      "properties": {
+        "passphrase": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceRecoverKeysByPassphraseResponse": {
+      "type": "object"
+    },
+    "spaceShareBucketViaEmailRequest": {
+      "type": "object",
+      "properties": {
+        "bucket": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceShareBucketViaEmailResponse": {
+      "type": "object"
+    },
+    "spaceShareBucketViaIdentityRequest": {
+      "type": "object",
+      "properties": {
+        "identityType": {
+          "$ref": "#/definitions/spaceIdentityType",
+          "title": "identityType is either USERNAME or EMAIL"
+        },
+        "identityValue": {
+          "type": "string",
+          "title": "E.g. if identityType is USERNAME, identityValue is the actual username"
+        },
+        "bucket": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceShareBucketViaIdentityResponse": {
+      "type": "object"
+    },
+    "spaceTextileEventResponse": {
+      "type": "object",
+      "properties": {
+        "bucket": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceToggleFuseRequest": {
+      "type": "object",
+      "properties": {
+        "mountDrive": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    }
+  }
+}

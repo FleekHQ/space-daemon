@@ -137,6 +137,7 @@ func (a *App) Start(ctx context.Context) error {
 		fuseController,
 		grpc.WithPort(a.cfg.GetInt(config.SpaceServerPort, 0)),
 		grpc.WithProxyPort(a.cfg.GetInt(config.SpaceProxyServerPort, 0)),
+		grpc.WithRestProxyPort(a.cfg.GetInt(config.SpaceRestProxyServerPort, 0)),
 	)
 
 	a.RunAsync("BucketSync", bucketSync, func() error {

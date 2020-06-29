@@ -5,21 +5,22 @@ import (
 )
 
 const (
-	JsonConfigFileName      = "space.json"
-	SpaceServerPort         = "space/rpcPort"
-	SpaceProxyServerPort    = "space/rpcProxyPort"
-	SpaceStorePath          = "space/storePath"
-	TextileHubTarget        = "space/textileHubTarget"
-	TextileThreadsTarget    = "space/textileThreadsTarget"
-	MountFuseDrive          = "space/mountFuseDrive"
-	FuseMountPath           = "space/fuseMountPath"
-	FuseDriveName           = "space/fuseDriveName"
-	SpaceServicesAPIURL     = "space/servicesApiUrl"
-	SpaceServicesHubAuthURL = "space/servicesHubAuthUrl"
-	Ipfsaddr                = "space/ipfsAddr"
-	Mongousr                = "space/mongoUsr"
-	Mongopw                 = "space/mongoPw"
-	Mongohost               = "space/mongoHost"
+	JsonConfigFileName       = "space.json"
+	SpaceServerPort          = "space/rpcPort"
+	SpaceProxyServerPort     = "space/rpcProxyPort"
+	SpaceRestProxyServerPort = "space/restProxyPort"
+	SpaceStorePath           = "space/storePath"
+	TextileHubTarget         = "space/textileHubTarget"
+	TextileThreadsTarget     = "space/textileThreadsTarget"
+	MountFuseDrive           = "space/mountFuseDrive"
+	FuseMountPath            = "space/fuseMountPath"
+	FuseDriveName            = "space/fuseDriveName"
+	SpaceServicesAPIURL      = "space/servicesApiUrl"
+	SpaceServicesHubAuthURL  = "space/servicesHubAuthUrl"
+	Ipfsaddr                 = "space/ipfsAddr"
+	Mongousr                 = "space/mongoUsr"
+	Mongopw                  = "space/mongoPw"
+	Mongohost                = "space/mongoHost"
 )
 
 var (
