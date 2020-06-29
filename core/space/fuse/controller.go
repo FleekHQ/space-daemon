@@ -2,6 +2,7 @@ package fuse
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"sync"
 
@@ -45,14 +46,19 @@ func NewController(
 
 // ShouldMount check the store and config to determine if the libfuse drive was previously mounted
 func (s *Controller) ShouldMount() bool {
-	mountFuseDrive, err := s.store.Get([]byte(config.MountFuseDrive))
-	if err == nil {
-		return string(mountFuseDrive) == "true"
-	} else {
-		log.Debug("Error fetching mountFuseDrive state: %s\n", err.Error())
+	if s.cfg.GetString(config.MountFuseDrive, "false") == "true" {
+		return true
 	}
 
-	return s.cfg.GetString(config.MountFuseDrive, "false") == "true"
+	mountFuseDrive, err := s.store.Get([]byte(config.MountFuseDrive))
+	if err == nil {
+		log.Debug("Persisted mountFuseDrive", fmt.Sprintf("state=%s", string(mountFuseDrive)))
+		return string(mountFuseDrive) == "true"
+	} else {
+		log.Debug("No persisted mountFuseDrive state found")
+	}
+
+	return false
 }
 
 // Mount mounts the vfs drive and immediately serves the handler.
@@ -121,16 +127,18 @@ func (s *Controller) Unmount() error {
 		return nil
 	}
 
-	// persist umount state to store to prevent remount on restart
+	// persist unmount state to store to prevent remount on restart
 	if err := s.store.Set([]byte(config.MountFuseDrive), []byte("false")); err != nil {
 		return err
 	}
 
+	err := s.vfs.Unmount()
+
 	// remove mounted path directory
-	if s.mountPath != "" {
+	if err == nil && s.mountPath != "" {
 		err := os.RemoveAll(s.mountPath)
 		log.Error("Failed to delete mount directory on unmount", err)
 	}
 
-	return s.vfs.Unmount()
+	return err
 }

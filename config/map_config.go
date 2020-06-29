@@ -18,8 +18,7 @@ func NewMap(env env.SpaceEnv, flags *Flags) Config {
 	configStr[TextileHubTarget] = "textile-hub-dev.fleek.co:3006"
 	configStr[TextileThreadsTarget] = "textile-hub-dev.fleek.co:3006"
 	configStr[MountFuseDrive] = "false"
-	configStr[FuseMountPath] = "~/"
-	configStr[FuseDriveName] = "FleekSpace"
+	configStr[FuseDriveName] = "Space"
 	configInt[SpaceServerPort] = 9999
 	configStr[Ipfsaddr] = flags.Ipfsaddr
 	configStr[Mongousr] = flags.Mongousr
