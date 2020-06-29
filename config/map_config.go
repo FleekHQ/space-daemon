@@ -17,6 +17,7 @@ func NewMap(env env.SpaceEnv, flags *Flags) Config {
 	configStr[SpaceStorePath] = "~/.fleek-space"
 	configStr[TextileHubTarget] = "textile-hub-dev.fleek.co:3006"
 	configStr[TextileThreadsTarget] = "textile-hub-dev.fleek.co:3006"
+	configStr[SpaceServicesAPIURL] = "https://td4uiovozc.execute-api.us-west-2.amazonaws.com/dev" // TODO: Get a domain
 	configStr[MountFuseDrive] = "false"
 	configStr[FuseDriveName] = "Space"
 	configInt[SpaceServerPort] = 9999
