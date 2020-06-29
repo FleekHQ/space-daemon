@@ -3,10 +3,8 @@ package libfuse
 import (
 	"context"
 	"errors"
-	"log"
-	s "strings"
 
-	"github.com/mitchellh/go-homedir"
+	"github.com/FleekHQ/space-poc/log"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
@@ -22,35 +20,31 @@ var (
 // VFS represent Virtual System
 type VFS struct {
 	ctx             context.Context
-	mountPath       string
 	fsOps           spacefs.FSOps
 	mountConnection *fuse.Conn
 }
 
 // NewVFileSystem creates a new Virtual FileSystem object
-func NewVFileSystem(ctx context.Context, mountPath string, fsOps spacefs.FSOps) *VFS {
-	if home, err := homedir.Dir(); err == nil {
-		// If the mount directory contains ~, we replace it with the actual home directory
-		mountPath = s.Replace(mountPath, "~", home, -1)
-	}
+func NewVFileSystem(ctx context.Context, fsOps spacefs.FSOps) *VFS {
 	return &VFS{
 		// storing ctx here to be used in the Root request
 		// as FUSE doesn't provide one there
 		ctx:             ctx,
-		mountPath:       mountPath,
 		fsOps:           fsOps,
 		mountConnection: nil,
 	}
 }
 
 // Mount mounts the file system, if it is not already mounted
-func (vfs *VFS) Mount(fsName string) error {
+func (vfs *VFS) Mount(mountPath, fsName string) error {
 	c, err := fuse.Mount(
-		vfs.mountPath,
+		mountPath,
 		fuse.FSName(fsName),
 		fuse.VolumeName(fsName),
 		fuse.NoAppleDouble(),
 		fuse.NoAppleXattr(),
+		fuse.AsyncRead(),
+		fuse.LocalVolume(),
 	)
 	if err != nil {
 		return err
@@ -109,7 +103,9 @@ func (vfs *VFS) Root() (fs.Node, error) {
 
 	rootDir, ok := rootDirEntry.(spacefs.DirOps)
 	if !ok {
-		log.Fatal("Root directory is not a spacefs.DirOps")
+		err = errors.New("root directory is not a spacefs.DirOps")
+		log.Error("VFS.Root() error", err)
+		return nil, err
 	}
 
 	log.Printf("Root Dir: %+v", rootDir)

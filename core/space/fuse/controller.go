@@ -2,6 +2,8 @@ package fuse
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"sync"
 
 	"github.com/FleekHQ/space-poc/core/spacefs"
@@ -20,7 +22,10 @@ type Controller struct {
 	store     store.Store
 	isServed  bool
 	mountLock sync.RWMutex
+	mountPath string
 }
+
+var DefaultFuseDriveName = "Space"
 
 func NewController(
 	ctx context.Context,
@@ -28,8 +33,8 @@ func NewController(
 	store store.Store,
 	sfs *spacefs.SpaceFS,
 ) *Controller {
-	mountPath := cfg.GetString(config.FuseMountPath, "~/")
-	vfs := libfuse.NewVFileSystem(ctx, mountPath, sfs)
+	vfs := libfuse.NewVFileSystem(ctx, sfs)
+
 	return &Controller{
 		cfg:       cfg,
 		store:     store,
@@ -41,14 +46,19 @@ func NewController(
 
 // ShouldMount check the store and config to determine if the libfuse drive was previously mounted
 func (s *Controller) ShouldMount() bool {
-	mountFuseDrive, err := s.store.Get([]byte(config.MountFuseDrive))
-	if err == nil {
-		return string(mountFuseDrive) == "true"
-	} else {
-		log.Debug("Error fetching mountFuseDrive state: %s\n", err.Error())
+	if s.cfg.GetString(config.MountFuseDrive, "false") == "true" {
+		return true
 	}
 
-	return s.cfg.GetString(config.MountFuseDrive, "false") == "true"
+	mountFuseDrive, err := s.store.Get([]byte(config.MountFuseDrive))
+	if err == nil {
+		log.Debug("Persisted mountFuseDrive", fmt.Sprintf("state=%s", string(mountFuseDrive)))
+		return string(mountFuseDrive) == "true"
+	} else {
+		log.Debug("No persisted mountFuseDrive state found")
+	}
+
+	return false
 }
 
 // Mount mounts the vfs drive and immediately serves the handler.
@@ -61,8 +71,16 @@ func (s *Controller) Mount() error {
 		return nil
 	}
 
+	mountPath, err := getMountPath(s.cfg)
+	if err != nil {
+		return err
+	}
+
+	s.mountPath = mountPath
+
 	if err := s.vfs.Mount(
-		s.cfg.GetString(config.FuseDriveName, "FleekSpace"),
+		mountPath,
+		s.cfg.GetString(config.FuseDriveName, DefaultFuseDriveName),
 	); err != nil {
 		return err
 	}
@@ -109,10 +127,18 @@ func (s *Controller) Unmount() error {
 		return nil
 	}
 
-	// persist mount state to store to trigger remount on restart
+	// persist unmount state to store to prevent remount on restart
 	if err := s.store.Set([]byte(config.MountFuseDrive), []byte("false")); err != nil {
 		return err
 	}
 
-	return s.vfs.Unmount()
+	err := s.vfs.Unmount()
+
+	// remove mounted path directory
+	if err == nil && s.mountPath != "" {
+		err := os.RemoveAll(s.mountPath)
+		log.Error("Failed to delete mount directory on unmount", err)
+	}
+
+	return err
 }

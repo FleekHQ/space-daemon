@@ -8,7 +8,6 @@ require (
 	github.com/dgraph-io/badger v1.6.1
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.9.0 // indirect
-	github.com/gin-gonic/gin v1.6.3 // indirect
 	github.com/go-playground/locales v0.13.0
 	github.com/golang/protobuf v1.4.2
 	github.com/hsanjuan/ipfs-lite v1.1.13
@@ -18,7 +17,6 @@ require (
 	github.com/ipfs/go-ipfs-chunker v0.0.5
 	github.com/ipfs/go-ipld-format v0.2.0
 	github.com/ipfs/go-log v1.0.4
-	github.com/ipfs/go-log/v2 v2.1.1 // indirect
 	github.com/ipfs/go-merkledag v0.3.2
 	github.com/ipfs/go-unixfs v0.2.4
 	github.com/ipfs/interface-go-ipfs-core v0.2.7
@@ -39,7 +37,6 @@ require (
 	github.com/stretchr/testify v1.6.0
 	github.com/textileio/go-threads v0.1.20
 	github.com/textileio/textile v1.0.8
-	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20200523222454-059865788121
 	google.golang.org/grpc v1.29.1

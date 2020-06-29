@@ -2,9 +2,13 @@ package fsds
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
+
+	"github.com/FleekHQ/space-poc/log"
 
 	"github.com/pkg/errors"
 
@@ -22,6 +26,16 @@ type SpaceFSDataSource struct {
 	service space.Service
 }
 
+func isBaseDirectory(path string) bool {
+	return path == "/"
+}
+
+func isNotExistError(err error) bool {
+	// Example of current error representing file not found:
+	// error: code = Unknown desc = no link named ".localized" under bafybeievqvkeo2ycggt4lino45pj3olv7yo2e6sybcmyphicejsvq2vimi[]
+	return strings.Contains(err.Error(), "no link named")
+}
+
 func NewSpaceFSDataSource(service space.Service) *SpaceFSDataSource {
 	return &SpaceFSDataSource{
 		service: service,
@@ -30,8 +44,9 @@ func NewSpaceFSDataSource(service space.Service) *SpaceFSDataSource {
 
 // Get returns the DirEntry information for item at path
 func (d *SpaceFSDataSource) Get(ctx context.Context, path string) (*DirEntry, error) {
+	log.Debug("FSDS.Get", "path="+path)
 	// handle quick lookup of home directory
-	if path == "/" {
+	if isBaseDirectory(path) {
 		return d.baseDirEntry(), nil
 	}
 
@@ -39,8 +54,13 @@ func (d *SpaceFSDataSource) Get(ctx context.Context, path string) (*DirEntry, er
 	parentPath := filepath.Dir(strings.TrimRight(path, "/") + "/..")
 	parentEntries, err := d.service.ListDir(ctx, parentPath)
 	if err != nil {
+		if isNotExistError(err) {
+			return nil, syscall.ENOENT
+		}
 		return nil, err
 	}
+
+	log.Debug(fmt.Sprintf("Parent Entries: %+v", parentEntries))
 
 	for _, entry := range parentEntries {
 		if entry.Name == baseName {
@@ -54,7 +74,7 @@ func (d *SpaceFSDataSource) Get(ctx context.Context, path string) (*DirEntry, er
 // Helper function to construct entry for the home directory
 func (d *SpaceFSDataSource) baseDirEntry() *DirEntry {
 	return NewDirEntry(domain.DirEntry{
-		Path:        filepath.Base("/"),
+		Path:        "", // filepath.Base("/"),
 		IsDir:       true,
 		Name:        "",
 		SizeInBytes: "0",

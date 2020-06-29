@@ -101,7 +101,7 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 	)
 
 	// setup FUSE FS Handler
-	sfs, err := spacefs.New(ctx, fsds.NewSpaceFSDataSource(sv))
+	sfs, err := spacefs.New(fsds.NewSpaceFSDataSource(sv))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -110,6 +110,8 @@ func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
 		log.Println("Mounting FUSE Drive")
 		if err := fuseController.Mount(); err != nil {
 			log.Println(errors.Wrap(err, "could not mount fuse on startup"))
+		} else {
+			log.Println("Mounting FUSE Drive successful")
 		}
 	}
 
