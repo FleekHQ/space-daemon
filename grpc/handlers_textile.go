@@ -11,13 +11,13 @@ func (srv *grpcServer) CreateBucket(ctx context.Context, request *pb.CreateBucke
 	if err != nil {
 		return nil, err
 	}
-
+	bd := b.GetData()
 	br := &pb.Bucket{
-		Key:       b.GetData().Key,
-		Name:      b.GetData().Name,
-		Path:      b.GetData().Path,
-		CreatedAt: b.GetData().CreatedAt,
-		UpdatedAt: b.GetData().UpdatedAt,
+		Key:       bd.Key,
+		Name:      bd.Name,
+		Path:      bd.Path,
+		CreatedAt: bd.CreatedAt,
+		UpdatedAt: bd.UpdatedAt,
 	}
 
 	return &pb.CreateBucketResponse{
