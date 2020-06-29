@@ -42,7 +42,7 @@ func main() {
 
 	// TODO: replace with embedded store
 	// TODO: get value from build time
-	// pw := os.Getenv("MONGOPW")
+	fmt.Println("mongo host: ", MongoHost)
 	addrMongoURI := "mongodb+srv://" + MongoUsr + ":" + MongoPw + "@" + MongoHost
 
 	// TODO: setup logging
@@ -124,4 +124,11 @@ func main() {
 	// create bucket
 	buck, err := buckets.Init(ctx, "personal")
 	fmt.Println("info: ", buck)
+
+	db, err := threads.ListDBs(ctx)
+
+	for k, v := range db {
+		fmt.Println("looping through thread id: ", k)
+		fmt.Println("db info: ", v)
+	}
 }
