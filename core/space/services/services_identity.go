@@ -72,7 +72,7 @@ func (s *Space) CreateIdentity(ctx context.Context, username string) (*domain.Id
 	}
 	apiURL := s.cfg.GetString(config.SpaceServicesAPIURL, "")
 	resp, err := http.Post(
-		s.cfg.GetString(apiURL, "")+"/identities",
+		apiURL+"/identities",
 		"application/json",
 		bytes.NewBuffer(identityJSON),
 	)
