@@ -56,11 +56,20 @@ message ConfigInfoResponse {
 }
 
 message CreateBucketRequest {
-  string name = 1;
+  string slug = 1;
+}
+
+// TODO: import from textile instead
+message Bucket {
+  string key = 1;
+  string name = 2;
+  string path = 3;
+  int64 createdAt = 4;
+  int64 updatedAt = 5;
 }
 
 message CreateBucketResponse {
-  bool success = 1
+  Bucket bucket = 1;
 }
 
 message GenerateKeyPairRequest {}
