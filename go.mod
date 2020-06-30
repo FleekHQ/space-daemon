@@ -9,6 +9,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/go-playground/locales v0.13.0
+	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/protobuf v1.4.2
 	github.com/hsanjuan/ipfs-lite v1.1.13
 	github.com/improbable-eng/grpc-web v0.12.0

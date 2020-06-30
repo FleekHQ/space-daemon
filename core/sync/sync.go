@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/FleekHQ/space-poc/core/events"
 	"github.com/FleekHQ/space-poc/core/space/domain"
 	"github.com/FleekHQ/space-poc/core/space/services"
@@ -33,7 +34,7 @@ type GrpcNotifier interface {
 type BucketSynchronizer interface {
 	WaitForReady() chan bool
 	Start(ctx context.Context) error
-	Stop()
+	Shutdown() error
 	RegisterNotifier(notifier GrpcNotifier)
 	AddFileWatch(addFileInfo domain.AddWatchFile) error
 	GetOpenFilePath(bucketSlug string, bucketPath string) (string, bool)
@@ -72,7 +73,7 @@ func New(
 	textileClient textile.Client,
 	store store.Store,
 	notifier GrpcNotifier,
-) BucketSynchronizer {
+) *bucketSynchronizer {
 	textileThreadListeners := make([]textile.ThreadListener, 0)
 
 	return &bucketSynchronizer{
@@ -154,17 +155,15 @@ func (bs *bucketSynchronizer) Start(ctx context.Context) error {
 		}
 	}
 
-	go func() {
-		bs.ready <- true
-	}()
+	//go func() {
+	bs.ready <- true
+	//}()
 
 	err = g.Wait()
 
 	if err != nil {
 		return err
 	}
-
-
 
 	return nil
 }
@@ -173,7 +172,7 @@ func (bs *bucketSynchronizer) WaitForReady() chan bool {
 	return bs.ready
 }
 
-func (bs *bucketSynchronizer) Stop() {
+func (bs *bucketSynchronizer) Shutdown() error {
 	// add shutdown logic here
 	log.Debug("shutting down folder watcher in bucketsync")
 	bs.folderWatcher.Close()
@@ -183,6 +182,7 @@ func (bs *bucketSynchronizer) Stop() {
 	}
 
 	close(bs.ready)
+	return nil
 }
 
 func (bs *bucketSynchronizer) RegisterNotifier(notifier GrpcNotifier) {

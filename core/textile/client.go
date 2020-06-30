@@ -41,7 +41,7 @@ func (tc *textileClient) WaitForReady() chan bool {
 var keepFileName = ".keep"
 
 // Creates a new Textile Client
-func NewClient(store db.Store) Client {
+func NewClient(store db.Store) *textileClient {
 	return &textileClient{
 		store:         store,
 		threads:       nil,
@@ -189,7 +189,7 @@ func (tc *textileClient) start(cfg config.Config) error {
 }
 
 // Closes connection to Textile
-func (tc *textileClient) Stop() error {
+func (tc *textileClient) Shutdown() error {
 	tc.isRunning = false
 	close(tc.Ready)
 	if err := tc.bucketsClient.Close(); err != nil {

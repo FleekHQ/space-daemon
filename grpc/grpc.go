@@ -35,6 +35,7 @@ type grpcServer struct {
 	fileEventStream pb.SpaceApi_SubscribeServer
 	txlEventStream  pb.SpaceApi_TxlSubscribeServer
 	isStarted       bool
+	readyCh         chan bool
 }
 
 // Idea taken from here https://medium.com/soon-london/variadic-configuration-functions-in-go-8cef1c97ce99
@@ -48,9 +49,10 @@ func New(sv space.Service, fc *fuse.Controller, opts ...ServerOption) *grpcServe
 		opt(&o)
 	}
 	srv := &grpcServer{
-		opts: &o,
-		sv:   sv,
-		fc:   fc,
+		opts:    &o,
+		sv:      sv,
+		fc:      fc,
+		readyCh: make(chan bool, 1),
 	}
 
 	return srv
@@ -67,8 +69,11 @@ func (srv *grpcServer) Start(ctx context.Context) error {
 	srv.s = grpc.NewServer()
 	pb.RegisterSpaceApiServer(srv.s, srv)
 
-	log.Info(fmt.Sprintf("grpc server started in Port %v", srv.opts.port))
 	srv.isStarted = true
+	srv.readyCh <- true
+	log.Info(fmt.Sprintf("grpc server started in Port %v", srv.opts.port))
+
+	// this is a blocking function
 	return srv.s.Serve(lis)
 }
 
@@ -85,4 +90,14 @@ func (srv *grpcServer) Stop() {
 	if srv.isStarted {
 		srv.s.GracefulStop()
 	}
+}
+
+func (srv *grpcServer) Shutdown() error {
+	close(srv.readyCh)
+	srv.Stop()
+	return nil
+}
+
+func (srv *grpcServer) WaitForReady() chan bool {
+	return srv.readyCh
 }
