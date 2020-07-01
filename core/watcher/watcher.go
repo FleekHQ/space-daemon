@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	fsutils "github.com/FleekHQ/space-poc/core/space/services"
-	"github.com/mitchellh/go-homedir"
 	s "strings"
 	"sync"
+
+	fsutils "github.com/FleekHQ/space-poc/core/space/services"
+	"github.com/mitchellh/go-homedir"
 
 	"time"
 
@@ -27,7 +28,6 @@ type FolderWatcher interface {
 	Close()
 }
 
-
 type folderWatcher struct {
 	w *watcher.Watcher
 
@@ -40,7 +40,7 @@ type folderWatcher struct {
 }
 
 // New creates an new instance of folder watcher
-func New(configs ...Option) (FolderWatcher, error) {
+func New(configs ...Option) (*folderWatcher, error) {
 	options := watcherOptions{}
 	for _, config := range configs {
 		config(&options)
@@ -98,7 +98,7 @@ func (fw *folderWatcher) Watch(ctx context.Context) error {
 		for {
 			select {
 			case <-fw.w.Closed:
-				log.Info("Watcher graceful shutdown triggered")
+				log.Debug("Watcher graceful shutdown triggered")
 				return
 			case <-ctx.Done():
 				fw.Close()
@@ -119,7 +119,7 @@ func (fw *folderWatcher) Watch(ctx context.Context) error {
 		}
 	}()
 
-	log.Info("Starting watcher", fmt.Sprintf("filePath:%s", fw.options.paths))
+	log.Debug("Starting watcher", fmt.Sprintf("filePath:%s", fw.options.paths))
 	// This is blocking
 	err := fw.w.Start(time.Millisecond * 100)
 	fw.started = false
@@ -183,4 +183,9 @@ func (fw *folderWatcher) Close() {
 
 	fw.closed = true
 	fw.w.Close()
+}
+
+func (fw *folderWatcher) Shutdown() error {
+	fw.Close()
+	return nil
 }

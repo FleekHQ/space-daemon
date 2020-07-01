@@ -142,3 +142,7 @@ func (s *Controller) Unmount() error {
 
 	return err
 }
+
+func (s *Controller) Shutdown() error {
+	return s.Unmount()
+}

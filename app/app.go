@@ -3,13 +3,11 @@ package app
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
-	"github.com/pkg/errors"
+	"github.com/FleekHQ/space-poc/core"
 
 	"github.com/FleekHQ/space-poc/core/space/fuse"
 
@@ -23,6 +21,7 @@ import (
 
 	"github.com/FleekHQ/space-poc/core/keychain"
 	"github.com/FleekHQ/space-poc/core/sync"
+	"github.com/FleekHQ/space-poc/log"
 
 	"golang.org/x/sync/errgroup"
 
@@ -30,168 +29,183 @@ import (
 	"github.com/FleekHQ/space-poc/core/store"
 	w "github.com/FleekHQ/space-poc/core/watcher"
 	"github.com/FleekHQ/space-poc/grpc"
+	"github.com/golang-collections/collections/stack"
 )
 
 // Shutdown logic follows this example https://gist.github.com/akhenakh/38dbfea70dc36964e23acc19777f3869
+type App struct {
+	eg             *errgroup.Group
+	components     *stack.Stack
+	cfg            config.Config
+	env            env.SpaceEnv
+	isShuttingDown bool
+}
 
-// Entry point for the app
-func Start(ctx context.Context, cfg config.Config, env env.SpaceEnv) {
+type componentMap struct {
+	name      string
+	component core.Component
+}
+
+func New(cfg config.Config, env env.SpaceEnv) *App {
+	return &App{
+		components:     stack.New(),
+		cfg:            cfg,
+		env:            env,
+		isShuttingDown: false,
+	}
+}
+
+// Start is the Entry point for the app.
+// All module components are initialized and managed here.
+// When a top level module that need to be shutdown on exit is initialized. It should be
+// added to the apps list of tracked components using the `Run()` function, but if the component has a blocking
+// start/run function it should be tracked with the `RunAsync()` function and call the blocking function in the
+// input function block.
+func (a *App) Start(ctx context.Context) error {
+	a.eg, ctx = errgroup.WithContext(ctx)
+
 	// setup to detect interruption
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(interrupt)
 
-	g, ctx := errgroup.WithContext(ctx)
-
-	// init store
-	store := store.New(
-		store.WithPath(cfg.GetString(config.SpaceStorePath, "")),
+	// init appStore
+	appStore := store.New(
+		store.WithPath(a.cfg.GetString(config.SpaceStorePath, "")),
 	)
-
-	waitForStore := make(chan bool, 1)
-	g.Go(func() error {
-		if err := store.Open(); err != nil {
-			return err
-		}
-		waitForStore <- true
-		return nil
-	})
-
-	<-waitForStore
+	if err := appStore.Open(); err != nil {
+		return err
+	}
+	a.Run("Store", appStore)
 
 	watcher, err := w.New()
 	if err != nil {
-		log.Fatal(err)
-		return
+		return err
 	}
+	a.Run("FolderWatcher", watcher)
 
 	// setup local buckets
-	buckd := textile.NewBuckd(cfg)
-	g.Go(func() error {
-		err := buckd.Start(ctx)
+	buckd := textile.NewBuckd(a.cfg)
+	err = buckd.Start(ctx)
+	if err != nil {
 		return err
-	})
-	<-buckd.WaitForReady()
+	}
+	a.Run("BucketDaemon", buckd)
 
 	// setup textile client
-	bootstrapReady := make(chan bool)
-	textileClient := textile.NewClient(store)
-	g.Go(func() error {
-		err := textileClient.StartAndBootstrap(ctx, cfg)
-		bootstrapReady <- true
-		return err
+	textileClient := textile.NewClient(appStore)
+	a.RunAsync("TextileClient", textileClient, func() error {
+		return textileClient.StartAndBootstrap(ctx, a.cfg)
 	})
 
-	// wait for textileClient to initialize
-	<-textileClient.WaitForReady()
-	<-bootstrapReady
-
 	// watcher is started inside bucket sync
-	sync := sync.New(watcher, textileClient, store, nil)
-	kc := keychain.New(store)
+	bucketSync := sync.New(watcher, textileClient, appStore, nil)
 
-	// setup the RPC server and Service
+	// setup the Space Service
 	sv, svErr := space.NewService(
-		store,
+		appStore,
 		textileClient,
-		sync,
-		cfg,
-		kc,
-		space.WithEnv(env),
+		bucketSync,
+		a.cfg,
+		keychain.New(appStore),
+		space.WithEnv(a.env),
 	)
+	if svErr != nil {
+		return svErr
+	}
 
 	// setup FUSE FS Handler
 	sfs, err := spacefs.New(fsds.NewSpaceFSDataSource(sv))
 	if err != nil {
-		log.Fatal(err)
+		log.Error("Failed to create space FUSE data source", err)
+		return err
 	}
-	fuseController := fuse.NewController(ctx, cfg, store, sfs)
+	fuseController := fuse.NewController(ctx, a.cfg, appStore, sfs)
 	if fuseController.ShouldMount() {
-		log.Println("Mounting FUSE Drive")
+		log.Info("Mounting FUSE Drive")
 		if err := fuseController.Mount(); err != nil {
-			log.Println(errors.Wrap(err, "could not mount fuse on startup"))
+			log.Error("Mounting FUSE drive failed", err)
 		} else {
-			log.Println("Mounting FUSE Drive successful")
+			log.Info("Mounting FUSE Drive successful")
 		}
 	}
+	a.Run("FuseController", fuseController)
 
+	// setup gRPC Server
 	srv := grpc.New(
 		sv,
 		fuseController,
-		grpc.WithPort(cfg.GetInt(config.SpaceServerPort, 0)),
+		grpc.WithPort(a.cfg.GetInt(config.SpaceServerPort, 0)),
 	)
 
-	g.Go(func() error {
-		sync.RegisterNotifier(srv)
-		return sync.Start(ctx)
+	a.RunAsync("BucketSync", bucketSync, func() error {
+		bucketSync.RegisterNotifier(srv)
+		return bucketSync.Start(ctx)
 	})
 
-	<-sync.WaitForReady()
-
 	// start the gRPC server
-	g.Go(func() error {
-		if svErr != nil {
-			log.Printf("unable to initialize service %s\n", svErr.Error())
-			return svErr
-		}
+	a.RunAsync("gRPCServer", srv, func() error {
 		return srv.Start(ctx)
 	})
 
-	fmt.Println("daemon ready")
+	log.Info("Daemon ready")
 
 	// wait for interruption or done signal
 	select {
 	case <-interrupt:
-		log.Println("got interrupt signal")
+		log.Debug("Got interrupt signal")
+		// TODO: Track multiple interrupts in a goroutine to force exit for app.
 		break
 	case <-ctx.Done():
-		log.Println("got context done signal")
+		log.Debug("Got context done signal")
 		break
 	}
 
-	// shutdown gracefully
-	log.Println("received shutdown signal. ")
+	return a.Shutdown()
+}
 
-	_, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer shutdownCancel()
+// Run registers this component to be cleaned up on Shutdown
+func (a *App) Run(name string, component core.Component) {
+	a.components.Push(&componentMap{
+		name:      name,
+		component: component,
+	})
+}
 
-	// probably we can create an interface Stop/Close to loop thru all modules
-	// NOTE: need to make sure the order of shutdown is in sync and we dont drop events
-	if textileClient != nil {
-		log.Println("shutdown Textile client")
-		textileClient.Stop()
+// RunAsync performs the same function as Run() but also accepts an function to be run
+// async to initialize the component.
+func (a *App) RunAsync(name string, component core.AsyncComponent, fn func() error) {
+	if a.eg == nil {
+		log.Warn("App.RunAsync() should be called after App.Start()")
+		return
 	}
 
-	if sync != nil {
-		log.Println("shutdown bucket sync...")
-		sync.Stop()
+	a.eg.Go(func() error {
+		return fn()
+	})
+
+	<-component.WaitForReady()
+	a.components.Push(&componentMap{
+		name:      name,
+		component: component,
+	})
+}
+
+// Shutdown would perform a graceful shutdown of all components added through the
+// Run() or RunAsync() functions
+func (a *App) Shutdown() error {
+	log.Info("Daemon shutdown started")
+	for a.components.Len() > 0 {
+		m, ok := a.components.Pop().(*componentMap)
+		if ok {
+			log.Debug(fmt.Sprintf("Shutting down %s", m.name))
+			if err := m.component.Shutdown(); err != nil {
+				log.Error(fmt.Sprintf("Error shutting down %s", m.name), err)
+			}
+		}
 	}
 
-	err = fuseController.Unmount()
-	if err != nil {
-		log.Println(errors.Wrap(err, "error shutdown FUSE Drive"))
-	}
-
-	if srv != nil {
-		log.Println("shutdown gRPC server...")
-		srv.Stop()
-	}
-
-	if store != nil {
-		log.Println("shutdown store...")
-		store.Close()
-	}
-
-	if buckd != nil {
-		log.Println("shutdown Buckd node")
-		buckd.Stop()
-	}
-
-	log.Println("waiting for shutdown group")
-	err = g.Wait()
-	log.Println("finished shutdown group")
-	if err != nil {
-		log.Println("server returning an error", "error", err)
-		os.Exit(2)
-	}
+	err := a.eg.Wait()
+	log.Info("Shutdown complete")
+	return err
 }

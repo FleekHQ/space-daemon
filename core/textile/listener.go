@@ -68,8 +68,7 @@ func (tl *textileThreadListener) Listen(ctx context.Context) error {
 		log.Debug("received from channel!!!!")
 		instance := &BucketData{}
 		if val.Err != nil {
-			log.Printf("error from threads event " + val.Err.Error())
-			log.Error("error getting threadsc listener event", err)
+			log.Error("error getting threadsc listener event", val.Err)
 			return
 		}
 		if err = json.Unmarshal(val.Action.Instance, instance); err != nil {

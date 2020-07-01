@@ -18,12 +18,12 @@ var MongoHost string
 
 type TextileBuckd struct {
 	textile   *core.Textile
-	isRunning bool
+	IsRunning bool
 	ready     chan bool
 	cfg       config.Config
 }
 
-func NewBuckd(cfg config.Config) Buckd {
+func NewBuckd(cfg config.Config) *TextileBuckd {
 	return &TextileBuckd{
 		ready: make(chan bool),
 		cfg:   cfg,
@@ -89,22 +89,20 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 
 	textile.Bootstrap()
 
-	fmt.Println("Welcome to Buckets!")
-	fmt.Println("Your peer ID is " + textile.HostID().String())
+	log.Info("Welcome to bucket", fmt.Sprintf("peerID:%s", textile.HostID().String()))
 	tb.textile = textile
-	tb.isRunning = true
-	tb.ready <- true
+	tb.IsRunning = true
 	return nil
 }
 
-func (tb *TextileBuckd) WaitForReady() chan bool {
-	return tb.ready
-}
-
 func (tb *TextileBuckd) Stop() error {
-	tb.isRunning = false
+	tb.IsRunning = false
 	tb.textile.Close()
 	close(tb.ready)
 	// TODO: what else
 	return nil
+}
+
+func (tb *TextileBuckd) Shutdown() error {
+	return tb.Stop()
 }

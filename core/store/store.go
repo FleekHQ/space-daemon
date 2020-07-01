@@ -6,6 +6,8 @@ import (
 	"os"
 	s "strings"
 
+	"github.com/FleekHQ/space-poc/core"
+
 	"github.com/FleekHQ/space-poc/log"
 
 	badger "github.com/dgraph-io/badger"
@@ -20,6 +22,8 @@ type store struct {
 	db      *badger.DB
 	isOpen  bool
 }
+
+var _ = core.Component(store{})
 
 type Store interface {
 	Open() error
@@ -44,7 +48,7 @@ var defaultStoreOptions = storeOptions{
 
 type Option func(o *storeOptions)
 
-func New(opts ...Option) Store {
+func New(opts ...Option) *store {
 	o := defaultStoreOptions
 	for _, opt := range opts {
 		opt(&o)
@@ -62,7 +66,8 @@ func New(opts ...Option) Store {
 
 func (store *store) Open() error {
 	if store.isOpen {
-		return errors.New("Tried to open already open database")
+		log.Warn("Trying to open an already open")
+		return nil
 	}
 
 	rootDir := s.Join([]string{store.rootDir, BadgerFileName}, "/")
@@ -78,12 +83,16 @@ func (store *store) Open() error {
 	if err := os.MkdirAll(rootDir, os.ModePerm); err != nil {
 		return err
 	}
-	if db, err := badger.Open(badger.DefaultOptions(rootDir)); err != nil {
+
+	db, err := badger.Open(
+		badger.DefaultOptions(rootDir).WithEventLogging(false),
+	)
+	if err != nil {
 		return err
-	} else {
-		store.db = db
-		store.isOpen = true
 	}
+
+	store.db = db
+	store.isOpen = true
 
 	return nil
 }
@@ -93,11 +102,14 @@ func (store store) IsOpen() bool {
 }
 
 func (store *store) Close() error {
-	if store.isOpen == false {
-		return errors.New("Tried to close a not yet opened database")
+	if !store.isOpen {
+		return nil
 	}
 
-	defer store.db.Close()
+	err := store.db.Close()
+	if err != nil {
+		return err
+	}
 
 	store.isOpen = false
 
@@ -217,6 +229,7 @@ func (store *store) Get(key []byte) ([]byte, error) {
 
 	return valCopy, nil
 }
+
 // Returns keys in the store filtered by prefix
 func (store store) KeysWithPrefix(prefix string) ([]string, error) {
 	db, err := store.getDb()
@@ -240,4 +253,8 @@ func (store store) KeysWithPrefix(prefix string) ([]string, error) {
 	})
 
 	return keys, nil
+}
+
+func (store store) Shutdown() error {
+	return store.Close()
 }
