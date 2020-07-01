@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/FleekHQ/space-poc/core/env"
 	"os"
+
+	"github.com/FleekHQ/space-poc/core/env"
 )
 
 type mapConfig struct {
@@ -22,6 +23,7 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 	configStr[MountFuseDrive] = "false"
 	configStr[FuseDriveName] = "Space"
 	configInt[SpaceServerPort] = 9999
+	configInt[SpaceProxyServerPort] = 9998
 	if flags.DevMode {
 		configStr[Ipfsaddr] = os.Getenv(env.IpfsAddr)
 		configStr[Mongousr] = os.Getenv(env.MongoUsr)
