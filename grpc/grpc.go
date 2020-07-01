@@ -139,6 +139,7 @@ func (srv *grpcServer) Shutdown() error {
 	defer func() {
 		srv.rpcProxy = nil
 		srv.s = nil
+		srv.isStarted = false
 	}()
 
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
