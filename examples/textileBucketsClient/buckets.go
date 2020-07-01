@@ -29,6 +29,7 @@ import (
 	bc "github.com/textileio/textile/api/buckets/client"
 	pb "github.com/textileio/textile/api/buckets/pb"
 	"github.com/textileio/textile/api/common"
+	uc "github.com/textileio/textile/api/users/client"
 	"github.com/textileio/textile/cmd"
 	"google.golang.org/grpc"
 )
@@ -179,7 +180,7 @@ type Bucket struct {
 	UpdatedAt int64 `json:"updated_at"`
 }
 
-func initUser(threads *tc.Client, buckets *bc.Client, user string, bucketSlug string) *pb.InitReply {
+func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, user string, bucketSlug string) *pb.InitReply {
 	// only needed for hub connections
 
 	key := os.Getenv("TXL_USER_KEY")
@@ -229,6 +230,19 @@ func initUser(threads *tc.Client, buckets *bc.Client, user string, bucketSlug st
 		log.Println("error doing list path on non existent directoy: ", err)
 	}
 	log.Println("lp1: ", lp)
+
+	db, err := users.ListThreads(ctx)
+
+	if err != nil {
+		fmt.Println("error getting list dbs")
+		fmt.Println(err)
+	}
+
+	fmt.Println("listing dbs")
+	for k, v := range db.GetList() {
+		fmt.Println("looping through thread id: ", k)
+		fmt.Println("db info: ", v)
+	}
 
 	emptyDirPath := strings.TrimRight("dummy", "/") + "/" + ".keep"
 	_, _, err = buckets.PushPath(ctx, buck.Root.Key, emptyDirPath, &bytes.Buffer{})
@@ -325,7 +339,7 @@ func main() {
 		var buckets *bc.Client
 		// might need these for other ops so leaving here as commented
 		// out and below
-		// var users *uc.Client
+		var users *uc.Client
 		// var hub *hc.Client
 		var err error
 
@@ -346,19 +360,16 @@ func main() {
 		if err != nil {
 			cmd.Fatal(err)
 		}
-		// hub, err = hc.NewClient(hubTarget, opts...)
-		// if err != nil {
-		// 	cmd.Fatal(err)
-		// }
-		// users, err = uc.NewClient(hubTarget, opts...)
-		// if err != nil {
-		// 	cmd.Fatal(err)
-		// }
+
+		users, err = uc.NewClient(hubTarget, opts...)
+		if err != nil {
+			cmd.Fatal(err)
+		}
 
 		log.Println("Finished client init, calling user init ...")
 
 		// hub
-		res := initUser(threads, buckets, "test-user", "test-bucket")
+		res := initUser(threads, buckets, users, "test-user", "test-bucket")
 		log.Println(res)
 	}
 }
