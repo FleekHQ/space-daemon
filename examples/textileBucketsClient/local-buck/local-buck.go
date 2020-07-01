@@ -2,15 +2,20 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"os"
 	"os/user"
+	"time"
 
 	"github.com/FleekHQ/space-poc/log"
+	crypto "github.com/libp2p/go-libp2p-crypto"
 	tc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
+	nc "github.com/textileio/go-threads/net/api/client"
 	bc "github.com/textileio/textile/api/buckets/client"
 	"github.com/textileio/textile/api/common"
+	hc "github.com/textileio/textile/api/hub/client"
 	"github.com/textileio/textile/cmd"
 	"github.com/textileio/textile/core"
 	"google.golang.org/grpc"
@@ -92,6 +97,7 @@ func main() {
 	// now create a bucket on that thread
 	var threads *tc.Client
 	var buckets *bc.Client
+	var netc *nc.Client
 	host := "127.0.0.1:3006"
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
@@ -108,6 +114,7 @@ func main() {
 	if err != nil {
 		cmd.Fatal(err)
 	}
+	netc, err = nc.NewClient(host, opts...)
 
 	log.Info("Finished client init, calling user init ...")
 
@@ -127,8 +134,74 @@ func main() {
 
 	db, err := threads.ListDBs(ctx)
 
+	hubHost := getHubHost()
+
 	for k, v := range db {
 		fmt.Println("looping through thread id: ", k)
 		fmt.Println("db info: ", v)
+
+		netc.AddReplicator(ctx, dbID, cmd.AddrFromStr(hubHost))
 	}
+
+	// replicate on hub
+
+}
+
+func getHubHost() string {
+	var threads *tc.Client
+	var buckets *bc.Client
+	var hub *hc.Client
+	// might need these for other ops so leaving here as commented
+	// out and below
+	// var users *uc.Client
+	var err error
+
+	host := os.Getenv("TXL_HUB_HOST")
+
+	auth := common.Credentials{}
+	var opts []grpc.DialOption
+	hubTarget := host
+	threadstarget := host
+	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithPerRPCCredentials(auth))
+
+	buckets, err = bc.NewClient(hubTarget, opts...)
+	if err != nil {
+		cmd.Fatal(err)
+	}
+	threads, err = tc.NewClient(threadstarget, opts...)
+	if err != nil {
+		cmd.Fatal(err)
+	}
+	hub, err = hc.NewClient(hubTarget, opts...)
+	if err != nil {
+		cmd.Fatal(err)
+	}
+	// users, err = uc.NewClient(hubTarget, opts...)
+	// if err != nil {
+	// 	cmd.Fatal(err)
+	// }
+
+	key := os.Getenv("TXL_USER_KEY")
+	secret := os.Getenv("TXL_USER_SECRET")
+
+	ctx := context.Background()
+	ctx = common.NewAPIKeyContext(ctx, key)
+	ctx, err = common.CreateAPISigContext(ctx, time.Now().Add(time.Minute*2), secret)
+
+	if err != nil {
+		log.Println("error creating APISigContext")
+		log.Fatal(err)
+	}
+
+	// TODO: get from key manager instead
+	sk, _, err := crypto.GenerateEd25519Key(rand.Reader)
+
+	// TODO: CTX has to be made from session key received from lambda
+	// ctx on next line needs to be rebuilt from the authorization from the lambda
+	tok, err := threads.GetToken(ctx, thread.NewLibp2pIdentity(sk))
+	ctx = thread.NewTokenContext(ctx, tok)
+
+	org, err := hub.GetOrg(ctx)
+	org.Host()
 }

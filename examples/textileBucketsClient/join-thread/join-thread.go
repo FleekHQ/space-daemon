@@ -33,7 +33,11 @@ func main() {
 
 	threadCtx := context.Background()
 	k, err := thread.KeyFromString(key)
-	threads.NewDBFromAddr(threadCtx, m1, k)
+
+	sk := k.Service()
+	rk := k.Read()
+
+	threads.NewDBFromAddr(threadCtx, m1, rk)
 
 	db, err := threads.ListDBs(threadCtx)
 
