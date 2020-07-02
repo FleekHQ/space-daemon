@@ -7,6 +7,7 @@ import (
 const (
 	JsonConfigFileName      = "space.json"
 	SpaceServerPort         = "space/rpcPort"
+	SpaceProxyServerPort    = "space/rpcProxyPort"
 	SpaceStorePath          = "space/storePath"
 	TextileHubTarget        = "space/textileHubTarget"
 	TextileThreadsTarget    = "space/textileThreadsTarget"
