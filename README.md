@@ -1,31 +1,125 @@
-# space-poc
+# Space Daemon
 
+Space Daemon is a wrapper built in Go around awesome IPFS tools so that you can have start coding a decentralized desktop app as fast as possible. It is built on top of Textile Threads and Buckets. Out of the box it includes:
 
-Research repository to test and try things
-this code later needs to be rewritten or moved to the actual
-repositories that will be used for implementation.
+- A running local instance of Textile Threads.
 
+- Interfaces to create local private, encrypted buckets.
 
-## Local Development
+- Interfaces for sharing those buckets and the files within.
 
-### POC Package Structure
+- Identity service so that sharing can be done through usernames or emails.
+
+- FUSE for drive mounting, so that the files can be explored natively in your OS.
+
+- Key management.
+
+Note: This project is in active development, so it might change its API until it reaches a stable version.
+
+## Installation
+
+By default, Space Daemon connects to hosted services provided by Fleek. This should be good if you just want to get it running quickly. However, if you want to connect to your own services, read the [Modules Section](https://github.com/FleekHQ/space-poc#Modules).
+
+## Usage
+
+Space Daemon provides a gRPC interface. You can read its proto schema [here](https://github.com/FleekHQ/space-poc/blob/master/grpc/pb/space.proto). It contains methods to:
+
+- Create files and directories
+
+- List files and directories
+
+- Creating buckets
+
+- Sharing buckets
+
+- Creating identities
+
+You can also use the JavaScript client here [https://github.com/FleekHQ/space-client](https://github.com/FleekHQ/space-client)
+
+This can be useful if, for example, you are building a web app that needs to interact with a user's locally running Space Daemon.
+
+### Downloading the binary
+
+Check out the releases [here](https://github.com/FleekHQ/space-poc/releases/tag). You can download the latest version for your OS and you should be good to go.
+
+If you want to run Space Daemon by source, check [this section](https://github.com/FleekHQ/space-poc#Running)
+
+## Modules
+
+Space Daemon requires a few modules to run successfully. If you downloaded the binary, you don't have to worry about this since it will be connecting to our services. It's good to understand what's happening behind the scenes though.
+
+### IPFS Node
+
+All encrypted files are stored in an IPFS node. For convenience, Space Daemon connects to a hosted IPFS node by default. You can connect to one of your choosing by providing the `-ipfsaddr` flag (e.g. `-ipfsaddr=/ip4/127.0.0.1/tcp/5001`)
+
+### Textile Hub
+
+Required for sharing files between users and backing it up. It stores all backed up files encrypted using a set of keys so that only you, and people you share files with, can read the data. We host our own instance of the Textile Hub, and by default, Space Daemon will conect to it. It can be customized by providing the `-textilehub` flag and `-textilethreads` flag.
+
+### Space Services
+
+We provide hosted alternatives for these services. You can deploy your own by following the instructions in its repo:
+
+[https://github.com/fleekHQ/space-services](https://github.com/fleekHQ/space-services)
+
+#### Identity
+
+These are centralized services that are optional, but offer additional convenience. Used mainly for identity. By using these services, you can allow users to claim usernames, so that Space Daemon can know the public key of a given username and in that way share files via username without having to input public keys directly.
+
+#### Authentication
+
+Our hosted Textile Hub requires authentication via public key for logging in. This service sends a challenge to Space Daemon, which signs the challenge with the private key of the user and in that way our hosted Textile Hub can allow the user to store data.
+
+### MongoDB
+
+Currently, local Textile Threads require a running MongoDB database. Space Daemon by default connects to a hosted one, but this will be removed once Textile switches over to an embeddable data store.
+
+## Running from source
+
+After cloning this repo, you can run it from source by running `go run ./cmd/space-poc -devMode=true`. Consider that you will need the following environment variables exported in your system:
+
+```
+SPACE_APP_DIR=[The path where the source code is located]
+IPFS_ADDR=[Your IPFS node address]
+MONGO_PW=[The password of a MongoDB database]
+MONGO_USR=[The user of a MongoDB database]
+MONGO_HOST=[The host of a MongoDB database]
+SERVICES_API_URL=[The URL where Space Services API is located]
+SERVICES_HUB_AUTH_URL=[The URL where Space Services Textile Hub Authorizer is located]
+TXL_HUB_TARGET=[The URL of the Textile Hub]
+TXL_THREADS_TARGET=[The URL of the Textile Hub where Threads are hosted, can be the same that TXL_HUB_TARGET]
+```
+
+Alternatively, you can run `make` to compile the binary. Make sure you have these environment variables exposed though. You can see some example environment variables in `.env.example`.
+
+## Contributting
+
+We are happy to receive issues and review pull requests. Please make sure to write tests for the code you are introducing and make sure it doesn't break already passing tests.
+
+Read the following sections for an introduction into the code.
+
+### Package Structure
 
 Loosely based on these resources:
 https://github.com/golang-standards/project-layout
 
-Note: For POC purposes the package structure is not as important but when we do migrate to a real folder we want to
-structure as much as possible following standards
 
-* `/api` Folder structure for REST API.
-* `/cmd` Entry point directory for all binaries this repo handles. E.g cmd/{binary-name}/main.go
-* `/config` Global Config code
-* `/core` Directory for core stuff like watcher service and threads watcher
-* `/logger` Directory for app logging
-* `/examples` Directory playground for general examples and drafts
+- `/grpc` Folder structure for REST API.
+- `/cmd` Entry point directory for all binaries this repo handles. E.g cmd/{binary-name}/main.go
+- `/config` Global Config code
+- `/core` Directory for the core objects of the package
+- `/logger` Directory for app logging
+- `/examples` Directory playground for general examples and drafts
 
-Other Potential directories to consider adding
-`/shared` or  `/common` In case we want to share libs or logic among several binaries like
-ipfs logic and other interactions.
+### Main classes
+
+- `ipfs`: contains utils for general IPFS operations.
+- `keychain`: manages user public/private key pair.
+- `libfuse`: interoperates with FUSE for mounting drives.
+- `space`: contains the main integration from the services to the final Textile or FS operations.
+- `store`: contains a wrapper around a local db.
+- `sync`: keeps track of open files so that the updates get pushed to IPFS
+- `textile`: wrapper around Textile booting and operations
 
 ### Generating Mocks
 
@@ -37,49 +131,16 @@ For Linux it needs to be built from source.
 
 ### Protobuf
 
+If you update the gRPC API, you need to regenerate the Protobuf file.
+
 Make sure Protobuf gen tool is in your path:
 `export PATH="$PATH:$(go env GOPATH)/bin"`
 
 Run the generation:
 `protoc -I grpc/pb/ grpc/pb/space.proto --go_out=plugins=grpc:grpc/pb`
 
+### Debugging and Profiling
 
-## Running the Space Binary
-
-### Building
-
-Set the required env variables:
-```
-IPFS_ADDR=/ip4/127.0.0.1/tcp/5001
-MONGO_PW=mongpw
-MONGO_USR=mongousr
-MONGO_HOST=mongohost
-SERVICES_API_URL=https://td4uiovozc.execute-api.us-west-2.amazonaws.com/dev
-SERVICES_HUB_AUTH_URL=wss://gqo1oqz055.execute-api.us-west-2.amazonaws.com/dev
-TXL_HUB_TARGET=textile-hub-dev.fleek.co:3006
-TXL_THREADS_TARGET=textile-hub-dev.fleek.co:3006
-```
-
-Run `make`. This will put the binary in the `bin` folder.
-
-### Running
-
-Binary should run in a folder with a space.json config file with the following settings:
-```json
-{
-  "space": {
-    "textileHubTarget": "textile-hub-dev.fleek.co:3006",
-    "textileThreadsTarget": "textile-hub-dev.fleek.co:3006",
-    "rpcPort": 9999,
-    "storePath": "~/.fleek-space"
-  }
-}
-```
-
-If you still have issues, try setting the env var SPACE_APP_DIR
-`export SPACE_APP_DIR=/path/to/the/space/binary`
-
-## Debugging Space Binary
 The following flags can be run with the binary to output profiling files for debugging.
 Flags support a full path to a file.
 `-cpuprofile cpu.prof -memprofile mem.prof`
@@ -89,5 +150,3 @@ server in localhost:6060. See docs how to interact with pprof server here: https
 
 To disable debug mode add this flag to binary arguments
 `-debug=false`
-
-
