@@ -56,6 +56,8 @@ MONGO_USR=mongousr
 MONGO_HOST=mongohost
 SERVICES_API_URL=https://td4uiovozc.execute-api.us-west-2.amazonaws.com/dev
 SERVICES_HUB_AUTH_URL=wss://gqo1oqz055.execute-api.us-west-2.amazonaws.com/dev
+TXL_HUB_TARGET=textile-hub-dev.fleek.co:3006
+TXL_THREADS_TARGET=textile-hub-dev.fleek.co:3006
 ```
 
 Run `make`. This will put the binary in the `bin` folder.

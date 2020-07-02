@@ -18,6 +18,8 @@ builds:
       - -X main.mongohost={{ .Env.MONGO_HOST }}
       - -X main.spaceapi={{ .Env.SERVICES_API_URL }}
       - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
+      - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
+      - -X main.textilethreads={{ .Env.TXL_THREADS_TARGET }}
     main: ./cmd/space-poc/main.go
     binary: space
     goos:
@@ -33,6 +35,8 @@ builds:
       - -X main.mongohost={{ .Env.MONGO_HOST }}
       - -X main.spaceapi={{ .Env.SERVICES_API_URL }}
       - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
+      - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
+      - -X main.textilethreads={{ .Env.TXL_THREADS_TARGET }}
     main: ./cmd/space-poc/main.go
     binary: space
     goos:
