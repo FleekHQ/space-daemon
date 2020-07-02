@@ -110,6 +110,7 @@ func (tc *textileClient) GetBaseThreadsContext(ctx context.Context) (context.Con
 	tokStr, err := getHubToken(tc.store, tc.cfg)
 	if err != nil {
 		log.Error("Token Challenge Error:", err)
+		return nil, err
 	}
 	tok := thread.Token(tokStr)
 

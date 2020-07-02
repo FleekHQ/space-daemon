@@ -7,12 +7,14 @@ import (
 )
 
 const (
-	SpaceWorkingDir = "SPACE_APP_DIR"
-	LogLevel        = "LOG_LEVEL"
-	IpfsAddr        = "IPFS_ADDR"
-	MongoUsr        = "MONGO_USR"
-	MongoPw         = "MONGO_PW"
-	MongoHost       = "MONGO_HOST"
+	SpaceWorkingDir    = "SPACE_APP_DIR"
+	LogLevel           = "LOG_LEVEL"
+	IpfsAddr           = "IPFS_ADDR"
+	MongoUsr           = "MONGO_USR"
+	MongoPw            = "MONGO_PW"
+	MongoHost          = "MONGO_HOST"
+	ServicesAPIURL     = "SERVICES_API_URL"
+	ServicesHubAuthURL = "SERVICES_HUB_AUTH_URL"
 )
 
 type SpaceEnv interface {

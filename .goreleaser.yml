@@ -16,6 +16,8 @@ builds:
       - -X main.mongousr={{ .Env.MONGO_USR }}
       - -X main.mongopw={{ .Env.MONGO_PW }}
       - -X main.mongohost={{ .Env.MONGO_HOST }}
+      - -X main.spaceapi={{ .Env.SERVICES_API_URL }}
+      - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
     main: ./cmd/space-poc/main.go
     binary: space
     goos:
@@ -29,6 +31,8 @@ builds:
       - -X main.mongousr={{ .Env.MONGO_USR }}
       - -X main.mongopw={{ .Env.MONGO_PW }}
       - -X main.mongohost={{ .Env.MONGO_HOST }}
+      - -X main.spaceapi={{ .Env.SERVICES_API_URL }}
+      - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
     main: ./cmd/space-poc/main.go
     binary: space
     goos:

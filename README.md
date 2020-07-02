@@ -54,6 +54,8 @@ IPFS_ADDR=/ip4/127.0.0.1/tcp/5001
 MONGO_PW=mongpw
 MONGO_USR=mongousr
 MONGO_HOST=mongohost
+SERVICES_API_URL=https://td4uiovozc.execute-api.us-west-2.amazonaws.com/dev
+SERVICES_HUB_AUTH_URL=wss://gqo1oqz055.execute-api.us-west-2.amazonaws.com/dev
 ```
 
 Run `make`. This will put the binary in the `bin` folder.
@@ -76,7 +78,7 @@ If you still have issues, try setting the env var SPACE_APP_DIR
 `export SPACE_APP_DIR=/path/to/the/space/binary`
 
 ## Debugging Space Binary
-The following flags can be run with the binary to output profiling files for debugging. 
+The following flags can be run with the binary to output profiling files for debugging.
 Flags support a full path to a file.
 `-cpuprofile cpu.prof -memprofile mem.prof`
 

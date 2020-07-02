@@ -33,3 +33,5 @@ jobs:
           MONGO_USR: ${{ secrets.MONGO_USR }}
           MONGO_PW: ${{ secrets.MONGO_PW }}
           MONGO_HOST: ${{ secrets.MONGO_HOST }}
+          SERVICES_API_URL: ${{ secrets.SERVICES_API_URL }}
+          SERVICES_HUB_AUTH_URL: ${{ secrets.SERVICES_HUB_AUTH_URL }}

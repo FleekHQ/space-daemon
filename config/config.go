@@ -27,11 +27,13 @@ var (
 )
 
 type Flags struct {
-	Ipfsaddr  string
-	Mongousr  string
-	Mongopw   string
-	Mongohost string
-	DevMode   bool
+	Ipfsaddr           string
+	Mongousr           string
+	Mongopw            string
+	Mongohost          string
+	DevMode            bool
+	ServicesAPIURL     string
+	ServicesHubAuthURL string
 }
 
 // Config used to fetch config information
