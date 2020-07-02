@@ -74,7 +74,7 @@ type Client interface {
 	GetThreadsConnection() (*threadsClient.Client, error)
 	ListBuckets(ctx context.Context) ([]Bucket, error)
 	CreateBucket(ctx context.Context, bucketSlug string) (Bucket, error)
-	Stop() error
+	Shutdown() error
 	WaitForReady() chan bool
 	StartAndBootstrap(ctx context.Context, cfg config.Config) error
 }
@@ -86,7 +86,6 @@ type Threadsd interface {
 }
 
 type Buckd interface {
-	WaitForReady() chan bool
 	Stop() error
 	Start(ctx context.Context) error
 }

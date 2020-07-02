@@ -65,8 +65,15 @@ func (l *logger) Debug(msg string, tags ...string) {
 		return
 	}
 
-	// l.log.WithFields(parseFields(tags...)).Debug(msg)
-	l.log.Debug(msg, tags)
+	l.log.WithFields(parseFields(tags...)).Debug(msg)
+}
+
+func (l *logger) Warn(msg string, tags ...string) {
+	if l.log.Level < logrus.WarnLevel {
+		return
+	}
+
+	l.log.WithFields(parseFields(tags...)).Warn(msg)
 }
 
 func (l *logger) Error(msg string, err error, tags ...string) {
@@ -80,6 +87,7 @@ func (l *logger) Error(msg string, err error, tags ...string) {
 
 func (l *logger) Fatal(err error) {
 	l.Error(err.Error(), err)
+	l.log.Exit(1)
 }
 
 // Functions
@@ -90,6 +98,10 @@ func Info(msg string, tags ...string) {
 
 func Printf(msg string, args ...interface{}) {
 	log.Printf(msg, args...)
+}
+
+func Warn(msg string, tags ...string) {
+	log.Warn(msg, tags...)
 }
 
 func Debug(msg string, tags ...string) {

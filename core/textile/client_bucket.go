@@ -194,7 +194,7 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 	}
 	for _, r := range bucketList.Roots {
 		if r.Name == bucketSlug {
-			log.Info("BucketData '" + bucketSlug + "' already exists")
+			log.Warn("BucketData already exists", "bucketSlug:"+bucketSlug)
 			return tc.getNewBucket(r), nil
 		}
 	}
