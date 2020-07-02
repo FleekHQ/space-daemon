@@ -1,6 +1,6 @@
 # Space Daemon
 
-Space Daemon is a wrapper built in Go around awesome IPFS tools so that you can have start coding a decentralized desktop app as fast as possible. It is built on top of Textile Threads and Buckets. Out of the box it includes:
+Space Daemon is a wrapper built in Go around awesome IPFS tools so that you can have start coding a decentralized desktop app as fast as possible. It's built on top of Textile Threads and Buckets. Out of the box it includes:
 
 - A running local instance of Textile Threads.
 
@@ -20,6 +20,12 @@ Note: This project is in active development, so it might change its API until it
 
 By default, Space Daemon connects to hosted services provided by Fleek. This should be good if you just want to get it running quickly. However, if you want to connect to your own services, read the [Modules Section](https://github.com/FleekHQ/space-poc#Modules).
 
+### Downloading the binary
+
+Check out the releases [here](https://github.com/FleekHQ/space-poc/releases/tag). You can download the latest version for your OS and you should be good to go.
+
+If you want to run Space Daemon by source, check out [this section](https://github.com/FleekHQ/space-poc#Running)
+
 ## Usage
 
 Space Daemon provides a gRPC interface. You can read its proto schema [here](https://github.com/FleekHQ/space-poc/blob/master/grpc/pb/space.proto). It contains methods to:
@@ -37,12 +43,6 @@ Space Daemon provides a gRPC interface. You can read its proto schema [here](htt
 You can also use the JavaScript client here [https://github.com/FleekHQ/space-client](https://github.com/FleekHQ/space-client)
 
 This can be useful if, for example, you are building a web app that needs to interact with a user's locally running Space Daemon.
-
-### Downloading the binary
-
-Check out the releases [here](https://github.com/FleekHQ/space-poc/releases/tag). You can download the latest version for your OS and you should be good to go.
-
-If you want to run Space Daemon by source, check [this section](https://github.com/FleekHQ/space-poc#Running)
 
 ## Modules
 
