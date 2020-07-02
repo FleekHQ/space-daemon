@@ -1,3 +1,11 @@
-export TXL_HUB_HOST=textile-hub-dev.fleek.co:3006
-export TXL_USER_KEY=setfromcligeneration
-export TXL_USER_SECRET=setfromcligeneration
+export TXL_HUB_HOST=
+export TXL_USER_KEY=
+export TXL_USER_SECRET=
+export MONGO_PW=
+export MONGO_USR=
+export MONGO_HOST=
+export KEY_SEED=
+export THREAD_ID=
+export IPFS_ADDR=
+export JOIN_THREAD_ADDR=
+export JOIN_THREAD_KEY=

@@ -9,6 +9,7 @@ import (
 	"github.com/FleekHQ/space-poc/log"
 	tc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
+	nc "github.com/textileio/go-threads/net/api/client"
 	bc "github.com/textileio/textile/api/buckets/client"
 	"github.com/textileio/textile/api/common"
 	"github.com/textileio/textile/cmd"
@@ -31,30 +32,12 @@ func main() {
 	addrAPI := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/3006")
 	addrAPIProxy := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/3007")
 	addrThreadsHost := cmd.AddrFromStr("/ip4/0.0.0.0/tcp/4006")
-	// TODO: replace with local blockstore
-	// TODO: get value from build time
 	addrIpfsAPI := cmd.AddrFromStr(IpfsAddr)
 
 	addrGatewayHost := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/8006")
 	addrGatewayURL := "http://127.0.0.1:8006"
-
-	// PLACEHOLDER: filecoin settings
-
-	// TODO: replace with embedded store
-	// TODO: get value from build time
 	fmt.Println("mongo host: ", MongoHost)
 	addrMongoURI := "mongodb+srv://" + MongoUsr + ":" + MongoPw + "@" + MongoHost
-
-	// TODO: setup logging
-	// if logFile != "" {
-	// 	util.SetupDefaultLoggingConfig(logFile)
-	// }
-
-	// TODO: on shared bucket creation, add hub as replicator
-	// use dbinfo to get keys to give to host, to get hostid
-	// use textile client.GetHostId (against hub we want to
-	// replicate). it will give back a couple just dont use
-	// local one
 
 	usr, err := user.Current()
 	if err != nil {
@@ -71,14 +54,9 @@ func main() {
 		AddrIPFSAPI:     addrIpfsAPI,
 		AddrGatewayHost: addrGatewayHost,
 		AddrGatewayURL:  addrGatewayURL,
-		//AddrPowergateAPI: addrPowergateApi,
-		AddrMongoURI: addrMongoURI,
-		//UseSubdomains:    config.Viper.GetBool("gateway.subdomains"),
-		MongoName: "buckets",
-		//DNSDomain:        dnsDomain,
-		//DNSZoneID:        dnsZoneID,
-		//DNSToken:         dnsToken,
-		Debug: false,
+		AddrMongoURI:    addrMongoURI,
+		MongoName:       "buckets",
+		Debug:           false,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -92,6 +70,7 @@ func main() {
 	// now create a bucket on that thread
 	var threads *tc.Client
 	var buckets *bc.Client
+	var netc *nc.Client
 	host := "127.0.0.1:3006"
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
@@ -108,27 +87,32 @@ func main() {
 	if err != nil {
 		cmd.Fatal(err)
 	}
+	netc, err = nc.NewClient(host, opts...)
 
 	log.Info("Finished client init, calling user init ...")
 
 	threadCtx := context.Background()
 	threadCtx = common.NewThreadNameContext(threadCtx, "testthreadname")
 	dbID := thread.NewIDV1(thread.Raw, 32)
-	// TODO: store threadid in config
 	if err := threads.NewDB(threadCtx, dbID); err != nil {
 		log.Info("error calling threads.NewDB")
 		log.Fatal(err)
 	}
 
 	ctx = common.NewThreadIDContext(threadCtx, dbID)
-	// create bucket
+
 	buck, err := buckets.Init(ctx, "personal")
 	fmt.Println("info: ", buck)
 
 	db, err := threads.ListDBs(ctx)
 
+	fmt.Println("got back from listdbs")
+
 	for k, v := range db {
 		fmt.Println("looping through thread id: ", k)
 		fmt.Println("db info: ", v)
+
+		// replicate on hub
+		netc.AddReplicator(ctx, dbID, cmd.AddrFromStr("/ip4/54.188.82.109/tcp/3006"))
 	}
 }
