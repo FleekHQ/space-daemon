@@ -22,12 +22,12 @@ var (
 	memprofile   = flag.String("memprofile", "", "write memory profile to `file`")
 	debugMode    = flag.Bool("debug", true, "run daemon with debug mode for profiling")
 	devMode      = flag.Bool("dev", false, "run daemon in dev mode to use .env file")
-	ipfsaddr     = flag.String("ipfsaddr", "", "The IPFS node to connect to")
+	ipfsaddr     string
 	mongousr     string
 	mongopw      string
 	mongohost    string
-	spaceapi     = flag.String("spaceapi", "", "The URL of the Space Services API")
-	spacehubauth = flag.String("spacehubauth", "", "The URL of the authorizer for Textile Hub")
+	spaceapi     string
+	spacehubauth string
 )
 
 func main() {
@@ -41,12 +41,12 @@ func main() {
 	log.Printf("INFO: dev mode %v", *devMode)
 
 	cf := &config.Flags{
-		Ipfsaddr:           *ipfsaddr,
+		Ipfsaddr:           ipfsaddr,
 		Mongousr:           mongousr,
 		Mongopw:            mongopw,
 		Mongohost:          mongohost,
-		ServicesAPIURL:     *spaceapi,
-		ServicesHubAuthURL: *spacehubauth,
+		ServicesAPIURL:     spaceapi,
+		ServicesHubAuthURL: spacehubauth,
 		DevMode:            *devMode == true,
 	}
 
