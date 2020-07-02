@@ -17,9 +17,6 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 
 	// default values
 	configStr[SpaceStorePath] = "~/.fleek-space"
-	configStr[TextileHubTarget] = "textile-hub-dev.fleek.co:3006"
-	configStr[TextileThreadsTarget] = "textile-hub-dev.fleek.co:3006"
-	configStr[SpaceServicesAPIURL] = "https://td4uiovozc.execute-api.us-west-2.amazonaws.com/dev" // TODO: Get a domain
 	configStr[MountFuseDrive] = "false"
 	configStr[FuseDriveName] = "Space"
 	configInt[SpaceServerPort] = 9999
@@ -29,11 +26,19 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[Mongousr] = os.Getenv(env.MongoUsr)
 		configStr[Mongopw] = os.Getenv(env.MongoPw)
 		configStr[Mongohost] = os.Getenv(env.MongoHost)
+		configStr[SpaceServicesAPIURL] = os.Getenv(env.ServicesAPIURL)
+		configStr[SpaceServicesHubAuthURL] = os.Getenv(env.ServicesHubAuthURL)
+		configStr[TextileHubTarget] = os.Getenv(env.TextileHubTarget)
+		configStr[TextileThreadsTarget] = os.Getenv(env.TextileThreadsTarget)
 	} else {
 		configStr[Ipfsaddr] = flags.Ipfsaddr
 		configStr[Mongousr] = flags.Mongousr
 		configStr[Mongopw] = flags.Mongopw
 		configStr[Mongohost] = flags.Mongohost
+		configStr[SpaceServicesAPIURL] = flags.ServicesAPIURL
+		configStr[SpaceServicesHubAuthURL] = flags.ServicesHubAuthURL
+		configStr[TextileHubTarget] = flags.TextileHubTarget
+		configStr[TextileThreadsTarget] = flags.TextileThreadsTarget
 	}
 
 	c := mapConfig{

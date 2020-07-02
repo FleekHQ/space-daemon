@@ -5,20 +5,21 @@ import (
 )
 
 const (
-	JsonConfigFileName   = "space.json"
-	SpaceServerPort      = "space/rpcPort"
-	SpaceProxyServerPort = "space/rpcProxyPort"
-	SpaceStorePath       = "space/storePath"
-	TextileHubTarget     = "space/textileHubTarget"
-	TextileThreadsTarget = "space/textileThreadsTarget"
-	MountFuseDrive       = "space/mountFuseDrive"
-	FuseMountPath        = "space/fuseMountPath"
-	FuseDriveName        = "space/fuseDriveName"
-	SpaceServicesAPIURL  = "space/servicesApiUrl"
-	Ipfsaddr             = "space/ipfsAddr"
-	Mongousr             = "space/mongoUsr"
-	Mongopw              = "space/mongoPw"
-	Mongohost            = "space/mongoHost"
+	JsonConfigFileName      = "space.json"
+	SpaceServerPort         = "space/rpcPort"
+	SpaceProxyServerPort    = "space/rpcProxyPort"
+	SpaceStorePath          = "space/storePath"
+	TextileHubTarget        = "space/textileHubTarget"
+	TextileThreadsTarget    = "space/textileThreadsTarget"
+	MountFuseDrive          = "space/mountFuseDrive"
+	FuseMountPath           = "space/fuseMountPath"
+	FuseDriveName           = "space/fuseDriveName"
+	SpaceServicesAPIURL     = "space/servicesApiUrl"
+	SpaceServicesHubAuthURL = "space/servicesHubAuthUrl"
+	Ipfsaddr                = "space/ipfsAddr"
+	Mongousr                = "space/mongoUsr"
+	Mongopw                 = "space/mongoPw"
+	Mongohost               = "space/mongoHost"
 )
 
 var (
@@ -26,11 +27,15 @@ var (
 )
 
 type Flags struct {
-	Ipfsaddr  string
-	Mongousr  string
-	Mongopw   string
-	Mongohost string
-	DevMode   bool
+	Ipfsaddr             string
+	Mongousr             string
+	Mongopw              string
+	Mongohost            string
+	DevMode              bool
+	ServicesAPIURL       string
+	ServicesHubAuthURL   string
+	TextileHubTarget     string
+	TextileThreadsTarget string
 }
 
 // Config used to fetch config information

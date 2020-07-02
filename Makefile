@@ -5,6 +5,10 @@ build:
 	"-X 'main.ipfsaddr=${IPFS_ADDR}'\
 	-X 'main.mongousr=${MONGO_USR}' \
 	-X 'main.mongopw=${MONGO_PW}' \
+	-X 'main.spaceapi=${SERVICES_API_URL}' \
+	-X 'main.spacehubauth=${SERVICES_HUB_AUTH_URL}' \
+	-X 'main.textilehub=${TXL_HUB_TARGET}' \
+	-X 'main.textilethreads=${TXL_THREADS_TARGET}' \
 	-X 'main.mongohost=${MONGO_HOST}'" \
 	cmd/space-poc/main.go
 

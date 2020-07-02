@@ -4,12 +4,9 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
-	"os"
 	"sync"
-	"time"
 
 	"github.com/FleekHQ/space-poc/config"
-	"github.com/libp2p/go-libp2p-core/crypto"
 
 	"github.com/FleekHQ/space-poc/core/keychain"
 	db "github.com/FleekHQ/space-poc/core/store"
@@ -31,6 +28,7 @@ type textileClient struct {
 
 	bucketsLock sync.RWMutex
 	buckets     map[string]*bucket
+	cfg         config.Config
 }
 
 func (tc *textileClient) WaitForReady() chan bool {
@@ -102,41 +100,19 @@ func (tc *textileClient) requiresRunning() error {
 }
 
 func (tc *textileClient) GetBaseThreadsContext(ctx context.Context) (context.Context, error) {
-	// TODO: this should be happening in an auth lambda
-	// only needed for hub connections
-	key := os.Getenv("TXL_USER_KEY")
-	secret := os.Getenv("TXL_USER_SECRET")
-
-	if key == "" || secret == "" {
-		return nil, errors.New("Couldn't get Textile key or secret from envs")
-	}
-
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	ctx = common.NewAPIKeyContext(ctx, key)
 
 	var err error
-	var apiSigCtx context.Context
 
-	if apiSigCtx, err = common.CreateAPISigContext(ctx, time.Now().Add(time.Minute), secret); err != nil {
-		return nil, err
-	}
-	ctx = apiSigCtx
-
-	log.Debug("Obtaining user key pair from local store")
-	kc := keychain.New(tc.store)
-	var privateKey crypto.PrivKey
-	if privateKey, _, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
-		return nil, err
-	}
-
-	// TODO: CTX has to be made from session key received from lambda
-	log.Debug("Creating libp2p identity")
-	tok, err := tc.threads.GetToken(ctx, thread.NewLibp2pIdentity(privateKey))
+	log.Debug("Authenticating with Textile Hub")
+	tokStr, err := getHubToken(tc.store, tc.cfg)
 	if err != nil {
+		log.Error("Token Challenge Error:", err)
 		return nil, err
 	}
+	tok := thread.Token(tokStr)
 
 	ctx = thread.NewTokenContext(ctx, tok)
 
@@ -154,6 +130,7 @@ func (tc *textileClient) GetThreadsConnection() (*threadsClient.Client, error) {
 
 // Starts the Textile Client
 func (tc *textileClient) start(cfg config.Config) error {
+	tc.cfg = cfg
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
 

@@ -18,14 +18,18 @@ import (
 )
 
 var (
-	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to `file`")
-	memprofile = flag.String("memprofile", "", "write memory profile to `file`")
-	debugMode  = flag.Bool("debug", true, "run daemon with debug mode for profiling")
-	devMode    = flag.Bool("dev", false, "run daemon in dev mode to use .env file")
-	ipfsaddr   string
-	mongousr   string
-	mongopw    string
-	mongohost  string
+	cpuprofile     = flag.String("cpuprofile", "", "write cpu profile to `file`")
+	memprofile     = flag.String("memprofile", "", "write memory profile to `file`")
+	debugMode      = flag.Bool("debug", true, "run daemon with debug mode for profiling")
+	devMode        = flag.Bool("dev", false, "run daemon in dev mode to use .env file")
+	ipfsaddr       string
+	mongousr       string
+	mongopw        string
+	mongohost      string
+	spaceapi       string
+	spacehubauth   string
+	textilehub     string
+	textilethreads string
 )
 
 func main() {
@@ -39,11 +43,15 @@ func main() {
 	log.Printf("INFO: dev mode %v", *devMode)
 
 	cf := &config.Flags{
-		Ipfsaddr:  ipfsaddr,
-		Mongousr:  mongousr,
-		Mongopw:   mongopw,
-		Mongohost: mongohost,
-		DevMode: *devMode == true,
+		Ipfsaddr:             ipfsaddr,
+		Mongousr:             mongousr,
+		Mongopw:              mongopw,
+		Mongohost:            mongohost,
+		ServicesAPIURL:       spaceapi,
+		ServicesHubAuthURL:   spacehubauth,
+		DevMode:              *devMode == true,
+		TextileHubTarget:     textilehub,
+		TextileThreadsTarget: textilethreads,
 	}
 
 	// CPU profiling
