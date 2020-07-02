@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/FleekHQ/space-poc/core/env"
 	"os"
+
+	"github.com/FleekHQ/space-poc/core/env"
 )
 
 type mapConfig struct {
@@ -18,7 +19,8 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 	configStr[SpaceStorePath] = "~/.fleek-space"
 	configStr[TextileHubTarget] = "textile-hub-dev.fleek.co:3006"
 	configStr[TextileThreadsTarget] = "textile-hub-dev.fleek.co:3006"
-	configStr[SpaceServicesAPIURL] = "https://td4uiovozc.execute-api.us-west-2.amazonaws.com/dev" // TODO: Get a domain
+	configStr[SpaceServicesAPIURL] = "https://td4uiovozc.execute-api.us-west-2.amazonaws.com/dev"   // TODO: Get a domain
+	configStr[SpaceServicesHubAuthURL] = "wss://gqo1oqz055.execute-api.us-west-2.amazonaws.com/dev" // TODO: Get a domain
 	configStr[MountFuseDrive] = "false"
 	configStr[FuseDriveName] = "Space"
 	configInt[SpaceServerPort] = 9999

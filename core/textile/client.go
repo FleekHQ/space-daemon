@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/FleekHQ/space-poc/config"
-	"github.com/libp2p/go-libp2p-core/crypto"
 
 	"github.com/FleekHQ/space-poc/core/keychain"
 	db "github.com/FleekHQ/space-poc/core/store"
@@ -31,6 +30,7 @@ type textileClient struct {
 
 	bucketsLock sync.RWMutex
 	buckets     map[string]*bucket
+	cfg         config.Config
 }
 
 func (tc *textileClient) WaitForReady() chan bool {
@@ -124,19 +124,12 @@ func (tc *textileClient) GetBaseThreadsContext(ctx context.Context) (context.Con
 	}
 	ctx = apiSigCtx
 
-	log.Debug("Obtaining user key pair from local store")
-	kc := keychain.New(tc.store)
-	var privateKey crypto.PrivKey
-	if privateKey, _, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
-		return nil, err
-	}
-
-	// TODO: CTX has to be made from session key received from lambda
-	log.Debug("Creating libp2p identity")
-	tok, err := tc.threads.GetToken(ctx, thread.NewLibp2pIdentity(privateKey))
+	log.Debug("Authenticating with Textile Hub")
+	tokStr, err := getHubToken(tc.store, tc.cfg)
 	if err != nil {
-		return nil, err
+		log.Error("Token Challenge Error:", err)
 	}
+	tok := thread.Token(tokStr)
 
 	ctx = thread.NewTokenContext(ctx, tok)
 
@@ -154,6 +147,7 @@ func (tc *textileClient) GetThreadsConnection() (*threadsClient.Client, error) {
 
 // Starts the Textile Client
 func (tc *textileClient) start(cfg config.Config) error {
+	tc.cfg = cfg
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
 
