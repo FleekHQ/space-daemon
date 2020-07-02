@@ -66,6 +66,38 @@ func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDire
 	return res, nil
 }
 
+func (srv *grpcServer) ListDirectory(
+	ctx context.Context,
+	request *pb.ListDirectoryRequest,
+) (*pb.ListDirectoryResponse, error) {
+	entries, err := srv.sv.ListDir(ctx, request.GetPath())
+	if err != nil {
+		return nil, err
+	}
+
+	dirEntries := make([]*pb.ListDirectoryEntry, 0)
+
+	for _, e := range entries {
+		dirEntry := &pb.ListDirectoryEntry{
+			Path:          e.Path,
+			IsDir:         e.IsDir,
+			Name:          e.Name,
+			SizeInBytes:   e.SizeInBytes,
+			Created:       e.Created,
+			Updated:       e.Updated,
+			FileExtension: e.FileExtension,
+			IpfsHash:      e.IpfsHash,
+		}
+		dirEntries = append(dirEntries, dirEntry)
+	}
+
+	res := &pb.ListDirectoryResponse{
+		Entries: dirEntries,
+	}
+
+	return res, nil
+}
+
 func (srv *grpcServer) GetConfigInfo(ctx context.Context, e *empty.Empty) (*pb.ConfigInfoResponse, error) {
 	appCfg := srv.sv.GetConfig(ctx)
 
