@@ -4,10 +4,10 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/FleekHQ/space-poc/core/events"
-	"github.com/FleekHQ/space-poc/core/space/domain"
-	"github.com/FleekHQ/space-poc/grpc/pb"
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/core/events"
+	"github.com/FleekHQ/space-daemon/core/space/domain"
+	"github.com/FleekHQ/space-daemon/grpc/pb"
+	"github.com/FleekHQ/space-daemon/log"
 	"github.com/golang/protobuf/ptypes/empty"
 )
 

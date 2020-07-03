@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/FleekHQ/space-poc/core/env"
+	"github.com/FleekHQ/space-daemon/core/env"
 	"github.com/sirupsen/logrus"
 )
 

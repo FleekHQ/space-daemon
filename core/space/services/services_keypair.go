@@ -3,8 +3,9 @@ package services
 import (
 	"context"
 	"encoding/hex"
-	"github.com/FleekHQ/space-poc/core/keychain"
-	"github.com/FleekHQ/space-poc/core/space/domain"
+
+	"github.com/FleekHQ/space-daemon/core/keychain"
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 )
 
 func (s *Space) GenerateKeyPair(ctx context.Context, useForce bool) (domain.KeyPair, error) {

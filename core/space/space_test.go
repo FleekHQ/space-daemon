@@ -16,9 +16,9 @@ import (
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/FleekHQ/space-poc/core/space/services"
-	"github.com/FleekHQ/space-poc/core/textile"
-	"github.com/FleekHQ/space-poc/mocks"
+	"github.com/FleekHQ/space-daemon/core/space/services"
+	"github.com/FleekHQ/space-daemon/core/textile"
+	"github.com/FleekHQ/space-daemon/mocks"
 	"github.com/stretchr/testify/assert"
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
 )

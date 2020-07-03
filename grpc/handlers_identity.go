@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 
-	"github.com/FleekHQ/space-poc/grpc/pb"
+	"github.com/FleekHQ/space-daemon/grpc/pb"
 
 	"github.com/pkg/errors"
 )

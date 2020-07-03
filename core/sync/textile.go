@@ -2,14 +2,13 @@ package sync
 
 import (
 	"encoding/json"
-	"github.com/FleekHQ/space-poc/core/textile"
 
-	"github.com/FleekHQ/space-poc/core/events"
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/core/textile"
+
+	"github.com/FleekHQ/space-daemon/core/events"
+	"github.com/FleekHQ/space-daemon/log"
 	tc "github.com/textileio/go-threads/api/client"
 )
-
-
 
 func (h *textileHandler) OnCreate(bucketData *textile.BucketData, listenEvent *tc.ListenEvent) {
 	log.Info("Default Listener Handler: OnCreate")

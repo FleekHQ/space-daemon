@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	events "github.com/FleekHQ/space-poc/core/events"
+	events "github.com/FleekHQ/space-daemon/core/events"
 	mock "github.com/stretchr/testify/mock"
 )
 

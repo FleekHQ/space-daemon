@@ -10,7 +10,7 @@ build:
 	-X 'main.textilehub=${TXL_HUB_TARGET}' \
 	-X 'main.textilethreads=${TXL_THREADS_TARGET}' \
 	-X 'main.mongohost=${MONGO_HOST}'" \
-	cmd/space-poc/main.go
+	cmd/space-daemon/main.go
 
 test:
 	go test ./...

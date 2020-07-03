@@ -10,7 +10,7 @@ import (
 
 	path "github.com/ipfs/interface-go-ipfs-core/path"
 
-	textile "github.com/FleekHQ/space-poc/core/textile"
+	textile "github.com/FleekHQ/space-daemon/core/textile"
 
 	thread "github.com/textileio/go-threads/core/thread"
 )

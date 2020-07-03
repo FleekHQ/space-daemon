@@ -5,7 +5,7 @@ import (
 	"io"
 	"log"
 
-	"github.com/FleekHQ/space-poc/core/spacefs"
+	"github.com/FleekHQ/space-daemon/core/spacefs"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"

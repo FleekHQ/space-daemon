@@ -4,10 +4,10 @@ import (
 	"encoding/base32"
 	"strings"
 
-	"github.com/FleekHQ/space-poc/config"
-	"github.com/FleekHQ/space-poc/core/keychain"
-	"github.com/FleekHQ/space-poc/core/store"
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/config"
+	"github.com/FleekHQ/space-daemon/core/keychain"
+	"github.com/FleekHQ/space-daemon/core/store"
+	"github.com/FleekHQ/space-daemon/log"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"golang.org/x/net/websocket"
 )

@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	domain "github.com/FleekHQ/space-poc/core/space/domain"
+	domain "github.com/FleekHQ/space-daemon/core/space/domain"
 	mock "github.com/stretchr/testify/mock"
 )
 

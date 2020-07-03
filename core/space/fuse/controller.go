@@ -6,12 +6,12 @@ import (
 	"os"
 	"sync"
 
-	"github.com/FleekHQ/space-poc/core/spacefs"
+	"github.com/FleekHQ/space-daemon/core/spacefs"
 
-	"github.com/FleekHQ/space-poc/config"
-	"github.com/FleekHQ/space-poc/core/libfuse"
-	"github.com/FleekHQ/space-poc/core/store"
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/config"
+	"github.com/FleekHQ/space-daemon/core/libfuse"
+	"github.com/FleekHQ/space-daemon/core/store"
+	"github.com/FleekHQ/space-daemon/log"
 )
 
 // Controller is the space domain controller for managing the libfuse VFS.

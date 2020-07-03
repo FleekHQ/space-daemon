@@ -1,10 +1,11 @@
 package sync
 
 import (
-	"github.com/FleekHQ/space-poc/core/textile"
 	"testing"
 
-	"github.com/FleekHQ/space-poc/mocks"
+	"github.com/FleekHQ/space-daemon/core/textile"
+
+	"github.com/FleekHQ/space-daemon/mocks"
 	"github.com/stretchr/testify/mock"
 	tc "github.com/textileio/go-threads/api/client"
 )

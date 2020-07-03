@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/user"
 
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/log"
 	tc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 	nc "github.com/textileio/go-threads/net/api/client"

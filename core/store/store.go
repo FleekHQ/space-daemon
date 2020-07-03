@@ -6,9 +6,9 @@ import (
 	"os"
 	s "strings"
 
-	"github.com/FleekHQ/space-poc/core"
+	"github.com/FleekHQ/space-daemon/core"
 
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/log"
 
 	badger "github.com/dgraph-io/badger"
 	homedir "github.com/mitchellh/go-homedir"

@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 
-	"github.com/FleekHQ/space-poc/config"
-	"github.com/FleekHQ/space-poc/core/env"
-	"github.com/FleekHQ/space-poc/core/keychain"
-	"github.com/FleekHQ/space-poc/core/space/domain"
-	"github.com/FleekHQ/space-poc/core/space/services"
-	"github.com/FleekHQ/space-poc/core/store"
-	"github.com/FleekHQ/space-poc/core/textile"
+	"github.com/FleekHQ/space-daemon/config"
+	"github.com/FleekHQ/space-daemon/core/env"
+	"github.com/FleekHQ/space-daemon/core/keychain"
+	"github.com/FleekHQ/space-daemon/core/space/domain"
+	"github.com/FleekHQ/space-daemon/core/space/services"
+	"github.com/FleekHQ/space-daemon/core/store"
+	"github.com/FleekHQ/space-daemon/core/textile"
 )
 
 // Service Layer should not depend on gRPC dependencies

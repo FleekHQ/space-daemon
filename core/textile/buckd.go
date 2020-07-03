@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os/user"
 
-	"github.com/FleekHQ/space-poc/config"
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/config"
+	"github.com/FleekHQ/space-daemon/log"
 	"github.com/textileio/textile/cmd"
 	"github.com/textileio/textile/core"
 )

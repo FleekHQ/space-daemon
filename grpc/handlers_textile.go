@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 
-	"github.com/FleekHQ/space-poc/grpc/pb"
+	"github.com/FleekHQ/space-daemon/grpc/pb"
 )
 
 func (srv *grpcServer) CreateBucket(ctx context.Context, request *pb.CreateBucketRequest) (*pb.CreateBucketResponse, error) {

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/log"
 	threadsc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 )
