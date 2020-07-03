@@ -6,8 +6,8 @@ import (
 
 	"errors"
 
-	db "github.com/FleekHQ/space-poc/core/store"
-	"github.com/FleekHQ/space-poc/log"
+	db "github.com/FleekHQ/space-daemon/core/store"
+	"github.com/FleekHQ/space-daemon/log"
 	"github.com/libp2p/go-libp2p-core/crypto"
 )
 

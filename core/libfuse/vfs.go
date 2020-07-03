@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/log"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
-	"github.com/FleekHQ/space-poc/core/spacefs"
+	"github.com/FleekHQ/space-daemon/core/spacefs"
 )
 
 var _ fs.FS = (*VFS)(nil)

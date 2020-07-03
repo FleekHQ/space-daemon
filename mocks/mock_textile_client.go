@@ -3,14 +3,14 @@
 package mocks
 
 import (
-	config "github.com/FleekHQ/space-poc/config"
+	config "github.com/FleekHQ/space-daemon/config"
 	client "github.com/textileio/go-threads/api/client"
 
 	context "context"
 
 	mock "github.com/stretchr/testify/mock"
 
-	textile "github.com/FleekHQ/space-poc/core/textile"
+	textile "github.com/FleekHQ/space-daemon/core/textile"
 
 	thread "github.com/textileio/go-threads/core/thread"
 )

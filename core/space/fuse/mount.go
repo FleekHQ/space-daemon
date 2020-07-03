@@ -5,7 +5,7 @@ import (
 	"os"
 	s "strings"
 
-	"github.com/FleekHQ/space-poc/config"
+	"github.com/FleekHQ/space-daemon/config"
 	"github.com/mitchellh/go-homedir"
 )
 

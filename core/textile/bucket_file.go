@@ -3,11 +3,12 @@ package textile
 import (
 	"bytes"
 	"context"
-	"github.com/FleekHQ/space-poc/core/ipfs"
-	"github.com/FleekHQ/space-poc/log"
-	"github.com/ipfs/interface-go-ipfs-core/path"
 	"io"
 	"regexp"
+
+	"github.com/FleekHQ/space-daemon/core/ipfs"
+	"github.com/FleekHQ/space-daemon/log"
+	"github.com/ipfs/interface-go-ipfs-core/path"
 )
 
 func (b *bucket) FileExists(ctx context.Context, path string) (bool, error) {
@@ -29,7 +30,6 @@ func (b *bucket) FileExists(ctx context.Context, path string) (bool, error) {
 		// Since a nil would be interpreted as a false
 		return false, err
 	}
-
 
 	var fsHash string
 	if _, err := ipfs.GetFileHash(&bytes.Buffer{}); err != nil {
@@ -71,4 +71,3 @@ func (b *bucket) GetFile(ctx context.Context, path string, w io.Writer) error {
 
 	return nil
 }
-

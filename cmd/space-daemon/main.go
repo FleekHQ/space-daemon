@@ -10,11 +10,11 @@ import (
 	"runtime"
 	"runtime/pprof"
 
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/log"
 
-	"github.com/FleekHQ/space-poc/app"
-	"github.com/FleekHQ/space-poc/config"
-	"github.com/FleekHQ/space-poc/core/env"
+	"github.com/FleekHQ/space-daemon/app"
+	"github.com/FleekHQ/space-daemon/config"
+	"github.com/FleekHQ/space-daemon/core/env"
 )
 
 var (

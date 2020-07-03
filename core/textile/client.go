@@ -6,11 +6,11 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/FleekHQ/space-poc/config"
+	"github.com/FleekHQ/space-daemon/config"
 
-	"github.com/FleekHQ/space-poc/core/keychain"
-	db "github.com/FleekHQ/space-poc/core/store"
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/core/keychain"
+	db "github.com/FleekHQ/space-daemon/core/store"
+	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 	bucketsClient "github.com/textileio/textile/api/buckets/client"

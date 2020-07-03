@@ -1,6 +1,5 @@
 package sync
 
-
 import (
 	"context"
 	"fmt"
@@ -8,9 +7,8 @@ import (
 
 	ipfspath "github.com/ipfs/interface-go-ipfs-core/path"
 
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/log"
 )
-
 
 func (h *watcherHandler) OnCreate(ctx context.Context, path string, fileInfo os.FileInfo) {
 	log.Info(

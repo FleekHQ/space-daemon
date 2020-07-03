@@ -1,11 +1,9 @@
 package textile
 
 import (
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/log"
 	tc "github.com/textileio/go-threads/api/client"
 )
-
-
 
 // EventHandler
 type EventHandler interface {

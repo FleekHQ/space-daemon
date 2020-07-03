@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/log"
 
-	"github.com/FleekHQ/space-poc/core/space/domain"
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 )
 
 // DirEntry implements the DirEntryOps

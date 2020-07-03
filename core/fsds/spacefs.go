@@ -8,13 +8,13 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/log"
 
 	"github.com/pkg/errors"
 
-	"github.com/FleekHQ/space-poc/core/space/domain"
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 
-	"github.com/FleekHQ/space-poc/core/space"
+	"github.com/FleekHQ/space-daemon/core/space"
 )
 
 // EntryNotFound error when a directory is not found
