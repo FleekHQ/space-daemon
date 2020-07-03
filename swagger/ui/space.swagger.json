@@ -12,6 +12,26 @@
   ],
   "paths": {
     "/v1/buckets": {
+      "get": {
+        "operationId": "SpaceApi_ListBuckets",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceListBucketsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "SpaceApi"
+        ]
+      },
       "post": {
         "summary": "Create a new bucket owned by current user (aka keypair)",
         "operationId": "SpaceApi_CreateBucket",
@@ -208,6 +228,12 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "bucket",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -264,6 +290,14 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "bucket",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "SpaceApi"
         ]
@@ -745,6 +779,10 @@
         "targetPath": {
           "type": "string",
           "description": "target path in bucket."
+        },
+        "bucket": {
+          "type": "string",
+          "title": "The bucket in which to save the item"
         }
       }
     },
@@ -839,6 +877,10 @@
         "path": {
           "type": "string",
           "title": "target path in bucket to add new empty folder"
+        },
+        "bucket": {
+          "type": "string",
+          "title": "The bucket in which to add the folder"
         }
       }
     },
@@ -953,6 +995,17 @@
       ],
       "default": "USERNAME"
     },
+    "spaceListBucketsResponse": {
+      "type": "object",
+      "properties": {
+        "buckets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/spaceBucket"
+          }
+        }
+      }
+    },
     "spaceListDirectoriesResponse": {
       "type": "object",
       "properties": {
@@ -1009,6 +1062,9 @@
       "type": "object",
       "properties": {
         "path": {
+          "type": "string"
+        },
+        "bucket": {
           "type": "string"
         }
       }

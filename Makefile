@@ -16,14 +16,14 @@ test:
 	go test ./...
 
 proto_gen:
-	protoc -I grpc/pb/ -I grpc/proto/ -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis grpc/proto/space.proto --go_out=plugins=grpc:grpc/pb
+	protoc -I grpc/pb/ -I grpc/proto/ -I./devtools/grpc-ecosystem/grpc-gateway/third_party/googleapis grpc/proto/space.proto --go_out=plugins=grpc:grpc/pb
 
 gen_rest:
-	protoc -I grpc/pb/ -I grpc/proto/ -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis grpc/proto/space.proto --go_out=plugins=grpc:grpc/pb --grpc-gateway_out=logtostderr=true:grpc/pb
+	protoc -I grpc/pb/ -I grpc/proto/ -I./devtools/grpc-ecosystem/grpc-gateway/third_party/googleapis grpc/proto/space.proto --go_out=plugins=grpc:grpc/pb --grpc-gateway_out=logtostderr=true:grpc/pb
 
 ## this target requires both protoc-gen-swagger and statik to be installed
 gen_rest_swagger:
-	protoc -I grpc/pb/ -I grpc/proto/ -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis grpc/proto/space.proto --swagger_out=logtostderr=true:swagger/ui \
+	protoc -I grpc/pb/ -I grpc/proto/ -I./devtools/grpc-ecosystem/grpc-gateway/third_party/googleapis grpc/proto/space.proto --swagger_out=logtostderr=true:swagger/ui \
 		&& statik -src=swagger/ui -f -dest=swagger -p=bin_ui
 
 gen_all: proto_gen gen_rest gen_rest_swagger

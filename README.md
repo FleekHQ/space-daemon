@@ -134,10 +134,15 @@ For Linux it needs to be built from source.
 
 If you update the gRPC API, you need to regenerate the Protobuf file.
 
-You will need to install the following binaries:
+You will need to install the following binaries in your Go path:
 
 - `go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway`
 - `go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger`
+
+Also you will need swagger for generating the REST API documentation:
+
+`brew install swagger-codegen`
+`brew install statik`
 
 Checking the binaries:
 `ls $GOPATH/bin`

@@ -24,3 +24,7 @@ func (srv *grpcServer) CreateBucket(ctx context.Context, request *pb.CreateBucke
 		Bucket: br,
 	}, nil
 }
+
+func (srv *grpcServer) ListBuckets(ctx context.Context, request *pb.ListBucketsRequest) (*pb.ListBucketsResponse, error) {
+	return nil, errNotImplemented
+}

@@ -28,6 +28,28 @@ func (s *Space) CreateBucket(ctx context.Context, slug string) (textile.Bucket, 
 	return b, nil
 }
 
+// Returns the bucket given the name, and if the name is "" returns the default bucket
+func (s *Space) getBucketWithFallback(ctx context.Context, bucketName string) (textile.Bucket, error) {
+	var b textile.Bucket
+	var err error
+
+	if bucketName == "" {
+		b, err = s.tc.GetDefaultBucket(ctx)
+	} else {
+		b, err = s.tc.GetBucket(ctx, bucketName)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	if b == nil {
+		return nil, errors.New("Could not find bucket")
+	}
+
+	return b, nil
+}
+
 func (s *Space) listDirAtPath(
 	ctx context.Context,
 	b textile.Bucket,
@@ -84,8 +106,8 @@ func (s *Space) listDirAtPath(
 }
 
 // ListDir returns children entries at path in a bucket
-func (s *Space) ListDir(ctx context.Context, path string) ([]domain.FileInfo, error) {
-	b, err := s.tc.GetDefaultBucket(ctx)
+func (s *Space) ListDir(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error) {
+	b, err := s.getBucketWithFallback(ctx, bucketName)
 	if err != nil {
 		return nil, err
 	}
@@ -99,26 +121,20 @@ func (s *Space) ListDir(ctx context.Context, path string) ([]domain.FileInfo, er
 
 // ListDirs lists all children entries at path in a bucket
 // Unlike ListDir, it includes all subfolders children recursively
-func (s *Space) ListDirs(ctx context.Context, path string) ([]domain.FileInfo, error) {
-	// TODO: add support for multiple buckets
-	b, err := s.tc.GetDefaultBucket(ctx)
+func (s *Space) ListDirs(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error) {
+	b, err := s.getBucketWithFallback(ctx, bucketName)
 	if err != nil {
 		return nil, err
-	}
-
-	if b == nil {
-		return nil, errors.New("Could not find buckets")
 	}
 
 	return s.listDirAtPath(ctx, b, path, true)
 }
 
-func (s *Space) OpenFile(ctx context.Context, path string) (domain.OpenFileInfo, error) {
+func (s *Space) OpenFile(ctx context.Context, path string, bucketName string) (domain.OpenFileInfo, error) {
 	var filePath string
 	var err error
 	// check if file exists in sync
-	// TODO : handle bucketslug for multiple buckets. For now default to personal bucket
-	b, err := s.tc.GetDefaultBucket(ctx)
+	b, err := s.getBucketWithFallback(ctx, bucketName)
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
@@ -176,8 +192,8 @@ func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket)
 	return tmpFile.Name(), nil
 }
 
-func (s *Space) CreateFolder(ctx context.Context, path string) error {
-	b, err := s.tc.GetDefaultBucket(ctx)
+func (s *Space) CreateFolder(ctx context.Context, path string, bucketName string) error {
+	b, err := s.getBucketWithFallback(ctx, bucketName)
 	if err != nil {
 		return err
 	}
@@ -201,15 +217,15 @@ func (s *Space) createFolder(ctx context.Context, path string, b textile.Bucket)
 	return root.String(), nil
 }
 
-func (s *Space) AddItems(ctx context.Context, sourcePaths []string, targetPath string) (<-chan domain.AddItemResult, domain.AddItemsResponse, error) {
+func (s *Space) AddItems(ctx context.Context, sourcePaths []string, targetPath string, bucketName string) (<-chan domain.AddItemResult, domain.AddItemsResponse, error) {
 	// check if all sourcePaths exist, else return err
 	for _, sourcePath := range sourcePaths {
 		if !PathExists(sourcePath) {
 			return nil, domain.AddItemsResponse{}, errors.New(fmt.Sprintf("path not found at %s", sourcePath))
 		}
 	}
-	// TODO: add support for bucket slug
-	b, err := s.tc.GetDefaultBucket(ctx)
+
+	b, err := s.getBucketWithFallback(ctx, bucketName)
 	if err != nil {
 		return nil, domain.AddItemsResponse{}, err
 	}

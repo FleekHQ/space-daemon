@@ -38,7 +38,8 @@ func (srv *grpcServer) SendTextileEvent(event events.TextileEvent) {
 }
 
 func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDirectoriesRequest) (*pb.ListDirectoriesResponse, error) {
-	entries, err := srv.sv.ListDirs(ctx, "")
+	bucketName := request.Bucket
+	entries, err := srv.sv.ListDirs(ctx, "", bucketName)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +71,7 @@ func (srv *grpcServer) ListDirectory(
 	ctx context.Context,
 	request *pb.ListDirectoryRequest,
 ) (*pb.ListDirectoryResponse, error) {
-	entries, err := srv.sv.ListDir(ctx, request.GetPath())
+	entries, err := srv.sv.ListDir(ctx, request.GetPath(), request.GetBucket())
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +145,7 @@ func (srv *grpcServer) registerTxlStream(stream pb.SpaceApi_TxlSubscribeServer) 
 }
 
 func (srv *grpcServer) OpenFile(ctx context.Context, request *pb.OpenFileRequest) (*pb.OpenFileResponse, error) {
-	fi, err := srv.sv.OpenFile(ctx, request.Path)
+	fi, err := srv.sv.OpenFile(ctx, request.Path, request.Bucket)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +156,7 @@ func (srv *grpcServer) OpenFile(ctx context.Context, request *pb.OpenFileRequest
 func (srv *grpcServer) AddItems(request *pb.AddItemsRequest, stream pb.SpaceApi_AddItemsServer) error {
 	ctx := stream.Context()
 
-	results, totals, err := srv.sv.AddItems(ctx, request.SourcePaths, request.TargetPath)
+	results, totals, err := srv.sv.AddItems(ctx, request.SourcePaths, request.TargetPath, request.Bucket)
 	if err != nil {
 		return err
 	}
@@ -219,7 +220,7 @@ func (srv *grpcServer) AddItems(request *pb.AddItemsRequest, stream pb.SpaceApi_
 }
 
 func (srv *grpcServer) CreateFolder(ctx context.Context, request *pb.CreateFolderRequest) (*pb.CreateFolderResponse, error) {
-	err := srv.sv.CreateFolder(ctx, request.Path)
+	err := srv.sv.CreateFolder(ctx, request.Path, request.Bucket)
 	if err != nil {
 		return nil, err
 	}
