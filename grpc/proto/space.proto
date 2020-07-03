@@ -12,8 +12,16 @@ option go_package = ".;pb";
 
 // SpaceApi service
 service SpaceApi {
-  // Get list of all directories in the default bucket
+  // Get all folder or files in the default bucket. It fetches all subdirectories too.
   rpc ListDirectories(ListDirectoriesRequest) returns (ListDirectoriesResponse) {
+    option (google.api.http) = {
+      get: "/v1/directories/all"
+    };
+  }
+
+  // Get the folder or files in the path directory.
+  // Unlike ListDirectories, this only returns immediate children at path.
+  rpc ListDirectory(ListDirectoryRequest) returns (ListDirectoryResponse) {
     option (google.api.http) = {
       get: "/v1/directories"
     };
@@ -176,6 +184,14 @@ message ListDirectoryEntry {
 
 
 message ListDirectoriesResponse {
+  repeated ListDirectoryEntry entries = 1;
+}
+
+message ListDirectoryRequest {
+  string path = 1;
+}
+
+message ListDirectoryResponse {
   repeated ListDirectoryEntry entries = 1;
 }
 

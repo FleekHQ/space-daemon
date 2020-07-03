@@ -186,13 +186,13 @@
     },
     "/v1/directories": {
       "get": {
-        "summary": "Get list of all directories in the default bucket",
-        "operationId": "SpaceApi_ListDirectories",
+        "summary": "Get the folder or files in the path directory.\nUnlike ListDirectories, this only returns immediate children at path.",
+        "operationId": "SpaceApi_ListDirectory",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/spaceListDirectoriesResponse"
+              "$ref": "#/definitions/spaceListDirectoryResponse"
             }
           },
           "default": {
@@ -202,6 +202,14 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "SpaceApi"
         ]
@@ -233,6 +241,29 @@
             }
           }
         ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/directories/all": {
+      "get": {
+        "summary": "Get all folder or files in the default bucket. It fetches all subdirectories too.",
+        "operationId": "SpaceApi_ListDirectories",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceListDirectoriesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
         "tags": [
           "SpaceApi"
         ]
@@ -960,6 +991,17 @@
         },
         "ipfsHash": {
           "type": "string"
+        }
+      }
+    },
+    "spaceListDirectoryResponse": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/spaceListDirectoryEntry"
+          }
         }
       }
     },
