@@ -139,10 +139,17 @@ You will need to install the following binaries in your Go path:
 - `go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway`
 - `go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger`
 
-Also you will need swagger for generating the REST API documentation:
+If you don't have swagger generator, you will need it for generating the REST API documentation:
 
 `brew install swagger-codegen`
 `brew install statik`
+
+Finally, you will need to install the git submodules for some extra dependencies in the proto buffer generation:
+
+```
+git submodule init
+git submodule update
+```
 
 Checking the binaries:
 `ls $GOPATH/bin`
