@@ -52,7 +52,9 @@ func (d *SpaceFSDataSource) Get(ctx context.Context, path string) (*DirEntry, er
 
 	baseName := filepath.Base(path)
 	parentPath := filepath.Dir(strings.TrimRight(path, "/") + "/..")
-	parentEntries, err := d.service.ListDir(ctx, parentPath)
+
+	// TODO: Support non default bucket, passing "" for now which is default bucket
+	parentEntries, err := d.service.ListDir(ctx, parentPath, "")
 	if err != nil {
 		if isNotExistError(err) {
 			return nil, syscall.ENOENT
@@ -83,7 +85,8 @@ func (d *SpaceFSDataSource) baseDirEntry() *DirEntry {
 
 // GetChildren returns list of entries in a path
 func (d *SpaceFSDataSource) GetChildren(ctx context.Context, path string) ([]*DirEntry, error) {
-	domainEntries, err := d.service.ListDir(ctx, path)
+	// TODO: Support non default bucket, passing "" for now which is default bucket
+	domainEntries, err := d.service.ListDir(ctx, path, "")
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +101,8 @@ func (d *SpaceFSDataSource) GetChildren(ctx context.Context, path string) ([]*Di
 
 // Open is invoked to read the content of a file
 func (d *SpaceFSDataSource) Open(ctx context.Context, path string) (ReadSeekCloser, error) {
-	openFileInfo, err := d.service.OpenFile(ctx, path)
+	// TODO: Support non default bucket, passing "" for now which is default bucket
+	openFileInfo, err := d.service.OpenFile(ctx, path, "")
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +114,8 @@ func (d *SpaceFSDataSource) Open(ctx context.Context, path string) (ReadSeekClos
 // CreateEntry creates a directory or file based on the mode at the path
 func (d *SpaceFSDataSource) CreateEntry(ctx context.Context, path string, mode os.FileMode) (*DirEntry, error) {
 	if mode.IsDir() {
-		err := d.service.CreateFolder(ctx, path)
+		// TODO: Support non default bucket, passing "" for now which is default bucket
+		err := d.service.CreateFolder(ctx, path, "")
 		if err != nil {
 			return nil, err
 		}
