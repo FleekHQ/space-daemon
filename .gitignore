@@ -16,6 +16,7 @@
 
 .idea/
 debug/
+.DS_Store
 
 .env
 space.json

@@ -8,10 +8,9 @@ require (
 	github.com/dgraph-io/badger v1.6.1
 	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.9.0 // indirect
-	github.com/go-playground/locales v0.13.0
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/protobuf v1.4.2
-	github.com/hsanjuan/ipfs-lite v1.1.13 // indirect
+	github.com/grpc-ecosystem/grpc-gateway v1.14.6
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/ipfs/go-cid v0.0.6
 	github.com/ipfs/go-ipfs-chunker v0.0.5
@@ -26,8 +25,11 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/multiformats/go-multiaddr v0.2.2
 	github.com/multiformats/go-multihash v0.0.13
+	github.com/philips/grpc-gateway-example v0.0.0-20170619012617-a269bcb5931c // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/radovskyb/watcher v1.0.7
+	github.com/rakyll/statik v0.1.7
+	github.com/rs/cors v1.7.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.6.0
 	github.com/textileio/go-threads v0.1.20
@@ -35,6 +37,9 @@ require (
 	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20200523222454-059865788121
+	google.golang.org/genproto v0.0.0-20200626011028-ee7919e894b5
 	google.golang.org/grpc v1.29.1
 	google.golang.org/protobuf v1.25.0
+	gopkg.in/yaml.v2 v2.3.0 // indirect
+	grpc.go4.org v0.0.0-20170609214715-11d0a25b4919
 )
