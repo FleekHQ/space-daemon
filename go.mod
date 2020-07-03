@@ -1,4 +1,4 @@
-module github.com/FleekHQ/space-poc
+module github.com/FleekHQ/space-daemon
 
 go 1.14
 

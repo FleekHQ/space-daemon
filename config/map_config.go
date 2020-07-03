@@ -3,7 +3,7 @@ package config
 import (
 	"os"
 
-	"github.com/FleekHQ/space-poc/core/env"
+	"github.com/FleekHQ/space-daemon/core/env"
 )
 
 type mapConfig struct {

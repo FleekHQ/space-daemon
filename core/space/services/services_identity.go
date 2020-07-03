@@ -9,8 +9,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/FleekHQ/space-poc/config"
-	"github.com/FleekHQ/space-poc/core/space/domain"
+	"github.com/FleekHQ/space-daemon/config"
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 )
 
 type createIdentityRequest struct {

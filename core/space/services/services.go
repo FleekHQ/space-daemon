@@ -3,12 +3,12 @@ package services
 import (
 	"context"
 
-	"github.com/FleekHQ/space-poc/config"
-	"github.com/FleekHQ/space-poc/core/env"
-	"github.com/FleekHQ/space-poc/core/keychain"
-	"github.com/FleekHQ/space-poc/core/space/domain"
-	"github.com/FleekHQ/space-poc/core/store"
-	"github.com/FleekHQ/space-poc/core/textile"
+	"github.com/FleekHQ/space-daemon/config"
+	"github.com/FleekHQ/space-daemon/core/env"
+	"github.com/FleekHQ/space-daemon/core/keychain"
+	"github.com/FleekHQ/space-daemon/core/space/domain"
+	"github.com/FleekHQ/space-daemon/core/store"
+	"github.com/FleekHQ/space-daemon/core/textile"
 )
 
 // Implementation for space.Service

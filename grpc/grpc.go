@@ -13,15 +13,15 @@ import (
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 
-	fuse "github.com/FleekHQ/space-poc/core/space/fuse"
+	fuse "github.com/FleekHQ/space-daemon/core/space/fuse"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 
-	"github.com/FleekHQ/space-poc/core/space"
+	"github.com/FleekHQ/space-daemon/core/space"
 
-	_ "github.com/FleekHQ/space-poc/swagger/bin_ui" // required by statik/fs
+	_ "github.com/FleekHQ/space-daemon/swagger/bin_ui" // required by statik/fs
 
-	"github.com/FleekHQ/space-poc/grpc/pb"
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/grpc/pb"
+	"github.com/FleekHQ/space-daemon/log"
 	"google.golang.org/grpc"
 )
 

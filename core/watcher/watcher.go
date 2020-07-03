@@ -7,14 +7,14 @@ import (
 	s "strings"
 	"sync"
 
-	fsutils "github.com/FleekHQ/space-poc/core/space/services"
+	fsutils "github.com/FleekHQ/space-daemon/core/space/services"
 	"github.com/mitchellh/go-homedir"
 
 	"time"
 
 	"github.com/radovskyb/watcher"
 
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/log"
 )
 
 var (

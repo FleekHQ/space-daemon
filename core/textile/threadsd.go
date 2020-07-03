@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/log"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	ma "github.com/multiformats/go-multiaddr"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"syscall"
 
-	"github.com/FleekHQ/space-poc/core/fsds"
+	"github.com/FleekHQ/space-daemon/core/fsds"
 )
 
 // SpaceFS is represents the filesystem that FUSE Interacts with

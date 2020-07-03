@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 
-	"github.com/FleekHQ/space-poc/grpc/pb"
+	"github.com/FleekHQ/space-daemon/grpc/pb"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
 )

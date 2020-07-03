@@ -3,12 +3,13 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/FleekHQ/space-poc/core/env"
-	"github.com/FleekHQ/space-poc/log"
-	"github.com/creamdog/gonfig"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/FleekHQ/space-daemon/core/env"
+	"github.com/FleekHQ/space-daemon/log"
+	"github.com/creamdog/gonfig"
 )
 
 // standardConfig implements Config
@@ -16,7 +17,6 @@ import (
 type jsonConfig struct {
 	cfg gonfig.Gonfig
 }
-
 
 type defaultSpaceJson struct {
 	TextileHubTarget     string `json:"textileHubTarget"`

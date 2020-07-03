@@ -7,28 +7,28 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/FleekHQ/space-poc/core"
+	"github.com/FleekHQ/space-daemon/core"
 
-	"github.com/FleekHQ/space-poc/core/space/fuse"
+	"github.com/FleekHQ/space-daemon/core/space/fuse"
 
-	"github.com/FleekHQ/space-poc/core/fsds"
+	"github.com/FleekHQ/space-daemon/core/fsds"
 
-	"github.com/FleekHQ/space-poc/core/spacefs"
-	"github.com/FleekHQ/space-poc/core/textile"
+	"github.com/FleekHQ/space-daemon/core/spacefs"
+	"github.com/FleekHQ/space-daemon/core/textile"
 
-	"github.com/FleekHQ/space-poc/core/env"
-	"github.com/FleekHQ/space-poc/core/space"
+	"github.com/FleekHQ/space-daemon/core/env"
+	"github.com/FleekHQ/space-daemon/core/space"
 
-	"github.com/FleekHQ/space-poc/core/keychain"
-	"github.com/FleekHQ/space-poc/core/sync"
-	"github.com/FleekHQ/space-poc/log"
+	"github.com/FleekHQ/space-daemon/core/keychain"
+	"github.com/FleekHQ/space-daemon/core/sync"
+	"github.com/FleekHQ/space-daemon/log"
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/FleekHQ/space-poc/config"
-	"github.com/FleekHQ/space-poc/core/store"
-	w "github.com/FleekHQ/space-poc/core/watcher"
-	"github.com/FleekHQ/space-poc/grpc"
+	"github.com/FleekHQ/space-daemon/config"
+	"github.com/FleekHQ/space-daemon/core/store"
+	w "github.com/FleekHQ/space-daemon/core/watcher"
+	"github.com/FleekHQ/space-daemon/grpc"
 	"github.com/golang-collections/collections/stack"
 )
 

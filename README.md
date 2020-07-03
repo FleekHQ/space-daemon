@@ -18,17 +18,17 @@ Note: This project is in active development, so it might change its API until it
 
 ## Installation
 
-By default, Space Daemon connects to hosted services provided by Fleek. This should be good if you just want to get it running quickly. However, if you want to connect to your own services, read the [Modules Section](https://github.com/FleekHQ/space-poc#Modules).
+By default, Space Daemon connects to hosted services provided by Fleek. This should be good if you just want to get it running quickly. However, if you want to connect to your own services, read the [Modules Section](https://github.com/FleekHQ/space-daemon#Modules).
 
 ### Downloading the binary
 
-Check out the releases [here](https://github.com/FleekHQ/space-poc/releases/tag). You can download the latest version for your OS and you should be good to go.
+Check out the releases [here](https://github.com/FleekHQ/space-daemon/releases/tag). You can download the latest version for your OS and you should be good to go.
 
-If you want to run Space Daemon by source, check out [this section](https://github.com/FleekHQ/space-poc#Running)
+If you want to run Space Daemon by source, check out [this section](https://github.com/FleekHQ/space-daemon#Running)
 
 ## Usage
 
-Space Daemon provides a gRPC interface. You can read its proto schema [here](https://github.com/FleekHQ/space-poc/blob/master/grpc/pb/space.proto). It contains methods to:
+Space Daemon provides a gRPC interface. You can read its proto schema [here](https://github.com/FleekHQ/space-daemon/blob/master/grpc/pb/space.proto). It contains methods to:
 
 - Create files and directories
 
@@ -76,7 +76,7 @@ Currently, local Textile Threads require a running MongoDB database. Space Daemo
 
 ## Running from source
 
-After cloning this repo, you can run it from source by running `go run ./cmd/space-poc -devMode=true`. Consider that you will need the following environment variables exported in your system:
+After cloning this repo, you can run it from source by running `go run ./cmd/space-daemon -devMode=true`. Consider that you will need the following environment variables exported in your system:
 
 ```
 SPACE_APP_DIR=[The path where the source code is located]

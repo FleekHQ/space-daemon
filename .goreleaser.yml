@@ -20,7 +20,7 @@ builds:
       - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
       - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
       - -X main.textilethreads={{ .Env.TXL_THREADS_TARGET }}
-    main: ./cmd/space-poc/main.go
+    main: ./cmd/space-daemon/main.go
     binary: space
     goos:
       - linux
@@ -37,7 +37,7 @@ builds:
       - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
       - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
       - -X main.textilethreads={{ .Env.TXL_THREADS_TARGET }}
-    main: ./cmd/space-poc/main.go
+    main: ./cmd/space-daemon/main.go
     binary: space
     goos:
       - darwin
