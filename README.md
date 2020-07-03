@@ -2,7 +2,7 @@
 
 Space Daemon is a wrapper built in Go around awesome IPFS tools so that you can have start coding a decentralized desktop app as fast as possible. It's built on top of Textile Threads and Buckets. Out of the box it includes:
 
-- A running local instance of Textile Threads.
+- A running local instance of [Textile Threads](https://github.com/textileio/go-threads).
 
 - Interfaces to create local private, encrypted buckets.
 
@@ -56,6 +56,8 @@ All encrypted files are stored in an IPFS node. For convenience, Space Daemon co
 
 Required for sharing files between users and backing it up. It stores all backed up files encrypted using a set of keys so that only you, and people you share files with, can read the data. We host our own instance of the Textile Hub, and by default, Space Daemon will conect to it. It can be customized by providing the `-textilehub` flag and `-textilethreads` flag.
 
+If you want to host your own Textile Hub node, you can [read its documentation here](https://github.com/textileio/textile)
+
 ### Space Services
 
 We provide hosted alternatives for these services. You can deploy your own by following the instructions in its repo:
@@ -79,7 +81,6 @@ Currently, local Textile Threads require a running MongoDB database. Space Daemo
 After cloning this repo, you can run it from source by running `go run ./cmd/space-daemon -devMode=true`. Consider that you will need the following environment variables exported in your system:
 
 ```
-SPACE_APP_DIR=[The path where the source code is located]
 IPFS_ADDR=[Your IPFS node address]
 MONGO_PW=[The password of a MongoDB database]
 MONGO_USR=[The user of a MongoDB database]
@@ -104,7 +105,7 @@ Loosely based on these resources:
 https://github.com/golang-standards/project-layout
 
 
-- `/grpc` Folder structure for REST API.
+- `/grpc` Folder structure for gRPC and REST API.
 - `/cmd` Entry point directory for all binaries this repo handles. E.g cmd/{binary-name}/main.go
 - `/config` Global Config code
 - `/core` Directory for the core objects of the package
@@ -132,6 +133,11 @@ For Linux it needs to be built from source.
 ### Protobuf
 
 If you update the gRPC API, you need to regenerate the Protobuf file.
+
+You will need to install the following binaries:
+
+- `go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway`
+- `go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger`
 
 Checking the binaries:
 `ls $GOPATH/bin`
