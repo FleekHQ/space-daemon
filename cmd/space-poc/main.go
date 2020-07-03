@@ -40,7 +40,7 @@ func main() {
 	// flags
 	flag.Parse()
 
-	log.Printf("INFO: dev mode %v", *devMode)
+	log.Debug("Running mode", fmt.Sprintf("DevMode:%v", *devMode))
 
 	cf := &config.Flags{
 		Ipfsaddr:             ipfsaddr,
@@ -56,7 +56,7 @@ func main() {
 
 	// CPU profiling
 	if *debugMode == true {
-		fmt.Println("DEBUG: running daemon with profiler on localhost:6060..")
+		log.Debug("Running daemon with profiler. Visit http://localhost:6060/debug/pprof")
 		go func() {
 			fmt.Println(http.ListenAndServe("localhost:6060", nil))
 		}()
@@ -103,10 +103,10 @@ func runCpuProfiler(outputFilePath string) func() {
 
 	// return cleanup function
 	return func() {
+		pprof.StopCPUProfile()
 		if f != nil {
 			_ = f.Close() // error is ignored
 		}
-		pprof.StopCPUProfile()
 	}
 }
 

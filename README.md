@@ -133,11 +133,24 @@ For Linux it needs to be built from source.
 
 If you update the gRPC API, you need to regenerate the Protobuf file.
 
-Make sure Protobuf gen tool is in your path:
-`export PATH="$PATH:$(go env GOPATH)/bin"`
+Checking the binaries:
+`ls $GOPATH/bin`
+Should show the following binaries in your path: protoc-gen-go, protoc-gen-grpc-gateway, protoc-gen-swagger
 
-Run the generation:
-`protoc -I grpc/pb/ grpc/pb/space.proto --go_out=plugins=grpc:grpc/pb`
+Run the protobuf generation:
+`make proto_gen`
+
+Run the REST proxy generation:
+`make gen_rest`
+
+To generate REST proxy swagger spec and ui binary generation
+`make gen_rest_swagger`
+
+** Ideally you should run `make gen_all` before commiting as this would run all the above three code generations and
+ensure everything is up to date **
+
+NOTE: See here for instructions on Reverse Proxy:
+https://github.com/grpc-ecosystem/grpc-gateway
 
 ### Debugging and Profiling
 

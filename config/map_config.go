@@ -21,6 +21,7 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 	configStr[FuseDriveName] = "Space"
 	configInt[SpaceServerPort] = 9999
 	configInt[SpaceProxyServerPort] = 9998
+	configInt[SpaceRestProxyServerPort] = 9997
 	if flags.DevMode {
 		configStr[Ipfsaddr] = os.Getenv(env.IpfsAddr)
 		configStr[Mongousr] = os.Getenv(env.MongoUsr)
