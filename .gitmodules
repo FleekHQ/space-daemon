@@ -1,0 +1,3 @@
+[submodule "grpc-gateway"]
+	path = devtools/grpc-ecosystem/grpc-gateway
+	url = https://github.com/grpc-ecosystem/grpc-gateway
