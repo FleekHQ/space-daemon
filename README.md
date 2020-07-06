@@ -144,13 +144,6 @@ If you don't have swagger generator, you will need it for generating the REST AP
 `brew install swagger-codegen`
 `brew install statik`
 
-Finally, you will need to install the git submodules for some extra dependencies in the proto buffer generation:
-
-```
-git submodule init
-git submodule update
-```
-
 Checking the binaries:
 `ls $GOPATH/bin`
 Should show the following binaries in your path: protoc-gen-go, protoc-gen-grpc-gateway, protoc-gen-swagger
