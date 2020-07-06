@@ -16,14 +16,14 @@ import (
 // Service Layer should not depend on gRPC dependencies
 type Service interface {
 	RegisterSyncer(sync services.Syncer)
-	OpenFile(ctx context.Context, path string) (domain.OpenFileInfo, error)
+	OpenFile(ctx context.Context, path string, bucketName string) (domain.OpenFileInfo, error)
 	GetConfig(ctx context.Context) domain.AppConfig
-	ListDirs(ctx context.Context, path string) ([]domain.FileInfo, error)
-	ListDir(ctx context.Context, path string) ([]domain.FileInfo, error)
+	ListDirs(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error)
+	ListDir(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error)
 	GenerateKeyPair(ctx context.Context, useForce bool) (domain.KeyPair, error)
-	CreateFolder(ctx context.Context, path string) error
+	CreateFolder(ctx context.Context, path string, bucketName string) error
 	CreateBucket(ctx context.Context, slug string) (textile.Bucket, error)
-	AddItems(ctx context.Context, sourcePaths []string, targetPath string) (<-chan domain.AddItemResult, domain.AddItemsResponse, error)
+	AddItems(ctx context.Context, sourcePaths []string, targetPath string, bucketName string) (<-chan domain.AddItemResult, domain.AddItemsResponse, error)
 	CreateIdentity(ctx context.Context, username string) (*domain.Identity, error)
 	GetIdentityByUsername(ctx context.Context, username string) (*domain.Identity, error)
 }

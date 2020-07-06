@@ -203,7 +203,7 @@ func TestService_ListDirs(t *testing.T) {
 		"/somedir",
 	).Return(mockDirItemsSubfolder, nil)
 
-	res, err := sv.ListDirs(context.Background(), "")
+	res, err := sv.ListDirs(context.Background(), "", "")
 
 	assert.Nil(t, err)
 	assert.NotEmpty(t, res)
@@ -278,7 +278,7 @@ func TestService_OpenFile(t *testing.T) {
 		"Slug",
 	).Return(testKey)
 
-	res, err := sv.OpenFile(context.Background(), testPath)
+	res, err := sv.OpenFile(context.Background(), testPath, "")
 
 	assert.Nil(t, err)
 	assert.NotEmpty(t, res)
@@ -317,7 +317,7 @@ func TestService_AddItems_FilesOnly(t *testing.T) {
 		).Return(nil, mockPath, nil)
 	}
 
-	ch, res, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+	ch, res, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath, "")
 
 	assert.Nil(t, err)
 	assert.NotNil(t, ch)
@@ -376,7 +376,7 @@ func TestService_AddItems_Folder(t *testing.T) {
 		).Return(nil, mockPath, nil)
 	}
 
-	ch, res, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+	ch, res, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath, "")
 
 	assert.Nil(t, err)
 	assert.NotNil(t, ch)
@@ -425,7 +425,7 @@ func TestService_AddItems_OnError(t *testing.T) {
 		mock.Anything,
 	).Return(nil, nil, bucketError)
 
-	ch, _, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath)
+	ch, _, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath, "")
 
 	assert.Nil(t, err)
 	assert.NotNil(t, ch)

@@ -167,9 +167,17 @@ service SpaceApi {
       body: "*"
     };
   }
+
+  rpc ListBuckets(ListBucketsRequest) returns (ListBucketsResponse) {
+    option (google.api.http) = {
+      get: "/v1/buckets"
+    };
+  }
 }
 
-message ListDirectoriesRequest {}
+message ListDirectoriesRequest {
+  string bucket = 1;
+}
 
 message ListDirectoryEntry {
   string path = 1;
@@ -189,6 +197,7 @@ message ListDirectoriesResponse {
 
 message ListDirectoryRequest {
   string path = 1;
+  string bucket = 2;
 }
 
 message ListDirectoryResponse {
@@ -241,6 +250,7 @@ message TextileEventResponse {
 
 message OpenFileRequest {
   string path = 1;
+  string bucket = 2;
 }
 
 message OpenFileResponse {
@@ -252,6 +262,8 @@ message AddItemsRequest {
   repeated string sourcePaths = 1;
   // target path in bucket.
   string targetPath = 2;
+  // The bucket in which to save the item
+  string bucket = 3;
 }
 
 message AddItemResult {
@@ -271,6 +283,8 @@ message AddItemsResponse {
 message CreateFolderRequest {
   // target path in bucket to add new empty folder
   string path = 1;
+  // The bucket in which to add the folder
+  string bucket = 2;
 }
 // not sure we need to return anything other than an error if we failed
 message CreateFolderResponse {
@@ -347,4 +361,10 @@ message ToggleFuseRequest {
 
 message FuseDriveResponse {
   bool fuseDriveMounted = 1;
+}
+
+message ListBucketsRequest {}
+
+message ListBucketsResponse {
+  repeated Bucket buckets = 1;
 }
