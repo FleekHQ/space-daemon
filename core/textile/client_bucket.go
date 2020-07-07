@@ -151,21 +151,18 @@ func (tc *textileClient) GetBucketContext(ctx context.Context, bucketSlug string
 }
 
 func (tc *textileClient) ListBuckets(ctx context.Context) ([]Bucket, error) {
-	threadsCtx, _, err := tc.GetLocalBucketContext(ctx, defaultPersonalBucketSlug)
-
-	if err != nil {
-		log.Error("error in ListBuckets while fetching bucket context", err)
-		return nil, err
-	}
-
-	bucketList, err := tc.bucketsClient.List(threadsCtx)
+	bucketList, err := tc.getBucketsFromCollection()
 	if err != nil {
 		return nil, err
 	}
 
 	result := make([]Bucket, 0)
-	for _, r := range bucketList.Roots {
-		b := tc.getNewBucket(r)
+	for _, r := range bucketList {
+		bucket, err := tc.bucketsClient.Init(ctx, r.Slug)
+		if err != nil {
+			return nil, err
+		}
+		b := tc.getNewBucket(bucket.Root)
 		result = append(result, b)
 	}
 
@@ -186,21 +183,26 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 	}
 
 	// return if bucket aready exists
-	// TODO: see if threads.find would be faster
-	bucketList, err := tc.bucketsClient.List(ctx)
+	bucketList, err := tc.getBucketsFromCollection()
 	if err != nil {
 		log.Error("error while fetching bucket list ", err)
 		return nil, err
 	}
-	for _, r := range bucketList.Roots {
-		if r.Name == bucketSlug {
+	for _, r := range bucketList {
+		if r.Slug == bucketSlug {
 			log.Warn("BucketData already exists", "bucketSlug:"+bucketSlug)
-			return tc.getNewBucket(r), nil
+			b, err := tc.bucketsClient.Init(ctx, bucketSlug)
+			if err != nil {
+				return nil, err
+			}
+			return tc.getNewBucket(b.Root), nil
 		}
 	}
 
 	// create bucket
 	log.Debug("Generating bucket")
+	// We store the bucket in a meta thread so that we can later fetch a list of all buckets
+	tc.storeBucketInCollection(bucketSlug)
 	b, err := tc.bucketsClient.Init(ctx, bucketSlug)
 	if err != nil {
 		return nil, err

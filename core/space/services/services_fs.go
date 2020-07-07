@@ -19,6 +19,7 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 )
 
+// Creates a bucket
 func (s *Space) CreateBucket(ctx context.Context, slug string) (textile.Bucket, error) {
 	b, err := s.tc.CreateBucket(ctx, slug)
 	if err != nil {
@@ -26,6 +27,16 @@ func (s *Space) CreateBucket(ctx context.Context, slug string) (textile.Bucket, 
 	}
 
 	return b, nil
+}
+
+// Returns a list of buckets the current user has access to
+func (s *Space) ListBuckets(ctx context.Context) ([]textile.Bucket, error) {
+	buckets, err := s.tc.ListBuckets(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return buckets, nil
 }
 
 // Returns the bucket given the name, and if the name is "" returns the default bucket

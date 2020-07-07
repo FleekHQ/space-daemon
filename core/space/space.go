@@ -23,6 +23,7 @@ type Service interface {
 	GenerateKeyPair(ctx context.Context, useForce bool) (domain.KeyPair, error)
 	CreateFolder(ctx context.Context, path string, bucketName string) error
 	CreateBucket(ctx context.Context, slug string) (textile.Bucket, error)
+	ListBuckets(ctx context.Context) ([]textile.Bucket, error)
 	AddItems(ctx context.Context, sourcePaths []string, targetPath string, bucketName string) (<-chan domain.AddItemResult, domain.AddItemsResponse, error)
 	CreateIdentity(ctx context.Context, username string) (*domain.Identity, error)
 	GetIdentityByUsername(ctx context.Context, username string) (*domain.Identity, error)

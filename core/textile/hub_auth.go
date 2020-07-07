@@ -42,6 +42,7 @@ type inMessageToken struct {
 }
 
 const base32Alphabet = "abcdefghijklmnopqrstuvwxyz234567"
+const hubTokenStoreKey = "hubAuthToken"
 
 var lowerBase32 = base32.NewEncoding(base32Alphabet)
 
@@ -49,7 +50,32 @@ func encodeToString(in []byte) string {
 	return strings.TrimRight(lowerBase32.EncodeToString(in), "=")
 }
 
+func getHubTokenFromStore(st store.Store) (string, error) {
+	key := []byte(hubTokenStoreKey)
+	val, _ := st.Get(key)
+
+	if val == nil {
+		return "", nil
+	}
+
+	return string(val), nil
+}
+
+func storeHubTokenToStore(st store.Store, hubToken string) error {
+	err := st.Set([]byte(hubTokenStoreKey), []byte(hubToken))
+
+	return err
+}
+
 func getHubToken(store store.Store, cfg config.Config) (string, error) {
+	// Try to avoid redoing challenge
+	if valFromStore, err := getHubTokenFromStore(store); err != nil {
+		return "", err
+	} else if valFromStore != "" {
+		log.Debug("Token Challenge: Got token from store")
+		return valFromStore, nil
+	}
+
 	kc := keychain.New(store)
 	log.Debug("Token Challenge: Connecting through websocket")
 	conn, err := websocket.Dial(cfg.GetString(config.SpaceServicesHubAuthURL, ""), "", "http://localhost/")
@@ -123,6 +149,10 @@ func getHubToken(store store.Store, cfg config.Config) (string, error) {
 		}
 	}
 	log.Debug("Token Challenge: Received token successfully")
+
+	if err := storeHubTokenToStore(store, token.Value.Token); err != nil {
+		return "", err
+	}
 
 	return token.Value.Token, nil
 }
