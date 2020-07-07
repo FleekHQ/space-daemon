@@ -50,8 +50,10 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 	// PLACEHOLDER: filecoin settings
 
 	// TODO: replace with embedded store
-	//addrMongoURI := "mongodb://" + MongoUsr + ":" + MongoPw + "@" + MongoHost
-  addrMongoURI := "mongodb://" + MongoUsr + ":" + MongoPw + "@" + MongoHost + "/?ssl=true&replicaSet="+ MongoRepSet + "&authSource=admin&retryWrites=true&w=majority"
+	// addrMongoURI := "mongodb://" + MongoUsr + ":" + MongoPw + "@" + MongoHost
+	// HOTFIX: in some linux environments the
+	// above connstr does not work
+	addrMongoURI := "mongodb://" + MongoUsr + ":" + MongoPw + "@" + MongoHost + "/?ssl=true&replicaSet=" + MongoRepSet + "&authSource=admin&retryWrites=true&w=majority"
 
 	// TODO: setup logging
 	// if logFile != "" {
