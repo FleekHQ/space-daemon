@@ -88,6 +88,7 @@ func main() {
 	}
 
 	if err != nil {
+		log.Error("Application startup failed", err)
 		returnCode = 1
 	}
 }

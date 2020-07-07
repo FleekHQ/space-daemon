@@ -168,6 +168,7 @@ func (a *App) Start(ctx context.Context) error {
 
 // Run registers this component to be cleaned up on Shutdown
 func (a *App) Run(name string, component core.Component) {
+	log.Debug("Starting Component", "name:"+name)
 	a.components.Push(&componentMap{
 		name:      name,
 		component: component,
@@ -177,6 +178,7 @@ func (a *App) Run(name string, component core.Component) {
 // RunAsync performs the same function as Run() but also accepts an function to be run
 // async to initialize the component.
 func (a *App) RunAsync(name string, component core.AsyncComponent, fn func() error) {
+	log.Debug("Starting Async Component", "name:"+name)
 	if a.eg == nil {
 		log.Warn("App.RunAsync() should be called after App.Start()")
 		return
@@ -200,7 +202,7 @@ func (a *App) Shutdown() error {
 	for a.components.Len() > 0 {
 		m, ok := a.components.Pop().(*componentMap)
 		if ok {
-			log.Debug(fmt.Sprintf("Shutting down %s", m.name))
+			log.Debug("Shutting down Component", fmt.Sprintf("name:%s", m.name))
 			if err := m.component.Shutdown(); err != nil {
 				log.Error(fmt.Sprintf("Error shutting down %s", m.name), err)
 			}
