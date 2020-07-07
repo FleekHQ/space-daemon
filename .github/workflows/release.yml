@@ -33,7 +33,8 @@ jobs:
           MONGO_USR: ${{ secrets.MONGO_USR }}
           MONGO_PW: ${{ secrets.MONGO_PW }}
           MONGO_HOST: ${{ secrets.MONGO_HOST }}
-          SERVICES_API_URL: ${{ secrets.SERVICES_API_URL }}
+          MONGO_REPICATE_SET: ${{ secrets.MONGO_REPLICA_SET }}
+					SERVICES_API_URL: ${{ secrets.SERVICES_API_URL }}
           SERVICES_HUB_AUTH_URL: ${{ secrets.SERVICES_HUB_AUTH_URL }}
           TXL_HUB_TARGET: ${{ secrets.TXL_HUB_TARGET }}
           TXL_THREADS_TARGET: ${{ secrets.TXL_THREADS_TARGET }}

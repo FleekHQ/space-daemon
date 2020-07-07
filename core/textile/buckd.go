@@ -15,6 +15,7 @@ var IpfsAddr string
 var MongoUsr string
 var MongoPw string
 var MongoHost string
+var MongoRepSet string
 
 type TextileBuckd struct {
 	textile   *core.Textile
@@ -35,6 +36,7 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 	MongoUsr = tb.cfg.GetString(config.Mongousr, "")
 	MongoPw = tb.cfg.GetString(config.Mongopw, "")
 	MongoHost = tb.cfg.GetString(config.Mongohost, "")
+	MongoRepSet = tb.cfg.GetString(config.Mongorepset, "")
 
 	addrAPI := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/3006")
 	addrAPIProxy := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/3007")
@@ -48,7 +50,8 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 	// PLACEHOLDER: filecoin settings
 
 	// TODO: replace with embedded store
-	addrMongoURI := "mongodb+srv://" + MongoUsr + ":" + MongoPw + "@" + MongoHost
+	//addrMongoURI := "mongodb://" + MongoUsr + ":" + MongoPw + "@" + MongoHost
+  addrMongoURI := "mongodb://" + MongoUsr + ":" + MongoPw + "@" + MongoHost + "/?ssl=true&replicaSet="+ MongoRepSet + "&authSource=admin&retryWrites=true&w=majority"
 
 	// TODO: setup logging
 	// if logFile != "" {
