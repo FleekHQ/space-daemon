@@ -28,3 +28,11 @@ func (srv *grpcServer) CreateBucket(ctx context.Context, request *pb.CreateBucke
 func (srv *grpcServer) ListBuckets(ctx context.Context, request *pb.ListBucketsRequest) (*pb.ListBucketsResponse, error) {
 	return nil, errNotImplemented
 }
+
+func (srv *grpcServer) ShareBucket(ctx context.Context, request *pb.ShareBucketRequest) (*pb.ShareBucketResponse, error) {
+	return nil, errNotImplemented
+}
+
+func (srv *grpcServer) JoinBucket(ctx context.Context, request *pb.JoinBucketRequest) (*pb.JoinBucketResponse, error) {
+	return nil, errNotImplemented
+}

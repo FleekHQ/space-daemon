@@ -103,6 +103,84 @@
         ]
       }
     },
+    "/v1/buckets/{bucket}/join": {
+      "post": {
+        "summary": "Join bucket",
+        "operationId": "SpaceApi_JoinBucket",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceJoinBucketResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "bucket",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceJoinBucketRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/buckets/{bucket}/share": {
+      "post": {
+        "summary": "Share bucket",
+        "operationId": "SpaceApi_ShareBucket",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceShareBucketResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "bucket",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceShareBucketRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/buckets/{bucket}/shareViaEmail": {
       "post": {
         "summary": "Share bucket via email",
@@ -995,6 +1073,26 @@
       ],
       "default": "USERNAME"
     },
+    "spaceJoinBucketRequest": {
+      "type": "object",
+      "properties": {
+        "threadinfo": {
+          "$ref": "#/definitions/spaceThreadInfo"
+        },
+        "bucket": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceJoinBucketResponse": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    },
     "spaceListBucketsResponse": {
       "type": "object",
       "properties": {
@@ -1088,6 +1186,22 @@
     "spaceRecoverKeysByPassphraseResponse": {
       "type": "object"
     },
+    "spaceShareBucketRequest": {
+      "type": "object",
+      "properties": {
+        "bucket": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceShareBucketResponse": {
+      "type": "object",
+      "properties": {
+        "threadinfo": {
+          "$ref": "#/definitions/spaceThreadInfo"
+        }
+      }
+    },
     "spaceShareBucketViaEmailRequest": {
       "type": "object",
       "properties": {
@@ -1125,6 +1239,20 @@
       "type": "object",
       "properties": {
         "bucket": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceThreadInfo": {
+      "type": "object",
+      "properties": {
+        "addresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "key": {
           "type": "string"
         }
       }
