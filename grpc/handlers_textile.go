@@ -30,9 +30,27 @@ func (srv *grpcServer) ListBuckets(ctx context.Context, request *pb.ListBucketsR
 }
 
 func (srv *grpcServer) ShareBucket(ctx context.Context, request *pb.ShareBucketRequest) (*pb.ShareBucketResponse, error) {
-	return nil, errNotImplemented
+	i, err := srv.sv.ShareBucket(ctx, request.bucket)
+	if err != nil {
+		return nil, err
+	}
+	ti := &pb.ThreadInfo{
+		Addresses: i.addresses,
+		Key:       i.key,
+	}
+
+	return &pb.ShareBucketResponse{
+		ThreadInfo: threadinfo,
+	}, nil
 }
 
 func (srv *grpcServer) JoinBucket(ctx context.Context, request *pb.JoinBucketRequest) (*pb.JoinBucketResponse, error) {
-	return nil, errNotImplemented
+	r, err := srv.sv.JoinBucket(ctx, request.bucket, request.threadinfo)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.ShareBucketResponse{
+		Result: r,
+	}, nil
 }
