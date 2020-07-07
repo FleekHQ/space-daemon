@@ -22,6 +22,8 @@ const (
 	Mongopw                  = "space/mongoPw"
 	Mongohost                = "space/mongoHost"
 	Mongorepset              = "space/mongoRepSet"
+	MinThreadsConnection     = "space/minThreadsConn"
+	MaxThreadsConnection     = "space/maxThreadsConn"
 )
 
 var (
