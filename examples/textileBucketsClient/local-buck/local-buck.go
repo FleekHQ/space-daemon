@@ -101,7 +101,7 @@ func main() {
 
 	ctx = common.NewThreadIDContext(threadCtx, dbID)
 
-	buck, err := buckets.Init(ctx, "personal")
+	buck, err := buckets.Init(ctx, bc.WithName("personal"), bc.WithPrivate(true))
 	fmt.Println("info: ", buck)
 
 	db, err := threads.ListDBs(ctx)

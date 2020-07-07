@@ -215,8 +215,8 @@ func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, user str
 
 	ctx = common.NewThreadIDContext(ctx, dbID)
 	// create bucket
-	buck, err := buckets.Init(ctx, bucketSlug)
-	buckets.Init(ctx, bucketSlug+"2")
+	buck, err := buckets.Init(ctx, bc.WithName(bucketSlug), bc.WithPrivate(true))
+	buckets.Init(ctx, bc.WithName(bucketSlug+"2"), bc.WithPrivate(true))
 
 	log.Println("finished creating bucket")
 
@@ -269,7 +269,7 @@ func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, user str
 
 	go func() {
 		time.Sleep(time.Second)
-		buckets.Init(ctx, bucketSlug+"3")
+		buckets.Init(ctx, bc.WithName(bucketSlug+"3"), bc.WithPrivate(true))
 	}()
 
 	// a separete go routine that keeps checking if msgs are there
