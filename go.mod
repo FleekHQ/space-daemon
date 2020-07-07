@@ -6,7 +6,6 @@ require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
 	github.com/creamdog/gonfig v0.0.0-20160810132730-80d86bfb5a37
 	github.com/dgraph-io/badger v1.6.1
-	github.com/dustin/go-humanize v1.0.0
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/protobuf v1.4.2
@@ -25,7 +24,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/multiformats/go-multiaddr v0.2.2
 	github.com/multiformats/go-multihash v0.0.13
-	github.com/philips/grpc-gateway-example v0.0.0-20170619012617-a269bcb5931c // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/radovskyb/watcher v1.0.7
 	github.com/rakyll/statik v0.1.7
@@ -33,7 +31,7 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/stretchr/testify v1.6.1
 	github.com/textileio/go-threads v0.1.21
-	github.com/textileio/textile v1.0.12
+	github.com/textileio/textile v1.0.13-0.20200707162859-d8131f5afba4
 	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
 	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980
@@ -41,5 +39,4 @@ require (
 	google.golang.org/grpc v1.30.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.3.0 // indirect
-	grpc.go4.org v0.0.0-20170609214715-11d0a25b4919
 )

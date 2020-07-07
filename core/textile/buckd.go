@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os/user"
+	"time"
+
+	connmgr "github.com/libp2p/go-libp2p-connmgr"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/log"
@@ -16,6 +19,8 @@ var MongoUsr string
 var MongoPw string
 var MongoHost string
 var MongoRepSet string
+var MaxThreadsConn int
+var MinThreadsConn int
 
 type TextileBuckd struct {
 	textile   *core.Textile
@@ -37,6 +42,8 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 	MongoPw = tb.cfg.GetString(config.Mongopw, "")
 	MongoHost = tb.cfg.GetString(config.Mongohost, "")
 	MongoRepSet = tb.cfg.GetString(config.Mongorepset, "")
+	MinThreadsConn = tb.cfg.GetInt(config.MinThreadsConnection, 50)
+	MaxThreadsConn = tb.cfg.GetInt(config.MaxThreadsConnection, 100)
 
 	addrAPI := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/3006")
 	addrAPIProxy := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/3007")
@@ -68,7 +75,7 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 
 	usr, err := user.Current()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	textile, err := core.NewTextile(ctx, core.Config{
@@ -86,10 +93,11 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 		//DNSDomain:        dnsDomain,
 		//DNSZoneID:        dnsZoneID,
 		//DNSToken:         dnsToken,
-		Debug: false,
+		ThreadsConnManager: connmgr.NewConnManager(MinThreadsConn, MaxThreadsConn, time.Second*20),
+		Debug:              false,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	textile.Bootstrap()
