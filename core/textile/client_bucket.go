@@ -5,9 +5,13 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/keychain"
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/libp2p/go-libp2p-core/crypto"
+	ma "github.com/multiformats/go-multiaddr"
+	tc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 	bc "github.com/textileio/textile/api/buckets/client"
 	bucketsproto "github.com/textileio/textile/api/buckets/pb"
@@ -210,6 +214,79 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 	newB := tc.getNewBucket(b.Root)
 
 	return newB, nil
+}
+
+func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*tc.DBInfo, error) {
+	dbBytes, err := tc.store.Get([]byte(getThreadIDStoreKey(bucketSlug)))
+
+	if err != nil {
+		return nil, err
+	}
+
+	dbID, err := thread.Cast(dbBytes)
+	b, err := tc.threads.GetDBInfo(ctx, dbID)
+
+	// replicate with the hub
+	hubma, err := ma.NewMultiaddr(tc.cfg.GetString(config.TextileHubMa, ""))
+	if err != nil {
+		log.Error("Unable to replicate on the hub: ", err)
+		// proceeding still because local/public IP
+		// addresses could be used to join thread
+	}
+
+	if _, err := tc.netc.AddReplicator(ctx, dbID, hubma); err != nil {
+		log.Error("Unable to replicate on the hub: ", err)
+		// proceeding still because local/public IP
+		// addresses could be used to join thread
+	}
+
+	return b, err
+}
+
+func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error) {
+	k, err := thread.KeyFromString(ti.Key)
+
+	// TODO: try local address first
+
+	for _, a := range ti.Addresses {
+		ma, err := ma.NewMultiaddr(a)
+		if err != nil {
+			log.Error("Unable to parse multiaddr", err)
+			continue
+		}
+
+		err = tc.threads.NewDBFromAddr(ctx, ma, k)
+
+		if err != nil {
+			log.Error("Unable to join addr", err)
+			continue
+		}
+
+		// exit on the first address that works
+		dbID, err := thread.FromAddr(ma)
+		if err != nil {
+			return true, fmt.Errorf("Unable to parse db id")
+		}
+		tc.SaveBucketThreadID(ctx, slug, dbID.String())
+		return true, nil
+	}
+
+	// if it reached here then no addresses worked, try the hub
+	hubma, err := ma.NewMultiaddr(tc.cfg.GetString(config.TextileHubMa, ""))
+	if err != nil {
+		return false, err
+	}
+	err = tc.threads.NewDBFromAddr(ctx, hubma, k)
+	if err != nil {
+		return false, err
+	}
+
+	dbID, err := thread.FromAddr(hubma)
+	if err != nil {
+		return true, fmt.Errorf("Unable to parse db id")
+	}
+	tc.SaveBucketThreadID(ctx, slug, dbID.String())
+	return true, nil
 }
 
 func (tc *textileClient) getNewBucket(b *bucketsproto.Root) Bucket {

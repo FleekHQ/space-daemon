@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/grpc/pb"
 )
 
@@ -35,8 +36,8 @@ func (srv *grpcServer) ShareBucket(ctx context.Context, request *pb.ShareBucketR
 		return nil, err
 	}
 	ti := &pb.ThreadInfo{
-		Addresses: i.addresses,
-		Key:       i.key,
+		Addresses: i.Addresses,
+		Key:       i.Key,
 	}
 
 	return &pb.ShareBucketResponse{
@@ -45,7 +46,11 @@ func (srv *grpcServer) ShareBucket(ctx context.Context, request *pb.ShareBucketR
 }
 
 func (srv *grpcServer) JoinBucket(ctx context.Context, request *pb.JoinBucketRequest) (*pb.JoinBucketResponse, error) {
-	r, err := srv.sv.JoinBucket(ctx, request.Bucket, request.Threadinfo)
+	ti := &domain.ThreadInfo{
+		Addresses: request.Threadinfo.Addresses,
+		Key:       request.Threadinfo.Key,
+	}
+	r, err := srv.sv.JoinBucket(ctx, request.Bucket, ti)
 	if err != nil {
 		return nil, err
 	}

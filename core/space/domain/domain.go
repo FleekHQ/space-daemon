@@ -17,6 +17,11 @@ type DirEntry struct {
 	FileExtension string
 }
 
+type ThreadInfo struct {
+	Addresses []string
+	Key       string
+}
+
 type FileInfo struct {
 	DirEntry
 	IpfsHash string

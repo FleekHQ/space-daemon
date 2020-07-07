@@ -31,6 +31,7 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[SpaceServicesAPIURL] = os.Getenv(env.ServicesAPIURL)
 		configStr[SpaceServicesHubAuthURL] = os.Getenv(env.ServicesHubAuthURL)
 		configStr[TextileHubTarget] = os.Getenv(env.TextileHubTarget)
+		configStr[TextileHubMa] = os.Getenv(env.TextileHubMa)
 		configStr[TextileThreadsTarget] = os.Getenv(env.TextileThreadsTarget)
 	} else {
 		configStr[Ipfsaddr] = flags.Ipfsaddr
@@ -41,6 +42,7 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[SpaceServicesAPIURL] = flags.ServicesAPIURL
 		configStr[SpaceServicesHubAuthURL] = flags.ServicesHubAuthURL
 		configStr[TextileHubTarget] = flags.TextileHubTarget
+		configStr[TextileHubMa] = flags.TextileHubMa
 		configStr[TextileThreadsTarget] = flags.TextileThreadsTarget
 	}
 
