@@ -16,7 +16,7 @@ builds:
       - -X main.mongousr={{ .Env.MONGO_USR }}
       - -X main.mongopw={{ .Env.MONGO_PW }}
       - -X main.mongohost={{ .Env.MONGO_HOST }}
-			- -X main.mongorepset={{ .Env.MONGO_REPLICA_SET }}
+      - -X main.mongorepset={{ .Env.MONGO_REPLICA_SET }}
       - -X main.spaceapi={{ .Env.SERVICES_API_URL }}
       - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
       - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
@@ -34,7 +34,7 @@ builds:
       - -X main.mongousr={{ .Env.MONGO_USR }}
       - -X main.mongopw={{ .Env.MONGO_PW }}
       - -X main.mongohost={{ .Env.MONGO_HOST }}
-			- -X main.mongorepset={{ .Env.MONGO_REPICATE_SET }}
+      - -X main.mongorepset={{ .Env.MONGO_REPICATE_SET }}
       - -X main.spaceapi={{ .Env.SERVICES_API_URL }}
       - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
       - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
