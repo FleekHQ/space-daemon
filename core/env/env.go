@@ -13,6 +13,7 @@ const (
 	MongoUsr             = "MONGO_USR"
 	MongoPw              = "MONGO_PW"
 	MongoHost            = "MONGO_HOST"
+	MongoRepSet          = "MONGO_REPLICA_SET"
 	ServicesAPIURL       = "SERVICES_API_URL"
 	ServicesHubAuthURL   = "SERVICES_HUB_AUTH_URL"
 	TextileHubTarget     = "TXL_HUB_TARGET"
