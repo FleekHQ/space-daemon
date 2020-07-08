@@ -88,9 +88,8 @@ func (tc *textileClient) GetBucket(ctx context.Context, slug string) (Bucket, er
 		return b, nil
 	}
 
-	log.Info("starting LISTBUCKETS")
 	buckets, err := tc.ListBuckets(ctx)
-	log.Info("returned from LISTBUCKETS, length: " + string(len(buckets)))
+
 	if err != nil {
 		log.Error("error while fetching bucketsClient in GetBucket", err)
 		return nil, err
@@ -100,7 +99,6 @@ func (tc *textileClient) GetBucket(ctx context.Context, slug string) (Bucket, er
 		return nil, NotFound(slug)
 	}
 	for _, b := range buckets {
-		log.Info("GETBUCKET: looping through bucks: " + b.Slug())
 		if b.Slug() == slug {
 			return tc.setBucket(slug, b), nil
 		}
@@ -180,11 +178,9 @@ func (tc *textileClient) ListBuckets(ctx context.Context) ([]Bucket, error) {
 	}
 
 	for _, key := range keys {
-		log.Info("key: " + key)
 		val, err := tc.store.Get([]byte(key))
-		log.Info("value: " + string(val))
 
-		threadsCtx, _, err := tc.GetLocalBucketContext(ctx, strings.TrimPrefix(defaultPersonalBucketSlug, threadIDStoreKey+"_"))
+		threadsCtx, _, err := tc.GetLocalBucketContext(ctx, strings.TrimPrefix(key, threadIDStoreKey+"_"))
 
 		if err != nil {
 			log.Error("error in ListBuckets while fetching bucket context", err)
@@ -197,7 +193,6 @@ func (tc *textileClient) ListBuckets(ctx context.Context) ([]Bucket, error) {
 		}
 
 		for _, r := range bucketList.Roots {
-			log.Info("looping through bucket: " + r.Name)
 			b := tc.getNewBucket(r)
 			result = append(result, b)
 		}
@@ -246,33 +241,6 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 }
 
 func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*tc.DBInfo, error) {
-	keys, err := tc.store.KeysWithPrefix(threadIDStoreKey)
-	if err != nil {
-		log.Error("error getting keys: ", err)
-	}
-
-	for _, key := range keys {
-		log.Info("key: " + key)
-		val, err := tc.store.Get([]byte(key))
-		log.Info("value: " + string(val))
-
-		threadsCtx, _, err := tc.GetLocalBucketContext(ctx, strings.TrimPrefix(defaultPersonalBucketSlug, threadIDStoreKey+"_"))
-
-		if err != nil {
-			log.Error("error in ListBuckets while fetching bucket context", err)
-			return nil, err
-		}
-
-		bucketList, err := tc.bucketsClient.List(threadsCtx)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, r := range bucketList.Roots {
-			log.Info("looping through bucket: " + r.Name)
-		}
-	}
-
 	dbBytes, err := tc.store.Get([]byte(getThreadIDStoreKey(bucketSlug)))
 
 	if err != nil {
