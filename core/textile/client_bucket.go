@@ -242,19 +242,23 @@ func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain
 	k, err := thread.KeyFromString(ti.Key)
 
 	// get the DB ID from the first ma
-	dbID, err := thread.FromAddr(ti.Addresses[0])
+	ma1, err := ma.NewMultiaddr(ti.Addresses[0])
 	if err != nil {
-		return true, fmt.Errorf("Unable to parse db id")
+		return false, fmt.Errorf("Unable to parse multiaddr")
+	}
+	dbID, err := thread.FromAddr(ma1)
+	if err != nil {
+		return false, fmt.Errorf("Unable to parse db id")
 	}
 
 	for _, a := range ti.Addresses {
-		ma, err := ma.NewMultiaddr(a)
+		ma1, err := ma.NewMultiaddr(a)
 		if err != nil {
 			log.Error("Unable to parse multiaddr", err)
 			continue
 		}
 
-		err = tc.threads.NewDBFromAddr(ctx, ma, k)
+		err = tc.threads.NewDBFromAddr(ctx, ma1, k)
 
 		if err != nil {
 			log.Error("Unable to join addr", err)
@@ -267,12 +271,11 @@ func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain
 	}
 
 	// if it reached here then no addresses worked, try the hub
-	hubma, err := ma.NewMultiaddr(tc.cfg.GetString(config.TextileHubMa, ""))
-	threadma := hubma + "/thread/" + dbID.String()
+	hubma, err := ma.NewMultiaddr(tc.cfg.GetString(config.TextileHubMa, "") + "/thread/" + dbID.String())
 	if err != nil {
 		return false, err
 	}
-	err = tc.threads.NewDBFromAddr(ctx, threadma, k)
+	err = tc.threads.NewDBFromAddr(ctx, hubma, k)
 	if err != nil {
 		return false, err
 	}
