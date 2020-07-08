@@ -178,8 +178,6 @@ func (tc *textileClient) ListBuckets(ctx context.Context) ([]Bucket, error) {
 	}
 
 	for _, key := range keys {
-		val, err := tc.store.Get([]byte(key))
-
 		threadsCtx, _, err := tc.GetLocalBucketContext(ctx, strings.TrimPrefix(key, threadIDStoreKey+"_"))
 
 		if err != nil {
