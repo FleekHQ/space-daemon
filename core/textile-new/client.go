@@ -28,7 +28,6 @@ type textileClient struct {
 	isRunning        bool
 	Ready            chan bool
 	cfg              config.Config
-	ctx              context.Context
 	isConnectedToHub bool
 }
 
@@ -55,9 +54,9 @@ func (tc *textileClient) requiresRunning() error {
 	return nil
 }
 
-func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error) {
+func (tc *textileClient) getHubCtx2(ctx context.Context) (context.Context, error) {
 	log.Debug("Authenticating with Textile Hub")
-	tokStr, err := hub.GetHubToken(tc.store, tc.cfg)
+	tokStr, err := hub.GetHubToken(ctx, tc.store, tc.cfg)
 	if err != nil {
 		log.Error("Token Challenge Error:", err)
 		return nil, err
@@ -65,12 +64,11 @@ func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error)
 
 	tok := thread.Token(tokStr)
 
-	ctx = thread.NewTokenContext(ctx, tok)
-
-	return ctx, nil
+	return thread.NewTokenContext(ctx, tok), nil
 }
 
-func (tc *textileClient) getHubCtxFromApiKeys(ctx context.Context) (context.Context, error) {
+// This method is just for testing purposes. Keys shouldn't be bundled in the daemon
+func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error) {
 	log.Debug("Authenticating with Textile Hub")
 
 	key := os.Getenv("TXL_USER_KEY")
@@ -98,6 +96,10 @@ func (tc *textileClient) getHubCtxFromApiKeys(ctx context.Context) (context.Cont
 	log.Debug("Creating libp2p identity")
 	tok, err := tc.threads.GetToken(ctx, thread.NewLibp2pIdentity(privateKey))
 	log.Debug("got tok")
+	_, err = tok.Validate(privateKey)
+	if err != nil {
+		return nil, err
+	}
 
 	ctx = thread.NewTokenContext(ctx, tok)
 	return ctx, nil
@@ -106,7 +108,6 @@ func (tc *textileClient) getHubCtxFromApiKeys(ctx context.Context) (context.Cont
 // Starts the Textile Client
 func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.cfg = cfg
-	tc.ctx = ctx
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
 
@@ -139,11 +140,10 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.isRunning = true
 
 	// Attempt to connect to the Hub
-	hubCtx, err := tc.getHubCtx(ctx)
+	_, err := tc.getHubCtx(ctx)
 	if err != nil {
 		log.Error("Could not connect to Textile Hub. Starting in offline mode.", err)
 	} else {
-		tc.ctx = hubCtx
 		tc.isConnectedToHub = true
 	}
 
@@ -169,7 +169,7 @@ func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
 	}
 
 	log.Debug("Listing buckets...")
-	buckets, err := tc.ListBuckets()
+	buckets, err := tc.ListBuckets(ctx)
 	if err != nil {
 		log.Error("Error listing buckets on Textile client start", err)
 		return err
@@ -184,7 +184,7 @@ func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
 	}
 	if defaultBucketExists == false {
 		log.Debug("Creating default bucket...")
-		_, err := tc.CreateBucket(defaultPersonalBucketSlug)
+		_, err := tc.CreateBucket(ctx, defaultPersonalBucketSlug)
 		if err != nil {
 			log.Error("Error creating default bucket", err)
 			return err

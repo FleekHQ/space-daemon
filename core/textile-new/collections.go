@@ -13,9 +13,10 @@ import (
 )
 
 type BucketSchema struct {
-	ID   core.InstanceID `json:"_id"`
-	Slug string          `json:"slug"`
-	DbID string
+	ID          core.InstanceID `json:"_id"`
+	Slug        string          `json:"slug"`
+	DbID        string
+	BackupInHub bool
 }
 
 const metaThreadName = "metathread"
@@ -46,13 +47,13 @@ func (tc *textileClient) initBucketCollection(ctx context.Context) (*thread.ID, 
 	return dbID, nil
 }
 
-func (tc *textileClient) storeBucketInCollection(bucketSlug, dbID string) (*BucketSchema, error) {
+func (tc *textileClient) storeBucketInCollection(ctx context.Context, bucketSlug, dbID string, backupInHub bool) (*BucketSchema, error) {
 	log.Debug("storeBucketInCollection: Storing bucket " + bucketSlug)
-	if existingBucket, err := tc.findBucketInCollection(bucketSlug); err == nil {
+	if existingBucket, err := tc.findBucketInCollection(ctx, bucketSlug); err == nil {
 		log.Debug("storeBucketInCollection: Bucket already in collection")
 		return existingBucket, nil
 	}
-	ctx := tc.ctx
+
 	log.Debug("storeBucketInCollection: Initializing db")
 	metaDbID, err := tc.initBucketCollection(ctx)
 	if err != nil && metaDbID == nil {
@@ -60,9 +61,10 @@ func (tc *textileClient) storeBucketInCollection(bucketSlug, dbID string) (*Buck
 	}
 
 	newInstance := &BucketSchema{
-		Slug: bucketSlug,
-		ID:   "",
-		DbID: dbID,
+		Slug:        bucketSlug,
+		ID:          "",
+		DbID:        dbID,
+		BackupInHub: backupInHub,
 	}
 
 	instances := client.Instances{newInstance}
@@ -74,15 +76,14 @@ func (tc *textileClient) storeBucketInCollection(bucketSlug, dbID string) (*Buck
 	}
 	id := res[0]
 	return &BucketSchema{
-		Slug: bucketSlug,
-		ID:   core.InstanceID(id),
-		DbID: dbID,
+		Slug:        newInstance.Slug,
+		ID:          core.InstanceID(id),
+		DbID:        newInstance.DbID,
+		BackupInHub: newInstance.BackupInHub,
 	}, nil
 }
 
-func (tc *textileClient) findBucketInCollection(bucketSlug string) (*BucketSchema, error) {
-	ctx := tc.ctx
-
+func (tc *textileClient) findBucketInCollection(ctx context.Context, bucketSlug string) (*BucketSchema, error) {
 	dbID, err := tc.initBucketCollection(ctx)
 	if err != nil || dbID == nil {
 		return nil, err
@@ -102,9 +103,7 @@ func (tc *textileClient) findBucketInCollection(bucketSlug string) (*BucketSchem
 	return buckets[0], nil
 }
 
-func (tc *textileClient) getBucketsFromCollection() ([]*BucketSchema, error) {
-	ctx := tc.ctx
-
+func (tc *textileClient) getBucketsFromCollection(ctx context.Context) ([]*BucketSchema, error) {
 	dbID, err := tc.initBucketCollection(ctx)
 	if err != nil && dbID == nil {
 		return nil, err

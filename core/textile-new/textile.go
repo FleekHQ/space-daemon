@@ -49,11 +49,11 @@ type Bucket interface {
 
 type Client interface {
 	IsRunning() bool
-	GetDefaultBucket() (Bucket, error)
-	GetBucket(slug string) (Bucket, error)
+	GetDefaultBucket(ctx context.Context) (Bucket, error)
+	GetBucket(ctx context.Context, slug string) (Bucket, error)
 	GetThreadsConnection() (*threadsClient.Client, error)
-	ListBuckets() ([]Bucket, error)
-	CreateBucket(bucketSlug string) (Bucket, error)
+	ListBuckets(ctx context.Context) ([]Bucket, error)
+	CreateBucket(ctx context.Context, bucketSlug string) (Bucket, error)
 	Shutdown() error
 	WaitForReady() chan bool
 	Start(ctx context.Context, cfg config.Config) error

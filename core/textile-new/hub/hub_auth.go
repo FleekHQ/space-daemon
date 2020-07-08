@@ -1,14 +1,13 @@
 package hub
 
 import (
-	"encoding/base32"
-	"strings"
+	"context"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/log"
-	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/textileio/go-threads/core/thread"
 	"golang.org/x/net/websocket"
 )
 
@@ -41,14 +40,7 @@ type inMessageToken struct {
 	Value inMessageTokenValue `json:"value"`
 }
 
-const base32Alphabet = "abcdefghijklmnopqrstuvwxyz234567"
 const hubTokenStoreKey = "hubAuthToken"
-
-var lowerBase32 = base32.NewEncoding(base32Alphabet)
-
-func encodeToString(in []byte) string {
-	return strings.TrimRight(lowerBase32.EncodeToString(in), "=")
-}
 
 func getHubTokenFromStore(st store.Store) (string, error) {
 	key := []byte(hubTokenStoreKey)
@@ -61,22 +53,22 @@ func getHubTokenFromStore(st store.Store) (string, error) {
 	return string(val), nil
 }
 
-func storeHubTokenToStore(st store.Store, hubToken string) error {
+func storeHubToken(st store.Store, hubToken string) error {
 	err := st.Set([]byte(hubTokenStoreKey), []byte(hubToken))
 
 	return err
 }
 
-func GetHubToken(store store.Store, cfg config.Config) (string, error) {
+func GetHubToken(ctx context.Context, st store.Store, cfg config.Config) (string, error) {
 	// Try to avoid redoing challenge if we already have the token
-	if valFromStore, err := getHubTokenFromStore(store); err != nil {
+	if valFromStore, err := getHubTokenFromStore(st); err != nil {
 		return "", err
 	} else if valFromStore != "" {
 		log.Debug("Token Challenge: Got token from store: " + valFromStore)
 		return valFromStore, nil
 	}
 
-	kc := keychain.New(store)
+	kc := keychain.New(st)
 	log.Debug("Token Challenge: Connecting through websocket")
 	conn, err := websocket.Dial(cfg.GetString(config.SpaceServicesHubAuthURL, ""), "", "http://localhost/")
 	if err != nil {
@@ -85,25 +77,20 @@ func GetHubToken(store store.Store, cfg config.Config) (string, error) {
 	defer conn.Close()
 	log.Debug("Token Challenge: Connected")
 
-	_, pub, err := kc.GetStoredKeyPairInLibP2PFormat()
+	privateKey, _, err := kc.GetStoredKeyPairInLibP2PFormat()
 	if err != nil {
 		return "", err
 	}
 
-	publicKeyBytes, err := crypto.MarshalPublicKey(pub)
-	if err != nil {
-		return "", err
-	}
-
-	// Textile auth requires public key to be in base32 format with a particular alphabet
-	publicKeyBase32 := encodeToString(publicKeyBytes)
+	identity := thread.NewLibp2pIdentity(privateKey)
+	pub := identity.GetPublic().String()
 
 	// Request a challenge (a payload we need to sign)
-	log.Debug("Token Challenge: Sending token request with pub key", publicKeyBase32)
+	log.Debug("Token Challenge: Sending token request with pub key", pub)
 	tokenRequest := &outMessage{
 		Action: "token",
 		Data: sentMessageData{
-			PublicKey: publicKeyBase32,
+			PublicKey: identity.GetPublic().String(),
 		},
 	}
 	err = websocket.JSON.Send(conn, tokenRequest)
@@ -117,7 +104,7 @@ func GetHubToken(store store.Store, cfg config.Config) (string, error) {
 	}
 	log.Debug("Token Challenge: Received challenge")
 
-	solution, err := kc.Sign(challenge.Value.Data)
+	solution, err := identity.Sign(ctx, challenge.Value.Data)
 	if err != nil {
 		return "", err
 	}
@@ -127,7 +114,7 @@ func GetHubToken(store store.Store, cfg config.Config) (string, error) {
 		Action: "challenge",
 		Data: sentMessageData{
 			Signature: solution,
-			PublicKey: publicKeyBase32,
+			PublicKey: pub,
 		},
 	}
 	log.Debug("Token Challenge: Sending signature")
@@ -150,7 +137,7 @@ func GetHubToken(store store.Store, cfg config.Config) (string, error) {
 	}
 	log.Debug("Token Challenge: Received token successfully")
 
-	if err := storeHubTokenToStore(store, token.Value.Token); err != nil {
+	if err := storeHubToken(st, token.Value.Token); err != nil {
 		return "", err
 	}
 

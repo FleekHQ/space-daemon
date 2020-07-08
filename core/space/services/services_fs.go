@@ -21,7 +21,7 @@ import (
 
 // Creates a bucket
 func (s *Space) CreateBucket(ctx context.Context, slug string) (textile.Bucket, error) {
-	b, err := s.tc.CreateBucket(slug)
+	b, err := s.tc.CreateBucket(ctx, slug)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func (s *Space) CreateBucket(ctx context.Context, slug string) (textile.Bucket, 
 
 // Returns a list of buckets the current user has access to
 func (s *Space) ListBuckets(ctx context.Context) ([]textile.Bucket, error) {
-	buckets, err := s.tc.ListBuckets()
+	buckets, err := s.tc.ListBuckets(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -45,9 +45,9 @@ func (s *Space) getBucketWithFallback(ctx context.Context, bucketName string) (t
 	var err error
 
 	if bucketName == "" {
-		b, err = s.tc.GetDefaultBucket()
+		b, err = s.tc.GetDefaultBucket(ctx)
 	} else {
-		b, err = s.tc.GetBucket(bucketName)
+		b, err = s.tc.GetBucket(ctx, bucketName)
 	}
 
 	if err != nil {

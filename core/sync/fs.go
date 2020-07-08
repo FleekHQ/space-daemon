@@ -29,7 +29,7 @@ func (h *watcherHandler) OnCreate(ctx context.Context, path string, fileInfo os.
 		return
 	}
 
-	b, err := h.bs.textileClient.GetBucket(key)
+	b, err := h.bs.textileClient.GetBucket(ctx, key)
 	if err != nil {
 		msg := fmt.Sprintf("error: could not find bucket with key %s", key)
 		log.Error(msg, fmt.Errorf(msg))
@@ -100,7 +100,7 @@ func (h *watcherHandler) OnRemove(ctx context.Context, path string, fileInfo os.
 		return
 	}
 
-	b, err := h.bs.textileClient.GetBucket(key)
+	b, err := h.bs.textileClient.GetBucket(ctx, key)
 	if err != nil {
 		msg := fmt.Sprintf("error: could not find bucket with key %s", key)
 		log.Error(msg, fmt.Errorf(msg))
@@ -132,7 +132,7 @@ func (h *watcherHandler) OnWrite(ctx context.Context, path string, fileInfo os.F
 		return
 	}
 
-	b, err := h.bs.textileClient.GetBucket(key)
+	b, err := h.bs.textileClient.GetBucket(ctx, key)
 	if err != nil {
 		msg := fmt.Sprintf("error: could not find bucket with key %s", key)
 		log.Error(msg, fmt.Errorf(msg))
