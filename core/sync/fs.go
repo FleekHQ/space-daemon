@@ -29,7 +29,7 @@ func (h *watcherHandler) OnCreate(ctx context.Context, path string, fileInfo os.
 		return
 	}
 
-	b, err := h.bs.textileClient.GetBucket(ctx, key)
+	b, err := h.bs.textileClient.GetBucket(key)
 	if err != nil {
 		msg := fmt.Sprintf("error: could not find bucket with key %s", key)
 		log.Error(msg, fmt.Errorf(msg))
@@ -37,7 +37,7 @@ func (h *watcherHandler) OnCreate(ctx context.Context, path string, fileInfo os.
 	}
 
 	if fileInfo.IsDir() {
-		existsOnTextile, err := b.DirExists(ctx, path)
+		existsOnTextile, err := b.DirExists(path)
 		if err != nil {
 			log.Error("Could not check if folder exists on textile", err)
 			return
@@ -48,9 +48,9 @@ func (h *watcherHandler) OnCreate(ctx context.Context, path string, fileInfo os.
 			return
 		}
 
-		result, newRoot, err = b.CreateDirectory(ctx, path)
+		result, newRoot, err = b.CreateDirectory(path)
 	} else {
-		existsOnTextile, err := b.FileExists(ctx, path)
+		existsOnTextile, err := b.FileExists(path)
 		if err != nil {
 			log.Error("Could not check if file exists on textile", err)
 			return
@@ -67,7 +67,7 @@ func (h *watcherHandler) OnCreate(ctx context.Context, path string, fileInfo os.
 			return
 		}
 
-		result, newRoot, err = b.UploadFile(ctx, path, fileReader)
+		result, newRoot, err = b.UploadFile(path, fileReader)
 	}
 
 	if err != nil {
@@ -100,14 +100,14 @@ func (h *watcherHandler) OnRemove(ctx context.Context, path string, fileInfo os.
 		return
 	}
 
-	b, err := h.bs.textileClient.GetBucket(ctx, key)
+	b, err := h.bs.textileClient.GetBucket(key)
 	if err != nil {
 		msg := fmt.Sprintf("error: could not find bucket with key %s", key)
 		log.Error(msg, fmt.Errorf(msg))
 		return
 	}
 
-	_, err = b.DeleteDirOrFile(ctx, path)
+	_, err = b.DeleteDirOrFile(path)
 
 	if err != nil {
 		log.Error("Deleting from textile failed", err, fmt.Sprintf("path:%s", path))
@@ -132,7 +132,7 @@ func (h *watcherHandler) OnWrite(ctx context.Context, path string, fileInfo os.F
 		return
 	}
 
-	b, err := h.bs.textileClient.GetBucket(ctx, key)
+	b, err := h.bs.textileClient.GetBucket(key)
 	if err != nil {
 		msg := fmt.Sprintf("error: could not find bucket with key %s", key)
 		log.Error(msg, fmt.Errorf(msg))
@@ -144,7 +144,7 @@ func (h *watcherHandler) OnWrite(ctx context.Context, path string, fileInfo os.F
 		return
 	}
 
-	_, _, err = b.UploadFile(ctx, path, fileReader)
+	_, _, err = b.UploadFile(path, fileReader)
 	if err != nil {
 		msg := fmt.Sprintf("error: could not sync file at path %s to bucket %s", path, key)
 		log.Error(msg, fmt.Errorf(msg))

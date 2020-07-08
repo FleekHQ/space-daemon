@@ -20,12 +20,14 @@ var IpfsAddr string
 var MongoUsr string
 var MongoPw string
 var MongoHost string
+var MongoRepSet string
 
 func main() {
 	IpfsAddr = os.Getenv("IPFS_ADDR")
 	MongoUsr = os.Getenv("MONGO_USR")
 	MongoPw = os.Getenv("MONGO_PW")
 	MongoHost = os.Getenv("MONGO_HOST")
+	MongoRepSet = os.Getenv("MONGO_REPLICA_SET")
 
 	addrAPI := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/3006")
 	addrAPIProxy := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/3007")
@@ -37,7 +39,7 @@ func main() {
 	addrGatewayURL := "http://127.0.0.1:8006"
 
 	fmt.Println("mongo host: ", MongoHost)
-	addrMongoURI := "mongodb+srv://" + MongoUsr + ":" + MongoPw + "@" + MongoHost
+	addrMongoURI := "mongodb://" + MongoUsr + ":" + MongoPw + "@" + MongoHost + "/?ssl=true&replicaSet=" + MongoRepSet + "&authSource=admin&retryWrites=true&w=majority"
 
 	usr, err := user.Current()
 	if err != nil {

@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/FleekHQ/space-daemon/core/textile"
+	"github.com/FleekHQ/space-daemon/core/textile-new"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
@@ -21,7 +21,7 @@ import (
 
 // Creates a bucket
 func (s *Space) CreateBucket(ctx context.Context, slug string) (textile.Bucket, error) {
-	b, err := s.tc.CreateBucket(ctx, slug)
+	b, err := s.tc.CreateBucket(slug)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func (s *Space) CreateBucket(ctx context.Context, slug string) (textile.Bucket, 
 
 // Returns a list of buckets the current user has access to
 func (s *Space) ListBuckets(ctx context.Context) ([]textile.Bucket, error) {
-	buckets, err := s.tc.ListBuckets(ctx)
+	buckets, err := s.tc.ListBuckets()
 	if err != nil {
 		return nil, err
 	}
@@ -45,9 +45,9 @@ func (s *Space) getBucketWithFallback(ctx context.Context, bucketName string) (t
 	var err error
 
 	if bucketName == "" {
-		b, err = s.tc.GetDefaultBucket(ctx)
+		b, err = s.tc.GetDefaultBucket()
 	} else {
-		b, err = s.tc.GetBucket(ctx, bucketName)
+		b, err = s.tc.GetBucket(bucketName)
 	}
 
 	if err != nil {
@@ -67,7 +67,7 @@ func (s *Space) listDirAtPath(
 	path string,
 	listSubfolderContent bool,
 ) ([]domain.FileInfo, error) {
-	dir, err := b.ListDirectory(ctx, path)
+	dir, err := b.ListDirectory(path)
 	if err != nil {
 		log.Error("Error in ListDir", err)
 		return nil, err
@@ -184,7 +184,7 @@ func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket)
 	defer tmpFile.Close()
 
 	// look for path in textile
-	err = b.GetFile(ctx, path, tmpFile)
+	err = b.GetFile(path, tmpFile)
 	if err != nil {
 		log.Error(fmt.Sprintf("error retrieving file from bucket %s in path %s", b.Key(), path), err)
 		return "", err
@@ -218,7 +218,7 @@ func (s *Space) CreateFolder(ctx context.Context, path string, bucketName string
 
 func (s *Space) createFolder(ctx context.Context, path string, b textile.Bucket) (string, error) {
 	// NOTE: may need to change signature of createFolder if we need to return this info
-	_, root, err := b.CreateDirectory(ctx, path)
+	_, root, err := b.CreateDirectory(path)
 
 	if err != nil {
 		log.Error(fmt.Sprintf("error creating folder in bucket %s with path %s", b.Key(), path), err)
@@ -438,7 +438,7 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 	targetPathBucket := targetPath + "/" + fileName
 
 	// NOTE: could modify addFile to return back more info for processing
-	_, root, err := b.UploadFile(ctx, targetPathBucket, f)
+	_, root, err := b.UploadFile(targetPathBucket, f)
 	if err != nil {
 		log.Error(fmt.Sprintf("error creating targetPath %s in bucket %s", targetPathBucket, b.Key()), err)
 		return domain.AddItemResult{}, err

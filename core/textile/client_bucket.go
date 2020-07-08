@@ -9,6 +9,7 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/textileio/go-threads/core/thread"
+	bc "github.com/textileio/textile/api/buckets/client"
 	bucketsproto "github.com/textileio/textile/api/buckets/pb"
 	"github.com/textileio/textile/api/common"
 )
@@ -203,7 +204,7 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 	log.Debug("Generating bucket")
 	// We store the bucket in a meta thread so that we can later fetch a list of all buckets
 	tc.storeBucketInCollection(bucketSlug)
-	b, err := tc.bucketsClient.Init(ctx, bucketSlug)
+	b, err := tc.bucketsClient.Init(ctx, bc.WithName(bucketSlug), bc.WithPrivate(true))
 	if err != nil {
 		return nil, err
 	}

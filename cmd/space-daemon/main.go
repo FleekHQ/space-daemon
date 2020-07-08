@@ -26,6 +26,7 @@ var (
 	mongousr       string
 	mongopw        string
 	mongohost      string
+	mongorepset    string
 	spaceapi       string
 	spacehubauth   string
 	textilehub     string
@@ -47,6 +48,7 @@ func main() {
 		Mongousr:             mongousr,
 		Mongopw:              mongopw,
 		Mongohost:            mongohost,
+		Mongorepset:          mongorepset,
 		ServicesAPIURL:       spaceapi,
 		ServicesHubAuthURL:   spacehubauth,
 		DevMode:              *devMode == true,
@@ -86,6 +88,7 @@ func main() {
 	}
 
 	if err != nil {
+		log.Error("Application startup failed", err)
 		returnCode = 1
 	}
 }

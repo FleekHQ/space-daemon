@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/FleekHQ/space-daemon/core/space/services"
-	"github.com/FleekHQ/space-daemon/core/textile"
+	"github.com/FleekHQ/space-daemon/core/textile-new/bucket"
 	"github.com/FleekHQ/space-daemon/mocks"
 	"github.com/stretchr/testify/assert"
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
@@ -116,7 +116,7 @@ func TestService_CreateBucket(t *testing.T) {
 	d1 := int64(1593405100)
 	d2 := int64(1593405100)
 
-	mb := &textile.BucketData{
+	mb := &bucket.BucketData{
 		Key:       key,
 		Name:      slug,
 		Path:      path,
@@ -148,7 +148,7 @@ func TestService_ListDirs(t *testing.T) {
 
 	bucketPath := "/ipfs/bafybeian44ntmjjfjbqt4dlkq4fiuhfzcxfunzuuzhbb7xkrnsdjb2sjha"
 
-	mockDirItems := &textile.DirEntries{
+	mockDirItems := &bucket.DirEntries{
 		Item: &buckets_pb.ListPathItem{
 			Items: []*buckets_pb.ListPathItem{
 				{
@@ -176,7 +176,7 @@ func TestService_ListDirs(t *testing.T) {
 		},
 	}
 
-	mockDirItemsSubfolder := &textile.DirEntries{
+	mockDirItemsSubfolder := &bucket.DirEntries{
 		Item: &buckets_pb.ListPathItem{
 			Items: []*buckets_pb.ListPathItem{
 				{

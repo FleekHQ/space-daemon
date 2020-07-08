@@ -8,7 +8,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/store"
-	"github.com/FleekHQ/space-daemon/core/textile"
+	"github.com/FleekHQ/space-daemon/core/textile-new"
 )
 
 // Implementation for space.Service

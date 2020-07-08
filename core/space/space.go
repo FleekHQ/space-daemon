@@ -10,7 +10,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/space/services"
 	"github.com/FleekHQ/space-daemon/core/store"
-	"github.com/FleekHQ/space-daemon/core/textile"
+	"github.com/FleekHQ/space-daemon/core/textile-new"
 )
 
 // Service Layer should not depend on gRPC dependencies

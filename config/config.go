@@ -21,6 +21,9 @@ const (
 	Mongousr                 = "space/mongoUsr"
 	Mongopw                  = "space/mongoPw"
 	Mongohost                = "space/mongoHost"
+	Mongorepset              = "space/mongoRepSet"
+	MinThreadsConnection     = "space/minThreadsConn"
+	MaxThreadsConnection     = "space/maxThreadsConn"
 )
 
 var (
@@ -32,6 +35,7 @@ type Flags struct {
 	Mongousr             string
 	Mongopw              string
 	Mongohost            string
+	Mongorepset          string
 	DevMode              bool
 	ServicesAPIURL       string
 	ServicesHubAuthURL   string

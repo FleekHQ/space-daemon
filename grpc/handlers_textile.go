@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 
-	"github.com/FleekHQ/space-daemon/core/textile"
+	"github.com/FleekHQ/space-daemon/core/textile-new"
 	"github.com/FleekHQ/space-daemon/grpc/pb"
 )
 
