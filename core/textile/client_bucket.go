@@ -241,7 +241,11 @@ func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*t
 func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error) {
 	k, err := thread.KeyFromString(ti.Key)
 
-	// TODO: try local address first
+	// get the DB ID from the first ma
+	dbID, err := thread.FromAddr(ti.Addresses[0])
+	if err != nil {
+		return true, fmt.Errorf("Unable to parse db id")
+	}
 
 	for _, a := range ti.Addresses {
 		ma, err := ma.NewMultiaddr(a)
@@ -258,27 +262,19 @@ func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain
 		}
 
 		// exit on the first address that works
-		dbID, err := thread.FromAddr(ma)
-		if err != nil {
-			return true, fmt.Errorf("Unable to parse db id")
-		}
 		tc.SaveBucketThreadID(ctx, slug, dbID.String())
 		return true, nil
 	}
 
 	// if it reached here then no addresses worked, try the hub
 	hubma, err := ma.NewMultiaddr(tc.cfg.GetString(config.TextileHubMa, ""))
+	threadma := hubma + "/thread/" + dbID.String()
 	if err != nil {
 		return false, err
 	}
-	err = tc.threads.NewDBFromAddr(ctx, hubma, k)
+	err = tc.threads.NewDBFromAddr(ctx, threadma, k)
 	if err != nil {
 		return false, err
-	}
-
-	dbID, err := thread.FromAddr(hubma)
-	if err != nil {
-		return true, fmt.Errorf("Unable to parse db id")
 	}
 	tc.SaveBucketThreadID(ctx, slug, dbID.String())
 	return true, nil
