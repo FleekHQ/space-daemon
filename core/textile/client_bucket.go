@@ -16,6 +16,7 @@ import (
 	bc "github.com/textileio/textile/api/buckets/client"
 	bucketsproto "github.com/textileio/textile/api/buckets/pb"
 	"github.com/textileio/textile/api/common"
+	"github.com/textileio/textile/cmd"
 )
 
 func NotFound(slug string) error {
@@ -227,14 +228,8 @@ func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*t
 	b, err := tc.threads.GetDBInfo(ctx, dbID)
 
 	// replicate with the hub
-	hubma, err := ma.NewMultiaddr(tc.cfg.GetString(config.TextileHubMa, ""))
-	if err != nil {
-		log.Error("Unable to replicate on the hub: ", err)
-		// proceeding still because local/public IP
-		// addresses could be used to join thread
-	}
-
-	if _, err := tc.netc.AddReplicator(ctx, dbID, hubma); err != nil {
+	hubma := tc.cfg.GetString(config.TextileHubMa, "")
+	if _, err := tc.netc.AddReplicator(ctx, dbID, cmd.AddrFromStr(hubma)); err != nil {
 		log.Error("Unable to replicate on the hub: ", err)
 		// proceeding still because local/public IP
 		// addresses could be used to join thread
