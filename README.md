@@ -28,7 +28,7 @@ If you want to run Space Daemon by source, check out [this section](https://gith
 
 ## Usage
 
-Space Daemon provides a gRPC interface. You can read its proto schema [here](https://github.com/FleekHQ/space-daemon/blob/master/grpc/pb/space.proto). It contains methods to:
+Space Daemon provides a gRPC interface. You can read its proto schema [here](https://github.com/FleekHQ/space-daemon/blob/master/grpc/proto/space.proto). It contains methods to:
 
 - Create files and directories
 
