@@ -261,6 +261,8 @@ func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*t
 
 func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error) {
 	k, err := thread.KeyFromString(ti.Key)
+	reflector := jsonschema.Reflector{ExpandedStruct: true}
+	schema = reflector.Reflect(&buckets.Bucket{})
 
 	// get the DB ID from the first ma
 	ma1, err := ma.NewMultiaddr(ti.Addresses[0])
@@ -279,7 +281,11 @@ func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain
 			continue
 		}
 
-		err = tc.threads.NewDBFromAddr(ctx, ma1, k)
+		err = tc.threads.NewDBFromAddr(ctx, ma1, k, db.WithNewManagedCollections(db.CollectionConfig{
+			Name:    "buckets",
+			Schema:  schema,
+			Indexes: indexes,
+		}))
 
 		if err != nil {
 			log.Error("Unable to join addr", err)
@@ -301,8 +307,6 @@ func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain
 		return false, err
 	}
 
-	reflector := jsonschema.Reflector{ExpandedStruct: true}
-	schema = reflector.Reflect(&buckets.Bucket{})
 	err = tc.threads.NewDBFromAddr(ctx, hubma, k, db.WithNewManagedCollections(db.CollectionConfig{
 		Name:    "buckets",
 		Schema:  schema,
