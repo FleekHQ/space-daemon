@@ -302,7 +302,7 @@ func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain
 		return false, err
 	}
 
-	tc.SaveBucketThreadID(ctx, slug, dbID.String())
+	tc.SaveBucketThreadID(ctx, slug, string(dbID.Bytes()))
 	return true, nil
 }
 
