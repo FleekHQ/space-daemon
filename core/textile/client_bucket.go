@@ -9,14 +9,24 @@ import (
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
+	"github.com/alecthomas/jsonschema"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	ma "github.com/multiformats/go-multiaddr"
 	tc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
+	"github.com/textileio/go-threads/db"
 	bc "github.com/textileio/textile/api/buckets/client"
 	bucketsproto "github.com/textileio/textile/api/buckets/pb"
 	"github.com/textileio/textile/api/common"
+	buckets "github.com/textileio/textile/buckets"
 	"github.com/textileio/textile/cmd"
+)
+
+var (
+	schema  *jsonschema.Schema
+	indexes = []db.Index{{
+		Path: "path",
+	}}
 )
 
 func NotFound(slug string) error {
@@ -270,15 +280,28 @@ func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain
 		return true, nil
 	}
 
+	log.Info("unable to join any advertised addresses, so joining via the hub instead")
+
 	// if it reached here then no addresses worked, try the hub
 	hubma, err := ma.NewMultiaddr(tc.cfg.GetString(config.TextileHubMa, "") + "/thread/" + dbID.String())
 	if err != nil {
+		log.Info("error getting hubma")
+		log.Fatal(err)
 		return false, err
 	}
-	err = tc.threads.NewDBFromAddr(ctx, hubma, k)
+
+	reflector := jsonschema.Reflector{ExpandedStruct: true}
+	schema = reflector.Reflect(&buckets.Bucket{})
+	err = tc.threads.NewDBFromAddr(ctx, hubma, k, db.WithNewManagedCollections(db.CollectionConfig{
+		Name:    "buckets",
+		Schema:  schema,
+		Indexes: indexes,
+	}))
 	if err != nil {
+		log.Error("error joining thread via hub: ", err)
 		return false, err
 	}
+
 	tc.SaveBucketThreadID(ctx, slug, dbID.String())
 	return true, nil
 }
