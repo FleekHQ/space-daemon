@@ -13,10 +13,9 @@ import (
 )
 
 type BucketSchema struct {
-	ID          core.InstanceID `json:"_id"`
-	Slug        string          `json:"slug"`
-	DbID        string
-	BackupInHub bool
+	ID   core.InstanceID `json:"_id"`
+	Slug string          `json:"slug"`
+	DbID string
 }
 
 const metaThreadName = "metathread"
@@ -47,7 +46,7 @@ func (tc *textileClient) initBucketCollection(ctx context.Context) (*thread.ID, 
 	return dbID, nil
 }
 
-func (tc *textileClient) storeBucketInCollection(ctx context.Context, bucketSlug, dbID string, backupInHub bool) (*BucketSchema, error) {
+func (tc *textileClient) storeBucketInCollection(ctx context.Context, bucketSlug, dbID string) (*BucketSchema, error) {
 	log.Debug("storeBucketInCollection: Storing bucket " + bucketSlug)
 	if existingBucket, err := tc.findBucketInCollection(ctx, bucketSlug); err == nil {
 		log.Debug("storeBucketInCollection: Bucket already in collection")
@@ -61,10 +60,9 @@ func (tc *textileClient) storeBucketInCollection(ctx context.Context, bucketSlug
 	}
 
 	newInstance := &BucketSchema{
-		Slug:        bucketSlug,
-		ID:          "",
-		DbID:        dbID,
-		BackupInHub: backupInHub,
+		Slug: bucketSlug,
+		ID:   "",
+		DbID: dbID,
 	}
 
 	instances := client.Instances{newInstance}
@@ -76,11 +74,23 @@ func (tc *textileClient) storeBucketInCollection(ctx context.Context, bucketSlug
 	}
 	id := res[0]
 	return &BucketSchema{
-		Slug:        newInstance.Slug,
-		ID:          core.InstanceID(id),
-		DbID:        newInstance.DbID,
-		BackupInHub: newInstance.BackupInHub,
+		Slug: newInstance.Slug,
+		ID:   core.InstanceID(id),
+		DbID: newInstance.DbID,
 	}, nil
+}
+
+func (tc *textileClient) upsertBucketInCollection(ctx context.Context, bucketSlug, dbID string) (*BucketSchema, error) {
+	metaDbID, err := tc.initBucketCollection(ctx)
+	if err != nil && metaDbID == nil {
+		return nil, err
+	}
+
+	if existingBucket, err := tc.findBucketInCollection(ctx, bucketSlug); err == nil {
+		tc.threads.Delete(ctx, *metaDbID, bucketCollectionName, []string{existingBucket.ID.String()})
+	}
+
+	return tc.storeBucketInCollection(ctx, bucketSlug, dbID)
 }
 
 func (tc *textileClient) findBucketInCollection(ctx context.Context, bucketSlug string) (*BucketSchema, error) {

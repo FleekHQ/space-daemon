@@ -11,6 +11,7 @@ const (
 	SpaceRestProxyServerPort = "space/restProxyPort"
 	SpaceStorePath           = "space/storePath"
 	TextileHubTarget         = "space/textileHubTarget"
+	TextileHubMa             = "space/textileHubMa"
 	TextileThreadsTarget     = "space/textileThreadsTarget"
 	MountFuseDrive           = "space/mountFuseDrive"
 	FuseMountPath            = "space/fuseMountPath"
@@ -40,6 +41,7 @@ type Flags struct {
 	ServicesAPIURL       string
 	ServicesHubAuthURL   string
 	TextileHubTarget     string
+	TextileHubMa         string
 	TextileThreadsTarget string
 }
 

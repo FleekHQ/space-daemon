@@ -30,6 +30,7 @@ var (
 	spaceapi       string
 	spacehubauth   string
 	textilehub     string
+	textilehubma   string
 	textilethreads string
 )
 
@@ -53,6 +54,7 @@ func main() {
 		ServicesHubAuthURL:   spacehubauth,
 		DevMode:              *devMode == true,
 		TextileHubTarget:     textilehub,
+		TextileHubMa:         textilehubma,
 		TextileThreadsTarget: textilethreads,
 	}
 

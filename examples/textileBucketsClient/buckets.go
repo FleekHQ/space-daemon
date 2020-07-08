@@ -24,6 +24,7 @@ import (
 	tCommon "github.com/textileio/go-threads/common"
 	"github.com/textileio/go-threads/core/thread"
 	netapi "github.com/textileio/go-threads/net/api"
+	netapiclient "github.com/textileio/go-threads/net/api/client"
 	netpb "github.com/textileio/go-threads/net/api/pb"
 	"github.com/textileio/go-threads/util"
 	bc "github.com/textileio/textile/api/buckets/client"
@@ -89,7 +90,6 @@ func runThreadsLocally() {
 	}
 	defer n.Close()
 	n.Bootstrap(util.DefaultBoostrapPeers())
-
 	service, err := api.NewService(n, api.Config{
 		RepoPath: repo,
 		Debug:    debug,
@@ -180,7 +180,7 @@ type Bucket struct {
 	UpdatedAt int64 `json:"updated_at"`
 }
 
-func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, user string, bucketSlug string) *pb.InitReply {
+func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, netclient *netapiclient.Client, user string, bucketSlug string) *pb.InitReply {
 	// only needed for hub connections
 
 	key := os.Getenv("TXL_USER_KEY")
@@ -219,6 +219,12 @@ func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, user str
 	buckets.Init(ctx, bc.WithName(bucketSlug+"2"), bc.WithPrivate(true))
 
 	log.Println("finished creating bucket")
+
+	hostid, err := netclient.GetHostID(ctx)
+	if err != nil {
+		log.Println("error getting HOST ID: ", err)
+	}
+	log.Println("HOSTID: ", hostid)
 
 	newCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -366,10 +372,15 @@ func main() {
 			cmd.Fatal(err)
 		}
 
+		netclient, err := netapiclient.NewClient(host, opts...)
+		if err != nil {
+			cmd.Fatal(err)
+		}
+
 		log.Println("Finished client init, calling user init ...")
 
 		// hub
-		res := initUser(threads, buckets, users, "test-user", "test-bucket")
+		res := initUser(threads, buckets, users, netclient, "test-user", "test-bucket")
 		log.Println(res)
 	}
 }

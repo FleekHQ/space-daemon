@@ -144,6 +144,22 @@ service SpaceApi {
     };
   }
 
+  // Share bucket
+  rpc ShareBucket(ShareBucketRequest) returns (ShareBucketResponse) {
+    option (google.api.http) = {
+      post: "/v1/buckets/{bucket}/share"
+      body: "*"
+    };
+  }
+
+  // Join bucket
+  rpc JoinBucket(JoinBucketRequest) returns (JoinBucketResponse) {
+    option (google.api.http) = {
+      post: "/v1/buckets/{bucket}/join"
+      body: "*"
+    };
+  }
+
   // Share bucket via email
   rpc ShareBucketViaEmail(ShareBucketViaEmailRequest) returns (ShareBucketViaEmailResponse) {
     option (google.api.http) = {
@@ -323,6 +339,28 @@ message RecoverKeysByPassphraseRequest {
 }
 
 message RecoverKeysByPassphraseResponse {}
+
+message ThreadInfo {
+  repeated string addresses = 1;
+  string key = 2;
+}
+
+message ShareBucketRequest {
+  string bucket = 1;
+}
+
+message ShareBucketResponse {
+  ThreadInfo threadinfo = 1;
+}
+
+message JoinBucketRequest {
+  ThreadInfo threadinfo = 1;
+  string bucket = 2;
+}
+
+message JoinBucketResponse {
+  bool result = 1;
+}
 
 message ShareBucketViaEmailRequest {
   string bucket = 1;

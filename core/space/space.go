@@ -27,6 +27,8 @@ type Service interface {
 	AddItems(ctx context.Context, sourcePaths []string, targetPath string, bucketName string) (<-chan domain.AddItemResult, domain.AddItemsResponse, error)
 	CreateIdentity(ctx context.Context, username string) (*domain.Identity, error)
 	GetIdentityByUsername(ctx context.Context, username string) (*domain.Identity, error)
+	ShareBucket(ctx context.Context, slug string) (*domain.ThreadInfo, error)
+	JoinBucket(ctx context.Context, slug string, threadinfo *domain.ThreadInfo) (bool, error)
 }
 
 type serviceOptions struct {

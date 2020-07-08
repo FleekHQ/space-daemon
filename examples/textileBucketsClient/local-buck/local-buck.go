@@ -117,6 +117,12 @@ func main() {
 		fmt.Println("db info - Name: ", v.Name)
 
 		// replicate on hub
-		netc.AddReplicator(ctx, dbID, cmd.AddrFromStr("/ip4/54.188.82.109/tcp/3006"))
+		peerid, err := netc.AddReplicator(ctx, dbID, cmd.AddrFromStr(os.Getenv("TXL_HUB_MA")))
+
+		if err != nil {
+			fmt.Println("Unable to replicate on the hub: " + err.Error())
+		}
+
+		fmt.Println("peerid: ", peerid)
 	}
 }

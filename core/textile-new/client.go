@@ -15,6 +15,7 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
+	nc "github.com/textileio/go-threads/net/api/client"
 	bucketsClient "github.com/textileio/textile/api/buckets/client"
 	"github.com/textileio/textile/api/common"
 	"github.com/textileio/textile/cmd"
@@ -29,6 +30,7 @@ type textileClient struct {
 	Ready            chan bool
 	cfg              config.Config
 	isConnectedToHub bool
+	netc             *nc.Client
 }
 
 // Creates a new Textile Client
@@ -37,6 +39,7 @@ func NewClient(store db.Store) *textileClient {
 		store:            store,
 		threads:          nil,
 		bucketsClient:    nil,
+		netc:             nil,
 		isRunning:        false,
 		Ready:            make(chan bool),
 		isConnectedToHub: false,
@@ -95,11 +98,6 @@ func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error)
 	// TODO: CTX has to be made from session key received from lambda
 	log.Debug("Creating libp2p identity")
 	tok, err := tc.threads.GetToken(ctx, thread.NewLibp2pIdentity(privateKey))
-	log.Debug("got tok")
-	_, err = tok.Validate(privateKey)
-	if err != nil {
-		return nil, err
-	}
 
 	ctx = thread.NewTokenContext(ctx, tok)
 	return ctx, nil
@@ -116,6 +114,7 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 
 	var threads *threadsClient.Client
 	var buckets *bucketsClient.Client
+	var netc *nc.Client
 
 	// by default it goes to local threads now
 	host := "127.0.0.1:3006"
@@ -134,8 +133,15 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 		threads = t
 	}
 
+	if n, err := nc.NewClient(host, opts...); err != nil {
+		cmd.Fatal(err)
+	} else {
+		netc = n
+	}
+
 	tc.bucketsClient = buckets
 	tc.threads = threads
+	tc.netc = netc
 
 	tc.isRunning = true
 
@@ -227,7 +233,7 @@ func getThreadIDStoreKey(bucketSlug string) []byte {
 }
 
 func (tc *textileClient) findOrCreateThreadID(ctx context.Context, threads *threadsClient.Client, bucketSlug string) (*thread.ID, error) {
-	if val, _ := tc.store.Get([]byte(getThreadIDStoreKey(bucketSlug))); val != nil {
+	if val, _ := tc.store.Get(getThreadIDStoreKey(bucketSlug)); val != nil {
 		log.Debug("findOrCreateThreadID: Thread ID found in local store")
 		// Cast the stored dbID from bytes to thread.ID
 		if dbID, err := thread.Cast(val); err != nil {

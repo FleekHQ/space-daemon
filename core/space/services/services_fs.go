@@ -39,6 +39,35 @@ func (s *Space) ListBuckets(ctx context.Context) ([]textile.Bucket, error) {
 	return buckets, nil
 }
 
+func (s *Space) ShareBucket(ctx context.Context, slug string) (*domain.ThreadInfo, error) {
+	r, err := s.tc.ShareBucket(ctx, slug)
+	if err != nil {
+		return nil, err
+	}
+
+	addrs := make([]string, 0)
+
+	for _, addr := range r.Addrs {
+		addrs = append(addrs, addr.String())
+	}
+
+	ti := &domain.ThreadInfo{
+		Addresses: addrs,
+		Key:       r.Key.String(),
+	}
+
+	return ti, nil
+}
+
+func (s *Space) JoinBucket(ctx context.Context, slug string, threadinfo *domain.ThreadInfo) (bool, error) {
+	r, err := s.tc.JoinBucket(ctx, slug, threadinfo)
+	if err != nil {
+		return false, err
+	}
+
+	return r, nil
+}
+
 // Returns the bucket given the name, and if the name is "" returns the default bucket
 func (s *Space) getBucketWithFallback(ctx context.Context, bucketName string) (textile.Bucket, error) {
 	var b textile.Bucket

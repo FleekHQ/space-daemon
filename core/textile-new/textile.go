@@ -5,8 +5,10 @@ import (
 	"io"
 
 	"github.com/FleekHQ/space-daemon/config"
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/textile-new/bucket"
 	"github.com/ipfs/interface-go-ipfs-core/path"
+	tc "github.com/textileio/go-threads/api/client"
 
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
 
@@ -53,6 +55,8 @@ type Client interface {
 	GetBucket(ctx context.Context, slug string) (Bucket, error)
 	GetThreadsConnection() (*threadsClient.Client, error)
 	ListBuckets(ctx context.Context) ([]Bucket, error)
+	ShareBucket(ctx context.Context, bucketSlug string) (*tc.DBInfo, error)
+	JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error)
 	CreateBucket(ctx context.Context, bucketSlug string) (Bucket, error)
 	Shutdown() error
 	WaitForReady() chan bool
