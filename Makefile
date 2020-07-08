@@ -15,7 +15,10 @@ build:
 	cmd/space-daemon/main.go
 
 test:
-	go test ./...
+	go test $$(go list ./... | grep -v integrationtest)
+
+integration_test:
+	go test -v ./integrationtest/...
 
 proto_gen:
 	protoc -I grpc/pb/ -I grpc/proto/ -I./devtools/googleapis grpc/proto/space.proto --go_out=plugins=grpc:grpc/pb

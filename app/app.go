@@ -39,6 +39,7 @@ type App struct {
 	cfg            config.Config
 	env            env.SpaceEnv
 	isShuttingDown bool
+	readChan       chan bool
 }
 
 type componentMap struct {
@@ -52,6 +53,7 @@ func New(cfg config.Config, env env.SpaceEnv) *App {
 		cfg:            cfg,
 		env:            env,
 		isShuttingDown: false,
+		readChan:       make(chan bool, 1),
 	}
 }
 
@@ -152,6 +154,7 @@ func (a *App) Start(ctx context.Context) error {
 
 	log.Info("Daemon ready")
 
+	a.readChan <- true
 	// wait for interruption or done signal
 	select {
 	case <-interrupt:
@@ -209,7 +212,14 @@ func (a *App) Shutdown() error {
 		}
 	}
 
-	err := a.eg.Wait()
+	var err error
+	if a.eg != nil {
+		err = a.eg.Wait()
+	}
 	log.Info("Shutdown complete")
 	return err
+}
+
+func (a *App) WaitForReady() chan bool {
+	return a.readChan
 }
