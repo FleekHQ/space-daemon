@@ -22,7 +22,7 @@ By default, Space Daemon connects to hosted services provided by Fleek. This sho
 
 ### Downloading the binary
 
-Check out the releases [here](https://github.com/FleekHQ/space-daemon/releases/tag). You can download the latest version for your OS and you should be good to go.
+Check out the releases [here](https://github.com/FleekHQ/space-daemon/releases). You can download the latest version for your OS and you should be good to go.
 
 If you want to run Space Daemon by source, check out [this section](https://github.com/FleekHQ/space-daemon#Running)
 
