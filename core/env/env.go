@@ -17,6 +17,7 @@ const (
 	ServicesAPIURL       = "SERVICES_API_URL"
 	ServicesHubAuthURL   = "SERVICES_HUB_AUTH_URL"
 	TextileHubTarget     = "TXL_HUB_TARGET"
+	TextileHubMa         = "TXL_HUB_MA"
 	TextileThreadsTarget = "TXL_THREADS_TARGET"
 )
 

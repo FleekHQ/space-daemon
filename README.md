@@ -89,6 +89,7 @@ MONGO_REPLICA_SET=[The replica set for a MongoDB database]
 SERVICES_API_URL=[The URL where Space Services API is located]
 SERVICES_HUB_AUTH_URL=[The URL where Space Services Textile Hub Authorizer is located]
 TXL_HUB_TARGET=[The URL of the Textile Hub]
+TXL_HUB_MA=[The multiaddress for the Textile hub]
 TXL_THREADS_TARGET=[The URL of the Textile Hub where Threads are hosted, can be the same that TXL_HUB_TARGET]
 ```
 

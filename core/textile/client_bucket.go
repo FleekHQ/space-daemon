@@ -4,14 +4,30 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
+	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/keychain"
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
+	"github.com/alecthomas/jsonschema"
 	"github.com/libp2p/go-libp2p-core/crypto"
+	ma "github.com/multiformats/go-multiaddr"
+	tc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
+	"github.com/textileio/go-threads/db"
 	bc "github.com/textileio/textile/api/buckets/client"
 	bucketsproto "github.com/textileio/textile/api/buckets/pb"
 	"github.com/textileio/textile/api/common"
+	buckets "github.com/textileio/textile/buckets"
+	"github.com/textileio/textile/cmd"
+)
+
+var (
+	schema  *jsonschema.Schema
+	indexes = []db.Index{{
+		Path: "path",
+	}}
 )
 
 func NotFound(slug string) error {
@@ -73,6 +89,7 @@ func (tc *textileClient) GetBucket(ctx context.Context, slug string) (Bucket, er
 	}
 
 	buckets, err := tc.ListBuckets(ctx)
+
 	if err != nil {
 		log.Error("error while fetching bucketsClient in GetBucket", err)
 		return nil, err
@@ -152,22 +169,31 @@ func (tc *textileClient) GetBucketContext(ctx context.Context, bucketSlug string
 }
 
 func (tc *textileClient) ListBuckets(ctx context.Context) ([]Bucket, error) {
-	threadsCtx, _, err := tc.GetLocalBucketContext(ctx, defaultPersonalBucketSlug)
-
-	if err != nil {
-		log.Error("error in ListBuckets while fetching bucket context", err)
-		return nil, err
-	}
-
-	bucketList, err := tc.bucketsClient.List(threadsCtx)
-	if err != nil {
-		return nil, err
-	}
-
 	result := make([]Bucket, 0)
-	for _, r := range bucketList.Roots {
-		b := tc.getNewBucket(r)
-		result = append(result, b)
+
+	// TEMP
+	keys, err := tc.store.KeysWithPrefix(threadIDStoreKey)
+	if err != nil {
+		log.Error("error getting keys: ", err)
+	}
+
+	for _, key := range keys {
+		threadsCtx, _, err := tc.GetLocalBucketContext(ctx, strings.TrimPrefix(key, threadIDStoreKey+"_"))
+
+		if err != nil {
+			log.Error("error in ListBuckets while fetching bucket context", err)
+			return nil, err
+		}
+
+		bucketList, err := tc.bucketsClient.List(threadsCtx)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, r := range bucketList.Roots {
+			b := tc.getNewBucket(r)
+			result = append(result, b)
+		}
 	}
 
 	return tc.setBuckets(result), nil
@@ -210,6 +236,89 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 	newB := tc.getNewBucket(b.Root)
 
 	return newB, nil
+}
+
+func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*tc.DBInfo, error) {
+	dbBytes, err := tc.store.Get([]byte(getThreadIDStoreKey(bucketSlug)))
+
+	if err != nil {
+		return nil, err
+	}
+
+	dbID, err := thread.Cast(dbBytes)
+	b, err := tc.threads.GetDBInfo(ctx, dbID)
+
+	// replicate with the hub
+	hubma := tc.cfg.GetString(config.TextileHubMa, "")
+	if _, err := tc.netc.AddReplicator(ctx, dbID, cmd.AddrFromStr(hubma)); err != nil {
+		log.Error("Unable to replicate on the hub: ", err)
+		// proceeding still because local/public IP
+		// addresses could be used to join thread
+	}
+
+	return b, err
+}
+
+func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error) {
+	k, err := thread.KeyFromString(ti.Key)
+	reflector := jsonschema.Reflector{ExpandedStruct: true}
+	schema = reflector.Reflect(&buckets.Bucket{})
+
+	// get the DB ID from the first ma
+	ma1, err := ma.NewMultiaddr(ti.Addresses[0])
+	if err != nil {
+		return false, fmt.Errorf("Unable to parse multiaddr")
+	}
+	dbID, err := thread.FromAddr(ma1)
+	if err != nil {
+		return false, fmt.Errorf("Unable to parse db id")
+	}
+
+	for _, a := range ti.Addresses {
+		ma1, err := ma.NewMultiaddr(a)
+		if err != nil {
+			log.Error("Unable to parse multiaddr", err)
+			continue
+		}
+
+		err = tc.threads.NewDBFromAddr(ctx, ma1, k, db.WithNewManagedCollections(db.CollectionConfig{
+			Name:    "buckets",
+			Schema:  schema,
+			Indexes: indexes,
+		}))
+
+		if err != nil {
+			log.Error("Unable to join addr", err)
+			continue
+		}
+
+		// exit on the first address that works
+		tc.SaveBucketThreadID(ctx, slug, dbID.String())
+		return true, nil
+	}
+
+	log.Info("unable to join any advertised addresses, so joining via the hub instead")
+
+	// if it reached here then no addresses worked, try the hub
+	hubma, err := ma.NewMultiaddr(tc.cfg.GetString(config.TextileHubMa, "") + "/thread/" + dbID.String())
+	if err != nil {
+		log.Info("error getting hubma")
+		log.Fatal(err)
+		return false, err
+	}
+
+	err = tc.threads.NewDBFromAddr(ctx, hubma, k, db.WithNewManagedCollections(db.CollectionConfig{
+		Name:    "buckets",
+		Schema:  schema,
+		Indexes: indexes,
+	}))
+	if err != nil {
+		log.Error("error joining thread via hub: ", err)
+		return false, err
+	}
+
+	tc.SaveBucketThreadID(ctx, slug, string(dbID.Bytes()))
+	return true, nil
 }
 
 func (tc *textileClient) getNewBucket(b *bucketsproto.Root) Bucket {

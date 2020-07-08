@@ -20,6 +20,7 @@ builds:
       - -X main.spaceapi={{ .Env.SERVICES_API_URL }}
       - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
       - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
+      - -X main.textilehubma={{ .Env.TXL_HUB_MA }}
       - -X main.textilethreads={{ .Env.TXL_THREADS_TARGET }}
     main: ./cmd/space-daemon/main.go
     binary: space
@@ -38,6 +39,7 @@ builds:
       - -X main.spaceapi={{ .Env.SERVICES_API_URL }}
       - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
       - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
+      - -X main.textilehubma={{ .Env.TXL_HUB_MA }}
       - -X main.textilethreads={{ .Env.TXL_THREADS_TARGET }}
     main: ./cmd/space-daemon/main.go
     binary: space

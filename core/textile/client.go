@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/FleekHQ/space-daemon/config"
@@ -13,6 +14,7 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
+	nc "github.com/textileio/go-threads/net/api/client"
 	bucketsClient "github.com/textileio/textile/api/buckets/client"
 	"github.com/textileio/textile/api/common"
 	"github.com/textileio/textile/cmd"
@@ -23,6 +25,7 @@ type textileClient struct {
 	store         db.Store
 	threads       *threadsClient.Client
 	bucketsClient *bucketsClient.Client
+	netc          *nc.Client
 	isRunning     bool
 	Ready         chan bool
 
@@ -44,6 +47,7 @@ func NewClient(store db.Store) *textileClient {
 		store:         store,
 		threads:       nil,
 		bucketsClient: nil,
+		netc:          nil,
 		isRunning:     false,
 		Ready:         make(chan bool),
 		buckets:       make(map[string]*bucket),
@@ -56,6 +60,25 @@ func getThreadName(userPubKey []byte, bucketSlug string) string {
 
 func getThreadIDStoreKey(bucketSlug string) []byte {
 	return []byte(threadIDStoreKey + "_" + bucketSlug)
+}
+
+func (tc *textileClient) SaveBucketThreadID(ctx context.Context, bucketSlug, dbID string) error {
+	if val, _ := tc.store.Get([]byte(getThreadIDStoreKey(bucketSlug))); val != nil {
+		log.Debug("Thread ID found in local store")
+		// Cast the stored dbID from bytes to thread.ID
+		if _, err := thread.Cast(val); err != nil {
+			return err
+		} else {
+			return fmt.Errorf("Bucket ID mapping already exists")
+		}
+	}
+
+	if err := tc.store.Set([]byte(getThreadIDStoreKey(bucketSlug)), []byte(dbID)); err != nil {
+		newErr := errors.New("error while storing thread id: check your local space db accessibility")
+		return newErr
+	}
+
+	return nil
 }
 
 func (tc *textileClient) findOrCreateThreadID(ctx context.Context, threads *threadsClient.Client, bucketSlug string) (*thread.ID, error) {
@@ -139,6 +162,7 @@ func (tc *textileClient) start(cfg config.Config) error {
 
 	var threads *threadsClient.Client
 	var buckets *bucketsClient.Client
+	var netc *nc.Client
 
 	// by default it goes to local threads now
 	host := "127.0.0.1:3006"
@@ -156,9 +180,15 @@ func (tc *textileClient) start(cfg config.Config) error {
 	} else {
 		threads = t
 	}
+	if n, err := nc.NewClient(host, opts...); err != nil {
+		cmd.Fatal(err)
+	} else {
+		netc = n
+	}
 
 	tc.bucketsClient = buckets
 	tc.threads = threads
+	tc.netc = netc
 
 	tc.isRunning = true
 	tc.Ready <- true
