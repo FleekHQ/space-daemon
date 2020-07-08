@@ -75,16 +75,36 @@ func (tc *textileClient) getBucketContext(ctx context.Context, bucketSlug string
 
 	bucketCtx = common.NewThreadNameContext(bucketCtx, getThreadName(pubKeyInBytes, bucketSlug))
 
-	var dbID *thread.ID
-	log.Debug("getBucketContext: Fetching thread id from local store")
-	if dbID, err = tc.findOrCreateThreadID(bucketCtx, tc.threads, bucketSlug); err != nil {
-		return nil, nil, err
+	var dbID thread.ID
+	log.Debug("getBucketContext: Fetching thread id from meta store")
+	bucketSchema, err := tc.findBucketInCollection(bucketCtx, bucketSlug)
+	if err == nil {
+		var castErr error
+		dbID, castErr = thread.Cast([]byte(bucketSchema.DbID))
+		if castErr != nil {
+			log.Error("Error casting thread id", castErr)
+			return nil, nil, castErr
+		}
+	} else {
+		log.Debug("getBucketContext: Thread ID not found in meta store. Generating a new one...")
+		dbID = thread.NewIDV1(thread.Raw, 32)
+
+		log.Debug("getBucketContext: Creating Thread DB")
+		if err := tc.threads.NewDB(ctx, dbID); err != nil {
+			return nil, nil, err
+		}
+		log.Debug("getBucketContext: Thread DB Created")
+		_, err := tc.storeBucketInCollection(bucketCtx, bucketSlug, castDbIDToString(dbID))
+		if err != nil {
+			return nil, nil, err
+		}
 	}
+
 	log.Debug("getBucketContext: got dbID " + dbID.String())
 
-	bucketCtx = common.NewThreadIDContext(bucketCtx, *dbID)
+	bucketCtx = common.NewThreadIDContext(bucketCtx, dbID)
 	log.Debug("getBucketContext: Returning bucket context")
-	return bucketCtx, dbID, nil
+	return bucketCtx, &dbID, nil
 }
 
 func (tc *textileClient) ListBuckets(ctx context.Context) ([]Bucket, error) {
@@ -209,9 +229,13 @@ func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address strin
 
 	dbID, err := thread.FromAddr(multiaddress)
 
-	tc.upsertBucketInCollection(ctx, bucketSlug, dbID.String())
+	tc.upsertBucketInCollection(ctx, bucketSlug, castDbIDToString(dbID))
 
 	return nil
+}
+
+func castDbIDToString(dbID thread.ID) string {
+	return string(dbID.Bytes())
 }
 
 func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error) {
