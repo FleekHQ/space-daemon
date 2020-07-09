@@ -2,6 +2,7 @@ package textile
 
 import (
 	"context"
+	"encoding/base32"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -10,17 +11,14 @@ import (
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	ma "github.com/multiformats/go-multiaddr"
 
-	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/textile-new/bucket"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/alecthomas/jsonschema"
-	"github.com/libp2p/go-libp2p-core/crypto"
 	textileApiClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
 	bc "github.com/textileio/textile/api/buckets/client"
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
-	"github.com/textileio/textile/api/common"
 	buckets "github.com/textileio/textile/buckets"
 	"github.com/textileio/textile/cmd"
 )
@@ -48,63 +46,39 @@ func getThreadName(userPubKey []byte, bucketSlug string) string {
 }
 
 // Returns a context that works for accessing a bucket
-func (tc *textileClient) getBucketContext(ctx context.Context, bucketSlug string, useHub bool) (context.Context, *thread.ID, error) {
+func (tc *textileClient) getBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error) {
 	log.Debug("getBucketContext: Getting bucket context")
-	var err error
-	if err = tc.requiresRunning(); err != nil {
-		return nil, nil, err
-	}
-	bucketCtx := ctx
-	if useHub == true {
-		bucketCtx, err = tc.getHubCtx(ctx)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
 
-	var publicKey crypto.PubKey
-	kc := keychain.New(tc.store)
-	if _, publicKey, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
-		return nil, nil, err
-	}
-
-	var pubKeyInBytes []byte
-	if pubKeyInBytes, err = publicKey.Bytes(); err != nil {
-		return nil, nil, err
-	}
-
-	bucketCtx = common.NewThreadNameContext(bucketCtx, getThreadName(pubKeyInBytes, bucketSlug))
-
-	var dbID thread.ID
 	log.Debug("getBucketContext: Fetching thread id from meta store")
-	bucketSchema, err := tc.findBucketInCollection(bucketCtx, bucketSlug)
-	if err == nil {
-		var castErr error
-		dbID, castErr = thread.Cast([]byte(bucketSchema.DbID))
-		if castErr != nil {
-			log.Error("Error casting thread id", castErr)
-			return nil, nil, castErr
-		}
-	} else {
-		log.Debug("getBucketContext: Thread ID not found in meta store. Generating a new one...")
-		dbID = thread.NewIDV1(thread.Raw, 32)
-
-		log.Debug("getBucketContext: Creating Thread DB")
-		if err := tc.threads.NewDB(ctx, dbID); err != nil {
-			return nil, nil, err
-		}
-		log.Debug("getBucketContext: Thread DB Created")
-		_, err := tc.storeBucketInCollection(bucketCtx, bucketSlug, castDbIDToString(dbID))
+	bucketSchema, notFoundErr := tc.findBucketInCollection(ctx, bucketSlug)
+	if notFoundErr == nil { // This means the bucket was already present in the schema
+		dbID, err := parseDbIDFromString(bucketSchema.DbID)
 		if err != nil {
+			log.Error("Error casting thread id", err)
 			return nil, nil, err
 		}
+		log.Debug("getBucketContext: Got dbID from collection: " + dbID.String())
+		ctx, err = tc.getThreadContext(ctx, bucketSlug, *dbID)
+		return ctx, dbID, err
 	}
 
-	log.Debug("getBucketContext: got dbID " + dbID.String())
+	// We need to create the thread and store it in the collection
+	log.Debug("getBucketContext: Thread ID not found in meta store. Generating a new one...")
+	dbID := thread.NewIDV1(thread.Raw, 32)
 
-	bucketCtx = common.NewThreadIDContext(bucketCtx, dbID)
+	log.Debug("getBucketContext: Creating Thread DB for bucket " + bucketSlug + " at db " + dbID.String())
+	if err := tc.threads.NewDB(ctx, dbID); err != nil {
+		return nil, nil, err
+	}
+	log.Debug("getBucketContext: Thread DB Created")
+	_, err := tc.storeBucketInCollection(ctx, bucketSlug, castDbIDToString(dbID))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	bucketCtx, err := tc.getThreadContext(ctx, bucketSlug, dbID)
 	log.Debug("getBucketContext: Returning bucket context")
-	return bucketCtx, &dbID, nil
+	return bucketCtx, &dbID, err
 }
 
 func (tc *textileClient) ListBuckets(ctx context.Context) ([]Bucket, error) {
@@ -126,7 +100,7 @@ func (tc *textileClient) ListBuckets(ctx context.Context) ([]Bucket, error) {
 }
 
 func (tc *textileClient) getBucketRootFromSlug(ctx context.Context, slug string) (context.Context, *buckets_pb.Root, error) {
-	ctx, _, err := tc.getBucketContext(ctx, slug, tc.isConnectedToHub)
+	ctx, _, err := tc.getBucketContext(ctx, slug)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -150,12 +124,13 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 		return b, nil
 	}
 
-	ctx, dbID, err := tc.getBucketContext(ctx, bucketSlug, tc.isConnectedToHub)
+	ctx, dbID, err := tc.getBucketContext(ctx, bucketSlug)
 
 	if err != nil {
 		return nil, err
 	}
 
+	log.Debug("Creating Bucket in db " + dbID.String())
 	// create bucket
 	b, err := tc.bucketsClient.Init(ctx, bc.WithName(bucketSlug), bc.WithPrivate(true))
 	if err != nil {
@@ -175,24 +150,42 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 }
 
 func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*textileApiClient.DBInfo, error) {
-	dbBytes, err := tc.store.Get([]byte(getThreadIDStoreKey(bucketSlug)))
+	bs, err := tc.findBucketInCollection(ctx, bucketSlug)
 
 	if err != nil {
 		return nil, err
 	}
 
-	dbID, err := thread.Cast(dbBytes)
-	b, err := tc.threads.GetDBInfo(ctx, dbID)
+	dbID, err := parseDbIDFromString(bs.DbID)
+	b, err := tc.threads.GetDBInfo(ctx, *dbID)
 
 	// replicate with the hub
 	hubma := tc.cfg.GetString(config.TextileHubMa, "")
-	if _, err := tc.netc.AddReplicator(ctx, dbID, cmd.AddrFromStr(hubma)); err != nil {
+	if _, err := tc.netc.AddReplicator(ctx, *dbID, cmd.AddrFromStr(hubma)); err != nil {
 		log.Error("Unable to replicate on the hub: ", err)
 		// proceeding still because local/public IP
 		// addresses could be used to join thread
 	}
 
 	return b, err
+}
+
+func castDbIDToString(dbID thread.ID) string {
+	bytes := dbID.Bytes()
+	return base32.StdEncoding.EncodeToString(bytes)
+}
+
+func parseDbIDFromString(dbID string) (*thread.ID, error) {
+	bytes, err := base32.StdEncoding.DecodeString(dbID)
+	if err != nil {
+		return nil, err
+	}
+	id, err := thread.Cast(bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
 }
 
 func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address string, key thread.Key, bucketSlug string) error {
@@ -232,10 +225,6 @@ func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address strin
 	tc.upsertBucketInCollection(ctx, bucketSlug, castDbIDToString(dbID))
 
 	return nil
-}
-
-func castDbIDToString(dbID thread.ID) string {
-	return string(dbID.Bytes())
 }
 
 func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error) {

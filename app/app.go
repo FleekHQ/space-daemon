@@ -141,7 +141,6 @@ func (a *App) Start(ctx context.Context) error {
 	)
 
 	a.RunAsync("BucketSync", bucketSync, func() error {
-		<-textileClient.Ready
 		bucketSync.RegisterNotifier(srv)
 		return bucketSync.Start(ctx)
 	})

@@ -57,7 +57,7 @@ func (tc *textileClient) requiresRunning() error {
 	return nil
 }
 
-func (tc *textileClient) getHubCtx2(ctx context.Context) (context.Context, error) {
+func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error) {
 	log.Debug("Authenticating with Textile Hub")
 	tokStr, err := hub.GetHubToken(ctx, tc.store, tc.cfg)
 	if err != nil {
@@ -71,7 +71,7 @@ func (tc *textileClient) getHubCtx2(ctx context.Context) (context.Context, error
 }
 
 // This method is just for testing purposes. Keys shouldn't be bundled in the daemon
-func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error) {
+func (tc *textileClient) getHubCtxViaApiKeys(ctx context.Context) (context.Context, error) {
 	log.Debug("Authenticating with Textile Hub")
 
 	key := os.Getenv("TXL_USER_KEY")
@@ -88,7 +88,6 @@ func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error)
 	}
 	ctx = apiSigCtx
 
-	log.Debug("Obtaining user key pair from local store")
 	kc := keychain.New(tc.store)
 	var privateKey crypto.PrivKey
 	if privateKey, _, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
@@ -96,7 +95,6 @@ func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error)
 	}
 
 	// TODO: CTX has to be made from session key received from lambda
-	log.Debug("Creating libp2p identity")
 	tok, err := tc.threads.GetToken(ctx, thread.NewLibp2pIdentity(privateKey))
 
 	ctx = thread.NewTokenContext(ctx, tok)
@@ -228,40 +226,39 @@ func (tc *textileClient) GetThreadsConnection() (*threadsClient.Client, error) {
 	return tc.threads, nil
 }
 
-func getThreadIDStoreKey(bucketSlug string) []byte {
-	return []byte(threadIDStoreKey + "_" + bucketSlug)
+func (tc *textileClient) IsRunning() bool {
+	return tc.isRunning
 }
 
-func (tc *textileClient) findOrCreateThreadID(ctx context.Context, threads *threadsClient.Client, bucketSlug string) (*thread.ID, error) {
-	if val, _ := tc.store.Get(getThreadIDStoreKey(bucketSlug)); val != nil {
-		log.Debug("findOrCreateThreadID: Thread ID found in local store")
-		// Cast the stored dbID from bytes to thread.ID
-		if dbID, err := thread.Cast(val); err != nil {
+func (tc *textileClient) getThreadContext(parentCtx context.Context, threadName string, dbID thread.ID) (context.Context, error) {
+	var err error
+	ctx := parentCtx
+
+	if err = tc.requiresRunning(); err != nil {
+		return nil, err
+	}
+
+	// If we are connected to the Hub, add the keys to the context so we can replicate
+	if tc.isConnectedToHub == true {
+		ctx, err = tc.getHubCtx(ctx)
+		if err != nil {
 			return nil, err
-		} else {
-			return &dbID, nil
 		}
 	}
 
-	// thread id does not exist yet
-	log.Debug("findOrCreateThreadID: Thread ID not found in local store. Generating a new one...")
-	dbID := thread.NewIDV1(thread.Raw, 32)
-	dbIDInBytes := dbID.Bytes()
-
-	log.Debug("findOrCreateThreadID: Creating Thread DB")
-	if err := tc.threads.NewDB(ctx, dbID); err != nil {
+	var publicKey crypto.PubKey
+	kc := keychain.New(tc.store)
+	if _, publicKey, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
 		return nil, err
 	}
-	log.Debug("findOrCreateThreadID: Thread DB Created")
 
-	if err := tc.store.Set([]byte(getThreadIDStoreKey(bucketSlug)), dbIDInBytes); err != nil {
-		newErr := errors.New("error while storing thread id: check your local space db accessibility")
-		return nil, newErr
+	var pubKeyInBytes []byte
+	if pubKeyInBytes, err = publicKey.Bytes(); err != nil {
+		return nil, err
 	}
 
-	return &dbID, nil
-}
+	ctx = common.NewThreadNameContext(ctx, getThreadName(pubKeyInBytes, threadName))
+	ctx = common.NewThreadIDContext(ctx, dbID)
 
-func (tc *textileClient) IsRunning() bool {
-	return tc.isRunning
+	return ctx, nil
 }
