@@ -11,7 +11,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	ma "github.com/multiformats/go-multiaddr"
 
-	"github.com/FleekHQ/space-daemon/core/textile-new/bucket"
+	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/alecthomas/jsonschema"
 	textileApiClient "github.com/textileio/go-threads/api/client"

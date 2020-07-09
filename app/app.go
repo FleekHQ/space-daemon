@@ -14,7 +14,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/fsds"
 
 	"github.com/FleekHQ/space-daemon/core/spacefs"
-	textile "github.com/FleekHQ/space-daemon/core/textile-new"
+	textile "github.com/FleekHQ/space-daemon/core/textile"
 
 	"github.com/FleekHQ/space-daemon/core/env"
 	"github.com/FleekHQ/space-daemon/core/space"

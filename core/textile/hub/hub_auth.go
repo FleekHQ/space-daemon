@@ -86,7 +86,7 @@ func GetHubToken(ctx context.Context, st store.Store, cfg config.Config) (string
 	pub := identity.GetPublic().String()
 
 	// Request a challenge (a payload we need to sign)
-	log.Debug("Token Challenge: Sending token request with pub key", pub)
+	log.Debug("Token Challenge: Sending token request with pub key" + pub)
 	tokenRequest := &outMessage{
 		Action: "token",
 		Data: sentMessageData{

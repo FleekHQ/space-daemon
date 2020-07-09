@@ -3,7 +3,7 @@ package sync
 import (
 	"testing"
 
-	"github.com/FleekHQ/space-daemon/core/textile-new/bucket"
+	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 
 	"github.com/FleekHQ/space-daemon/mocks"
 	"github.com/stretchr/testify/mock"

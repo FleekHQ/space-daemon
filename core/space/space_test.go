@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/FleekHQ/space-daemon/core/space/services"
-	"github.com/FleekHQ/space-daemon/core/textile-new/bucket"
+	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/mocks"
 	"github.com/stretchr/testify/assert"
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"

@@ -3,7 +3,7 @@ package sync
 import (
 	"encoding/json"
 
-	"github.com/FleekHQ/space-daemon/core/textile-new/bucket"
+	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 
 	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/log"
