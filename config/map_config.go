@@ -11,7 +11,7 @@ type mapConfig struct {
 	configInt map[string]int
 }
 
-func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
+func NewMap(flags *Flags) Config {
 	configStr := make(map[string]string)
 	configInt := make(map[string]int)
 

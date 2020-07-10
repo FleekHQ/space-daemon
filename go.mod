@@ -24,11 +24,10 @@ require (
 	github.com/libp2p/go-libp2p-connmgr v0.2.4
 	github.com/libp2p/go-libp2p-core v0.6.0
 	github.com/libp2p/go-libp2p-crypto v0.1.0
-	github.com/libp2p/go-libp2p-peerstore v0.2.6
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/multiformats/go-base32 v0.0.3
 	github.com/multiformats/go-multiaddr v0.2.2
 	github.com/multiformats/go-multihash v0.0.13
+	github.com/namsral/flag v1.7.4-pre
 	github.com/pkg/errors v0.9.1
 	github.com/radovskyb/watcher v1.0.7
 	github.com/rakyll/statik v0.1.7
@@ -37,7 +36,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/textileio/go-threads v0.1.22-0.20200715004950-43b77eed845f
 	github.com/textileio/textile v1.0.13-0.20200715062314-bc5c48f9d59e
-	go.etcd.io/etcd v3.3.22+incompatible
+	go.uber.org/atomic v1.6.0
 	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
 	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980

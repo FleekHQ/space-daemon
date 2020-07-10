@@ -75,7 +75,7 @@ func main() {
 	env := env.New()
 
 	// load configs
-	cfg := config.NewMap(env, cf)
+	cfg := config.NewMap(cf)
 
 	// setup context
 	ctx := context.Background()

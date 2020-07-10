@@ -110,7 +110,9 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 
 func (tb *TextileBuckd) Stop() error {
 	tb.IsRunning = false
-	tb.textile.Close()
+	if err := tb.textile.Close(); err != nil {
+		return err
+	}
 	close(tb.ready)
 	// TODO: what else
 	return nil
