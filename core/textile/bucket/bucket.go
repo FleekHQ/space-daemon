@@ -34,22 +34,24 @@ type BucketsClient interface {
 // TODO: Maybe read operations dont need a lock, needs testing
 // struct for implementing bucket interface
 type Bucket struct {
-	lock          sync.RWMutex
-	root          *bucketsproto.Root
-	ctx           context.Context
-	bucketsClient BucketsClient
-	threadID      *thread.ID
+	lock             sync.RWMutex
+	root             *bucketsproto.Root
+	bucketsClient    BucketsClient
+	threadID         *thread.ID
+	getBucketContext getBucketContextFn
 }
 
 func (b *Bucket) Slug() string {
 	return b.GetData().Name
 }
 
-func New(root *bucketsproto.Root, ctx context.Context, bucketsClient BucketsClient) *Bucket {
+type getBucketContextFn func(context.Context, string) (context.Context, *thread.ID, error)
+
+func New(root *bucketsproto.Root, getBucketContext getBucketContextFn, bucketsClient BucketsClient) *Bucket {
 	return &Bucket{
-		root:          root,
-		bucketsClient: bucketsClient,
-		ctx:           ctx,
+		root:             root,
+		bucketsClient:    bucketsClient,
+		getBucketContext: getBucketContext,
 	}
 }
 
@@ -68,6 +70,6 @@ func (b *Bucket) GetData() BucketData {
 	}
 }
 
-func (b *Bucket) getContext() (context.Context, *thread.ID) {
-	return b.ctx, b.threadID
+func (b *Bucket) getContext(ctx context.Context) (context.Context, *thread.ID, error) {
+	return b.getBucketContext(ctx, b.root.Name)
 }

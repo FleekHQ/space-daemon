@@ -3,9 +3,11 @@
 package mocks
 
 import (
-	io "io"
+	context "context"
 
 	bucket "github.com/FleekHQ/space-daemon/core/textile/bucket"
+
+	io "io"
 
 	mock "github.com/stretchr/testify/mock"
 
@@ -17,13 +19,13 @@ type Bucket struct {
 	mock.Mock
 }
 
-// CreateDirectory provides a mock function with given fields: _a0
-func (_m *Bucket) CreateDirectory(_a0 string) (path.Resolved, path.Path, error) {
-	ret := _m.Called(_a0)
+// CreateDirectory provides a mock function with given fields: ctx, _a1
+func (_m *Bucket) CreateDirectory(ctx context.Context, _a1 string) (path.Resolved, path.Path, error) {
+	ret := _m.Called(ctx, _a1)
 
 	var r0 path.Resolved
-	if rf, ok := ret.Get(0).(func(string) path.Resolved); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, string) path.Resolved); ok {
+		r0 = rf(ctx, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(path.Resolved)
@@ -31,8 +33,8 @@ func (_m *Bucket) CreateDirectory(_a0 string) (path.Resolved, path.Path, error) 
 	}
 
 	var r1 path.Path
-	if rf, ok := ret.Get(1).(func(string) path.Path); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(context.Context, string) path.Path); ok {
+		r1 = rf(ctx, _a1)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(path.Path)
@@ -40,8 +42,8 @@ func (_m *Bucket) CreateDirectory(_a0 string) (path.Resolved, path.Path, error) 
 	}
 
 	var r2 error
-	if rf, ok := ret.Get(2).(func(string) error); ok {
-		r2 = rf(_a0)
+	if rf, ok := ret.Get(2).(func(context.Context, string) error); ok {
+		r2 = rf(ctx, _a1)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -49,13 +51,13 @@ func (_m *Bucket) CreateDirectory(_a0 string) (path.Resolved, path.Path, error) 
 	return r0, r1, r2
 }
 
-// DeleteDirOrFile provides a mock function with given fields: _a0
-func (_m *Bucket) DeleteDirOrFile(_a0 string) (path.Resolved, error) {
-	ret := _m.Called(_a0)
+// DeleteDirOrFile provides a mock function with given fields: ctx, _a1
+func (_m *Bucket) DeleteDirOrFile(ctx context.Context, _a1 string) (path.Resolved, error) {
+	ret := _m.Called(ctx, _a1)
 
 	var r0 path.Resolved
-	if rf, ok := ret.Get(0).(func(string) path.Resolved); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, string) path.Resolved); ok {
+		r0 = rf(ctx, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(path.Resolved)
@@ -63,8 +65,8 @@ func (_m *Bucket) DeleteDirOrFile(_a0 string) (path.Resolved, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,20 +74,20 @@ func (_m *Bucket) DeleteDirOrFile(_a0 string) (path.Resolved, error) {
 	return r0, r1
 }
 
-// DirExists provides a mock function with given fields: _a0
-func (_m *Bucket) DirExists(_a0 string) (bool, error) {
-	ret := _m.Called(_a0)
+// DirExists provides a mock function with given fields: ctx, _a1
+func (_m *Bucket) DirExists(ctx context.Context, _a1 string) (bool, error) {
+	ret := _m.Called(ctx, _a1)
 
 	var r0 bool
-	if rf, ok := ret.Get(0).(func(string) bool); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
+		r0 = rf(ctx, _a1)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -93,20 +95,20 @@ func (_m *Bucket) DirExists(_a0 string) (bool, error) {
 	return r0, r1
 }
 
-// FileExists provides a mock function with given fields: _a0
-func (_m *Bucket) FileExists(_a0 string) (bool, error) {
-	ret := _m.Called(_a0)
+// FileExists provides a mock function with given fields: ctx, _a1
+func (_m *Bucket) FileExists(ctx context.Context, _a1 string) (bool, error) {
+	ret := _m.Called(ctx, _a1)
 
 	var r0 bool
-	if rf, ok := ret.Get(0).(func(string) bool); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
+		r0 = rf(ctx, _a1)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -128,13 +130,13 @@ func (_m *Bucket) GetData() bucket.BucketData {
 	return r0
 }
 
-// GetFile provides a mock function with given fields: _a0, w
-func (_m *Bucket) GetFile(_a0 string, w io.Writer) error {
-	ret := _m.Called(_a0, w)
+// GetFile provides a mock function with given fields: ctx, _a1, w
+func (_m *Bucket) GetFile(ctx context.Context, _a1 string, w io.Writer) error {
+	ret := _m.Called(ctx, _a1, w)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, io.Writer) error); ok {
-		r0 = rf(_a0, w)
+	if rf, ok := ret.Get(0).(func(context.Context, string, io.Writer) error); ok {
+		r0 = rf(ctx, _a1, w)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -156,13 +158,13 @@ func (_m *Bucket) Key() string {
 	return r0
 }
 
-// ListDirectory provides a mock function with given fields: _a0
-func (_m *Bucket) ListDirectory(_a0 string) (*bucket.DirEntries, error) {
-	ret := _m.Called(_a0)
+// ListDirectory provides a mock function with given fields: ctx, _a1
+func (_m *Bucket) ListDirectory(ctx context.Context, _a1 string) (*bucket.DirEntries, error) {
+	ret := _m.Called(ctx, _a1)
 
 	var r0 *bucket.DirEntries
-	if rf, ok := ret.Get(0).(func(string) *bucket.DirEntries); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *bucket.DirEntries); ok {
+		r0 = rf(ctx, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*bucket.DirEntries)
@@ -170,8 +172,8 @@ func (_m *Bucket) ListDirectory(_a0 string) (*bucket.DirEntries, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -193,13 +195,13 @@ func (_m *Bucket) Slug() string {
 	return r0
 }
 
-// UploadFile provides a mock function with given fields: _a0, reader
-func (_m *Bucket) UploadFile(_a0 string, reader io.Reader) (path.Resolved, path.Path, error) {
-	ret := _m.Called(_a0, reader)
+// UploadFile provides a mock function with given fields: ctx, _a1, reader
+func (_m *Bucket) UploadFile(ctx context.Context, _a1 string, reader io.Reader) (path.Resolved, path.Path, error) {
+	ret := _m.Called(ctx, _a1, reader)
 
 	var r0 path.Resolved
-	if rf, ok := ret.Get(0).(func(string, io.Reader) path.Resolved); ok {
-		r0 = rf(_a0, reader)
+	if rf, ok := ret.Get(0).(func(context.Context, string, io.Reader) path.Resolved); ok {
+		r0 = rf(ctx, _a1, reader)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(path.Resolved)
@@ -207,8 +209,8 @@ func (_m *Bucket) UploadFile(_a0 string, reader io.Reader) (path.Resolved, path.
 	}
 
 	var r1 path.Path
-	if rf, ok := ret.Get(1).(func(string, io.Reader) path.Path); ok {
-		r1 = rf(_a0, reader)
+	if rf, ok := ret.Get(1).(func(context.Context, string, io.Reader) path.Path); ok {
+		r1 = rf(ctx, _a1, reader)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(path.Path)
@@ -216,8 +218,8 @@ func (_m *Bucket) UploadFile(_a0 string, reader io.Reader) (path.Resolved, path.
 	}
 
 	var r2 error
-	if rf, ok := ret.Get(2).(func(string, io.Reader) error); ok {
-		r2 = rf(_a0, reader)
+	if rf, ok := ret.Get(2).(func(context.Context, string, io.Reader) error); ok {
+		r2 = rf(ctx, _a1, reader)
 	} else {
 		r2 = ret.Error(2)
 	}

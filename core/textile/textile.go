@@ -9,6 +9,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	tc "github.com/textileio/go-threads/api/client"
+	"github.com/textileio/go-threads/core/thread"
 
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
 
@@ -28,23 +29,28 @@ type Bucket interface {
 	Slug() string
 	Key() string
 	GetData() bucket.BucketData
-	DirExists(path string) (bool, error)
-	FileExists(path string) (bool, error)
+	DirExists(ctx context.Context, path string) (bool, error)
+	FileExists(ctx context.Context, path string) (bool, error)
 	UploadFile(
+		ctx context.Context,
 		path string,
 		reader io.Reader,
 	) (result path.Resolved, root path.Path, err error)
 	GetFile(
+		ctx context.Context,
 		path string,
 		w io.Writer,
 	) error
 	CreateDirectory(
+		ctx context.Context,
 		path string,
 	) (result path.Resolved, root path.Path, err error)
 	ListDirectory(
+		ctx context.Context,
 		path string,
 	) (*bucket.DirEntries, error)
 	DeleteDirOrFile(
+		ctx context.Context,
 		path string,
 	) (path.Resolved, error)
 }
@@ -54,6 +60,7 @@ type Client interface {
 	GetDefaultBucket(ctx context.Context) (Bucket, error)
 	GetBucket(ctx context.Context, slug string) (Bucket, error)
 	GetThreadsConnection() (*threadsClient.Client, error)
+	GetBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error)
 	ListBuckets(ctx context.Context) ([]Bucket, error)
 	ShareBucket(ctx context.Context, bucketSlug string) (*tc.DBInfo, error)
 	JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error)

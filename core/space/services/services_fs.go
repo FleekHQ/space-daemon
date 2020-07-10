@@ -96,7 +96,7 @@ func (s *Space) listDirAtPath(
 	path string,
 	listSubfolderContent bool,
 ) ([]domain.FileInfo, error) {
-	dir, err := b.ListDirectory(path)
+	dir, err := b.ListDirectory(ctx, path)
 	if err != nil {
 		log.Error("Error in ListDir", err)
 		return nil, err
@@ -213,7 +213,7 @@ func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket)
 	defer tmpFile.Close()
 
 	// look for path in textile
-	err = b.GetFile(path, tmpFile)
+	err = b.GetFile(ctx, path, tmpFile)
 	if err != nil {
 		log.Error(fmt.Sprintf("error retrieving file from bucket %s in path %s", b.Key(), path), err)
 		return "", err
@@ -247,7 +247,7 @@ func (s *Space) CreateFolder(ctx context.Context, path string, bucketName string
 
 func (s *Space) createFolder(ctx context.Context, path string, b textile.Bucket) (string, error) {
 	// NOTE: may need to change signature of createFolder if we need to return this info
-	_, root, err := b.CreateDirectory(path)
+	_, root, err := b.CreateDirectory(ctx, path)
 
 	if err != nil {
 		log.Error(fmt.Sprintf("error creating folder in bucket %s with path %s", b.Key(), path), err)
@@ -467,7 +467,7 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 	targetPathBucket := targetPath + "/" + fileName
 
 	// NOTE: could modify addFile to return back more info for processing
-	_, root, err := b.UploadFile(targetPathBucket, f)
+	_, root, err := b.UploadFile(ctx, targetPathBucket, f)
 	if err != nil {
 		log.Error(fmt.Sprintf("error creating targetPath %s in bucket %s", targetPathBucket, b.Key()), err)
 		return domain.AddItemResult{}, err

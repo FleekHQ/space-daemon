@@ -2,6 +2,7 @@ package bucket
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"regexp"
 
@@ -10,11 +11,14 @@ import (
 	"github.com/ipfs/interface-go-ipfs-core/path"
 )
 
-func (b *Bucket) FileExists(path string) (bool, error) {
+func (b *Bucket) FileExists(ctx context.Context, path string) (bool, error) {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
 
-	ctx, _ := b.getContext()
+	ctx, _, err := b.getContext(ctx)
+	if err != nil {
+		return false, err
+	}
 
 	lp, err := b.bucketsClient.ListPath(ctx, b.Key(), path)
 	if err != nil {
@@ -41,20 +45,25 @@ func (b *Bucket) FileExists(path string) (bool, error) {
 	return false, nil
 }
 
-func (b *Bucket) UploadFile(path string, reader io.Reader) (result path.Resolved, root path.Path, err error) {
+func (b *Bucket) UploadFile(ctx context.Context, path string, reader io.Reader) (result path.Resolved, root path.Path, err error) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
-	ctx, _ := b.getContext()
-
+	ctx, _, err = b.getContext(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
 	return b.bucketsClient.PushPath(ctx, b.Key(), path, reader)
 }
 
 // GetFile pulls path from bucket writing it to writer if it's a file.
-func (b *Bucket) GetFile(path string, w io.Writer) error {
+func (b *Bucket) GetFile(ctx context.Context, path string, w io.Writer) error {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
 
-	ctx, _ := b.getContext()
+	ctx, _, err := b.getContext(ctx)
+	if err != nil {
+		return err
+	}
 
 	if err := b.bucketsClient.PullPath(ctx, b.Key(), path, w); err != nil {
 		log.Error("error in GetFile from textile client", err)

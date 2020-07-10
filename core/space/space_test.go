@@ -193,11 +193,13 @@ func TestService_ListDirs(t *testing.T) {
 	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
 	mockBucket.On(
 		"ListDirectory",
+		mock.Anything,
 		"",
 	).Return(mockDirItems, nil)
 
 	mockBucket.On(
 		"ListDirectory",
+		mock.Anything,
 		"/somedir",
 	).Return(mockDirItemsSubfolder, nil)
 
@@ -263,6 +265,7 @@ func TestService_OpenFile(t *testing.T) {
 	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
 	mockBucket.On(
 		"GetFile",
+		mock.Anything,
 		testPath,
 		mock.Anything,
 	).Return(nil)
@@ -308,6 +311,7 @@ func TestService_AddItems_FilesOnly(t *testing.T) {
 		_, fileName := filepath.Split(f)
 		mockBucket.On(
 			"UploadFile",
+			mock.Anything,
 			bucketPath+"/"+fileName,
 			mock.Anything,
 		).Return(nil, mockPath, nil)
@@ -358,6 +362,7 @@ func TestService_AddItems_Folder(t *testing.T) {
 
 	mockBucket.On(
 		"CreateDirectory",
+		mock.Anything,
 		targetBucketPath,
 	).Return(nil, mockPath, nil)
 
@@ -365,6 +370,7 @@ func TestService_AddItems_Folder(t *testing.T) {
 		_, fileName := filepath.Split(f)
 		mockBucket.On(
 			"UploadFile",
+			mock.Anything,
 			targetBucketPath+"/"+fileName,
 			mock.Anything,
 		).Return(nil, mockPath, nil)
@@ -414,6 +420,7 @@ func TestService_AddItems_OnError(t *testing.T) {
 
 	mockBucket.On(
 		"UploadFile",
+		mock.Anything,
 		mock.Anything,
 		mock.Anything,
 	).Return(nil, nil, bucketError)

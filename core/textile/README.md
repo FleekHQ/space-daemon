@@ -40,8 +40,8 @@ Creating and joining buckets (`bucket_factory.go`) adds a bucket instance to the
 
 Currently, we attempt to connect to the Hub on initialization. In coming releases, we might switch that so that it can be toggled on and off from the API. If the Hub connection succeeds, all bucket operations will include the auth token in the calls to Textile's bucket client. This will trigger Hub replication. The auth token is obtained by signing a challenge received from the Hub using the user private key. If the challenge is signed correctly, the Hub returns a non-expiring auth token that we store so that we don't need to re-authenticate.
 
-The logic for authenticating and prepending the keys before bucket operations can be seen in `bucket_factory.go` in the method `getBucketContext`. It creates a Context instance that includes all the necessary information for accessing the correct thread and include the correct auth token.
+The logic for authenticating and prepending the keys before bucket operations can be seen in `bucket_factory.go` in the method `GetBucketContext`. It creates a Context instance that includes all the necessary information for accessing the correct thread and include the correct auth token.
 
 ### TODO
 
-Currently the challenge flow is disabled as it's triggering an error when using the token in `getBucketContext`. Instead we authorize the user using embedded Textile Hub API Keys. This is being looked at by Textile team and will be fixed shortly.
+Currently the challenge flow is disabled as it's triggering an error when using the token in `GetBucketContext`. Instead we authorize the user using embedded Textile Hub API Keys. This is being looked at by Textile team and will be fixed shortly.
