@@ -74,6 +74,14 @@ service SpaceApi {
     };
   }
 
+  // Open an encrypted public shared file in the daemon.
+  // This requires the decryption key and file hash/cid to work
+  rpc OpenPublicSharedFile(OpenSharedFileRequest) returns (OpenSharedFileResponse) {
+    option (google.api.http) = {
+      get: "/v1/files/openPublic"
+    };
+  }
+
   // Adds items (files/folders) to be uploaded to the bucket.
   rpc AddItems(AddItemsRequest) returns (stream AddItemsResponse) {
     option (google.api.http) = {
@@ -179,7 +187,7 @@ service SpaceApi {
   // Generate sharing link for file in bucket
   rpc GenerateFileShareLink(GenerateFileShareLinkRequest) returns (GenerateFileShareLinkResponse) {
     option (google.api.http) = {
-      post: "/v1/buckets/{bucket}/generateLink"
+      post: "/v1/buckets/{bucket}/generateFileShareLink"
       body: "*"
     };
   }
@@ -290,6 +298,16 @@ message OpenFileRequest {
 }
 
 message OpenFileResponse {
+  string location = 1;
+}
+
+message OpenSharedFileRequest {
+  string fileCid = 1;
+  string fileKey = 2;
+  string filename = 3;
+}
+
+message OpenSharedFileResponse {
   string location = 1;
 }
 
@@ -412,6 +430,8 @@ message GenerateFileShareLinkRequest {
 
 message GenerateFileShareLinkResponse {
   string link = 1;
+  string fileCid = 2;
+  string fileKey = 3;
 }
 
 message ToggleFuseRequest {

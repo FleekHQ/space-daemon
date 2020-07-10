@@ -64,7 +64,7 @@
         ]
       }
     },
-    "/v1/buckets/{bucket}/generateLink": {
+    "/v1/buckets/{bucket}/generateFileShareLink": {
       "post": {
         "summary": "Generate sharing link for file in bucket",
         "operationId": "SpaceApi_GenerateFileShareLink",
@@ -456,6 +456,49 @@
         ]
       }
     },
+    "/v1/files/openPublic": {
+      "get": {
+        "summary": "Open an encrypted public shared file in the daemon.\nThis requires the decryption key and file hash/cid to work",
+        "operationId": "SpaceApi_OpenPublicSharedFile",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceOpenSharedFileResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "fileCid",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "fileKey",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "filename",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/fuse": {
       "get": {
         "summary": "Get status of FUSE drive. If mounted or unmounted",
@@ -567,6 +610,38 @@
             "in": "path",
             "required": true,
             "type": "string"
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/items/shareToGroup": {
+      "post": {
+        "operationId": "SpaceApi_ShareItemsToSelectGroup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceShareItemsToSelectGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceShareItemsToSelectGroupRequest"
+            }
           }
         ],
         "tags": [
@@ -918,9 +993,43 @@
         "updatedAt": {
           "type": "string",
           "format": "int64"
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/spaceBucketMember"
+          }
+        },
+        "isSelectGroupBucket": {
+          "type": "boolean",
+          "format": "boolean"
         }
-      },
-      "title": "TODO: import from textile instead"
+      }
+    },
+    "spaceBucketMember": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string",
+          "description": "Might be blank while the invite is not accepted."
+        },
+        "publicKey": {
+          "type": "string",
+          "description": "Might be blank while the invite is not accepted."
+        },
+        "isOwner": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "username": {
+          "type": "string",
+          "description": "Might be blank while the invite is not accepted."
+        },
+        "email": {
+          "type": "string",
+          "description": "Optional. Might be blank."
+        }
+      }
     },
     "spaceConfigInfoResponse": {
       "type": "object",
@@ -1026,6 +1135,12 @@
       "properties": {
         "link": {
           "type": "string"
+        },
+        "fileCid": {
+          "type": "string"
+        },
+        "fileKey": {
+          "type": "string"
         }
       }
     },
@@ -1073,6 +1188,27 @@
       ],
       "default": "USERNAME"
     },
+    "spaceInvitation": {
+      "type": "object",
+      "properties": {
+        "invitationType": {
+          "$ref": "#/definitions/spaceInvitationType",
+          "title": "If inviting a user that might or might not have Space installed, use INVITE_THROUGH_EMAIL. If you want to invite via a known identity, use INVITE_THROUGH_ADDRESS instead"
+        },
+        "invitationValue": {
+          "type": "string",
+          "title": "Either the email if using INVITE_THROUGH_EMAIL, or the address (derivation from public key) if using INVITE_THROUGH_ADDRESS"
+        }
+      }
+    },
+    "spaceInvitationType": {
+      "type": "string",
+      "enum": [
+        "INVITE_THROUGH_EMAIL",
+        "INVITE_THROUGH_ADDRESS"
+      ],
+      "default": "INVITE_THROUGH_EMAIL"
+    },
     "spaceJoinBucketRequest": {
       "type": "object",
       "properties": {
@@ -1080,6 +1216,9 @@
           "$ref": "#/definitions/spaceThreadInfo"
         },
         "bucket": {
+          "type": "string"
+        },
+        "invitationID": {
           "type": "string"
         }
       }
@@ -1175,6 +1314,14 @@
         }
       }
     },
+    "spaceOpenSharedFileResponse": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "string"
+        }
+      }
+    },
     "spaceRecoverKeysByPassphraseRequest": {
       "type": "object",
       "properties": {
@@ -1233,6 +1380,32 @@
       }
     },
     "spaceShareBucketViaIdentityResponse": {
+      "type": "object"
+    },
+    "spaceShareItemsToSelectGroupRequest": {
+      "type": "object",
+      "properties": {
+        "bucket": {
+          "type": "string"
+        },
+        "itemPaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "invitations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/spaceInvitation"
+          }
+        },
+        "customMessage": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceShareItemsToSelectGroupResponse": {
       "type": "object"
     },
     "spaceTextileEventResponse": {

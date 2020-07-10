@@ -64,3 +64,11 @@ type Identity struct {
 type APIError struct {
 	Message string `json:"message"`
 }
+
+type FileSharingInfo struct {
+	Bucket            string
+	Path              string
+	SharedFileCid     string
+	SharedFileKey     string
+	SpaceDownloadLink string
+}

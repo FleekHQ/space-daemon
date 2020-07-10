@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 
+	"github.com/FleekHQ/space-daemon/core/ipfs"
+
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/env"
 	"github.com/FleekHQ/space-daemon/core/keychain"
@@ -19,6 +21,7 @@ type Space struct {
 	tc       textile.Client
 	sync     Syncer
 	keychain keychain.Keychain
+	ic       ipfs.Client
 }
 
 type Syncer interface {
@@ -42,7 +45,15 @@ func (s *Space) GetConfig(ctx context.Context) domain.AppConfig {
 
 }
 
-func NewSpace(st store.Store, tc textile.Client, syncer Syncer, cfg config.Config, env env.SpaceEnv, kc keychain.Keychain) *Space {
+func NewSpace(
+	st store.Store,
+	tc textile.Client,
+	syncer Syncer,
+	cfg config.Config,
+	env env.SpaceEnv,
+	kc keychain.Keychain,
+	ic ipfs.Client,
+) *Space {
 	return &Space{
 		store:    st,
 		cfg:      cfg,
@@ -50,5 +61,6 @@ func NewSpace(st store.Store, tc textile.Client, syncer Syncer, cfg config.Confi
 		tc:       tc,
 		sync:     syncer,
 		keychain: kc,
+		ic:       ic,
 	}
 }

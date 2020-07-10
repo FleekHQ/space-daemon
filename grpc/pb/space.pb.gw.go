@@ -258,6 +258,42 @@ func local_request_SpaceApi_OpenFile_0(ctx context.Context, marshaler runtime.Ma
 
 }
 
+var (
+	filter_SpaceApi_OpenPublicSharedFile_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_SpaceApi_OpenPublicSharedFile_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq OpenSharedFileRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_SpaceApi_OpenPublicSharedFile_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.OpenPublicSharedFile(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_SpaceApi_OpenPublicSharedFile_0(ctx context.Context, marshaler runtime.Marshaler, server SpaceApiServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq OpenSharedFileRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_SpaceApi_OpenPublicSharedFile_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.OpenPublicSharedFile(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 func request_SpaceApi_AddItems_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (SpaceApi_AddItemsClient, runtime.ServerMetadata, error) {
 	var protoReq AddItemsRequest
 	var metadata runtime.ServerMetadata
@@ -927,10 +963,43 @@ func local_request_SpaceApi_ListBuckets_0(ctx context.Context, marshaler runtime
 
 }
 
+func request_SpaceApi_ShareItemsToSelectGroup_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ShareItemsToSelectGroupRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.ShareItemsToSelectGroup(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_SpaceApi_ShareItemsToSelectGroup_0(ctx context.Context, marshaler runtime.Marshaler, server SpaceApiServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ShareItemsToSelectGroupRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.ShareItemsToSelectGroup(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 // RegisterSpaceApiHandlerServer registers the http handlers for service SpaceApi to "mux".
 // UnaryRPC     :call SpaceApiServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features (such as grpc.SendHeader, etc) to stop working. Consider using RegisterSpaceApiHandlerFromEndpoint instead.
 func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, server SpaceApiServer) error {
 
 	mux.Handle("GET", pattern_SpaceApi_ListDirectories_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -1064,6 +1133,26 @@ func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 		}
 
 		forward_SpaceApi_OpenFile_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_SpaceApi_OpenPublicSharedFile_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_SpaceApi_OpenPublicSharedFile_0(rctx, inboundMarshaler, server, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_SpaceApi_OpenPublicSharedFile_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1354,6 +1443,26 @@ func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 
 	})
 
+	mux.Handle("POST", pattern_SpaceApi_ShareItemsToSelectGroup_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_SpaceApi_ShareItemsToSelectGroup_0(rctx, inboundMarshaler, server, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_SpaceApi_ShareItemsToSelectGroup_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	return nil
 }
 
@@ -1552,6 +1661,26 @@ func RegisterSpaceApiHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 		}
 
 		forward_SpaceApi_OpenFile_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_SpaceApi_OpenPublicSharedFile_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_SpaceApi_OpenPublicSharedFile_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_SpaceApi_OpenPublicSharedFile_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1855,6 +1984,26 @@ func RegisterSpaceApiHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 
 	})
 
+	mux.Handle("POST", pattern_SpaceApi_ShareItemsToSelectGroup_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_SpaceApi_ShareItemsToSelectGroup_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_SpaceApi_ShareItemsToSelectGroup_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	return nil
 }
 
@@ -1874,6 +2023,8 @@ var (
 	pattern_SpaceApi_TxlSubscribe_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "subscriptions", "textile"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_SpaceApi_OpenFile_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "files", "open"}, "", runtime.AssumeColonVerbOpt(true)))
+
+	pattern_SpaceApi_OpenPublicSharedFile_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "files", "openPublic"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_SpaceApi_AddItems_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "files"}, "", runtime.AssumeColonVerbOpt(true)))
 
@@ -1901,9 +2052,11 @@ var (
 
 	pattern_SpaceApi_ShareBucketViaIdentity_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "buckets", "bucket", "shareViaIdentity"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_SpaceApi_GenerateFileShareLink_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "buckets", "bucket", "generateLink"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_SpaceApi_GenerateFileShareLink_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "buckets", "bucket", "generateFileShareLink"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_SpaceApi_ListBuckets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "buckets"}, "", runtime.AssumeColonVerbOpt(true)))
+
+	pattern_SpaceApi_ShareItemsToSelectGroup_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "items", "shareToGroup"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (
@@ -1922,6 +2075,8 @@ var (
 	forward_SpaceApi_TxlSubscribe_0 = runtime.ForwardResponseStream
 
 	forward_SpaceApi_OpenFile_0 = runtime.ForwardResponseMessage
+
+	forward_SpaceApi_OpenPublicSharedFile_0 = runtime.ForwardResponseMessage
 
 	forward_SpaceApi_AddItems_0 = runtime.ForwardResponseStream
 
@@ -1952,4 +2107,6 @@ var (
 	forward_SpaceApi_GenerateFileShareLink_0 = runtime.ForwardResponseMessage
 
 	forward_SpaceApi_ListBuckets_0 = runtime.ForwardResponseMessage
+
+	forward_SpaceApi_ShareItemsToSelectGroup_0 = runtime.ForwardResponseMessage
 )

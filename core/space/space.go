@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/FleekHQ/space-daemon/core/ipfs"
+
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/env"
 	"github.com/FleekHQ/space-daemon/core/keychain"
@@ -27,6 +29,8 @@ type Service interface {
 	AddItems(ctx context.Context, sourcePaths []string, targetPath string, bucketName string) (<-chan domain.AddItemResult, domain.AddItemsResponse, error)
 	CreateIdentity(ctx context.Context, username string) (*domain.Identity, error)
 	GetIdentityByUsername(ctx context.Context, username string) (*domain.Identity, error)
+	GenerateFileSharingLink(ctx context.Context, path string, bucketName string) (domain.FileSharingInfo, error)
+	OpenSharedFile(ctx context.Context, cid, key, filename string) (domain.OpenFileInfo, error)
 	ShareBucket(ctx context.Context, slug string) (*domain.ThreadInfo, error)
 	JoinBucket(ctx context.Context, slug string, threadinfo *domain.ThreadInfo) (bool, error)
 }
@@ -40,7 +44,14 @@ var defaultOptions = serviceOptions{}
 
 type ServiceOption func(o *serviceOptions)
 
-func NewService(store store.Store, tc textile.Client, sync services.Syncer, cfg config.Config, kc keychain.Keychain, opts ...ServiceOption) (Service, error) {
+func NewService(
+	store store.Store,
+	tc textile.Client,
+	sync services.Syncer,
+	cfg config.Config,
+	kc keychain.Keychain,
+	opts ...ServiceOption,
+) (Service, error) {
 	if !store.IsOpen() {
 		return nil, errors.New("service expects an opened store to work")
 	}
@@ -52,7 +63,12 @@ func NewService(store store.Store, tc textile.Client, sync services.Syncer, cfg 
 		o.env = env.New()
 	}
 
-	sv := services.NewSpace(store, tc, sync, cfg, o.env, kc)
+	ic, err := ipfs.NewSpaceIpfsClient(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	sv := services.NewSpace(store, tc, sync, cfg, o.env, kc, ic)
 
 	return sv, nil
 }

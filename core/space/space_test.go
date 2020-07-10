@@ -13,6 +13,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/FleekHQ/space-daemon/config"
+
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/stretchr/testify/mock"
 
@@ -88,6 +90,10 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 		closeAndDelete(tmpFile2)
 		os.RemoveAll(dir)
 	}
+
+	cfg.On("GetString", config.Ipfsaddr, mock.Anything).Return(
+		"/ip4/127.0.0.1/tcp/5001",
+	)
 
 	// NOTE: if we need to test without the store open we must override on each test
 	st.On("IsOpen").Return(true)

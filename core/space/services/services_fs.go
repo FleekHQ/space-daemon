@@ -202,15 +202,11 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketName string) (d
 
 func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket) (string, error) {
 	// write file copy to temp folder
-	cfg := s.GetConfig(ctx)
-	_, fileName := filepath.Split(path)
-	// NOTE: the pattern of the file ensures that it retains extension. e.g (rand num) + filename/path
-	tmpFile, err := ioutil.TempFile(cfg.AppPath, "*-"+fileName)
+	tmpFile, err := s.createTempFileForPath(ctx, path, false)
 	if err != nil {
 		log.Error("cannot create temp file while executing OpenFile", err)
 		return "", err
 	}
-	defer tmpFile.Close()
 
 	// look for path in textile
 	err = b.GetFile(ctx, path, tmpFile)
@@ -230,6 +226,20 @@ func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket)
 		return "", err
 	}
 	return tmpFile.Name(), nil
+}
+
+// createTempFileForPath creates a temporary file using the path specified relative to the AppPath
+// configured when running the daemon. If inTempDir is true, then it is created relative
+// to the operating systems temp dir.
+func (s *Space) createTempFileForPath(ctx context.Context, path string, inTempDir bool) (*os.File, error) {
+	cfg := s.GetConfig(ctx)
+	_, fileName := filepath.Split(path)
+	prefixPath := ""
+	if !inTempDir {
+		prefixPath = cfg.AppPath
+	}
+	// NOTE: the pattern of the file ensures that it retains extension. e.g (rand num) + filename/path
+	return ioutil.TempFile(prefixPath, "*-"+fileName)
 }
 
 func (s *Space) CreateFolder(ctx context.Context, path string, bucketName string) error {
