@@ -65,9 +65,9 @@ builds:
     binary: space
     goos:
       - windows
-    ignore:
-      - goos: windows
-        goarch: 386
+    # ignore:
+    #   - goos: windows
+    #     goarch: 386
 archives:
 - name_template: '{{ .Binary }}_{{ .Os }}_{{ .Arch }}'
   format: binary
