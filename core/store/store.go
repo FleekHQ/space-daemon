@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
 	s "strings"
 
 	"github.com/FleekHQ/space-daemon/core"
@@ -85,7 +86,9 @@ func (store *store) Open() error {
 	}
 
 	db, err := badger.Open(
-		badger.DefaultOptions(rootDir).WithEventLogging(false),
+		badger.DefaultOptions(rootDir).
+			WithEventLogging(false).
+			WithTruncate(runtime.GOOS == "windows"),
 	)
 	if err != nil {
 		return err
