@@ -7,7 +7,6 @@ before:
     # - go generate ./...
 project_name: space
 builds:
-  # Builds everything except macos
   - id: space
     env:
       - CGO_ENABLED=0
@@ -47,6 +46,28 @@ builds:
       - darwin
     # hooks:
     #   post: gon -log-level debug ci/gon.hcl
+
+  - id: space-win
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X main.ipfsaddr={{ .Env.IPFS_ADDR }}
+      - -X main.mongousr={{ .Env.MONGO_USR }}
+      - -X main.mongopw={{ .Env.MONGO_PW }}
+      - -X main.mongohost={{ .Env.MONGO_HOST }}
+      - -X main.mongorepset={{ .Env.MONGO_REPLICA_SET }}
+      - -X main.spaceapi={{ .Env.SERVICES_API_URL }}
+      - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
+      - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
+      - -X main.textilehubma={{ .Env.TXL_HUB_MA }}
+      - -X main.textilethreads={{ .Env.TXL_THREADS_TARGET }}
+    main: ./cmd/space-daemon/main.go
+    binary: space
+    goos:
+      - windows
+    # ignore:
+    #   - goos: windows
+    #     goarch: 386
 archives:
 - name_template: '{{ .Binary }}_{{ .Os }}_{{ .Arch }}'
   format: binary
