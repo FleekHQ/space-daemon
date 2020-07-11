@@ -1,9 +1,16 @@
+//+build !windows
+
 package fuse
 
 import (
+	"context"
 	"fmt"
 	"os"
 	s "strings"
+
+	"github.com/FleekHQ/space-daemon/core/libfuse"
+
+	"github.com/FleekHQ/space-daemon/core/spacefs"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/mitchellh/go-homedir"
@@ -37,4 +44,8 @@ func getMountPath(cfg config.Config) (string, error) {
 	}
 
 	return mountPath, nil
+}
+
+func initVFS(ctx context.Context, sfs spacefs.FSOps) VFS {
+	return libfuse.NewVFileSystem(ctx, sfs)
 }
