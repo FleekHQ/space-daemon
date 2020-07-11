@@ -9,16 +9,15 @@ import (
 	"github.com/FleekHQ/space-daemon/core/spacefs"
 
 	"github.com/FleekHQ/space-daemon/config"
-	"github.com/FleekHQ/space-daemon/core/libfuse"
 	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/log"
 )
 
-// Controller is the space domain controller for managing the libfuse VFS.
+// Controller is the space domain controller for managing the VFS.
 // It is used by the grpc server and app/daemon generally
 type Controller struct {
 	cfg       config.Config
-	vfs       *libfuse.VFS
+	vfs       VFS
 	store     store.Store
 	isServed  bool
 	mountLock sync.RWMutex
@@ -33,7 +32,7 @@ func NewController(
 	store store.Store,
 	sfs *spacefs.SpaceFS,
 ) *Controller {
-	vfs := libfuse.NewVFileSystem(ctx, sfs)
+	vfs := initVFS(ctx, sfs)
 
 	return &Controller{
 		cfg:       cfg,
@@ -44,7 +43,7 @@ func NewController(
 	}
 }
 
-// ShouldMount check the store and config to determine if the libfuse drive was previously mounted
+// ShouldMount check the store and config to determine if the VFS drive was previously mounted
 func (s *Controller) ShouldMount() bool {
 	if s.cfg.GetString(config.MountFuseDrive, "false") == "true" {
 		return true
