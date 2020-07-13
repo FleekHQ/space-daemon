@@ -14,7 +14,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/fsds"
 
 	"github.com/FleekHQ/space-daemon/core/spacefs"
-	"github.com/FleekHQ/space-daemon/core/textile"
+	textile "github.com/FleekHQ/space-daemon/core/textile"
 
 	"github.com/FleekHQ/space-daemon/core/env"
 	"github.com/FleekHQ/space-daemon/core/space"
@@ -95,7 +95,7 @@ func (a *App) Start(ctx context.Context) error {
 	// setup textile client
 	textileClient := textile.NewClient(appStore)
 	a.RunAsync("TextileClient", textileClient, func() error {
-		return textileClient.StartAndBootstrap(ctx, a.cfg)
+		return textileClient.Start(ctx, a.cfg)
 	})
 
 	// watcher is started inside bucket sync

@@ -2,12 +2,10 @@ package keychain
 
 import (
 	"crypto/ed25519"
-	"fmt"
 
 	"errors"
 
 	db "github.com/FleekHQ/space-daemon/core/store"
-	"github.com/FleekHQ/space-daemon/log"
 	"github.com/libp2p/go-libp2p-core/crypto"
 )
 
@@ -93,8 +91,6 @@ func (kc *keychain) generateAndStoreKeyPair() ([]byte, []byte, error) {
 		return nil, nil, err
 	}
 
-	log.Info(fmt.Sprintf("Got pub key size %d", len(pub)))
-	log.Info(fmt.Sprintf("Got priv key size %d", len(priv)))
 	// Store the key pair in the db
 	if err = kc.store.Set([]byte(PublicKeyStoreKey), pub); err != nil {
 		return nil, nil, err

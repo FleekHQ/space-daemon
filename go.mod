@@ -24,6 +24,7 @@ require (
 	github.com/libp2p/go-libp2p-crypto v0.1.0
 	github.com/libp2p/go-libp2p-peerstore v0.2.6
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/multiformats/go-base32 v0.0.3
 	github.com/multiformats/go-multiaddr v0.2.2
 	github.com/multiformats/go-multihash v0.0.13
 	github.com/pkg/errors v0.9.1

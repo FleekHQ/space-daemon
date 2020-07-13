@@ -3,7 +3,7 @@ package sync
 import (
 	"testing"
 
-	"github.com/FleekHQ/space-daemon/core/textile"
+	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 
 	"github.com/FleekHQ/space-daemon/mocks"
 	"github.com/stretchr/testify/mock"
@@ -18,7 +18,7 @@ func TestTextileHandler_OnCreate(t *testing.T) {
 
 	b := []byte(`{"Key":"bafzbeid2zp544qy6ktwdlr5xxsmsioclbxj42dkbqckm35e6l5biqlo3tq","Name":"test-bucket-1"}`)
 
-	buck := &textile.BucketData{}
+	buck := &bucket.BucketData{}
 	action := tc.Action{
 		Collection: "buckets",
 		Type:       1,
@@ -43,7 +43,7 @@ func TestTextileHandler_OnRemove(t *testing.T) {
 
 	b := []byte(`{"Key":"bafzbeid2zp544qy6ktwdlr5xxsmsioclbxj42dkbqckm35e6l5biqlo3tq","Name":"test-bucket-1"}`)
 
-	buck := &textile.BucketData{}
+	buck := &bucket.BucketData{}
 	action := tc.Action{
 		Collection: "buckets",
 		Type:       1,
@@ -68,7 +68,7 @@ func TestTextileHandler_OnSave(t *testing.T) {
 
 	b := []byte(`{"Key":"bafzbeid2zp544qy6ktwdlr5xxsmsioclbxj42dkbqckm35e6l5biqlo3tq","Name":"test-bucket-1"}`)
 
-	buck := &textile.BucketData{}
+	buck := &bucket.BucketData{}
 	action := tc.Action{
 		Collection: "buckets",
 		Type:       1,

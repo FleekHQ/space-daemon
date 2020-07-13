@@ -3,16 +3,16 @@ package sync
 import (
 	"encoding/json"
 
-	"github.com/FleekHQ/space-daemon/core/textile"
+	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 
 	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/log"
 	tc "github.com/textileio/go-threads/api/client"
 )
 
-func (h *textileHandler) OnCreate(bucketData *textile.BucketData, listenEvent *tc.ListenEvent) {
+func (h *textileHandler) OnCreate(bucketData *bucket.BucketData, listenEvent *tc.ListenEvent) {
 	log.Info("Default Listener Handler: OnCreate")
-	instance := &textile.BucketData{}
+	instance := &bucket.BucketData{}
 	if err := json.Unmarshal(listenEvent.Action.Instance, instance); err != nil {
 		log.Error("failed to unmarshal listen result: %v", err)
 	}
@@ -20,9 +20,9 @@ func (h *textileHandler) OnCreate(bucketData *textile.BucketData, listenEvent *t
 	h.notifier.SendTextileEvent(evt)
 }
 
-func (h *textileHandler) OnRemove(bucketData *textile.BucketData, listenEvent *tc.ListenEvent) {
+func (h *textileHandler) OnRemove(bucketData *bucket.BucketData, listenEvent *tc.ListenEvent) {
 	log.Info("Default Listener Handler: OnRemove")
-	instance := &textile.BucketData{}
+	instance := &bucket.BucketData{}
 	if err := json.Unmarshal(listenEvent.Action.Instance, instance); err != nil {
 		log.Error("failed to unmarshal listen result: %v", err)
 	}
@@ -30,9 +30,9 @@ func (h *textileHandler) OnRemove(bucketData *textile.BucketData, listenEvent *t
 	h.notifier.SendTextileEvent(evt)
 }
 
-func (h *textileHandler) OnSave(bucketData *textile.BucketData, listenEvent *tc.ListenEvent) {
+func (h *textileHandler) OnSave(bucketData *bucket.BucketData, listenEvent *tc.ListenEvent) {
 	log.Info("Default Listener Handler: OnSave")
-	instance := &textile.BucketData{}
+	instance := &bucket.BucketData{}
 	if err := json.Unmarshal(listenEvent.Action.Instance, instance); err != nil {
 		log.Error("failed to unmarshal listen result: %v", err)
 	}

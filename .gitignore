@@ -27,3 +27,4 @@ debug/
 dist/
 main
 devtools/grpc-ecosystem
+__debug_bin

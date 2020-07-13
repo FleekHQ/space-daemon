@@ -112,7 +112,9 @@ func main() {
 
 	for k, v := range db {
 		fmt.Println("looping through thread id: ", k)
-		fmt.Println("db info: ", v)
+		fmt.Println("db info - Addrs: ", v.Addrs)
+		fmt.Println("db info - Key: ", v.Key)
+		fmt.Println("db info - Name: ", v.Name)
 
 		// replicate on hub
 		peerid, err := netc.AddReplicator(ctx, dbID, cmd.AddrFromStr(os.Getenv("TXL_HUB_MA")))

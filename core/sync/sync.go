@@ -57,14 +57,14 @@ type textileHandler struct {
 }
 
 type bucketSynchronizer struct {
-	folderWatcher          watcher.FolderWatcher
-	textileClient          textile.Client
-	fh                     *watcherHandler
-	th                     *textileHandler
-	textileThreadListeners []textile.ThreadListener
-	notifier               GrpcNotifier
-	store                  store.Store
-	ready                  chan bool
+	folderWatcher watcher.FolderWatcher
+	textileClient textile.Client
+	fh            *watcherHandler
+	th            *textileHandler
+	// textileThreadListeners []textile.ThreadListener
+	notifier GrpcNotifier
+	store    store.Store
+	ready    chan bool
 }
 
 // Creates a new bucketSynchronizer instancelistenerEventHandler
@@ -74,17 +74,17 @@ func New(
 	store store.Store,
 	notifier GrpcNotifier,
 ) *bucketSynchronizer {
-	textileThreadListeners := make([]textile.ThreadListener, 0)
+	// textileThreadListeners := make([]textile.ThreadListener, 0)
 
 	return &bucketSynchronizer{
-		folderWatcher:          folderWatcher,
-		textileClient:          textileClient,
-		fh:                     nil,
-		th:                     nil,
-		textileThreadListeners: textileThreadListeners,
-		notifier:               notifier,
-		store:                  store,
-		ready:                  make(chan bool),
+		folderWatcher: folderWatcher,
+		textileClient: textileClient,
+		fh:            nil,
+		th:            nil,
+		// textileThreadListeners: textileThreadListeners,
+		notifier: notifier,
+		store:    store,
+		ready:    make(chan bool),
 	}
 }
 
@@ -110,11 +110,11 @@ func (bs *bucketSynchronizer) Start(ctx context.Context) error {
 		bs:       bs,
 	}
 
-	handlers := make([]textile.EventHandler, 0)
-	handlers = append(handlers, bs.th)
+	// handlers := make([]textile.EventHandler, 0)
+	// handlers = append(handlers, bs.th)
 
-	for _, bucket := range buckets {
-		bs.textileThreadListeners = append(bs.textileThreadListeners, textile.NewListener(bs.textileClient, bucket.Slug(), handlers))
+	for range buckets {
+		// bs.textileThreadListeners = append(bs.textileThreadListeners, textile.NewListener(bs.textileClient, bucket.Slug(), handlers))
 	}
 
 	bs.folderWatcher.RegisterHandler(bs.fh)
@@ -129,12 +129,12 @@ func (bs *bucketSynchronizer) Start(ctx context.Context) error {
 		return bs.folderWatcher.Watch(newCtx)
 	})
 
-	for _, listener := range bs.textileThreadListeners {
-		g.Go(func() error {
-			log.Debug("Starting textile thread listener in bucketsync")
-			return listener.Listen(newCtx)
-		})
-	}
+	// for _, listener := range bs.textileThreadListeners {
+	// 	g.Go(func() error {
+	// 		log.Debug("Starting textile thread listener in bucketsync")
+	// 		return listener.Listen(newCtx)
+	// 	})
+	// }
 
 	// add open files to watcher
 	keys, err := bs.store.KeysWithPrefix(OpenFilesKeyPrefix)
@@ -177,9 +177,9 @@ func (bs *bucketSynchronizer) Shutdown() error {
 	log.Debug("shutting down folder watcher in bucketsync")
 	bs.folderWatcher.Close()
 	log.Debug("shutting down textile thread listener in bucketsync")
-	for _, listener := range bs.textileThreadListeners {
-		listener.Close()
-	}
+	// for _, listener := range bs.textileThreadListeners {
+	// 	listener.Close()
+	// }
 
 	close(bs.ready)
 	return nil
