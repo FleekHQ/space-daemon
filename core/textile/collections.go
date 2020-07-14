@@ -3,6 +3,7 @@ package textile
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/textileio/go-threads/api/client"
@@ -18,8 +19,24 @@ type BucketSchema struct {
 	DbID string
 }
 
+type BucketInvite struct {
+	ID        core.InstanceID `json:"_id"`
+	CreatedAt time.Time       `json:"createdAt"`
+	PubKey    string          `json:"pubKey"`
+}
+
+type BucketJoin struct {
+	ID        core.InstanceID `json:"_id"`
+	CreatedAt time.Time       `json:"createdAt"`
+	PubKey    string          `json:"pubKey"`
+}
+
 const metaThreadName = "metathread"
+
 const bucketCollectionName = "BucketMetadata"
+
+const bucketInviteCollectionName = "BucketInvites"
+const bucketJoinCollectionName = "BucketJoins"
 
 var errBucketNotFound = errors.New("Bucket not found")
 
@@ -171,4 +188,20 @@ func (tc *textileClient) initBucketCollection(ctx context.Context) (context.Cont
 	}
 
 	return metaCtx, dbID, nil
+}
+
+func (tc *textileClient) initBucketThreadMetaCollection(ctx context.Context, slug string, collname string, schema interface{}) (context.Context, *thread.ID, error) {
+	bctx, dbID, err := tc.GetBucketContext(ctx, slug)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err := tc.threads.NewCollection(bctx, *dbID, db.CollectionConfig{
+		Name:   collname,
+		Schema: util.SchemaFromInstance(schema, false),
+	}); err != nil {
+		return nil, nil, err
+	}
+
+	return bctx, dbID, nil
 }

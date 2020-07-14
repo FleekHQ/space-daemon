@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
@@ -14,6 +15,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/alecthomas/jsonschema"
+	"github.com/textileio/go-threads/api/client"
 	textileApiClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
@@ -167,6 +169,8 @@ func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*t
 		// addresses could be used to join thread
 	}
 
+	tc.saveInviteRecord(ctx, bucketSlug)
+
 	return b, err
 }
 
@@ -224,6 +228,8 @@ func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address strin
 
 	tc.upsertBucketInCollection(ctx, bucketSlug, castDbIDToString(dbID))
 
+	tc.saveJoinRecord(ctx, bucketSlug)
+
 	return nil
 }
 
@@ -258,4 +264,42 @@ func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain
 	}
 
 	return true, nil
+}
+
+func (tc *textileClient) saveInviteRecord(ctx context.Context, slug string) error {
+	bctx, dbID, err := tc.initBucketThreadMetaCollection(ctx, slug, bucketInviteCollectionName, &BucketInvite{})
+
+	// TODO: store pubkey of user
+	newInvite := &BucketInvite{
+		ID:        "",
+		CreatedAt: time.Now(),
+	}
+
+	instances := client.Instances{newInvite}
+
+	_, err = tc.threads.Create(bctx, *dbID, "invites", instances)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (tc *textileClient) saveJoinRecord(ctx context.Context, slug string) error {
+	bctx, dbID, err := tc.initBucketThreadMetaCollection(ctx, slug, bucketJoinCollectionName, &BucketJoin{})
+
+	// TODO: store pubkey of user
+	newJoin := &BucketJoin{
+		ID:        "",
+		CreatedAt: time.Now(),
+	}
+
+	instances := client.Instances{newJoin}
+
+	_, err = tc.threads.Create(bctx, *dbID, "joins", instances)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
