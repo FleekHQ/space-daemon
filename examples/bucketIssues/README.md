@@ -3,7 +3,7 @@
 This example is to highlight some issues that are currently being experience
 using textiles threads/buckets.
 
-### Issue the buckets directory returns `false` for `IsDir`.
+### Issue 1: Buckets directory returns `false` for `IsDir`.
 
 To replicate this issue, run the `is_dir_issue/main.go` program.
 1. Ensure you are currently in this directory.
@@ -12,7 +12,7 @@ To replicate this issue, run the `is_dir_issue/main.go` program.
 
 Don't forget to run stop docker afterwards with `docker-compose down`
 
-### Issue with threads daemon not properly shutting down its badger resource.
+### Issue 2: Textile daemon does not properly shutdown its badger resource.
 
 To replicate this issue, run the `stop_start_issue/main.go` program.
 1. Ensure you are currently in this directory.

@@ -1,0 +1,2 @@
+### A Issue example.
+Check [here](https://github.com/FleekHQ/space-daemon/tree/master/examples/bucketIssues#issue-with-threads-daemon-not-properly-shutting-down-its-badger-resource) for instructions on how to run
