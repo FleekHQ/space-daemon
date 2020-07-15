@@ -13,3 +13,9 @@ This is analogue to a conversation between a set of people in Slack. When callin
 For more info, refer to the following diagram:
 
 ![sequence diagram](https://github.com/FleekHQ/space-daemon/blob/master/docs/sharing/select-group-sharing.png)
+
+## Link Sharing
+
+When calling `GenerateFileShareLink`, the file is going to be encrypted and uploaded to IPFS. The link will point to a gateway so that anyone with the decryption key will be able to download the file.
+
+We are evaluating also creating a bucket around this single file, so that the link can also be used to join the bucket and modify the file collaboratively.
