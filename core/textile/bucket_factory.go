@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/FleekHQ/space-daemon/config"
+	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	ma "github.com/multiformats/go-multiaddr"
 
@@ -266,13 +267,30 @@ func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain
 	return true, nil
 }
 
+func (tc *textileClient) getContextPubKey(ctx context.Context) (thread.PubKey, error) {
+	kc := keychain.New(tc.store)
+	rk, _, err := kc.GetRootKeyPairInLibP2PFormat()
+	if err != nil {
+		return nil, err
+	}
+
+	tok, _ := thread.TokenFromContext(ctx)
+	pk, err := tok.Validate(rk)
+	return pk, nil
+}
+
 func (tc *textileClient) saveInviteRecord(ctx context.Context, slug string) error {
 	bctx, dbID, err := tc.initBucketThreadMetaCollection(ctx, slug, bucketInviteCollectionName, &BucketInvite{})
 
-	// TODO: store pubkey of user
+	pk, err := tc.getContextPubKey(ctx)
+	if err != nil {
+		return err
+	}
+
 	newInvite := &BucketInvite{
 		ID:        "",
 		CreatedAt: time.Now(),
+		PubKey:    pk.String(),
 	}
 
 	instances := client.Instances{newInvite}
@@ -288,10 +306,15 @@ func (tc *textileClient) saveInviteRecord(ctx context.Context, slug string) erro
 func (tc *textileClient) saveJoinRecord(ctx context.Context, slug string) error {
 	bctx, dbID, err := tc.initBucketThreadMetaCollection(ctx, slug, bucketJoinCollectionName, &BucketJoin{})
 
-	// TODO: store pubkey of user
+	pk, err := tc.getContextPubKey(ctx)
+	if err != nil {
+		return err
+	}
+
 	newJoin := &BucketJoin{
 		ID:        "",
 		CreatedAt: time.Now(),
+		PubKey:    pk.String(),
 	}
 
 	instances := client.Instances{newJoin}
