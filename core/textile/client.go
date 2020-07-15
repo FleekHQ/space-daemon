@@ -162,7 +162,15 @@ func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
 	// Create key pair if not present
 	kc := keychain.New(tc.store)
 	log.Debug("Starting Textile Client: Generating key pair...")
+	// space app keys
 	if _, _, err := kc.GenerateKeyPair(); err != nil {
+		log.Debug("Starting Textile Client: Error generating key pair, key might already exist")
+		log.Debug(err.Error())
+		// Not returning err since it can error if keys already exist
+	}
+
+	// root signing keys
+	if _, _, err := kc.GenerateRootKeyPair(); err != nil {
 		log.Debug("Starting Textile Client: Error generating key pair, key might already exist")
 		log.Debug(err.Error())
 		// Not returning err since it can error if keys already exist
@@ -240,23 +248,34 @@ func (tc *textileClient) getThreadContext(parentCtx context.Context, threadName 
 		return nil, err
 	}
 
-	// If we are connected to the Hub, add the keys to the context so we can replicate
-	if tc.isConnectedToHub == true {
-		ctx, err = tc.getHubCtx(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	var publicKey crypto.PubKey
 	kc := keychain.New(tc.store)
-	if _, publicKey, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
+	_, publicKey, err = kc.GetStoredKeyPairInLibP2PFormat()
+	if err != nil {
 		return nil, err
 	}
 
 	var pubKeyInBytes []byte
 	if pubKeyInBytes, err = publicKey.Bytes(); err != nil {
 		return nil, err
+	}
+
+	// If we are connected to the Hub, add the keys to the context so we can replicate
+	if tc.isConnectedToHub == true {
+		ctx, err = tc.getHubCtx(ctx)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		rk, _, err := kc.GetRootKeyPairInLibP2PFormat()
+		if err != nil {
+			return nil, err
+		}
+		tok, err := thread.NewToken(rk, thread.NewLibp2pPubKey(publicKey))
+		if err != nil {
+			return nil, err
+		}
+		ctx = thread.NewTokenContext(ctx, tok)
 	}
 
 	ctx = common.NewThreadNameContext(ctx, getThreadName(pubKeyInBytes, threadName))

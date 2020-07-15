@@ -9,8 +9,14 @@ import (
 	"github.com/libp2p/go-libp2p-core/crypto"
 )
 
+// these can be considered the Space app keys, for other apps,
+//  we should generate or let the app pass in a key
 const PrivateKeyStoreKey = "private_key"
 const PublicKeyStoreKey = "public_key"
+
+// this key is used to sign tokens for app keys
+const RootPrivateKeyStoreKey = "root_private_key"
+const RootPublicKeyStoreKey = "root_private_key"
 
 var (
 	ErrKeyPairNotFound = errors.New("No key pair found in the local db.")
@@ -38,26 +44,43 @@ func New(store db.Store) *keychain {
 // If there's already a key pair stored, it returns an error.
 // Use GenerateKeyPairWithForce if you want to override existing keys
 func (kc *keychain) GenerateKeyPair() ([]byte, []byte, error) {
-	if val, _ := kc.store.Get([]byte(PublicKeyStoreKey)); val != nil {
+	return kc.GenerateNamedKeyPair(PrivateKeyStoreKey, PublicKeyStoreKey)
+}
+
+func (kc *keychain) GenerateRootKeyPair() ([]byte, []byte, error) {
+	return kc.GenerateNamedKeyPair(RootPrivateKeyStoreKey, RootPublicKeyStoreKey)
+}
+
+func (kc *keychain) GenerateNamedKeyPair(privkeystorekey string, pubkeystorekey string) ([]byte, []byte, error) {
+	if val, _ := kc.store.Get([]byte(privkeystorekey)); val != nil {
 		newErr := errors.New("Error while executing GenerateKeyPair. Key pair already exists. Use GenerateKeyPairWithForce if you want to override it.")
 		return nil, nil, newErr
 	}
 
-	return kc.generateAndStoreKeyPair()
+	return kc.generateAndStoreKeyPair(privkeystorekey, pubkeystorekey)
 }
 
 // Returns the stored key pair using the same signature than libp2p's GenerateEd25519Key function
 func (kc *keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error) {
+	return kc.GetStoredKeyPairByNameInLibP2PFormat(PrivateKeyStoreKey, PublicKeyStoreKey)
+}
+
+func (kc *keychain) GetRootKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error) {
+	return kc.GetStoredKeyPairByNameInLibP2PFormat(RootPrivateKeyStoreKey, RootPublicKeyStoreKey)
+}
+
+// Returns the stored key pair using the same signature than libp2p's GenerateEd25519Key function
+func (kc *keychain) GetStoredKeyPairByNameInLibP2PFormat(privkeystorekey string, pubkeystorekey string) (crypto.PrivKey, crypto.PubKey, error) {
 	var priv []byte
 	var pub []byte
 	var err error
 
-	if pub, err = kc.store.Get([]byte(PublicKeyStoreKey)); err != nil {
+	if pub, err = kc.store.Get([]byte(pubkeystorekey)); err != nil {
 		newErr := ErrKeyPairNotFound
 		return nil, nil, newErr
 	}
 
-	if priv, err = kc.store.Get([]byte(PrivateKeyStoreKey)); err != nil {
+	if priv, err = kc.store.Get([]byte(privkeystorekey)); err != nil {
 		newErr := ErrKeyPairNotFound
 		return nil, nil, newErr
 	}
@@ -80,10 +103,10 @@ func (kc *keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.Pub
 // It stores it in the local db and returns the key pair.
 // Warning: If there's already a key pair stored, it overrides it.
 func (kc *keychain) GenerateKeyPairWithForce() ([]byte, []byte, error) {
-	return kc.generateAndStoreKeyPair()
+	return kc.generateAndStoreKeyPair(PrivateKeyStoreKey, PublicKeyStoreKey)
 }
 
-func (kc *keychain) generateAndStoreKeyPair() ([]byte, []byte, error) {
+func (kc *keychain) generateAndStoreKeyPair(privkeystorekey string, pubkeystorekey string) ([]byte, []byte, error) {
 	// Compute the key from a random seed
 	pub, priv, err := ed25519.GenerateKey(nil)
 
@@ -92,11 +115,11 @@ func (kc *keychain) generateAndStoreKeyPair() ([]byte, []byte, error) {
 	}
 
 	// Store the key pair in the db
-	if err = kc.store.Set([]byte(PublicKeyStoreKey), pub); err != nil {
+	if err = kc.store.Set([]byte(pubkeystorekey), pub); err != nil {
 		return nil, nil, err
 	}
 
-	if err = kc.store.Set([]byte(PrivateKeyStoreKey), priv); err != nil {
+	if err = kc.store.Set([]byte(privkeystorekey), priv); err != nil {
 		return nil, nil, err
 	}
 
