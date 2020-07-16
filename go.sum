@@ -1594,6 +1594,8 @@ github.com/textileio/go-assets v0.0.0-20200430191519-b341e634e2b7 h1:J7+UXJT/Ku8
 github.com/textileio/go-assets v0.0.0-20200430191519-b341e634e2b7/go.mod h1:j7aKMh8sbbtvttp7V7yCOkHW/pfRtIM/6h+8qEDsLyI=
 github.com/textileio/go-threads v0.1.21 h1:jZHA+WRIcppq7bZIWR71MB3Je33A+qdGVQB/kxASsnE=
 github.com/textileio/go-threads v0.1.21/go.mod h1:64L0Vgmhs/+J92OdIblMaNC8rsaiWEtHotAikgkychw=
+github.com/textileio/go-threads v0.1.22-0.20200715004950-43b77eed845f h1:Kvw67D+VWb+y69NeU+5o9aDPMqA4VzYyFcOoI0wDFnk=
+github.com/textileio/go-threads v0.1.22-0.20200715004950-43b77eed845f/go.mod h1:64L0Vgmhs/+J92OdIblMaNC8rsaiWEtHotAikgkychw=
 github.com/textileio/powergate v0.0.1-beta.11 h1:cJYQPeMz7TIoU1vmOy+DLvQUHBZ/5nuXjkEe9I9FDzU=
 github.com/textileio/powergate v0.0.1-beta.11/go.mod h1:D3ImIiFCJSFdNdSO1m1SL+P8kQvW2Jrkc6hAZI8h7Bg=
 github.com/textileio/powergate v0.0.1-beta.13.0.20200703203605-db27e80fa8b5 h1:sZxhbihpeGscOsceiLw7uokXQK0EoSmykAm+EpwgVSs=
@@ -1602,7 +1604,10 @@ github.com/textileio/textile v1.0.12 h1:A4NRfmRWuKoFLR42OGmyBM78SxkTQFHOVYr32S5i
 github.com/textileio/textile v1.0.12/go.mod h1:1NSLip0L4+joDd++QzyjIpGb1FfQAP6NwPJcf77qO1s=
 github.com/textileio/textile v1.0.13-0.20200707162859-d8131f5afba4 h1:PralxzWUP+3iqFmhWjTP/tdQxTKIVpEmUtdowAYTka0=
 github.com/textileio/textile v1.0.13-0.20200707162859-d8131f5afba4/go.mod h1:Z03zrWEShTQ8+8PvH/hTUCEut1H44/08OMlbFjcMFvY=
+github.com/textileio/textile v1.0.13-0.20200715062314-bc5c48f9d59e h1:cj8hjHOyh76S5wSCt9OIpfr8/p8Sl+l2GXvQ4vowuFQ=
+github.com/textileio/textile v1.0.13-0.20200715062314-bc5c48f9d59e/go.mod h1:bdcIHxhXAKAbU5CXOmS4/EJUmJLHPrFJs/CUskSEdow=
 github.com/textileio/uiprogress v0.0.3/go.mod h1:ijtyLXHP6vw9MbbT4tmCKZonLPE3LN4mD9C/XRJkrgg=
+github.com/textileio/uiprogress v0.0.4/go.mod h1:ijtyLXHP6vw9MbbT4tmCKZonLPE3LN4mD9C/XRJkrgg=
 github.com/texttheater/golang-levenshtein v0.0.0-20180516184445-d188e65d659e/go.mod h1:XDKHRm5ThF8YJjx001LtgelzsoaEcvnA7lVWz9EeX3g=
 github.com/tidwall/gjson v1.3.5 h1:2oW9FBNu8qt9jy5URgrzsVx/T/KSn3qn/smJQ0crlDQ=
 github.com/tidwall/gjson v1.3.5/go.mod h1:P256ACg0Mn+j1RXIDXoss50DeIABTYK1PULOJHhxOls=

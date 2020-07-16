@@ -1,2 +1,0 @@
-### A Issue example.
-Check [here](https://github.com/FleekHQ/space-daemon/tree/master/examples/bucketIssues#issue-2-textile-daemon-does-not-properly-shutdown-its-badger-resource) for instructions on how to run

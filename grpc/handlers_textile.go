@@ -16,6 +16,10 @@ func parseBucket(b textile.Bucket) *pb.Bucket {
 		Path:      bd.Path,
 		CreatedAt: bd.CreatedAt,
 		UpdatedAt: bd.UpdatedAt,
+
+		// TODO: Fill these out from metathread + identity service call
+		Members:             []*pb.BucketMember{},
+		IsSelectGroupBucket: false,
 	}
 
 	return br
@@ -79,4 +83,8 @@ func (srv *grpcServer) JoinBucket(ctx context.Context, request *pb.JoinBucketReq
 	return &pb.JoinBucketResponse{
 		Result: r,
 	}, nil
+}
+
+func (srv *grpcServer) ShareItemsToSelectGroup(ctx context.Context, request *pb.ShareItemsToSelectGroupRequest) (*pb.ShareItemsToSelectGroupResponse, error) {
+	return nil, errNotImplemented
 }

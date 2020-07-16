@@ -33,8 +33,8 @@ require (
 	github.com/rs/cors v1.7.0
 	github.com/sirupsen/logrus v1.6.0
 	github.com/stretchr/testify v1.6.1
-	github.com/textileio/go-threads v0.1.21
-	github.com/textileio/textile v1.0.13-0.20200707162859-d8131f5afba4
+	github.com/textileio/go-threads v0.1.22-0.20200715004950-43b77eed845f
+	github.com/textileio/textile v1.0.13-0.20200715062314-bc5c48f9d59e
 	go.etcd.io/etcd v3.3.22+incompatible
 	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
