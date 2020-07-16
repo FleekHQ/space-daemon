@@ -189,6 +189,13 @@ service SpaceApi {
       get: "/v1/buckets"
     };
   }
+
+  rpc ShareItemsToSelectGroup(ShareItemsToSelectGroupRequest) returns (ShareItemsToSelectGroupResponse) {
+    option (google.api.http) = {
+      post: "/v1/items/shareToGroup"
+      body: "*"
+    };
+  }
 }
 
 message ListDirectoriesRequest {
@@ -229,13 +236,26 @@ message CreateBucketRequest {
   string slug = 1;
 }
 
-// TODO: import from textile instead
+message BucketMember {
+  // Might be blank while the invite is not accepted.
+  string address = 1;
+  // Might be blank while the invite is not accepted.
+  string publicKey = 2;
+  bool isOwner = 3;
+  // Might be blank while the invite is not accepted.
+  string username = 4;
+  // Optional. Might be blank.
+  string email = 5;
+}
+
 message Bucket {
   string key = 1;
   string name = 2;
   string path = 3;
   int64 createdAt = 4;
   int64 updatedAt = 5;
+  repeated BucketMember members = 6;
+  bool isSelectGroupBucket = 7;
 }
 
 message CreateBucketResponse {
@@ -356,6 +376,7 @@ message ShareBucketResponse {
 message JoinBucketRequest {
   ThreadInfo threadinfo = 1;
   string bucket = 2;
+  string invitationID = 3;
 }
 
 message JoinBucketResponse {
@@ -406,3 +427,23 @@ message ListBucketsRequest {}
 message ListBucketsResponse {
   repeated Bucket buckets = 1;
 }
+
+enum InvitationType {
+  INVITE_THROUGH_EMAIL = 0;
+  INVITE_THROUGH_ADDRESS = 1;
+}
+
+message Invitation {
+  // If inviting a user that might or might not have Space installed, use INVITE_THROUGH_EMAIL. If you want to invite via a known identity, use INVITE_THROUGH_ADDRESS instead
+  InvitationType invitationType = 1;
+  // Either the email if using INVITE_THROUGH_EMAIL, or the address (derivation from public key) if using INVITE_THROUGH_ADDRESS
+  string invitationValue = 2;
+}
+
+message ShareItemsToSelectGroupRequest {
+  string bucket = 1;
+  repeated string itemPaths = 2;
+  repeated Invitation invitations = 3;
+}
+
+message ShareItemsToSelectGroupResponse {}
