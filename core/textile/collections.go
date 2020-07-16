@@ -18,8 +18,28 @@ type BucketSchema struct {
 	DbID string
 }
 
+// this is to be a singleton, just one record
+// to store metadata about that bucket inside
+// the buckets thread
+type BucketThreadMeta struct {
+	ID                  core.InstanceID `json:"_id"`
+	IsSelectGroupBucket bool            `json:isSelectGroupBucket`
+}
+
+type Member struct {
+	ID           core.InstanceID `json:"_id"`
+	Address      string          `json:"address"`
+	PublicKey    string          `json:"publicKey"`
+	Username     string          `json:"username"`
+	Email        string          `json:"email"`
+	IsOwner      bool            `json:"isOwner"`
+	InvitationID string          `json:"invitationID"`
+}
+
 const metaThreadName = "metathread"
 const bucketCollectionName = "BucketMetadata"
+const bucketThreadMetaCollectionName = "BucketThreadMetadata"
+const membersCollectionName = "Members"
 
 var errBucketNotFound = errors.New("Bucket not found")
 
@@ -171,4 +191,27 @@ func (tc *textileClient) initBucketCollection(ctx context.Context) (context.Cont
 	}
 
 	return metaCtx, dbID, nil
+}
+
+func (tc *textileClient) initBucketThreadMetaCollection(ctx context.Context, slug string) (context.Context, *thread.ID, error) {
+	bctx, dbID, err := tc.GetBucketContext(ctx, slug)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err := tc.threads.NewCollection(bctx, *dbID, db.CollectionConfig{
+		Name:   bucketThreadMetaCollectionName,
+		Schema: util.SchemaFromInstance(&BucketThreadMeta{}, false),
+	}); err != nil {
+		return nil, nil, err
+	}
+
+	if err := tc.threads.NewCollection(bctx, *dbID, db.CollectionConfig{
+		Name:   membersCollectionName,
+		Schema: util.SchemaFromInstance(&Member{}, false),
+	}); err != nil {
+		return nil, nil, err
+	}
+
+	return bctx, dbID, nil
 }
