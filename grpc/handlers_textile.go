@@ -86,5 +86,19 @@ func (srv *grpcServer) JoinBucket(ctx context.Context, request *pb.JoinBucketReq
 }
 
 func (srv *grpcServer) ShareItemsToSelectGroup(ctx context.Context, request *pb.ShareItemsToSelectGroupRequest) (*pb.ShareItemsToSelectGroupResponse, error) {
-	return nil, errNotImplemented
+	invs := make([]domain.Invitation, len(request.Invitations))
+	for _, i := range request.Invitations {
+		inv := &domain.Invitation{
+			InvitationType:  domain.InvitationType(i.InvitationType),
+			InvitationValue: i.GetInvitationValue(),
+		}
+		invs = append(invs, *inv)
+	}
+
+	err := srv.sv.ShareItemsToSelectGroup(ctx, request.Bucket, request.ItemPaths, invs)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.ShareItemsToSelectGroupResponse{}, nil
 }

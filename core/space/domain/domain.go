@@ -64,3 +64,15 @@ type Identity struct {
 type APIError struct {
 	Message string `json:"message"`
 }
+
+type InvitationType int
+
+const (
+	INVITE_THROUGH_EMAIL InvitationType = iota
+	INVITE_THROUGH_ADDRESS
+)
+
+type Invitation struct {
+	InvitationType  InvitationType `json:"invitationType"`
+	InvitationValue string         `json:"invitationValue"`
+}

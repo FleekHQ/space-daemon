@@ -68,6 +68,17 @@ func (s *Space) JoinBucket(ctx context.Context, slug string, threadinfo *domain.
 	return r, nil
 }
 
+func (s *Space) ShareItemsToSelectGroup(ctx context.Context, slug string, paths []string, invs []domain.Invitation) error {
+	// look for matching buckets
+
+	// if no bucket create it
+
+	// copy items
+
+	// share new bucket
+	return nil
+}
+
 // Returns the bucket given the name, and if the name is "" returns the default bucket
 func (s *Space) getBucketWithFallback(ctx context.Context, bucketName string) (textile.Bucket, error) {
 	var b textile.Bucket

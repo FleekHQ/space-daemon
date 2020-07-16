@@ -29,6 +29,7 @@ type Service interface {
 	GetIdentityByUsername(ctx context.Context, username string) (*domain.Identity, error)
 	ShareBucket(ctx context.Context, slug string) (*domain.ThreadInfo, error)
 	JoinBucket(ctx context.Context, slug string, threadinfo *domain.ThreadInfo) (bool, error)
+	ShareItemsToSelectGroup(ctx context.Context, slug string, paths []string, invs []domain.Invitation) error
 }
 
 type serviceOptions struct {
