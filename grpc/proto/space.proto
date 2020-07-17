@@ -444,6 +444,7 @@ message ShareItemsToSelectGroupRequest {
   string bucket = 1;
   repeated string itemPaths = 2;
   repeated Invitation invitations = 3;
+  string customMessage = 4;
 }
 
 message ShareItemsToSelectGroupResponse {}
