@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/textileio/go-threads/api/client"
 	core "github.com/textileio/go-threads/core/db"
@@ -16,24 +17,6 @@ type BucketSchema struct {
 	ID   core.InstanceID `json:"_id"`
 	Slug string          `json:"slug"`
 	DbID string
-}
-
-// this is to be a singleton, just one record
-// to store metadata about that bucket inside
-// the buckets thread
-type BucketThreadMeta struct {
-	ID                  core.InstanceID `json:"_id"`
-	IsSelectGroupBucket bool            `json:isSelectGroupBucket`
-}
-
-type Member struct {
-	ID           core.InstanceID `json:"_id"`
-	Address      string          `json:"address"`
-	PublicKey    string          `json:"publicKey"`
-	Username     string          `json:"username"`
-	Email        string          `json:"email"`
-	IsOwner      bool            `json:"isOwner"`
-	InvitationID string          `json:"invitationID"`
 }
 
 const metaThreadName = "metathread"
@@ -201,17 +184,26 @@ func (tc *textileClient) initBucketThreadMetaCollection(ctx context.Context, slu
 
 	if err := tc.threads.NewCollection(bctx, *dbID, db.CollectionConfig{
 		Name:   bucketThreadMetaCollectionName,
-		Schema: util.SchemaFromInstance(&BucketThreadMeta{}, false),
+		Schema: util.SchemaFromInstance(&domain.BucketThreadMeta{}, false),
 	}); err != nil {
 		return nil, nil, err
 	}
 
 	if err := tc.threads.NewCollection(bctx, *dbID, db.CollectionConfig{
 		Name:   membersCollectionName,
-		Schema: util.SchemaFromInstance(&Member{}, false),
+		Schema: util.SchemaFromInstance(&domain.Member{}, false),
 	}); err != nil {
 		return nil, nil, err
 	}
 
 	return bctx, dbID, nil
+}
+
+func (tc *textileClient) GetMembers(ctx context.Context, slug string) ([]domain.Member, error) {
+	r := make([]domain.Member, 0)
+	return r, nil
+}
+
+func (tc *textileClient) SetMembers(ctx context.Context, slug string, ms []domain.Member) error {
+	return nil
 }

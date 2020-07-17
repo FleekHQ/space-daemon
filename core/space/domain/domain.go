@@ -1,5 +1,9 @@
 package domain
 
+import (
+	core "github.com/textileio/go-threads/core/db"
+)
+
 type AppConfig struct {
 	Port                 int
 	AppPath              string
@@ -75,4 +79,23 @@ const (
 type Invitation struct {
 	InvitationType  InvitationType `json:"invitationType"`
 	InvitationValue string         `json:"invitationValue"`
+}
+
+// this is to be a singleton, just one record
+// to store metadata about that bucket inside
+// the buckets thread
+type BucketThreadMeta struct {
+	ID                  core.InstanceID `json:"_id"`
+	IsSelectGroupBucket bool            `json:isSelectGroupBucket`
+}
+
+type Member struct {
+	ID             core.InstanceID `json:"_id"`
+	Address        string          `json:"address"`
+	PublicKey      string          `json:"publicKey"`
+	Username       string          `json:"username"`
+	Email          string          `json:"email"`
+	IsOwner        bool            `json:"isOwner"`
+	InvitationID   string          `json:"invitationID"`
+	InvitationType InvitationType  `json:"invitationType"`
 }

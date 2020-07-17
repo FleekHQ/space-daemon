@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -68,14 +70,85 @@ func (s *Space) JoinBucket(ctx context.Context, slug string, threadinfo *domain.
 	return r, nil
 }
 
+func generateSelectGroupBucketName() string {
+	return "bucket-shared-on-" + time.Now().UTC().String()
+}
+
 func (s *Space) ShareItemsToSelectGroup(ctx context.Context, slug string, paths []string, invs []domain.Invitation) error {
 	// look for matching buckets
+	b, err := s.tc.FindBucketWithMembers(ctx, invs)
+	if err != nil {
+		return err
+	}
 
 	// if no bucket create it
+	n := generateSelectGroupBucketName()
 
-	// copy items
+	if b == nil {
+		b, err = s.tc.CreateBucket(ctx, n)
+	}
+
+	// copy item to share into new bucket
+	err = s.tc.CopyItems(ctx, slug, paths, b.Slug())
+	if err != nil {
+		return err
+	}
+
+	ms := make([]domain.Member, len(invs))
+	iids := make([]string, len(invs))
+
+	for _, inv := range invs {
+		var m *domain.Member
+
+		bytes := make([]byte, 32)
+		if _, err := rand.Read(bytes); err != nil {
+			return err
+		}
+		iid := hex.EncodeToString(bytes)
+		iids = append(iids, iid)
+
+		if inv.InvitationType == domain.INVITE_THROUGH_ADDRESS {
+			m = &domain.Member{
+				Address:        inv.InvitationValue,
+				IsOwner:        false,
+				InvitationID:   iid,
+				InvitationType: inv.InvitationType,
+			}
+		}
+
+		if inv.InvitationType == domain.INVITE_THROUGH_ADDRESS {
+			m = &domain.Member{
+				Address:        inv.InvitationValue,
+				IsOwner:        false,
+				InvitationID:   iid,
+				InvitationType: inv.InvitationType,
+			}
+		}
+
+		ms = append(ms, *m)
+	}
+
+	// set members on new bucket
+	err = s.tc.SetMembers(ctx, b.GetData().Name, ms)
+	if err != nil {
+		return err
+	}
 
 	// share new bucket
+	i, err := s.ShareBucket(ctx, b.Slug())
+
+	for _, inv := range invs {
+		err = sendInvite(ctx, inv.InvitationType, inv.InvitationValue, i)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func sendInvite(ctx context.Context, it domain.InvitationType, iv string, ti *domain.ThreadInfo) error {
+	// depending on invitation type, send invite
 	return nil
 }
 

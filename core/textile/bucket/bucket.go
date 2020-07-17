@@ -5,6 +5,7 @@ import (
 	"io"
 	"sync"
 
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/textileio/go-threads/core/thread"
 	bucketsClient "github.com/textileio/textile/api/buckets/client"
@@ -72,4 +73,51 @@ func (b *Bucket) GetData() BucketData {
 
 func (b *Bucket) getContext(ctx context.Context) (context.Context, *thread.ID, error) {
 	return b.getBucketContext(ctx, b.root.Name)
+}
+
+func (b *Bucket) MatchInvitesWithMembers(ctx context.Context, invs []domain.Invitation, ms []domain.Member) (bool, error) {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
+
+	// bitmask to make sure duplicates weren't counted
+	invsFoundBitmask := 0
+
+	// if the lengths dont match we can already return
+	if len(ms) != len(invs) {
+		return false, nil
+	}
+
+	// loop through each member
+	for _, m := range ms {
+		// flag to indicate we cound member in the invite group
+		f2 := false
+		for i, inv := range invs {
+			if inv.InvitationType == m.InvitationType {
+				if inv.InvitationType == domain.INVITE_THROUGH_ADDRESS && inv.InvitationValue == m.Address {
+					f2 = true
+					invsFoundBitmask = invsFoundBitmask | 2 ^ i
+					break
+				}
+				if inv.InvitationType == domain.INVITE_THROUGH_EMAIL && inv.InvitationValue == m.Email {
+					f2 = true
+					invsFoundBitmask = invsFoundBitmask | 2 ^ i
+					break
+				}
+			}
+		}
+		if !f2 {
+			// if we get here but f2 was net set, it means we
+			// couldnt find the member inside the invites
+			return false, nil
+		}
+	}
+
+	// since it hasnt exited until now,
+	// and all the positions have been matched
+	// we can return a match
+	if invsFoundBitmask == 2^len(invs)-1 {
+		return true, nil
+	}
+
+	return false, nil
 }
