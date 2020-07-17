@@ -75,7 +75,7 @@ func (b *Bucket) getContext(ctx context.Context) (context.Context, *thread.ID, e
 	return b.getBucketContext(ctx, b.root.Name)
 }
 
-func (b *Bucket) MatchInvitesWithMembers(ctx context.Context, invs []domain.Invitation, ms []domain.Member) (bool, error) {
+func (b *Bucket) MatchInvitesWithMembers(ctx context.Context, invs []domain.Invitation, ms []*domain.Member) (bool, error) {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
 
@@ -92,13 +92,13 @@ func (b *Bucket) MatchInvitesWithMembers(ctx context.Context, invs []domain.Invi
 		// flag to indicate we cound member in the invite group
 		f2 := false
 		for i, inv := range invs {
-			if inv.InvitationType == m.InvitationType {
-				if inv.InvitationType == domain.INVITE_THROUGH_ADDRESS && inv.InvitationValue == m.Address {
+			if inv.InvitationType == (*m).InvitationType {
+				if inv.InvitationType == domain.INVITE_THROUGH_ADDRESS && inv.InvitationValue == (*m).Address {
 					f2 = true
 					invsFoundBitmask = invsFoundBitmask | 2 ^ i
 					break
 				}
-				if inv.InvitationType == domain.INVITE_THROUGH_EMAIL && inv.InvitationValue == m.Email {
+				if inv.InvitationType == domain.INVITE_THROUGH_EMAIL && inv.InvitationValue == (*m).Email {
 					f2 = true
 					invsFoundBitmask = invsFoundBitmask | 2 ^ i
 					break

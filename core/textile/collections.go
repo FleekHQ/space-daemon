@@ -199,11 +199,34 @@ func (tc *textileClient) initBucketThreadMetaCollection(ctx context.Context, slu
 	return bctx, dbID, nil
 }
 
-func (tc *textileClient) GetMembers(ctx context.Context, slug string) ([]domain.Member, error) {
-	r := make([]domain.Member, 0)
-	return r, nil
+func (tc *textileClient) GetMembers(ctx context.Context, slug string) ([]*domain.Member, error) {
+	bctx, dbID, err := tc.GetBucketContext(ctx, slug)
+	rawms, err := tc.threads.Find(bctx, *dbID, membersCollectionName, &db.Query{}, &domain.Member{})
+	if err != nil {
+		return nil, err
+	}
+	ms := rawms.([]*domain.Member)
+	return ms, nil
 }
 
 func (tc *textileClient) SetMembers(ctx context.Context, slug string, ms []domain.Member) error {
+	bctx, dbID, err := tc.GetBucketContext(ctx, slug)
+	_, err = tc.threads.Create(bctx, *dbID, membersCollectionName, client.Instances{ms})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (tc *textileClient) SetAsSelectGroupBucket(ctx context.Context, slug string) error {
+	bctx, dbID, err := tc.GetBucketContext(ctx, slug)
+	r := &domain.BucketThreadMeta{
+		ID:                  "",
+		IsSelectGroupBucket: true,
+	}
+	_, err = tc.threads.Create(bctx, *dbID, bucketThreadMetaCollectionName, client.Instances{r})
+	if err != nil {
+		return err
+	}
 	return nil
 }

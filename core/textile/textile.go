@@ -53,7 +53,7 @@ type Bucket interface {
 		ctx context.Context,
 		path string,
 	) (path.Resolved, error)
-	MatchInvitesWithMembers(ctx context.Context, invs []domain.Invitation, ms []domain.Member) (bool, error)
+	MatchInvitesWithMembers(ctx context.Context, invs []domain.Invitation, ms []*domain.Member) (bool, error)
 }
 
 type Client interface {
@@ -72,7 +72,8 @@ type Client interface {
 	FindBucketWithMembers(ctx context.Context, invs []domain.Invitation) (Bucket, error)
 	CopyItems(ctx context.Context, srcBucket string, paths []string, trgBucket string) error
 	SetMembers(ctx context.Context, slug string, ms []domain.Member) error
-	GetMembers(ctx context.Context, slug string) ([]domain.Member, error)
+	GetMembers(ctx context.Context, slug string) ([]*domain.Member, error)
+	SetAsSelectGroupBucket(ctx context.Context, slug string) error
 }
 
 type Buckd interface {

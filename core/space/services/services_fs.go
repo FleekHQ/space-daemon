@@ -134,6 +134,11 @@ func (s *Space) ShareItemsToSelectGroup(ctx context.Context, slug string, paths 
 		return err
 	}
 
+	err = s.tc.SetAsSelectGroupBucket(ctx, b.GetData().Name)
+	if err != nil {
+		return err
+	}
+
 	// share new bucket
 	i, err := s.ShareBucket(ctx, b.Slug())
 
