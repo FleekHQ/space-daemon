@@ -5,6 +5,7 @@ go 1.14
 require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
 	github.com/alecthomas/jsonschema v0.0.0-20191017121752-4bb6e3fae4f2
+	github.com/aws/aws-sdk-go v1.27.0
 	github.com/creamdog/gonfig v0.0.0-20160810132730-80d86bfb5a37
 	github.com/dgraph-io/badger v1.6.1
 	github.com/fatih/color v1.9.0 // indirect

@@ -17,6 +17,7 @@ import (
 
 	"github.com/FleekHQ/space-daemon/core/textile"
 
+	"github.com/FleekHQ/space-daemon/core/email"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
 )
@@ -142,19 +143,26 @@ func (s *Space) ShareItemsToSelectGroup(ctx context.Context, slug string, paths 
 	// share new bucket
 	i, err := s.ShareBucket(ctx, b.Slug())
 
-	for _, inv := range invs {
-		err = sendInvite(ctx, inv.InvitationType, inv.InvitationValue, i)
-		if err != nil {
-			return err
-		}
+	err = sendInvite(ctx, invs, i)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func sendInvite(ctx context.Context, it domain.InvitationType, iv string, ti *domain.ThreadInfo) error {
-	// depending on invitation type, send invite
-	return nil
+func sendInvite(ctx context.Context, invs []domain.Invitation, ti *domain.ThreadInfo) error {
+	rs := make([]string, 0)
+	for _, inv := range invs {
+		// TODO: handle invite through address
+
+		if inv.InvitationType == domain.INVITE_THROUGH_EMAIL {
+			rs = append(rs, inv.InvitationValue)
+		}
+	}
+
+	url := fmt.Sprintf("joinbucket?key=%s&addresses=%s", ti.Key, strings.Join(ti.Addresses, ","))
+	return email.SendEmails(rs, url, "TODO username", "TODO email")
 }
 
 // Returns the bucket given the name, and if the name is "" returns the default bucket
