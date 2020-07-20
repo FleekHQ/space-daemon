@@ -298,14 +298,35 @@ func (tc *textileClient) CopyItems(ctx context.Context, srcBucket string, paths 
 		return err
 	}
 	for _, pth := range paths {
-		var buf bytes.Buffer
-		err := b1.GetFile(ctx, pth, &buf)
+		lp, err := tc.bucketsClient.ListPath(ctx, b1.Key(), pth)
+
 		if err != nil {
 			return err
 		}
-		_, _, err = b2.UploadFile(ctx, pth, &buf)
-		if err != nil {
-			return err
+
+		if lp.Item.IsDir {
+			_, _, err := b2.CreateDirectory(ctx, pth)
+			if err != nil {
+				return err
+			}
+			spths := make([]string, len(lp.Item.Items))
+			for _, i := range lp.Item.Items {
+				spths = append(spths, pth+"/"+i.Name)
+			}
+			err = tc.CopyItems(ctx, srcBucket, spths, trgBucket)
+			if err != nil {
+				return err
+			}
+		} else {
+			var buf bytes.Buffer
+			err := b1.GetFile(ctx, pth, &buf)
+			if err != nil {
+				return err
+			}
+			_, _, err = b2.UploadFile(ctx, pth, &buf)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
