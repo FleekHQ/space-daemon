@@ -14,6 +14,8 @@ require (
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/ipfs/go-cid v0.0.6
 	github.com/ipfs/go-ipfs-chunker v0.0.5
+	github.com/ipfs/go-ipfs-files v0.0.8
+	github.com/ipfs/go-ipfs-http-client v0.0.6-0.20200512220018-7002cce28cb1
 	github.com/ipfs/go-ipld-format v0.2.0
 	github.com/ipfs/go-merkledag v0.3.2
 	github.com/ipfs/go-unixfs v0.2.4

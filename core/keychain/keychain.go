@@ -2,6 +2,7 @@ package keychain
 
 import (
 	"crypto/ed25519"
+	"crypto/rand"
 
 	"errors"
 
@@ -24,6 +25,7 @@ type Keychain interface {
 	GenerateKeyPair() ([]byte, []byte, error)
 	GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error)
 	GenerateKeyPairWithForce() ([]byte, []byte, error)
+	GenerateTempKey() ([]byte, error)
 	Sign([]byte) ([]byte, error)
 }
 
@@ -44,6 +46,14 @@ func (kc *keychain) GenerateKeyPair() ([]byte, []byte, error) {
 	}
 
 	return kc.generateAndStoreKeyPair()
+}
+
+// GenerateTempKey generates a 256 bit symmetric key useful for AES encryption.
+// Note: This does not store the generated key, hence the reason they are temp keys.
+func (kc *keychain) GenerateTempKey() ([]byte, error) {
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
+	return b, err
 }
 
 // Returns the stored key pair using the same signature than libp2p's GenerateEd25519Key function
@@ -81,6 +91,12 @@ func (kc *keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.Pub
 // Warning: If there's already a key pair stored, it overrides it.
 func (kc *keychain) GenerateKeyPairWithForce() ([]byte, []byte, error) {
 	return kc.generateAndStoreKeyPair()
+}
+
+func (kc *keychain) generateKeyPair() ([]byte, []byte, error) {
+	// Compute the key from a random seed
+	pub, priv, err := ed25519.GenerateKey(nil)
+	return pub, priv, err
 }
 
 func (kc *keychain) generateAndStoreKeyPair() ([]byte, []byte, error) {
