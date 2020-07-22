@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"context"
-	"strconv"
+	"errors"
 
 	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
@@ -10,6 +10,8 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/golang/protobuf/ptypes/empty"
 )
+
+var errNotImplemented = errors.New("Not implemented")
 
 func (srv *grpcServer) sendFileEvent(event *pb.FileEventResponse) {
 	if srv.fileEventStream != nil {
@@ -94,17 +96,6 @@ func (srv *grpcServer) ListDirectory(
 
 	res := &pb.ListDirectoryResponse{
 		Entries: dirEntries,
-	}
-
-	return res, nil
-}
-
-func (srv *grpcServer) GetConfigInfo(ctx context.Context, e *empty.Empty) (*pb.ConfigInfoResponse, error) {
-	appCfg := srv.sv.GetConfig(ctx)
-
-	res := &pb.ConfigInfoResponse{
-		Port:    strconv.Itoa(appCfg.Port),
-		AppPath: appCfg.AppPath,
 	}
 
 	return res, nil

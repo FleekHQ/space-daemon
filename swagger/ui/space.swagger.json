@@ -64,15 +64,15 @@
         ]
       }
     },
-    "/v1/buckets/{bucket}/generateFileShareLink": {
+    "/v1/buckets/{bucket}/generatePublicFileLink": {
       "post": {
-        "summary": "Generate sharing link for file in bucket",
-        "operationId": "SpaceApi_GenerateFileShareLink",
+        "summary": "Generates a copy of the file that's accessible through IPFS gateways",
+        "operationId": "SpaceApi_GeneratePublicFileLink",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/spaceGenerateFileShareLinkResponse"
+              "$ref": "#/definitions/spaceGeneratePublicFileLinkResponse"
             }
           },
           "default": {
@@ -94,7 +94,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/spaceGenerateFileShareLinkRequest"
+              "$ref": "#/definitions/spaceGeneratePublicFileLinkRequest"
             }
           }
         ],
@@ -181,15 +181,15 @@
         ]
       }
     },
-    "/v1/buckets/{bucket}/shareViaEmail": {
+    "/v1/buckets/{bucket}/shareViaPublicKey": {
       "post": {
-        "summary": "Share bucket via email",
-        "operationId": "SpaceApi_ShareBucketViaEmail",
+        "summary": "Share bucket via public key using Textile Hub inboxing",
+        "operationId": "SpaceApi_ShareBucketViaPublicKey",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/spaceShareBucketViaEmailResponse"
+              "$ref": "#/definitions/spaceShareBucketViaPublicKeyResponse"
             }
           },
           "default": {
@@ -211,72 +211,10 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/spaceShareBucketViaEmailRequest"
+              "$ref": "#/definitions/spaceShareBucketViaPublicKeyRequest"
             }
           }
         ],
-        "tags": [
-          "SpaceApi"
-        ]
-      }
-    },
-    "/v1/buckets/{bucket}/shareViaIdentity": {
-      "post": {
-        "summary": "Share bucket via identity information",
-        "operationId": "SpaceApi_ShareBucketViaIdentity",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/spaceShareBucketViaIdentityResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response",
-            "schema": {
-              "$ref": "#/definitions/runtimeError"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "bucket",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/spaceShareBucketViaIdentityRequest"
-            }
-          }
-        ],
-        "tags": [
-          "SpaceApi"
-        ]
-      }
-    },
-    "/v1/configs": {
-      "get": {
-        "summary": "Get Config information installed daemon",
-        "operationId": "SpaceApi_GetConfigInfo",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/spaceConfigInfoResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response",
-            "schema": {
-              "$ref": "#/definitions/runtimeError"
-            }
-          }
-        },
         "tags": [
           "SpaceApi"
         ]
@@ -459,12 +397,12 @@
     "/v1/files/openPublic": {
       "get": {
         "summary": "Open an encrypted public shared file in the daemon.\nThis requires the decryption key and file hash/cid to work",
-        "operationId": "SpaceApi_OpenPublicSharedFile",
+        "operationId": "SpaceApi_OpenPublicFile",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/spaceOpenSharedFileResponse"
+              "$ref": "#/definitions/spaceOpenPublicFileResponse"
             }
           },
           "default": {
@@ -553,15 +491,15 @@
         ]
       }
     },
-    "/v1/identities": {
+    "/v1/items/copyAndShareFiles": {
       "post": {
-        "summary": "Create a new user identity. Username and Email required.",
-        "operationId": "SpaceApi_CreateUsernameAndEmail",
+        "summary": "Copies a set of files in a new or existing bucket that's shared with a group of public keys\nAuxiliary method that internally calls CreateBucket, ShareBucketViaPublicKey, AddFile.",
+        "operationId": "SpaceApi_CopyAndShareFiles",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/spaceCreateUsernameAndEmailResponse"
+              "$ref": "#/definitions/spaceCopyAndShareFilesResponse"
             }
           },
           "default": {
@@ -577,70 +515,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/spaceCreateUsernameAndEmailRequest"
-            }
-          }
-        ],
-        "tags": [
-          "SpaceApi"
-        ]
-      }
-    },
-    "/v1/identities/{username}": {
-      "get": {
-        "summary": "Get Identity by Username",
-        "operationId": "SpaceApi_GetIdentityByUsername",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/spaceGetIdentityByUsernameResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response",
-            "schema": {
-              "$ref": "#/definitions/runtimeError"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "username",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "SpaceApi"
-        ]
-      }
-    },
-    "/v1/items/shareToGroup": {
-      "post": {
-        "operationId": "SpaceApi_ShareItemsToSelectGroup",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/spaceShareItemsToSelectGroupResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response",
-            "schema": {
-              "$ref": "#/definitions/runtimeError"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/spaceShareItemsToSelectGroupRequest"
+              "$ref": "#/definitions/spaceCopyAndShareFilesRequest"
             }
           }
         ],
@@ -1000,7 +875,7 @@
             "$ref": "#/definitions/spaceBucketMember"
           }
         },
-        "isSelectGroupBucket": {
+        "isPersonalBucket": {
           "type": "boolean",
           "format": "boolean"
         }
@@ -1010,37 +885,42 @@
       "type": "object",
       "properties": {
         "address": {
-          "type": "string",
-          "description": "Might be blank while the invite is not accepted."
+          "type": "string"
         },
         "publicKey": {
-          "type": "string",
-          "description": "Might be blank while the invite is not accepted."
+          "type": "string"
         },
         "isOwner": {
           "type": "boolean",
           "format": "boolean"
-        },
-        "username": {
-          "type": "string",
-          "description": "Might be blank while the invite is not accepted."
-        },
-        "email": {
-          "type": "string",
-          "description": "Optional. Might be blank."
         }
       }
     },
-    "spaceConfigInfoResponse": {
+    "spaceCopyAndShareFilesRequest": {
       "type": "object",
       "properties": {
-        "port": {
+        "bucket": {
           "type": "string"
         },
-        "appPath": {
+        "itemPaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "publicKeys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "customMessage": {
           "type": "string"
         }
       }
+    },
+    "spaceCopyAndShareFilesResponse": {
+      "type": "object"
     },
     "spaceCreateBucketRequest": {
       "type": "object",
@@ -1075,21 +955,6 @@
       "type": "object",
       "title": "not sure we need to return anything other than an error if we failed"
     },
-    "spaceCreateUsernameAndEmailRequest": {
-      "type": "object",
-      "properties": {
-        "username": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string",
-          "description": "Optional. Send \"\" to skip."
-        }
-      }
-    },
-    "spaceCreateUsernameAndEmailResponse": {
-      "type": "object"
-    },
     "spaceEventType": {
       "type": "string",
       "enum": [
@@ -1119,31 +984,6 @@
         }
       }
     },
-    "spaceGenerateFileShareLinkRequest": {
-      "type": "object",
-      "properties": {
-        "bucket": {
-          "type": "string"
-        },
-        "filePath": {
-          "type": "string"
-        }
-      }
-    },
-    "spaceGenerateFileShareLinkResponse": {
-      "type": "object",
-      "properties": {
-        "link": {
-          "type": "string"
-        },
-        "fileCid": {
-          "type": "string"
-        },
-        "fileKey": {
-          "type": "string"
-        }
-      }
-    },
     "spaceGenerateKeyPairRequest": {
       "type": "object"
     },
@@ -1158,56 +998,30 @@
         }
       }
     },
-    "spaceGetIdentityByUsernameResponse": {
+    "spaceGeneratePublicFileLinkRequest": {
       "type": "object",
       "properties": {
-        "identity": {
-          "$ref": "#/definitions/spaceIdentity"
-        }
-      }
-    },
-    "spaceIdentity": {
-      "type": "object",
-      "properties": {
-        "address": {
+        "bucket": {
           "type": "string"
         },
-        "publicKey": {
+        "filePath": {
           "type": "string"
         },
-        "username": {
+        "password": {
           "type": "string"
         }
       }
     },
-    "spaceIdentityType": {
-      "type": "string",
-      "enum": [
-        "USERNAME",
-        "EMAIL"
-      ],
-      "default": "USERNAME"
-    },
-    "spaceInvitation": {
+    "spaceGeneratePublicFileLinkResponse": {
       "type": "object",
       "properties": {
-        "invitationType": {
-          "$ref": "#/definitions/spaceInvitationType",
-          "title": "If inviting a user that might or might not have Space installed, use INVITE_THROUGH_EMAIL. If you want to invite via a known identity, use INVITE_THROUGH_ADDRESS instead"
+        "link": {
+          "type": "string"
         },
-        "invitationValue": {
-          "type": "string",
-          "title": "Either the email if using INVITE_THROUGH_EMAIL, or the address (derivation from public key) if using INVITE_THROUGH_ADDRESS"
+        "fileCid": {
+          "type": "string"
         }
       }
-    },
-    "spaceInvitationType": {
-      "type": "string",
-      "enum": [
-        "INVITE_THROUGH_EMAIL",
-        "INVITE_THROUGH_ADDRESS"
-      ],
-      "default": "INVITE_THROUGH_EMAIL"
     },
     "spaceJoinBucketRequest": {
       "type": "object",
@@ -1314,7 +1128,7 @@
         }
       }
     },
-    "spaceOpenSharedFileResponse": {
+    "spaceOpenPublicFileResponse": {
       "type": "object",
       "properties": {
         "location": {
@@ -1349,63 +1163,18 @@
         }
       }
     },
-    "spaceShareBucketViaEmailRequest": {
+    "spaceShareBucketViaPublicKeyRequest": {
       "type": "object",
       "properties": {
-        "bucket": {
+        "publicKey": {
           "type": "string"
-        },
-        "email": {
-          "type": "string"
-        }
-      }
-    },
-    "spaceShareBucketViaEmailResponse": {
-      "type": "object"
-    },
-    "spaceShareBucketViaIdentityRequest": {
-      "type": "object",
-      "properties": {
-        "identityType": {
-          "$ref": "#/definitions/spaceIdentityType",
-          "title": "identityType is either USERNAME or EMAIL"
-        },
-        "identityValue": {
-          "type": "string",
-          "title": "E.g. if identityType is USERNAME, identityValue is the actual username"
         },
         "bucket": {
           "type": "string"
         }
       }
     },
-    "spaceShareBucketViaIdentityResponse": {
-      "type": "object"
-    },
-    "spaceShareItemsToSelectGroupRequest": {
-      "type": "object",
-      "properties": {
-        "bucket": {
-          "type": "string"
-        },
-        "itemPaths": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "invitations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/spaceInvitation"
-          }
-        },
-        "customMessage": {
-          "type": "string"
-        }
-      }
-    },
-    "spaceShareItemsToSelectGroupResponse": {
+    "spaceShareBucketViaPublicKeyResponse": {
       "type": "object"
     },
     "spaceTextileEventResponse": {
