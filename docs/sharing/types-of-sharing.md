@@ -6,16 +6,12 @@ Sharing happens around buckets. A bucket holds the file structure and pointers t
 
 The most simple sharing type. When you create a bucket (using the `CreateBucket` gRPC endpoint), a bucket with a single member, the creator of the bucket, will be created. If you use the `ShareBucket` gRPC, you can add all members you want. This is very similar to creating a team, or creating a channel in Slack.
 
-## Select Group Sharing
+## Copy and share
 
-This is analogue to a conversation between a set of people in Slack. When calling the `ShareItemsToSelectGroup` request, Space Daemon creates a bucket with a predefined slot for each member invited. When each member joins, the slots get filled with their public key. If you want to later on add another participant, you need to create a new bucket and either fork the "conversation" or start from scratch.
+This is analogue to a conversation between a set of people in Slack. When calling the `CopyAndShareFiles` request, Space Daemon creates a bucket with members access already predefined by the public keys given. If a bucket with the same set of public keys exists, it is used instead. Then, it copies the set of files over to that bucket and sends an invitation through Textile's Hub inboxing.
 
-For more info, refer to the following diagram:
+## Public File Sharing
 
-![sequence diagram](https://github.com/FleekHQ/space-daemon/blob/master/docs/sharing/select-group-sharing.png)
-
-## Link Sharing
-
-When calling `GenerateFileShareLink`, the file is going to be encrypted and uploaded to IPFS. The link will point to a gateway so that anyone with the decryption key will be able to download the file.
+When calling `GeneratePublicFileLink`, the file is going to be encrypted and uploaded to IPFS. The link will point to a gateway so that anyone with the decryption key will be able to download the file.
 
 We are evaluating also creating a bucket around this single file, so that the link can also be used to join the bucket and modify the file collaboratively.

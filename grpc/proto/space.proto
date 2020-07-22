@@ -354,7 +354,7 @@ message ShareBucketViaPublicKeyResponse {}
 
 message GeneratePublicFileLinkRequest {
   string bucket = 1;
-  string filePath = 2;
+  repeated string itemPaths = 2;
   string password = 3;
 }
 

@@ -1004,8 +1004,11 @@
         "bucket": {
           "type": "string"
         },
-        "filePath": {
-          "type": "string"
+        "itemPaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "password": {
           "type": "string"
