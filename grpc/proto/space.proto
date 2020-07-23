@@ -206,11 +206,6 @@ message ListDirectoryResponse {
   repeated ListDirectoryEntry entries = 1;
 }
 
-message ConfigInfoResponse {
-  string port = 1;
-  string appPath = 2;
-}
-
 message CreateBucketRequest {
   string slug = 1;
 }
