@@ -6,34 +6,38 @@ import (
 	"github.com/FleekHQ/space-daemon/grpc/pb"
 )
 
-func (srv *grpcServer) ShareBucketViaEmail(ctx context.Context, request *pb.ShareBucketViaEmailRequest) (*pb.ShareBucketViaEmailResponse, error) {
+func (srv *grpcServer) ShareBucketViaPublicKey(ctx context.Context, request *pb.ShareBucketViaPublicKeyRequest) (*pb.ShareBucketViaPublicKeyResponse, error) {
 	return nil, errNotImplemented
 }
 
-func (srv *grpcServer) ShareBucketViaIdentity(ctx context.Context, request *pb.ShareBucketViaIdentityRequest) (*pb.ShareBucketViaIdentityResponse, error) {
-	return nil, errNotImplemented
-}
-
-func (srv *grpcServer) GenerateFileShareLink(ctx context.Context, request *pb.GenerateFileShareLinkRequest) (*pb.GenerateFileShareLinkResponse, error) {
-	res, err := srv.sv.GenerateFileSharingLink(ctx, request.FilePath, request.Bucket)
+func (srv *grpcServer) GeneratePublicFileLink(ctx context.Context, request *pb.GeneratePublicFileLinkRequest) (*pb.GeneratePublicFileLinkResponse, error) {
+	// TODO: Generalize for multiple file upload
+	res, err := srv.sv.GenerateFileSharingLink(ctx, request.ItemPaths[0], request.Bucket)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.GenerateFileShareLinkResponse{
+	return &pb.GeneratePublicFileLinkResponse{
 		Link:    res.SpaceDownloadLink,
 		FileCid: res.SharedFileCid,
-		FileKey: res.SharedFileKey,
 	}, nil
 }
 
-func (srv *grpcServer) OpenPublicSharedFile(ctx context.Context, request *pb.OpenSharedFileRequest) (*pb.OpenSharedFileResponse, error) {
+func (srv *grpcServer) OpenPublicFile(ctx context.Context, request *pb.OpenPublicFileRequest) (*pb.OpenPublicFileResponse, error) {
 	res, err := srv.sv.OpenSharedFile(ctx, request.FileCid, request.FileKey, request.Filename)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.OpenSharedFileResponse{
+	return &pb.OpenPublicFileResponse{
 		Location: res.Location,
 	}, nil
+}
+
+func (srv *grpcServer) GetPendingBucketInvitations(ctx context.Context, request *pb.GetPendingBucketInvitationsRequest) (*pb.GetPendingBucketInvitationsResponse, error) {
+	return nil, errNotImplemented
+}
+
+func (srv *grpcServer) AcceptBucketInvitation(ctx context.Context, request *pb.AcceptBucketInvitationRequest) (*pb.AcceptBucketInvitationResponse, error) {
+	return nil, errNotImplemented
 }

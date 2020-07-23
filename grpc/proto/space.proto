@@ -27,13 +27,6 @@ service SpaceApi {
     };
   }
 
-  // Get Config information installed daemon
-  rpc GetConfigInfo(google.protobuf.Empty) returns (ConfigInfoResponse) {
-    option (google.api.http) = {
-      get: "/v1/configs"
-    };
-  }
-
   // Generate Key Pair for current account.
   // This will return error if daemon account already has keypairs
   rpc GenerateKeyPair(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {
@@ -74,9 +67,17 @@ service SpaceApi {
     };
   }
 
+  // Generates a copy of the file that's accessible through IPFS gateways
+  rpc GeneratePublicFileLink(GeneratePublicFileLinkRequest) returns (GeneratePublicFileLinkResponse) {
+    option (google.api.http) = {
+      post: "/v1/buckets/{bucket}/generatePublicFileLink"
+      body: "*"
+    };
+  }
+
   // Open an encrypted public shared file in the daemon.
   // This requires the decryption key and file hash/cid to work
-  rpc OpenPublicSharedFile(OpenSharedFileRequest) returns (OpenSharedFileResponse) {
+  rpc OpenPublicFile(OpenPublicFileRequest) returns (OpenPublicFileResponse) {
     option (google.api.http) = {
       get: "/v1/files/openPublic"
     };
@@ -121,21 +122,6 @@ service SpaceApi {
     };
   }
 
-  // Get Identity by Username
-  rpc GetIdentityByUsername(GetIdentityByUsernameRequest) returns (GetIdentityByUsernameResponse) {
-    option (google.api.http) = {
-      get: "/v1/identities/{username}"
-    };
-  }
-
-  // Create a new user identity. Username and Email required.
-  rpc CreateUsernameAndEmail(CreateUsernameAndEmailRequest) returns (CreateUsernameAndEmailResponse) {
-    option (google.api.http) = {
-      post: "/v1/identities"
-      body: "*"
-    };
-  }
-
   // Backup Key by Passphrase
   rpc BackupKeysByPassphrase(BackupKeysByPassphraseRequest) returns (BackupKeysByPassphraseResponse) {
     option (google.api.http) = {
@@ -168,26 +154,24 @@ service SpaceApi {
     };
   }
 
-  // Share bucket via email
-  rpc ShareBucketViaEmail(ShareBucketViaEmailRequest) returns (ShareBucketViaEmailResponse) {
+  // Share bucket via public key using Textile Hub inboxing
+  rpc ShareBucketViaPublicKey(ShareBucketViaPublicKeyRequest) returns (ShareBucketViaPublicKeyResponse) {
     option (google.api.http) = {
-      post: "/v1/buckets/{bucket}/shareViaEmail"
+      post: "/v1/buckets/{bucket}/shareViaPublicKey"
       body: "*"
     };
   }
 
-  // Share bucket via identity information
-  rpc ShareBucketViaIdentity(ShareBucketViaIdentityRequest) returns (ShareBucketViaIdentityResponse) {
+  rpc GetPendingBucketInvitations(GetPendingBucketInvitationsRequest) returns (GetPendingBucketInvitationsResponse) {
     option (google.api.http) = {
-      post: "/v1/buckets/{bucket}/shareViaIdentity"
+      post: "/v1/pendingInvitations"
       body: "*"
     };
   }
 
-  // Generate sharing link for file in bucket
-  rpc GenerateFileShareLink(GenerateFileShareLinkRequest) returns (GenerateFileShareLinkResponse) {
+  rpc AcceptBucketInvitation(AcceptBucketInvitationRequest) returns (AcceptBucketInvitationResponse) {
     option (google.api.http) = {
-      post: "/v1/buckets/{bucket}/generateFileShareLink"
+      post: "/v1/acceptInvitation"
       body: "*"
     };
   }
@@ -198,9 +182,11 @@ service SpaceApi {
     };
   }
 
-  rpc ShareItemsToSelectGroup(ShareItemsToSelectGroupRequest) returns (ShareItemsToSelectGroupResponse) {
+  // Copies a set of files in a new or existing bucket that's shared with a group of public keys
+  // Auxiliary method that internally calls CreateBucket, ShareBucketViaPublicKey, AddFile.
+  rpc CopyAndShareFiles(CopyAndShareFilesRequest) returns (CopyAndShareFilesResponse) {
     option (google.api.http) = {
-      post: "/v1/items/shareToGroup"
+      post: "/v1/items/copyAndShareFiles"
       body: "*"
     };
   }
@@ -221,7 +207,6 @@ message ListDirectoryEntry {
   string ipfsHash = 8;
 }
 
-
 message ListDirectoriesResponse {
   repeated ListDirectoryEntry entries = 1;
 }
@@ -235,25 +220,15 @@ message ListDirectoryResponse {
   repeated ListDirectoryEntry entries = 1;
 }
 
-message ConfigInfoResponse {
-  string port = 1;
-  string appPath = 2;
-}
-
 message CreateBucketRequest {
   string slug = 1;
 }
 
 message BucketMember {
-  // Might be blank while the invite is not accepted.
   string address = 1;
-  // Might be blank while the invite is not accepted.
   string publicKey = 2;
   bool isOwner = 3;
-  // Might be blank while the invite is not accepted.
-  string username = 4;
-  // Optional. Might be blank.
-  string email = 5;
+  bool hasJoined = 4;
 }
 
 message Bucket {
@@ -263,7 +238,7 @@ message Bucket {
   int64 createdAt = 4;
   int64 updatedAt = 5;
   repeated BucketMember members = 6;
-  bool isSelectGroupBucket = 7;
+  bool isPersonalBucket = 7;
 }
 
 message CreateBucketResponse {
@@ -301,13 +276,13 @@ message OpenFileResponse {
   string location = 1;
 }
 
-message OpenSharedFileRequest {
+message OpenPublicFileRequest {
   string fileCid = 1;
   string fileKey = 2;
   string filename = 3;
 }
 
-message OpenSharedFileResponse {
+message OpenPublicFileResponse {
   string location = 1;
 }
 
@@ -344,28 +319,6 @@ message CreateFolderRequest {
 message CreateFolderResponse {
 }
 
-message GetIdentityByUsernameRequest {
-  string username = 1;
-}
-
-message Identity {
-  string address = 1;
-  string publicKey = 2;
-  string username = 3;
-}
-
-message GetIdentityByUsernameResponse {
-  Identity identity = 1;
-}
-
-message CreateUsernameAndEmailRequest {
-  string username = 1;
-  // Optional. Send "" to skip.
-  string email = 2;
-}
-
-message CreateUsernameAndEmailResponse {}
-
 message BackupKeysByPassphraseRequest {
   string passphrase = 1;
 }
@@ -394,44 +347,29 @@ message ShareBucketResponse {
 message JoinBucketRequest {
   ThreadInfo threadinfo = 1;
   string bucket = 2;
-  string invitationID = 3;
 }
 
 message JoinBucketResponse {
   bool result = 1;
 }
 
-message ShareBucketViaEmailRequest {
+
+message ShareBucketViaPublicKeyRequest {
+  repeated string publicKeys = 1;
+  string bucket = 2;
+}
+
+message ShareBucketViaPublicKeyResponse {}
+
+message GeneratePublicFileLinkRequest {
   string bucket = 1;
-  string email = 2;
+  repeated string itemPaths = 2;
+  string password = 3;
 }
 
-message ShareBucketViaEmailResponse {}
-
-enum IdentityType {
-  USERNAME = 0;
-  EMAIL = 1;
-}
-
-message ShareBucketViaIdentityRequest {
-  // identityType is either USERNAME or EMAIL
-  IdentityType identityType = 1;
-  // E.g. if identityType is USERNAME, identityValue is the actual username
-  string identityValue = 2;
-  string bucket = 3;
-}
-
-message ShareBucketViaIdentityResponse {}
-
-message GenerateFileShareLinkRequest {
-  string bucket = 1;
-  string filePath = 2;
-}
-
-message GenerateFileShareLinkResponse {
+message GeneratePublicFileLinkResponse {
   string link = 1;
   string fileCid = 2;
-  string fileKey = 3;
 }
 
 message ToggleFuseRequest {
@@ -448,23 +386,28 @@ message ListBucketsResponse {
   repeated Bucket buckets = 1;
 }
 
-enum InvitationType {
-  INVITE_THROUGH_EMAIL = 0;
-  INVITE_THROUGH_ADDRESS = 1;
-}
-
-message Invitation {
-  // If inviting a user that might or might not have Space installed, use INVITE_THROUGH_EMAIL. If you want to invite via a known identity, use INVITE_THROUGH_ADDRESS instead
-  InvitationType invitationType = 1;
-  // Either the email if using INVITE_THROUGH_EMAIL, or the address (derivation from public key) if using INVITE_THROUGH_ADDRESS
-  string invitationValue = 2;
-}
-
-message ShareItemsToSelectGroupRequest {
+message CopyAndShareFilesRequest {
   string bucket = 1;
   repeated string itemPaths = 2;
-  repeated Invitation invitations = 3;
+  repeated string publicKeys = 3;
   string customMessage = 4;
 }
 
-message ShareItemsToSelectGroupResponse {}
+message CopyAndShareFilesResponse {}
+
+message Invitation {
+  string inviterPublicKey = 1;
+  string invitationID = 2;
+}
+
+message GetPendingBucketInvitationsRequest {}
+
+message GetPendingBucketInvitationsResponse {
+  repeated Invitation invitations = 1;
+}
+
+message AcceptBucketInvitationRequest {
+  string invitationID = 1;
+}
+
+message AcceptBucketInvitationResponse {}
