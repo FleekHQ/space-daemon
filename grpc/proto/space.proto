@@ -396,9 +396,8 @@ message CopyAndShareFilesRequest {
 message CopyAndShareFilesResponse {}
 
 message Invitation {
-  string bucket = 1;
-  string inviterPublicKey = 2;
-  string invitationID = 3;
+  string inviterPublicKey = 1;
+  string invitationID = 2;
 }
 
 message GetPendingBucketInvitationsRequest {}

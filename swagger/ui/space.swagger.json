@@ -1122,9 +1122,6 @@
     "spaceInvitation": {
       "type": "object",
       "properties": {
-        "bucket": {
-          "type": "string"
-        },
         "inviterPublicKey": {
           "type": "string"
         },
