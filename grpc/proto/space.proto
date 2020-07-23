@@ -346,7 +346,7 @@ message JoinBucketResponse {
 
 
 message ShareBucketViaPublicKeyRequest {
-  string publicKey = 1;
+  repeated string publicKeys = 1;
   string bucket = 2;
 }
 

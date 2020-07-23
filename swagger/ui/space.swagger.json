@@ -1169,8 +1169,11 @@
     "spaceShareBucketViaPublicKeyRequest": {
       "type": "object",
       "properties": {
-        "publicKey": {
-          "type": "string"
+        "publicKeys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "bucket": {
           "type": "string"
