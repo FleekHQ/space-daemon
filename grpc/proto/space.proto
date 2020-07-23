@@ -162,6 +162,20 @@ service SpaceApi {
     };
   }
 
+  rpc GetPendingBucketInvitations(GetPendingBucketInvitationsRequest) returns (GetPendingBucketInvitationsResponse) {
+    option (google.api.http) = {
+      post: "/v1/pendingInvitations"
+      body: "*"
+    };
+  }
+
+  rpc AcceptBucketInvitation(AcceptBucketInvitationRequest) returns (AcceptBucketInvitationResponse) {
+    option (google.api.http) = {
+      post: "/v1/acceptInvitation"
+      body: "*"
+    };
+  }
+
   rpc ListBuckets(ListBucketsRequest) returns (ListBucketsResponse) {
     option (google.api.http) = {
       get: "/v1/buckets"
@@ -214,6 +228,7 @@ message BucketMember {
   string address = 1;
   string publicKey = 2;
   bool isOwner = 3;
+  bool hasJoined = 4;
 }
 
 message Bucket {
@@ -332,7 +347,6 @@ message ShareBucketResponse {
 message JoinBucketRequest {
   ThreadInfo threadinfo = 1;
   string bucket = 2;
-  string invitationID = 3;
 }
 
 message JoinBucketResponse {
@@ -380,3 +394,21 @@ message CopyAndShareFilesRequest {
 }
 
 message CopyAndShareFilesResponse {}
+
+message Invitation {
+  string bucket = 1;
+  string inviterPublicKey = 2;
+  string invitationID = 3;
+}
+
+message GetPendingBucketInvitationsRequest {}
+
+message GetPendingBucketInvitationsResponse {
+  repeated Invitation invitations = 1;
+}
+
+message AcceptBucketInvitationRequest {
+  string invitationID = 1;
+}
+
+message AcceptBucketInvitationResponse {}

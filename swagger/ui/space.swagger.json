@@ -11,6 +11,38 @@
     "application/json"
   ],
   "paths": {
+    "/v1/acceptInvitation": {
+      "post": {
+        "operationId": "SpaceApi_AcceptBucketInvitation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceAcceptBucketInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceAcceptBucketInvitationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/buckets": {
       "get": {
         "operationId": "SpaceApi_ListBuckets",
@@ -656,6 +688,38 @@
         ]
       }
     },
+    "/v1/pendingInvitations": {
+      "post": {
+        "operationId": "SpaceApi_GetPendingBucketInvitations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceGetPendingBucketInvitationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceGetPendingBucketInvitationsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/subscriptions/file": {
       "get": {
         "summary": "Subscribe to file events. This streams responses to the caller",
@@ -780,6 +844,17 @@
         }
       }
     },
+    "spaceAcceptBucketInvitationRequest": {
+      "type": "object",
+      "properties": {
+        "invitationID": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceAcceptBucketInvitationResponse": {
+      "type": "object"
+    },
     "spaceAddItemResult": {
       "type": "object",
       "properties": {
@@ -891,6 +966,10 @@
           "type": "string"
         },
         "isOwner": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "hasJoined": {
           "type": "boolean",
           "format": "boolean"
         }
@@ -1026,6 +1105,34 @@
         }
       }
     },
+    "spaceGetPendingBucketInvitationsRequest": {
+      "type": "object"
+    },
+    "spaceGetPendingBucketInvitationsResponse": {
+      "type": "object",
+      "properties": {
+        "invitations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/spaceInvitation"
+          }
+        }
+      }
+    },
+    "spaceInvitation": {
+      "type": "object",
+      "properties": {
+        "bucket": {
+          "type": "string"
+        },
+        "inviterPublicKey": {
+          "type": "string"
+        },
+        "invitationID": {
+          "type": "string"
+        }
+      }
+    },
     "spaceJoinBucketRequest": {
       "type": "object",
       "properties": {
@@ -1033,9 +1140,6 @@
           "$ref": "#/definitions/spaceThreadInfo"
         },
         "bucket": {
-          "type": "string"
-        },
-        "invitationID": {
           "type": "string"
         }
       }

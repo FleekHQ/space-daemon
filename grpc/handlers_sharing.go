@@ -33,3 +33,11 @@ func (srv *grpcServer) OpenPublicFile(ctx context.Context, request *pb.OpenPubli
 		Location: res.Location,
 	}, nil
 }
+
+func (srv *grpcServer) GetPendingBucketInvitations(ctx context.Context, request *pb.GetPendingBucketInvitationsRequest) (*pb.GetPendingBucketInvitationsResponse, error) {
+	return nil, errNotImplemented
+}
+
+func (srv *grpcServer) AcceptBucketInvitation(ctx context.Context, request *pb.AcceptBucketInvitationRequest) (*pb.AcceptBucketInvitationResponse, error) {
+	return nil, errNotImplemented
+}
