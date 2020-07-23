@@ -33,6 +33,14 @@ type Service interface {
 	OpenSharedFile(ctx context.Context, cid, key, filename string) (domain.OpenFileInfo, error)
 	ShareBucket(ctx context.Context, slug string) (*domain.ThreadInfo, error)
 	JoinBucket(ctx context.Context, slug string, threadinfo *domain.ThreadInfo) (bool, error)
+	CopyAndShareFiles(
+		ctx context.Context,
+		bucketName string,
+		itemPaths []string,
+		publicKeys []string,
+		customMessage string,
+	) error
+	ShareBucketViaPublicKey(ctx context.Context, pubkeys []string, bucketname string, customMsg *string) error
 }
 
 type serviceOptions struct {

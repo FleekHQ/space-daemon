@@ -1,6 +1,7 @@
 package textile
 
 import (
+	"bytes"
 	"context"
 	"encoding/base32"
 	"encoding/hex"
@@ -144,6 +145,12 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 		return nil, err
 	}
 
+	// set the owner for the bucket
+	err = tc.SetOwner(ctx, bucketSlug)
+	if err != nil {
+		return nil, err
+	}
+
 	newB := bucket.New(b.Root, tc.GetBucketContext, tc.bucketsClient)
 
 	return newB, nil
@@ -258,4 +265,76 @@ func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain
 	}
 
 	return true, nil
+}
+
+func (tc *textileClient) FindBucketWithMembers(ctx context.Context, invs []string) (Bucket, error) {
+	bs, err := tc.ListBuckets(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: this is not efficient. we should find
+	// a way to create an index and match off that
+	// instead of this O(n^3) looping
+	for _, b := range bs {
+		ms, err := tc.GetMembers(ctx, b.GetData().Name)
+		if err != nil {
+			return nil, err
+		}
+
+		r, err := b.MatchInvitesWithMembers(ctx, invs, ms)
+		if err != nil {
+			return nil, err
+		}
+		if r {
+			return b, nil
+		}
+	}
+
+	return nil, nil
+}
+
+func (tc *textileClient) CopyItems(ctx context.Context, srcBucket string, paths []string, trgBucket string) error {
+	b1, err := tc.GetBucket(ctx, srcBucket)
+	if err != nil {
+		return err
+	}
+	b2, err := tc.GetBucket(ctx, trgBucket)
+	if err != nil {
+		return err
+	}
+	for _, pth := range paths {
+		lp, err := tc.bucketsClient.ListPath(ctx, b1.Key(), pth)
+
+		if err != nil {
+			return err
+		}
+
+		if lp.Item.IsDir {
+			_, _, err := b2.CreateDirectory(ctx, pth)
+			if err != nil {
+				return err
+			}
+			spths := make([]string, len(lp.Item.Items))
+			for _, i := range lp.Item.Items {
+				spths = append(spths, pth+"/"+i.Name)
+			}
+			err = tc.CopyItems(ctx, srcBucket, spths, trgBucket)
+			if err != nil {
+				return err
+			}
+		} else {
+			var buf bytes.Buffer
+			err := b1.GetFile(ctx, pth, &buf)
+			if err != nil {
+				return err
+			}
+			_, _, err = b2.UploadFile(ctx, pth, &buf)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

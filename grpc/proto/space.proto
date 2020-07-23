@@ -123,6 +123,8 @@ service SpaceApi {
   }
 
   // Backup Key by Passphrase
+  // QUESTION: is this safe to remove since it would have to go through
+  // the identity service?
   rpc BackupKeysByPassphrase(BackupKeysByPassphraseRequest) returns (BackupKeysByPassphraseResponse) {
     option (google.api.http) = {
       post: "/v1/passphrases/backup"
@@ -131,6 +133,8 @@ service SpaceApi {
   }
 
   // Recover Keys by Passphrase
+  // QUESTION: is this safe to remove since it would have to go through
+  // the identity service?
   rpc RecoverKeysByPassphrase(RecoverKeysByPassphraseRequest) returns (RecoverKeysByPassphraseResponse) {
     option (google.api.http) = {
       post: "/v1/passphrases/recover"
@@ -138,7 +142,8 @@ service SpaceApi {
     };
   }
 
-  // Share bucket
+  // Share bucket is a lower level share function that just returns the link
+  // that could be used by anyone to join the bucket
   rpc ShareBucket(ShareBucketRequest) returns (ShareBucketResponse) {
     option (google.api.http) = {
       post: "/v1/buckets/{bucket}/share"
@@ -146,7 +151,7 @@ service SpaceApi {
     };
   }
 
-  // Join bucket
+  // Join bucket joins a bucket given a link as returned in ShareBucket
   rpc JoinBucket(JoinBucketRequest) returns (JoinBucketResponse) {
     option (google.api.http) = {
       post: "/v1/buckets/{bucket}/join"

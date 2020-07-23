@@ -10,6 +10,7 @@ require (
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/protobuf v1.4.2
+	github.com/google/uuid v1.1.1
 	github.com/grpc-ecosystem/grpc-gateway v1.14.6
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/ipfs/go-cid v0.0.6
@@ -38,6 +39,7 @@ require (
 	github.com/textileio/go-threads v0.1.22-0.20200715004950-43b77eed845f
 	github.com/textileio/textile v1.0.13-0.20200715062314-bc5c48f9d59e
 	go.etcd.io/etcd v3.3.22+incompatible
+	go.mongodb.org/mongo-driver v1.3.2
 	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
 	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980

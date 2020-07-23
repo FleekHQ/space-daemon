@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/url"
 	"path/filepath"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -181,4 +182,73 @@ func (e *EncryptedFileReader) Read(b []byte) (int, error) {
 	n, err := e.reader.Read(b)
 	e.stream.XORKeyStream(b[:], b[:])
 	return n, err
+}
+
+func generateSelectGroupBucketName() string {
+	return "bucket-shared-on-" + time.Now().UTC().String()
+}
+
+// string bucket = 1;
+// repeated string itemPaths = 2;
+// repeated string publicKeys = 3;
+// string customMessage = 4;
+func (s *Space) CopyAndShareFiles(
+	ctx context.Context,
+	bucketName string,
+	itemPaths []string,
+	publicKeys []string,
+	customMessage string,
+) error {
+	// look for matching buckets
+	b, err := s.tc.FindBucketWithMembers(ctx, publicKeys)
+	if err != nil {
+		return err
+	}
+
+	// if no bucket create it
+	n := generateSelectGroupBucketName()
+
+	var existing bool
+	if b == nil {
+		b, err = s.tc.CreateBucket(ctx, n)
+		// TODO: add this new bucket to meta thread
+		existing = false
+	} else {
+		existing = true
+	}
+
+	// copy item to share into new bucket
+	err = s.tc.CopyItems(ctx, bucketName, itemPaths, b.Slug())
+	if err != nil {
+		return err
+	}
+
+	// QUESTION: if it already exists we dont need to send invite
+	// however we probably want to still notify them, is this where
+	// we should decouple shares and invites as far as notifications/metathread goes
+	if existing {
+		return nil
+	} else {
+		return s.ShareBucketViaPublicKey(ctx, publicKeys, bucketName, &customMessage)
+	}
+}
+
+func (s *Space) ShareBucketViaPublicKey(ctx context.Context, pubkeys []string, bucketname string, customMsg *string) error {
+	r, err := s.ShareBucket(ctx, bucketname)
+	if err != nil {
+		return err
+	}
+	for _, pk := range pubkeys {
+		err := s.tc.SetMember(ctx, bucketname, pk, customMsg)
+		if err != nil {
+			return err
+		}
+
+		err = s.tc.SendInviteMessage(ctx, pk, r, customMsg)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

@@ -53,6 +53,7 @@ type Bucket interface {
 		ctx context.Context,
 		path string,
 	) (path.Resolved, error)
+	MatchInvitesWithMembers(ctx context.Context, invs []string, ms []*domain.Member) (bool, error)
 }
 
 type Client interface {
@@ -68,6 +69,13 @@ type Client interface {
 	Shutdown() error
 	WaitForReady() chan bool
 	Start(ctx context.Context, cfg config.Config) error
+	FindBucketWithMembers(ctx context.Context, invs []string) (Bucket, error)
+	CopyItems(ctx context.Context, srcBucket string, paths []string, trgBucket string) error
+	// TODO: move next 3 to bucket package
+	SetOwner(ctx context.Context, slug string) error
+	SetMember(ctx context.Context, slug string, pk string, msg *string) error
+	GetMembers(ctx context.Context, slug string) ([]*domain.Member, error)
+	SendInviteMessage(ctx context.Context, recipient string, ti *domain.ThreadInfo, msg *string) error
 }
 
 type Buckd interface {

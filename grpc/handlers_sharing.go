@@ -7,7 +7,17 @@ import (
 )
 
 func (srv *grpcServer) ShareBucketViaPublicKey(ctx context.Context, request *pb.ShareBucketViaPublicKeyRequest) (*pb.ShareBucketViaPublicKeyResponse, error) {
-	return nil, errNotImplemented
+	err := srv.sv.ShareBucketViaPublicKey(ctx, request.PublicKeys, request.Bucket, nil)
+	return &pb.ShareBucketViaPublicKeyResponse{}, err
+}
+
+func (srv *grpcServer) CopyAndShareFiles(ctx context.Context, request *pb.CopyAndShareFilesRequest) (*pb.CopyAndShareFilesResponse, error) {
+	err := srv.sv.CopyAndShareFiles(ctx, request.Bucket, request.ItemPaths, request.PublicKeys, request.CustomMessage)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.CopyAndShareFilesResponse{}, nil
 }
 
 func (srv *grpcServer) GeneratePublicFileLink(ctx context.Context, request *pb.GeneratePublicFileLinkRequest) (*pb.GeneratePublicFileLinkResponse, error) {

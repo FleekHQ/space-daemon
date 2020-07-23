@@ -1,5 +1,11 @@
 package domain
 
+import (
+	"time"
+
+	core "github.com/textileio/go-threads/core/db"
+)
+
 type AppConfig struct {
 	Port                 int
 	AppPath              string
@@ -71,4 +77,26 @@ type FileSharingInfo struct {
 	SharedFileCid     string
 	SharedFileKey     string
 	SpaceDownloadLink string
+}
+
+type Invitation struct {
+	CustomMessage    string    `json:"customMessage"`
+	InvitationID     string    `json:"invitationID"`
+	InviteePublicKey string    `json:"inviteePublicKey"`
+	InviterPublicKey string    `json:"inviterPublicKey"`
+	Joined           bool      `json:"joined"`
+	Read             bool      `json:"read"`
+	CreatedAt        time.Time `json:"createdAt"`
+}
+
+type Member struct {
+	ID               core.InstanceID `json:"_id"`
+	PublicKey        string          `json:"publicKey"`
+	IsOwner          bool            `json:"isOwner"`
+	InvitationID     string          `json:"invitationID"`
+	InviterPublicKey string          `json:"inviterPublicKey"`
+	CreatedAt        time.Time       `json:"createdAt"`
+	Joined           bool            `json:"joined"`
+	Read             bool            `json:"read"`
+	CustomMessage    string          `json:"customMessage"`
 }
