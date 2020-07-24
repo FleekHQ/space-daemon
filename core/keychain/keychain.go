@@ -2,7 +2,9 @@ package keychain
 
 import (
 	"crypto/ed25519"
-	"crypto/rand"
+	"crypto/sha1"
+
+	"golang.org/x/crypto/pbkdf2"
 
 	"errors"
 
@@ -25,7 +27,7 @@ type Keychain interface {
 	GenerateKeyPair() (pub []byte, priv []byte, err error)
 	GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error)
 	GenerateKeyPairWithForce() (pub []byte, priv []byte, err error)
-	GenerateTempKey() ([]byte, error)
+	GeneratePasswordBasedKey(password string, salt []byte) []byte
 	Sign([]byte) ([]byte, error)
 	ImportExistingKeyPair(priv crypto.PrivKey) error
 }
@@ -49,12 +51,10 @@ func (kc *keychain) GenerateKeyPair() ([]byte, []byte, error) {
 	return kc.generateAndStoreKeyPair()
 }
 
-// GenerateTempKey generates a 256 bit symmetric key useful for AES encryption.
+// GeneratePasswordBasedKey generates a 256 bit symmetric pbkdf2 key useful for AES encryption.
 // Note: This does not store the generated key, hence the reason they are temp keys.
-func (kc *keychain) GenerateTempKey() ([]byte, error) {
-	b := make([]byte, 32)
-	_, err := rand.Read(b)
-	return b, err
+func (kc *keychain) GeneratePasswordBasedKey(password string, salt []byte) []byte {
+	return pbkdf2.Key([]byte(password), salt, 4096, 32, sha1.New)
 }
 
 // Returns the stored key pair using the same signature than libp2p's GenerateEd25519Key function

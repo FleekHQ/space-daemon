@@ -42,6 +42,7 @@ require (
 	github.com/textileio/go-threads v0.1.24-0.20200728224844-456a1ebdf635
 	github.com/textileio/textile v1.0.14
 	go.etcd.io/etcd v3.3.22+incompatible
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
 	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980

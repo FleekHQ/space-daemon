@@ -11,8 +11,7 @@ func (srv *grpcServer) ShareBucketViaPublicKey(ctx context.Context, request *pb.
 }
 
 func (srv *grpcServer) GeneratePublicFileLink(ctx context.Context, request *pb.GeneratePublicFileLinkRequest) (*pb.GeneratePublicFileLinkResponse, error) {
-	// TODO: Generalize for multiple file upload
-	res, err := srv.sv.GenerateFileSharingLink(ctx, request.ItemPaths[0], request.Bucket)
+	res, err := srv.sv.GenerateFilesSharingLink(ctx, request.Password, request.ItemPaths, request.Bucket)
 	if err != nil {
 		return nil, err
 	}
