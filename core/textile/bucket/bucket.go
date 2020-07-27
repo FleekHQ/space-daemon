@@ -40,7 +40,7 @@ type Bucket struct {
 	bucketsClient    BucketsClient
 	threadID         *thread.ID
 	getBucketContext getBucketContextFn
-	members					 []*domain.Member
+	members          []*domain.Member
 }
 
 func (b *Bucket) Slug() string {
@@ -54,7 +54,7 @@ func New(root *bucketsproto.Root, getBucketContext getBucketContextFn, bucketsCl
 		root:             root,
 		bucketsClient:    bucketsClient,
 		getBucketContext: getBucketContext,
-		members: 					members,
+		members:          members,
 	}
 }
 
@@ -74,7 +74,7 @@ func (b *Bucket) GetData() BucketData {
 }
 
 func (b *Bucket) GetMembers() []*domain.Member {
-	return b.members;
+	return b.members
 }
 
 func (b *Bucket) getContext(ctx context.Context) (context.Context, *thread.ID, error) {

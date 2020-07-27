@@ -35,7 +35,7 @@ func (tc *textileClient) GetBucket(ctx context.Context, slug string) (Bucket, er
 		return nil, err
 	}
 
-	members, _ := tc.GetMembers(ctx, slug);
+	members, _ := tc.GetMembers(ctx, slug)
 
 	b := bucket.New(root, tc.GetBucketContext, tc.bucketsClient, members)
 

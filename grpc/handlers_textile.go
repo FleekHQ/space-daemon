@@ -10,18 +10,18 @@ import (
 
 func parseMember(m *domain.Member) *pb.BucketMember {
 	parsed := &pb.BucketMember{
-		Address: m.PublicKey, // there's no address on domain.Member?
+		Address:   m.PublicKey, // there's no address on domain.Member?
 		PublicKey: m.PublicKey,
-		IsOwner: m.IsOwner,
+		IsOwner:   m.IsOwner,
 		HasJoined: m.Joined,
 	}
 
-	return parsed;
+	return parsed
 }
 
 func parseBucket(b textile.Bucket) *pb.Bucket {
 	bd := b.GetData()
-	members := b.GetMembers();
+	members := b.GetMembers()
 
 	parsedMembers := []*pb.BucketMember{}
 
@@ -31,12 +31,12 @@ func parseBucket(b textile.Bucket) *pb.Bucket {
 	}
 
 	br := &pb.Bucket{
-		Key:       bd.Key,
-		Name:      bd.Name,
-		Path:      bd.Path,
-		CreatedAt: bd.CreatedAt,
-		UpdatedAt: bd.UpdatedAt,
-		Members:  parsedMembers,
+		Key:              bd.Key,
+		Name:             bd.Name,
+		Path:             bd.Path,
+		CreatedAt:        bd.CreatedAt,
+		UpdatedAt:        bd.UpdatedAt,
+		Members:          parsedMembers,
 		IsPersonalBucket: false,
 	}
 
