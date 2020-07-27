@@ -57,7 +57,7 @@ func (tc *textileClient) requiresRunning() error {
 	return nil
 }
 
-func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error) {
+func (tc *textileClient) getHubCtxViaChallenge(ctx context.Context) (context.Context, error) {
 	log.Debug("Authenticating with Textile Hub")
 	tokStr, err := hub.GetHubToken(ctx, tc.store, tc.cfg)
 	if err != nil {
@@ -73,7 +73,7 @@ func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error)
 // This method is just for testing purposes. Keys shouldn't be bundled in the daemon
 // NOTE: Being used right now instead of the challenge flow
 // TODO: Use getHubCtxViaChallenge instead once that's fixed
-func (tc *textileClient) getHubCtx2(ctx context.Context) (context.Context, error) {
+func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error) {
 	log.Debug("Authenticating with Textile Hub")
 
 	key := os.Getenv("TXL_USER_KEY")

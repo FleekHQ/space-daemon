@@ -2,7 +2,6 @@ package hub
 
 import (
 	"context"
-	"encoding/hex"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/keychain"
@@ -62,12 +61,12 @@ func storeHubToken(st store.Store, hubToken string) error {
 
 func GetHubToken(ctx context.Context, st store.Store, cfg config.Config) (string, error) {
 	// Try to avoid redoing challenge if we already have the token
-	// if valFromStore, err := getHubTokenFromStore(st); err != nil {
-	// 	return "", err
-	// } else if valFromStore != "" {
-	// 	log.Debug("Token Challenge: Got token from store: " + valFromStore)
-	// 	return valFromStore, nil
-	// }
+	if valFromStore, err := getHubTokenFromStore(st); err != nil {
+		return "", err
+	} else if valFromStore != "" {
+		log.Debug("Token Challenge: Got token from store: " + valFromStore)
+		return valFromStore, nil
+	}
 
 	kc := keychain.New(st)
 	log.Debug("Token Challenge: Connecting through websocket")
@@ -78,7 +77,7 @@ func GetHubToken(ctx context.Context, st store.Store, cfg config.Config) (string
 	defer conn.Close()
 	log.Debug("Token Challenge: Connected")
 
-	privateKey, pk, err := kc.GetStoredKeyPairInLibP2PFormat()
+	privateKey, _, err := kc.GetStoredKeyPairInLibP2PFormat()
 	if err != nil {
 		return "", err
 	}
@@ -86,12 +85,8 @@ func GetHubToken(ctx context.Context, st store.Store, cfg config.Config) (string
 	identity := thread.NewLibp2pIdentity(privateKey)
 	pub := identity.GetPublic().String()
 
-	raw, _ := pk.Raw()
-	pubinHex := hex.EncodeToString(raw)
-
 	// Request a challenge (a payload we need to sign)
 	log.Debug("Token Challenge: Sending token request with pub key" + pub)
-	log.Debug("Token Challenge: stored value" + pubinHex)
 	tokenRequest := &outMessage{
 		Action: "token",
 		Data: sentMessageData{
