@@ -47,10 +47,11 @@ type grpcServer struct {
 	sv         space.Service
 	fc         *fuse.Controller
 	// TODO: see if we need to clean this up by gc or handle an array
-	fileEventStream pb.SpaceApi_SubscribeServer
-	txlEventStream  pb.SpaceApi_TxlSubscribeServer
-	isStarted       bool
-	readyCh         chan bool
+	fileEventStream       pb.SpaceApi_SubscribeServer
+	txlEventStream        pb.SpaceApi_TxlSubscribeServer
+	invitationEventStream pb.SpaceApi_InvitationSubscribeServer
+	isStarted             bool
+	readyCh               chan bool
 }
 
 // Idea taken from here https://medium.com/soon-london/variadic-configuration-functions-in-go-8cef1c97ce99

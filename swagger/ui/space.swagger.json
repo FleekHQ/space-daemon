@@ -720,6 +720,38 @@
         ]
       }
     },
+    "/v1/rejectInvitation": {
+      "post": {
+        "operationId": "SpaceApi_RejectBucketInvitation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceRejectBucketInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceRejectBucketInvitationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/subscriptions/file": {
       "get": {
         "summary": "Subscribe to file events. This streams responses to the caller",
@@ -738,6 +770,37 @@
                 }
               },
               "title": "Stream result of spaceFileEventResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/subscriptions/invitation": {
+      "get": {
+        "operationId": "SpaceApi_InvitationSubscribe",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/spaceInvitationEventResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/runtimeStreamError"
+                }
+              },
+              "title": "Stream result of spaceInvitationEventResponse"
             }
           },
           "default": {
@@ -1127,8 +1190,41 @@
         },
         "invitationID": {
           "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/spaceInvitationStatus"
+        },
+        "itemPaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "readAt": {
+          "type": "string",
+          "format": "int64"
         }
       }
+    },
+    "spaceInvitationEventResponse": {
+      "type": "object",
+      "properties": {
+        "invitation": {
+          "$ref": "#/definitions/spaceInvitation"
+        }
+      }
+    },
+    "spaceInvitationStatus": {
+      "type": "string",
+      "enum": [
+        "ACCEPTED",
+        "REJECTED"
+      ],
+      "default": "ACCEPTED"
     },
     "spaceJoinBucketRequest": {
       "type": "object",
@@ -1249,6 +1345,17 @@
       }
     },
     "spaceRecoverKeysByPassphraseResponse": {
+      "type": "object"
+    },
+    "spaceRejectBucketInvitationRequest": {
+      "type": "object",
+      "properties": {
+        "invitationID": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceRejectBucketInvitationResponse": {
       "type": "object"
     },
     "spaceShareBucketRequest": {

@@ -176,6 +176,19 @@ service SpaceApi {
     };
   }
 
+  rpc RejectBucketInvitation(RejectBucketInvitationRequest) returns (RejectBucketInvitationResponse) {
+    option (google.api.http) = {
+      post: "/v1/rejectInvitation"
+      body: "*"
+    };
+  }
+
+  rpc InvitationSubscribe(google.protobuf.Empty) returns (stream InvitationEventResponse) {
+    option (google.api.http) = {
+      get: "/v1/subscriptions/invitation"
+    };
+  }
+
   rpc ListBuckets(ListBucketsRequest) returns (ListBucketsResponse) {
     option (google.api.http) = {
       get: "/v1/buckets"
@@ -256,6 +269,11 @@ enum EventType {
   ENTRY_ADDED = 0;
   ENTRY_DELETED = 1;
   ENTRY_UPDATED = 2;
+}
+
+enum InvitationStatus {
+  ACCEPTED = 0;
+  REJECTED = 1;
 }
 
 message FileEventResponse {
@@ -398,6 +416,10 @@ message CopyAndShareFilesResponse {}
 message Invitation {
   string inviterPublicKey = 1;
   string invitationID = 2;
+  InvitationStatus status = 4;
+  repeated string itemPaths = 5;
+  int64 createdAt = 6;
+  int64 readAt = 7;
 }
 
 message GetPendingBucketInvitationsRequest {}
@@ -411,3 +433,13 @@ message AcceptBucketInvitationRequest {
 }
 
 message AcceptBucketInvitationResponse {}
+
+message RejectBucketInvitationRequest {
+  string invitationID = 1;
+}
+
+message RejectBucketInvitationResponse {}
+
+message InvitationEventResponse {
+  Invitation invitation = 1;
+}

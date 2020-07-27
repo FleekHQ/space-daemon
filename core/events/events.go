@@ -42,3 +42,19 @@ func NewTextileEvent(bucketname string) TextileEvent {
 		BucketName: bucketname,
 	}
 }
+
+type InvitationStatus string
+
+const (
+	Accepted InvitationStatus = "ACCEPTED"
+	Rejected InvitationStatus = "REJECTED"
+)
+
+type InvitationEvent struct {
+	InviterPublicKey string
+	InvitationID     string
+	Status           InvitationStatus
+	ItemPaths        []string
+	CreatedAt        int64
+	ReadAt           int64
+}

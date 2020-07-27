@@ -3,7 +3,10 @@ package grpc
 import (
 	"context"
 
+	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/grpc/pb"
+	"github.com/FleekHQ/space-daemon/log"
+	"github.com/golang/protobuf/ptypes/empty"
 )
 
 func (srv *grpcServer) ShareBucketViaPublicKey(ctx context.Context, request *pb.ShareBucketViaPublicKeyRequest) (*pb.ShareBucketViaPublicKeyResponse, error) {
@@ -40,4 +43,38 @@ func (srv *grpcServer) GetPendingBucketInvitations(ctx context.Context, request 
 
 func (srv *grpcServer) AcceptBucketInvitation(ctx context.Context, request *pb.AcceptBucketInvitationRequest) (*pb.AcceptBucketInvitationResponse, error) {
 	return nil, errNotImplemented
+}
+
+func (srv *grpcServer) RejectBucketInvitation(ctx context.Context, request *pb.RejectBucketInvitationRequest) (*pb.RejectBucketInvitationResponse, error) {
+	return nil, errNotImplemented
+}
+
+func (srv *grpcServer) InvitationSubscribe(empty *empty.Empty, stream pb.SpaceApi_InvitationSubscribeServer) error {
+	srv.registerInvitationStream(stream)
+	// waits until request is done
+	select {
+	case <-stream.Context().Done():
+		break
+	}
+	// clean up stream
+	srv.registerInvitationStream(nil)
+	log.Info("closing stream")
+	return nil
+}
+
+func (srv *grpcServer) registerInvitationStream(stream pb.SpaceApi_InvitationSubscribeServer) {
+	srv.invitationEventStream = stream
+}
+
+func (srv *grpcServer) sendInvitationEvent(event *pb.InvitationEventResponse) {
+	if srv.invitationEventStream != nil {
+		log.Info("sending events to client")
+		srv.invitationEventStream.Send(event)
+	}
+}
+
+func (srv *grpcServer) SendInvitationEvent(event events.InvitationEvent) {
+	pe := &pb.InvitationEventResponse{}
+
+	srv.sendInvitationEvent(pe)
 }
