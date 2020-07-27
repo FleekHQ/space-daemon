@@ -30,10 +30,14 @@ func NotFound(slug string) error {
 
 func (tc *textileClient) GetBucket(ctx context.Context, slug string) (Bucket, error) {
 	ctx, root, err := tc.getBucketRootFromSlug(ctx, slug)
+
 	if err != nil {
 		return nil, err
 	}
-	b := bucket.New(root, tc.GetBucketContext, tc.bucketsClient)
+
+	members, _ := tc.GetMembers(ctx, slug);
+
+	b := bucket.New(root, tc.GetBucketContext, tc.bucketsClient, members)
 
 	return b, nil
 }
@@ -151,7 +155,9 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 		return nil, err
 	}
 
-	newB := bucket.New(b.Root, tc.GetBucketContext, tc.bucketsClient)
+	// members, _ := tc.GetMembers(ctx, bucketSlug);
+
+	newB := bucket.New(b.Root, tc.GetBucketContext, tc.bucketsClient, nil)
 
 	return newB, nil
 }

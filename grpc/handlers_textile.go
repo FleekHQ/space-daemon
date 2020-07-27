@@ -8,17 +8,35 @@ import (
 	"github.com/FleekHQ/space-daemon/grpc/pb"
 )
 
+func parseMember(m *domain.Member) *pb.BucketMember {
+	parsed := &pb.BucketMember{
+		Address: m.PublicKey, // there's no address on domain.Member?
+		PublicKey: m.PublicKey,
+		IsOwner: m.IsOwner,
+		HasJoined: m.Joined,
+	}
+
+	return parsed;
+}
+
 func parseBucket(b textile.Bucket) *pb.Bucket {
 	bd := b.GetData()
+	members := b.GetMembers();
+
+	parsedMembers := []*pb.BucketMember{}
+
+	for _, m := range members {
+		member := parseMember(m)
+		parsedMembers = append(parsedMembers, member)
+	}
+
 	br := &pb.Bucket{
 		Key:       bd.Key,
 		Name:      bd.Name,
 		Path:      bd.Path,
 		CreatedAt: bd.CreatedAt,
 		UpdatedAt: bd.UpdatedAt,
-
-		// TODO: Fill these out from metathread + identity service call
-		Members:          []*pb.BucketMember{},
+		Members:  parsedMembers,
 		IsPersonalBucket: false,
 	}
 

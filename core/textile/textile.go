@@ -29,6 +29,7 @@ type Bucket interface {
 	Slug() string
 	Key() string
 	GetData() bucket.BucketData
+	GetMembers() []*domain.Member
 	DirExists(ctx context.Context, path string) (bool, error)
 	FileExists(ctx context.Context, path string) (bool, error)
 	UploadFile(
