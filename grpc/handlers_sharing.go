@@ -37,7 +37,7 @@ func (srv *grpcServer) OpenPublicFile(ctx context.Context, request *pb.OpenPubli
 	}, nil
 }
 
-func (srv *grpcServer) GetPendingBucketInvitations(ctx context.Context, request *pb.GetPendingBucketInvitationsRequest) (*pb.GetPendingBucketInvitationsResponse, error) {
+func (srv *grpcServer) GetNotifications(ctx context.Context, request *pb.GetNotificationsRequest) (*pb.GetNotificationsResponse, error) {
 	return nil, errNotImplemented
 }
 
@@ -49,32 +49,32 @@ func (srv *grpcServer) RejectBucketInvitation(ctx context.Context, request *pb.R
 	return nil, errNotImplemented
 }
 
-func (srv *grpcServer) InvitationSubscribe(empty *empty.Empty, stream pb.SpaceApi_InvitationSubscribeServer) error {
-	srv.registerInvitationStream(stream)
+func (srv *grpcServer) NotificationSubscribe(empty *empty.Empty, stream pb.SpaceApi_NotificationSubscribeServer) error {
+	srv.registerNotificationStream(stream)
 	// waits until request is done
 	select {
 	case <-stream.Context().Done():
 		break
 	}
 	// clean up stream
-	srv.registerInvitationStream(nil)
+	srv.registerNotificationStream(nil)
 	log.Info("closing stream")
 	return nil
 }
 
-func (srv *grpcServer) registerInvitationStream(stream pb.SpaceApi_InvitationSubscribeServer) {
-	srv.invitationEventStream = stream
+func (srv *grpcServer) registerNotificationStream(stream pb.SpaceApi_NotificationSubscribeServer) {
+	srv.notificationEventStream = stream
 }
 
-func (srv *grpcServer) sendInvitationEvent(event *pb.InvitationEventResponse) {
-	if srv.invitationEventStream != nil {
+func (srv *grpcServer) sendNotificationEvent(event *pb.NotificationEventResponse) {
+	if srv.notificationEventStream != nil {
 		log.Info("sending events to client")
-		srv.invitationEventStream.Send(event)
+		srv.notificationEventStream.Send(event)
 	}
 }
 
-func (srv *grpcServer) SendInvitationEvent(event events.InvitationEvent) {
-	pe := &pb.InvitationEventResponse{}
+func (srv *grpcServer) SendInvitationEvent(event events.NotificationEvent) {
+	pe := &pb.NotificationEventResponse{}
 
-	srv.sendInvitationEvent(pe)
+	srv.sendNotificationEvent(pe)
 }

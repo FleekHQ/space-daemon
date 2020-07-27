@@ -162,13 +162,6 @@ service SpaceApi {
     };
   }
 
-  rpc GetPendingBucketInvitations(GetPendingBucketInvitationsRequest) returns (GetPendingBucketInvitationsResponse) {
-    option (google.api.http) = {
-      post: "/v1/pendingInvitations"
-      body: "*"
-    };
-  }
-
   rpc AcceptBucketInvitation(AcceptBucketInvitationRequest) returns (AcceptBucketInvitationResponse) {
     option (google.api.http) = {
       post: "/v1/acceptInvitation"
@@ -183,9 +176,9 @@ service SpaceApi {
     };
   }
 
-  rpc InvitationSubscribe(google.protobuf.Empty) returns (stream InvitationEventResponse) {
+  rpc NotificationSubscribe(google.protobuf.Empty) returns (stream NotificationEventResponse) {
     option (google.api.http) = {
-      get: "/v1/subscriptions/invitation"
+      get: "/v1/subscriptions/notification"
     };
   }
 
@@ -198,6 +191,13 @@ service SpaceApi {
   // Copies a set of files in a new or existing bucket that's shared with a group of public keys
   // Auxiliary method that internally calls CreateBucket, ShareBucketViaPublicKey, AddFile.
   rpc CopyAndShareFiles(CopyAndShareFilesRequest) returns (CopyAndShareFilesResponse) {
+    option (google.api.http) = {
+      post: "/v1/items/copyAndShareFiles"
+      body: "*"
+    };
+  }
+
+  rpc GetNotifications(GetNotificationsRequest) returns (GetNotificationsResponse) {
     option (google.api.http) = {
       post: "/v1/items/copyAndShareFiles"
       body: "*"
@@ -269,11 +269,6 @@ enum EventType {
   ENTRY_ADDED = 0;
   ENTRY_DELETED = 1;
   ENTRY_UPDATED = 2;
-}
-
-enum InvitationStatus {
-  ACCEPTED = 0;
-  REJECTED = 1;
 }
 
 message FileEventResponse {
@@ -413,19 +408,32 @@ message CopyAndShareFilesRequest {
 
 message CopyAndShareFilesResponse {}
 
+enum NotificationType {
+  INVITATION = 0;
+}
+
+enum InvitationStatus {
+  ACCEPTED = 0;
+  REJECTED = 1;
+}
+
 message Invitation {
   string inviterPublicKey = 1;
   string invitationID = 2;
   InvitationStatus status = 4;
   repeated string itemPaths = 5;
-  int64 createdAt = 6;
-  int64 readAt = 7;
 }
 
-message GetPendingBucketInvitationsRequest {}
-
-message GetPendingBucketInvitationsResponse {
-  repeated Invitation invitations = 1;
+message Notification {
+  string subject = 1;
+  string body = 2;
+  oneof relatedObject {
+    Invitation invitationValue = 3;
+    // later we can add other types here
+  }
+  NotificationType type = 4;
+  int64 createdAt = 5;
+  int64 readAt = 6;
 }
 
 message AcceptBucketInvitationRequest {
@@ -440,6 +448,16 @@ message RejectBucketInvitationRequest {
 
 message RejectBucketInvitationResponse {}
 
-message InvitationEventResponse {
-  Invitation invitation = 1;
+message NotificationEventResponse {
+  Notification notification = 1;
+}
+
+message GetNotificationsRequest {
+  string seek = 1;
+  int64 limit = 2;
+}
+
+message GetNotificationsResponse {
+  repeated Notification notifications= 1;
+  int64 nextOffset = 2;
 }

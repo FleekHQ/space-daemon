@@ -525,13 +525,12 @@
     },
     "/v1/items/copyAndShareFiles": {
       "post": {
-        "summary": "Copies a set of files in a new or existing bucket that's shared with a group of public keys\nAuxiliary method that internally calls CreateBucket, ShareBucketViaPublicKey, AddFile.",
-        "operationId": "SpaceApi_CopyAndShareFiles",
+        "operationId": "SpaceApi_GetNotifications",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/spaceCopyAndShareFilesResponse"
+              "$ref": "#/definitions/spaceGetNotificationsResponse"
             }
           },
           "default": {
@@ -547,7 +546,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/spaceCopyAndShareFilesRequest"
+              "$ref": "#/definitions/spaceGetNotificationsRequest"
             }
           }
         ],
@@ -688,38 +687,6 @@
         ]
       }
     },
-    "/v1/pendingInvitations": {
-      "post": {
-        "operationId": "SpaceApi_GetPendingBucketInvitations",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/spaceGetPendingBucketInvitationsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response",
-            "schema": {
-              "$ref": "#/definitions/runtimeError"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/spaceGetPendingBucketInvitationsRequest"
-            }
-          }
-        ],
-        "tags": [
-          "SpaceApi"
-        ]
-      }
-    },
     "/v1/rejectInvitation": {
       "post": {
         "operationId": "SpaceApi_RejectBucketInvitation",
@@ -784,9 +751,9 @@
         ]
       }
     },
-    "/v1/subscriptions/invitation": {
+    "/v1/subscriptions/notification": {
       "get": {
-        "operationId": "SpaceApi_InvitationSubscribe",
+        "operationId": "SpaceApi_NotificationSubscribe",
         "responses": {
           "200": {
             "description": "A successful response.(streaming responses)",
@@ -794,13 +761,13 @@
               "type": "object",
               "properties": {
                 "result": {
-                  "$ref": "#/definitions/spaceInvitationEventResponse"
+                  "$ref": "#/definitions/spaceNotificationEventResponse"
                 },
                 "error": {
                   "$ref": "#/definitions/runtimeStreamError"
                 }
               },
-              "title": "Stream result of spaceInvitationEventResponse"
+              "title": "Stream result of spaceNotificationEventResponse"
             }
           },
           "default": {
@@ -1168,17 +1135,30 @@
         }
       }
     },
-    "spaceGetPendingBucketInvitationsRequest": {
-      "type": "object"
-    },
-    "spaceGetPendingBucketInvitationsResponse": {
+    "spaceGetNotificationsRequest": {
       "type": "object",
       "properties": {
-        "invitations": {
+        "seek": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "spaceGetNotificationsResponse": {
+      "type": "object",
+      "properties": {
+        "notifications": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/spaceInvitation"
+            "$ref": "#/definitions/spaceNotification"
           }
+        },
+        "nextOffset": {
+          "type": "string",
+          "format": "int64"
         }
       }
     },
@@ -1199,22 +1179,6 @@
           "items": {
             "type": "string"
           }
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "int64"
-        },
-        "readAt": {
-          "type": "string",
-          "format": "int64"
-        }
-      }
-    },
-    "spaceInvitationEventResponse": {
-      "type": "object",
-      "properties": {
-        "invitation": {
-          "$ref": "#/definitions/spaceInvitation"
         }
       }
     },
@@ -1308,6 +1272,46 @@
           }
         }
       }
+    },
+    "spaceNotification": {
+      "type": "object",
+      "properties": {
+        "subject": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "invitationValue": {
+          "$ref": "#/definitions/spaceInvitation"
+        },
+        "type": {
+          "$ref": "#/definitions/spaceNotificationType"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "readAt": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "spaceNotificationEventResponse": {
+      "type": "object",
+      "properties": {
+        "notification": {
+          "$ref": "#/definitions/spaceNotification"
+        }
+      }
+    },
+    "spaceNotificationType": {
+      "type": "string",
+      "enum": [
+        "INVITATION"
+      ],
+      "default": "INVITATION"
     },
     "spaceOpenFileRequest": {
       "type": "object",
