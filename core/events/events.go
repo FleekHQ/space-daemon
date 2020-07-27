@@ -42,3 +42,33 @@ func NewTextileEvent(bucketname string) TextileEvent {
 		BucketName: bucketname,
 	}
 }
+
+type InvitationStatus int
+
+const (
+	Pending InvitationStatus = 0
+	Accepted
+	Rejected
+)
+
+type NotificationType int
+
+const (
+	InvitationType NotificationType = 0
+)
+
+type Invitation struct {
+	InviterPublicKey string
+	InvitationID     string
+	Status           InvitationStatus
+	ItemPaths        []string
+}
+
+type NotificationEvent struct {
+	Subject       string
+	Body          string
+	RelatedObject interface{}
+	Type          NotificationType
+	CreatedAt     int64
+	ReadAt        int64
+}

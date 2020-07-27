@@ -162,17 +162,23 @@ service SpaceApi {
     };
   }
 
-  rpc GetPendingBucketInvitations(GetPendingBucketInvitationsRequest) returns (GetPendingBucketInvitationsResponse) {
-    option (google.api.http) = {
-      post: "/v1/pendingInvitations"
-      body: "*"
-    };
-  }
-
   rpc AcceptBucketInvitation(AcceptBucketInvitationRequest) returns (AcceptBucketInvitationResponse) {
     option (google.api.http) = {
       post: "/v1/acceptInvitation"
       body: "*"
+    };
+  }
+
+  rpc RejectBucketInvitation(RejectBucketInvitationRequest) returns (RejectBucketInvitationResponse) {
+    option (google.api.http) = {
+      post: "/v1/rejectInvitation"
+      body: "*"
+    };
+  }
+
+  rpc NotificationSubscribe(google.protobuf.Empty) returns (stream NotificationEventResponse) {
+    option (google.api.http) = {
+      get: "/v1/subscriptions/notification"
     };
   }
 
@@ -187,6 +193,20 @@ service SpaceApi {
   rpc CopyAndShareFiles(CopyAndShareFilesRequest) returns (CopyAndShareFilesResponse) {
     option (google.api.http) = {
       post: "/v1/items/copyAndShareFiles"
+      body: "*"
+    };
+  }
+
+  rpc GetNotifications(GetNotificationsRequest) returns (GetNotificationsResponse) {
+    option (google.api.http) = {
+      get: "/v1/notifications"
+    };
+  }
+
+
+  rpc ReadNotification(ReadNotificationRequest) returns (ReadNotificationResponse) {
+    option (google.api.http) = {
+      post: "/v1/notifications/{ID}/read"
       body: "*"
     };
   }
@@ -395,15 +415,34 @@ message CopyAndShareFilesRequest {
 
 message CopyAndShareFilesResponse {}
 
+enum NotificationType {
+  INVITATION = 0;
+}
+
+enum InvitationStatus {
+  PENDING = 0;
+  ACCEPTED = 1;
+  REJECTED = 2;
+}
+
 message Invitation {
   string inviterPublicKey = 1;
   string invitationID = 2;
+  InvitationStatus status = 4;
+  repeated string itemPaths = 5;
 }
 
-message GetPendingBucketInvitationsRequest {}
-
-message GetPendingBucketInvitationsResponse {
-  repeated Invitation invitations = 1;
+message Notification {
+  string ID = 1; // underlying message id from textile
+  string subject = 2;
+  string body = 3;
+  oneof relatedObject {
+    Invitation invitationValue = 4;
+    // later we can add other types here
+  }
+  NotificationType type = 5;
+  int64 createdAt = 6;
+  int64 readAt = 7;
 }
 
 message AcceptBucketInvitationRequest {
@@ -411,3 +450,29 @@ message AcceptBucketInvitationRequest {
 }
 
 message AcceptBucketInvitationResponse {}
+
+message RejectBucketInvitationRequest {
+  string invitationID = 1;
+}
+
+message RejectBucketInvitationResponse {}
+
+message NotificationEventResponse {
+  Notification notification = 1;
+}
+
+message GetNotificationsRequest {
+  string seek = 1;
+  int64 limit = 2;
+}
+
+message GetNotificationsResponse {
+  repeated Notification notifications= 1;
+  int64 nextOffset = 2;
+}
+message ReadNotificationRequest {
+  string ID = 1;
+}
+
+message ReadNotificationResponse {
+}
