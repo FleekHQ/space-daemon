@@ -44,6 +44,13 @@ service SpaceApi {
     };
   }
 
+  rpc GetPublicKey(GetPublicKeyRequest) returns (GetPublicKeyResponse) {
+    option (google.api.http) = {
+      post: "/v1/publicKey"
+      body: "*"
+    };
+  }
+
   // Subscribe to file events. This streams responses to the caller
   rpc Subscribe(google.protobuf.Empty) returns (stream FileEventResponse) {
     option (google.api.http) = {
@@ -134,6 +141,20 @@ service SpaceApi {
   rpc RecoverKeysByPassphrase(RecoverKeysByPassphraseRequest) returns (RecoverKeysByPassphraseResponse) {
     option (google.api.http) = {
       post: "/v1/passphrases/recover"
+      body: "*"
+    };
+  }
+
+  rpc CreateLocalKeysBackup(CreateLocalKeysBackupRequest) returns (CreateLocalKeysBackupResponse) {
+    option (google.api.http) = {
+      post: "/v1/localBackups/backup"
+      body: "*"
+    };
+  }
+
+  rpc RecoverKeysByLocalBackup(RecoverKeysByLocalBackupRequest) returns (RecoverKeysByLocalBackupResponse) {
+    option (google.api.http) = {
+      post: "/v1/localBackups/recover"
       body: "*"
     };
   }
@@ -476,3 +497,23 @@ message ReadNotificationRequest {
 
 message ReadNotificationResponse {
 }
+
+message GetPublicKeyRequest {}
+
+message GetPublicKeyResponse {
+  // Public key encoded in hex
+  string publicKey = 1;
+}
+
+message RecoverKeysByLocalBackupRequest {
+  string pathToKeyBackup = 1;
+}
+
+message RecoverKeysByLocalBackupResponse {}
+
+message CreateLocalKeysBackupRequest {
+  // The path in which to save the backup
+  string pathToKeyBackup = 1;
+}
+
+message CreateLocalKeysBackupResponse {}

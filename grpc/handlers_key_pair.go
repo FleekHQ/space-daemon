@@ -27,3 +27,15 @@ func (srv *grpcServer) GenerateKeyPairWithForce(ctx context.Context, request *pb
 		}, nil
 	}
 }
+
+func (srv *grpcServer) GetPublicKey(ctx context.Context, request *pb.GetPublicKeyRequest) (*pb.GetPublicKeyResponse, error) {
+	pub, err := srv.sv.GetPublicKey(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetPublicKeyResponse{
+		PublicKey: pub,
+	}, nil
+}

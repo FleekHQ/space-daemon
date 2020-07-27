@@ -611,3 +611,27 @@ func TestService_GetIdentityByUsername_OnError(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, err, errors.New("Not Found Error: Identity with username dmerrill1 not found."))
 }
+
+func TestService_GetPublicKey(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	defer tearDown()
+
+	mockPubKey := "67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
+	mockPrivKey := "dd55f8921f90fdf31c6ef9ad86bd90605602fd7d32dc8ea66ab72deb6a82821c67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
+
+	pubKeyBytes, _ := hex.DecodeString(mockPubKey)
+	privKeyBytes, _ := hex.DecodeString(mockPrivKey)
+	unmarshalledPub, _ := crypto.UnmarshalEd25519PublicKey(pubKeyBytes)
+	unmarshalledPriv, _ := crypto.UnmarshalEd25519PrivateKey(privKeyBytes)
+
+	mockKeychain.On(
+		"GetStoredKeyPairInLibP2PFormat",
+	).Return(unmarshalledPriv, unmarshalledPub, nil)
+
+	pub, err := sv.GetPublicKey(context.Background())
+
+	assert.Nil(t, err)
+	assert.NotNil(t, pub)
+	assert.Equal(t, pub, mockPubKey)
+
+}

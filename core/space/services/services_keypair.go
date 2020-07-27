@@ -37,3 +37,19 @@ func (s *Space) generateKeyPairWithForce(ctx context.Context) (domain.KeyPair, e
 		}, nil
 	}
 }
+
+func (s *Space) GetPublicKey(ctx context.Context) (string, error) {
+	_, pub, err := s.keychain.GetStoredKeyPairInLibP2PFormat()
+	if err != nil {
+		return "", err
+	}
+
+	publicKeyBytes, err := pub.Raw()
+	if err != nil {
+		return "", err
+	}
+
+	publicKeyHex := hex.EncodeToString(publicKeyBytes)
+
+	return publicKeyHex, nil
+}
