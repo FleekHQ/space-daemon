@@ -420,8 +420,9 @@ enum NotificationType {
 }
 
 enum InvitationStatus {
-  ACCEPTED = 0;
-  REJECTED = 1;
+  PENDING = 0;
+  ACCEPTED = 1;
+  REJECTED = 2;
 }
 
 message Invitation {

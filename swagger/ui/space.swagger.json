@@ -1249,10 +1249,11 @@
     "spaceInvitationStatus": {
       "type": "string",
       "enum": [
+        "PENDING",
         "ACCEPTED",
         "REJECTED"
       ],
-      "default": "ACCEPTED"
+      "default": "PENDING"
     },
     "spaceJoinBucketRequest": {
       "type": "object",

@@ -46,7 +46,8 @@ func NewTextileEvent(bucketname string) TextileEvent {
 type InvitationStatus int
 
 const (
-	Accepted InvitationStatus = 0
+	Pending InvitationStatus = 0
+	Accepted
 	Rejected
 )
 
