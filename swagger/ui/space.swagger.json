@@ -525,12 +525,13 @@
     },
     "/v1/items/copyAndShareFiles": {
       "post": {
-        "operationId": "SpaceApi_GetNotifications",
+        "summary": "Copies a set of files in a new or existing bucket that's shared with a group of public keys\nAuxiliary method that internally calls CreateBucket, ShareBucketViaPublicKey, AddFile.",
+        "operationId": "SpaceApi_CopyAndShareFiles",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/spaceGetNotificationsResponse"
+              "$ref": "#/definitions/spaceCopyAndShareFilesResponse"
             }
           },
           "default": {
@@ -546,7 +547,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/spaceGetNotificationsRequest"
+              "$ref": "#/definitions/spaceCopyAndShareFilesRequest"
             }
           }
         ],
@@ -613,6 +614,81 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/spaceGenerateKeyPairRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/notifications": {
+      "get": {
+        "operationId": "SpaceApi_GetNotifications",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceGetNotificationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "seek",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/notifications/{ID}/read": {
+      "post": {
+        "operationId": "SpaceApi_ReadNotification",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceReadNotificationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceReadNotificationRequest"
             }
           }
         ],
@@ -1135,18 +1211,6 @@
         }
       }
     },
-    "spaceGetNotificationsRequest": {
-      "type": "object",
-      "properties": {
-        "seek": {
-          "type": "string"
-        },
-        "limit": {
-          "type": "string",
-          "format": "int64"
-        }
-      }
-    },
     "spaceGetNotificationsResponse": {
       "type": "object",
       "properties": {
@@ -1276,6 +1340,9 @@
     "spaceNotification": {
       "type": "object",
       "properties": {
+        "ID": {
+          "type": "string"
+        },
         "subject": {
           "type": "string"
         },
@@ -1339,6 +1406,17 @@
           "type": "string"
         }
       }
+    },
+    "spaceReadNotificationRequest": {
+      "type": "object",
+      "properties": {
+        "ID": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceReadNotificationResponse": {
+      "type": "object"
     },
     "spaceRecoverKeysByPassphraseRequest": {
       "type": "object",

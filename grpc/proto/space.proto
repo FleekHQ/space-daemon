@@ -199,7 +199,14 @@ service SpaceApi {
 
   rpc GetNotifications(GetNotificationsRequest) returns (GetNotificationsResponse) {
     option (google.api.http) = {
-      post: "/v1/items/copyAndShareFiles"
+      get: "/v1/notifications"
+    };
+  }
+
+
+  rpc ReadNotification(ReadNotificationRequest) returns (ReadNotificationResponse) {
+    option (google.api.http) = {
+      post: "/v1/notifications/{ID}/read"
       body: "*"
     };
   }
@@ -425,15 +432,16 @@ message Invitation {
 }
 
 message Notification {
-  string subject = 1;
-  string body = 2;
+  string ID = 1; // underlying message id from textile
+  string subject = 2;
+  string body = 3;
   oneof relatedObject {
-    Invitation invitationValue = 3;
+    Invitation invitationValue = 4;
     // later we can add other types here
   }
-  NotificationType type = 4;
-  int64 createdAt = 5;
-  int64 readAt = 6;
+  NotificationType type = 5;
+  int64 createdAt = 6;
+  int64 readAt = 7;
 }
 
 message AcceptBucketInvitationRequest {
@@ -460,4 +468,10 @@ message GetNotificationsRequest {
 message GetNotificationsResponse {
   repeated Notification notifications= 1;
   int64 nextOffset = 2;
+}
+message ReadNotificationRequest {
+  string ID = 1;
+}
+
+message ReadNotificationResponse {
 }

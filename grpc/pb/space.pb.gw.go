@@ -906,15 +906,18 @@ func local_request_SpaceApi_CopyAndShareFiles_0(ctx context.Context, marshaler r
 
 }
 
+var (
+	filter_SpaceApi_GetNotifications_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
 func request_SpaceApi_GetNotifications_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetNotificationsRequest
 	var metadata runtime.ServerMetadata
 
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_SpaceApi_GetNotifications_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -927,6 +930,22 @@ func local_request_SpaceApi_GetNotifications_0(ctx context.Context, marshaler ru
 	var protoReq GetNotificationsRequest
 	var metadata runtime.ServerMetadata
 
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_SpaceApi_GetNotifications_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.GetNotifications(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+func request_SpaceApi_ReadNotification_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ReadNotificationRequest
+	var metadata runtime.ServerMetadata
+
 	newReader, berr := utilities.IOReaderFactory(req.Body)
 	if berr != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
@@ -935,7 +954,60 @@ func local_request_SpaceApi_GetNotifications_0(ctx context.Context, marshaler ru
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.GetNotifications(ctx, &protoReq)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["ID"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ID")
+	}
+
+	protoReq.ID, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ID", err)
+	}
+
+	msg, err := client.ReadNotification(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_SpaceApi_ReadNotification_0(ctx context.Context, marshaler runtime.Marshaler, server SpaceApiServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ReadNotificationRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["ID"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ID")
+	}
+
+	protoReq.ID, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ID", err)
+	}
+
+	msg, err := server.ReadNotification(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -1374,7 +1446,7 @@ func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 
 	})
 
-	mux.Handle("POST", pattern_SpaceApi_GetNotifications_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_SpaceApi_GetNotifications_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -1391,6 +1463,26 @@ func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 		}
 
 		forward_SpaceApi_GetNotifications_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_SpaceApi_ReadNotification_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_SpaceApi_ReadNotification_0(rctx, inboundMarshaler, server, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_SpaceApi_ReadNotification_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1915,7 +2007,7 @@ func RegisterSpaceApiHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 
 	})
 
-	mux.Handle("POST", pattern_SpaceApi_GetNotifications_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_SpaceApi_GetNotifications_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -1932,6 +2024,26 @@ func RegisterSpaceApiHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 		}
 
 		forward_SpaceApi_GetNotifications_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_SpaceApi_ReadNotification_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_SpaceApi_ReadNotification_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_SpaceApi_ReadNotification_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1987,7 +2099,9 @@ var (
 
 	pattern_SpaceApi_CopyAndShareFiles_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "items", "copyAndShareFiles"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_SpaceApi_GetNotifications_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "items", "copyAndShareFiles"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_SpaceApi_GetNotifications_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "notifications"}, "", runtime.AssumeColonVerbOpt(true)))
+
+	pattern_SpaceApi_ReadNotification_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "notifications", "ID", "read"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (
@@ -2040,4 +2154,6 @@ var (
 	forward_SpaceApi_CopyAndShareFiles_0 = runtime.ForwardResponseMessage
 
 	forward_SpaceApi_GetNotifications_0 = runtime.ForwardResponseMessage
+
+	forward_SpaceApi_ReadNotification_0 = runtime.ForwardResponseMessage
 )
