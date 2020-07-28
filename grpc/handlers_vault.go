@@ -13,3 +13,11 @@ func (srv *grpcServer) BackupKeysByPassphrase(ctx context.Context, request *pb.B
 func (srv *grpcServer) RecoverKeysByPassphrase(ctx context.Context, request *pb.RecoverKeysByPassphraseRequest) (*pb.RecoverKeysByPassphraseResponse, error) {
 	return nil, errNotImplemented
 }
+
+func (srv *grpcServer) CreateLocalKeysBackup(ctx context.Context, request *pb.CreateLocalKeysBackupRequest) (*pb.CreateLocalKeysBackupResponse, error) {
+	return nil, errNotImplemented
+}
+
+func (srv *grpcServer) RecoverKeysByLocalBackup(ctx context.Context, request *pb.RecoverKeysByLocalBackupRequest) (*pb.RecoverKeysByLocalBackupResponse, error) {
+	return nil, errNotImplemented
+}
