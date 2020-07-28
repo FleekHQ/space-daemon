@@ -106,8 +106,9 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 	log.Info("Welcome to bucket", fmt.Sprintf("peerID:%s", textile.HostID().String()))
 
 	// wait for the port to be listening to consider it done
+	log.Info("Waiting for 127.0.0.1 3006 to listen")
 	for {
-		conn, _ := net.Dial("tcp", net.JoinHostPort("localhost", "3006"))
+		conn, _ := net.Dial("tcp", net.JoinHostPort("127.0.0.1", "3006"))
 		if conn != nil {
 			conn.Close()
 			break
