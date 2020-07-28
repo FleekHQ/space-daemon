@@ -202,12 +202,6 @@ func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address strin
 		return err
 	}
 
-	err = tc.threads.NewDBFromAddr(ctx, multiaddress, key)
-	if err != nil {
-		log.Error("Unable to join addr", err)
-		return err
-	}
-
 	var (
 		schema  *jsonschema.Schema
 		indexes = []db.Index{{
@@ -223,7 +217,7 @@ func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address strin
 		Indexes: indexes,
 	}))
 	if err != nil {
-		log.Error("error joining thread via hub: ", err)
+		log.Error("Unable to join addr", err)
 		return err
 	}
 
