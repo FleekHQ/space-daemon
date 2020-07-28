@@ -188,10 +188,6 @@ func generateSelectGroupBucketName() string {
 	return "bucket-shared-on-" + time.Now().UTC().String()
 }
 
-// string bucket = 1;
-// repeated string itemPaths = 2;
-// repeated string publicKeys = 3;
-// string customMessage = 4;
 func (s *Space) CopyAndShareFiles(
 	ctx context.Context,
 	bucketName string,

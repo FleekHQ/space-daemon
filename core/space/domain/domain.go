@@ -79,24 +79,34 @@ type FileSharingInfo struct {
 	SpaceDownloadLink string
 }
 
+type InvitationStatus int
+
+const (
+	Pending InvitationStatus = 0
+	Accepted
+	Rejected
+)
+
 type Invitation struct {
-	CustomMessage    string    `json:"customMessage"`
-	InvitationID     string    `json:"invitationID"`
-	InviteePublicKey string    `json:"inviteePublicKey"`
-	InviterPublicKey string    `json:"inviterPublicKey"`
-	Joined           bool      `json:"joined"`
-	Read             bool      `json:"read"`
-	CreatedAt        time.Time `json:"createdAt"`
+	CustomMessage    string           `json:"customMessage"`
+	InvitationID     string           `json:"invitationID"`
+	InviteePublicKey string           `json:"inviteePublicKey"`
+	InviterPublicKey string           `json:"inviterPublicKey"`
+	Status           InvitationStatus `json:"status"`
+	// NOTE: these will move to notifications
+	// when we integrate hub inboxing
+	ReadAt    time.Time `json:"readAt"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type Member struct {
-	ID               core.InstanceID `json:"_id"`
-	PublicKey        string          `json:"publicKey"`
-	IsOwner          bool            `json:"isOwner"`
-	InvitationID     string          `json:"invitationID"`
-	InviterPublicKey string          `json:"inviterPublicKey"`
-	CreatedAt        time.Time       `json:"createdAt"`
-	Joined           bool            `json:"joined"`
-	Read             bool            `json:"read"`
-	CustomMessage    string          `json:"customMessage"`
+	ID               core.InstanceID  `json:"_id"`
+	PublicKey        string           `json:"publicKey"`
+	IsOwner          bool             `json:"isOwner"`
+	InvitationID     string           `json:"invitationID"`
+	InviterPublicKey string           `json:"inviterPublicKey"`
+	CreatedAt        time.Time        `json:"createdAt"`
+	Status           InvitationStatus `json:"status"`
+	ReadAt           time.Time        `json:"readAt"`
+	CustomMessage    string           `json:"customMessage"`
 }
