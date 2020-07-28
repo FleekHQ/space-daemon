@@ -86,11 +86,9 @@ func (a *App) Start(ctx context.Context) error {
 
 	// setup local buckets
 	buckd := textile.NewBuckd(a.cfg)
-	err = buckd.Start(ctx)
-	if err != nil {
-		return err
-	}
-	a.Run("BucketDaemon", buckd)
+	a.RunAsync("BucketDaemon", buckd, func() error {
+		return buckd.Start(ctx)
+	})
 
 	// setup textile client
 	textileClient := textile.NewClient(appStore)
