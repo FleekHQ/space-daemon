@@ -107,6 +107,10 @@ func (tc *textileClient) getBucketRootFromSlug(ctx context.Context, slug string)
 
 	bucketListReply, err := tc.bucketsClient.List(ctx)
 
+	if err != nil {
+		return nil, nil, err
+	}
+
 	for _, root := range bucketListReply.Roots {
 		if root.Name == slug {
 			return ctx, root, nil
