@@ -117,7 +117,7 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	var netc *nc.Client
 
 	// by default it goes to local threads now
-	host := "127.0.0.1:3006"
+	host := "localhost:3006"
 
 	log.Debug("Creating buckets client in " + host)
 	if b, err := bucketsClient.NewClient(host, opts...); err != nil {
