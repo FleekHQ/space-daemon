@@ -174,9 +174,6 @@ func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
 		return err
 	}
 
-	log.Info("Sleeping for 30 ...")
-	time.Sleep(30 * time.Second)
-
 	log.Debug("Listing buckets...")
 	buckets, err := tc.ListBuckets(ctx)
 	if err != nil {
