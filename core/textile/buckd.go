@@ -103,6 +103,10 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 	textile.Bootstrap()
 
 	log.Info("Welcome to bucket", fmt.Sprintf("peerID:%s", textile.HostID().String()))
+
+	log.Info("Sleeping for 5s to wait for ports to listen ...")
+	time.Sleep(5 * time.Second)
+
 	tb.textile = textile
 	tb.IsRunning = true
 	tb.Ready <- true
