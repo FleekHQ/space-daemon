@@ -110,9 +110,11 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 	for {
 		conn, _ := net.Dial("tcp", net.JoinHostPort("127.0.0.1", "3006"))
 		if conn != nil {
+			log.Info("Test connection made")
 			conn.Close()
 			break
 		}
+		log.Info("Test connection failed")
 	}
 
 	tb.textile = textile
