@@ -3,7 +3,6 @@ package textile
 import (
 	"context"
 	"fmt"
-	"net"
 	"os/user"
 	"time"
 
@@ -105,17 +104,8 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 
 	log.Info("Welcome to bucket", fmt.Sprintf("peerID:%s", textile.HostID().String()))
 
-	// wait for the port to be listening to consider it done
-	log.Info("Waiting for 127.0.0.1 3006 to listen")
-	for {
-		conn, _ := net.Dial("tcp", net.JoinHostPort("127.0.0.1", "3006"))
-		if conn != nil {
-			log.Info("Test connection made")
-			conn.Close()
-			break
-		}
-		log.Info("Test connection failed")
-	}
+	log.Info("Sleeping for 5s to wait for buckd grpc ports to listen ...")
+	time.Sleep(5 * time.Second)
 
 	tb.textile = textile
 	tb.IsRunning = true
