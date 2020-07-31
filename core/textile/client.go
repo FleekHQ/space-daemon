@@ -184,7 +184,6 @@ func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
 	// Create default bucket if it doesnt exist
 	defaultBucketExists := false
 	for _, b := range buckets {
-		log.Info("looping through bucket: " + b.Slug())
 		if b.Slug() == defaultPersonalBucketSlug {
 			defaultBucketExists = true
 		}
