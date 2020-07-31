@@ -2,6 +2,10 @@ module github.com/FleekHQ/space-daemon
 
 go 1.14
 
+replace github.com/ipfs/go-datastore v0.4.4 => github.com/textileio/go-datastore v0.4.5-0.20200728205504-ffeb3591b248
+
+replace github.com/ipfs/go-ds-badger v0.2.4 => github.com/textileio/go-ds-badger v0.2.5-0.20200728212847-1ec9ac5e644c
+
 require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
 	github.com/alecthomas/jsonschema v0.0.0-20191017121752-4bb6e3fae4f2
@@ -35,8 +39,8 @@ require (
 	github.com/rs/cors v1.7.0
 	github.com/sirupsen/logrus v1.6.0
 	github.com/stretchr/testify v1.6.1
-	github.com/textileio/go-threads v0.1.22-0.20200715004950-43b77eed845f
-	github.com/textileio/textile v1.0.13-0.20200715062314-bc5c48f9d59e
+	github.com/textileio/go-threads v0.1.24-0.20200728224844-456a1ebdf635
+	github.com/textileio/textile v1.0.14
 	go.etcd.io/etcd v3.3.22+incompatible
 	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
