@@ -51,6 +51,7 @@ func (tc *textileClient) GetBucketContext(ctx context.Context, bucketSlug string
 
 	log.Debug("GetBucketContext: Fetching thread id from meta store")
 	bucketSchema, notFoundErr := tc.findBucketInCollection(ctx, bucketSlug)
+
 	if notFoundErr == nil { // This means the bucket was already present in the schema
 		dbID, err := parseDbIDFromString(bucketSchema.DbID)
 		if err != nil {
@@ -59,6 +60,10 @@ func (tc *textileClient) GetBucketContext(ctx context.Context, bucketSlug string
 		}
 		log.Debug("GetBucketContext: Got dbID from collection: " + dbID.String())
 		ctx, err = tc.getThreadContext(ctx, bucketSlug, *dbID)
+
+		if err != nil {
+			return nil, nil, err
+		}
 		return ctx, dbID, err
 	}
 
@@ -107,6 +112,10 @@ func (tc *textileClient) getBucketRootFromSlug(ctx context.Context, slug string)
 
 	bucketListReply, err := tc.bucketsClient.List(ctx)
 
+	if err != nil {
+		return nil, nil, err
+	}
+
 	for _, root := range bucketListReply.Roots {
 		if root.Name == slug {
 			return ctx, root, nil
@@ -122,6 +131,10 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 
 	if b, _ := tc.GetBucket(ctx, bucketSlug); b != nil {
 		return b, nil
+	}
+
+	if err != nil {
+		return nil, err
 	}
 
 	ctx, dbID, err := tc.GetBucketContext(ctx, bucketSlug)

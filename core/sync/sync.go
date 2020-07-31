@@ -90,10 +90,11 @@ func New(
 
 // Starts the folder watcher and the textile watcher.
 func (bs *bucketSynchronizer) Start(ctx context.Context) error {
-	buckets, err := bs.textileClient.ListBuckets(ctx)
-	if err != nil {
-		return err
-	}
+	// Disabling this temporarily due to errors
+	//buckets, err := bs.textileClient.ListBuckets(ctx)
+	// if err != nil {
+	// 	return err
+	// }
 
 	if bs.notifier == nil {
 		log.Printf("using default notifier to start bucket sync")
@@ -113,9 +114,10 @@ func (bs *bucketSynchronizer) Start(ctx context.Context) error {
 	// handlers := make([]textile.EventHandler, 0)
 	// handlers = append(handlers, bs.th)
 
-	for range buckets {
-		// bs.textileThreadListeners = append(bs.textileThreadListeners, textile.NewListener(bs.textileClient, bucket.Slug(), handlers))
-	}
+	// Disabling this temporarily due to errors
+	//for range buckets {
+	// bs.textileThreadListeners = append(bs.textileThreadListeners, textile.NewListener(bs.textileClient, bucket.Slug(), handlers))
+	//}
 
 	bs.folderWatcher.RegisterHandler(bs.fh)
 
