@@ -121,7 +121,6 @@ func (tb *TextileBuckd) Stop() error {
 	tb.IsRunning = false
 	tb.textile.Close()
 	close(tb.Ready)
-	// TODO: what else
 	return nil
 }
 
