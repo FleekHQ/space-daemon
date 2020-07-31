@@ -63,7 +63,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer textile.Close()
+	defer textile.Close(false)
 	textile.Bootstrap()
 
 	fmt.Println("Welcome to Buckets!")
