@@ -19,7 +19,7 @@ import (
 	"github.com/textileio/go-threads/db"
 	bc "github.com/textileio/textile/api/buckets/client"
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
-	buckets "github.com/textileio/textile/buckets/collection"
+	buckets "github.com/textileio/textile/buckets/local"
 	"github.com/textileio/textile/cmd"
 )
 
