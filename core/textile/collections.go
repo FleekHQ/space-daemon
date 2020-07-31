@@ -78,7 +78,7 @@ func (tc *textileClient) findBucketInCollection(ctx context.Context, bucketSlug 
 		return nil, err
 	}
 
-	rawBuckets, err := tc.threads.Find(metaCtx, *dbID, bucketCollectionName, db.Where("slug").Eq(bucketSlug).UseIndex("slug"), &BucketSchema{})
+	rawBuckets, err := tc.threads.Find(metaCtx, *dbID, bucketCollectionName, db.Where("slug").Eq(bucketSlug), &BucketSchema{})
 	if rawBuckets == nil {
 		return nil, errBucketNotFound
 	}
