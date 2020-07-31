@@ -25,13 +25,13 @@ var MinThreadsConn int
 type TextileBuckd struct {
 	textile   *core.Textile
 	IsRunning bool
-	ready     chan bool
+	Ready     chan bool
 	cfg       config.Config
 }
 
 func NewBuckd(cfg config.Config) *TextileBuckd {
 	return &TextileBuckd{
-		ready: make(chan bool),
+		Ready: make(chan bool),
 		cfg:   cfg,
 	}
 }
@@ -103,16 +103,24 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 	textile.Bootstrap()
 
 	log.Info("Welcome to bucket", fmt.Sprintf("peerID:%s", textile.HostID().String()))
+
+	log.Info("Sleeping for 5s to wait for buckd grpc ports to listen ...")
+	time.Sleep(5 * time.Second)
+
 	tb.textile = textile
 	tb.IsRunning = true
+	tb.Ready <- true
 	return nil
+}
+
+func (tb *TextileBuckd) WaitForReady() chan bool {
+	return tb.Ready
 }
 
 func (tb *TextileBuckd) Stop() error {
 	tb.IsRunning = false
-	tb.textile.Close()
-	close(tb.ready)
-	// TODO: what else
+	tb.textile.Close(false)
+	close(tb.Ready)
 	return nil
 }
 
