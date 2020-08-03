@@ -30,12 +30,21 @@ func (srv *grpcServer) GenerateKeyPairWithForce(ctx context.Context, request *pb
 
 func (srv *grpcServer) GetPublicKey(ctx context.Context, request *pb.GetPublicKeyRequest) (*pb.GetPublicKeyResponse, error) {
 	pub, err := srv.sv.GetPublicKey(ctx)
+	if err != nil {
+		return nil, err
+	}
 
+	tok, err := srv.sv.GetHubAuthToken(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	return &pb.GetPublicKeyResponse{
-		PublicKey: pub,
+		PublicKey:    pub,
+		HubAuthToken: tok,
 	}, nil
+}
+
+func (srv *grpcServer) DeleteKeyPair(ctx context.Context, request *pb.DeleteKeyPairRequest) (*pb.DeleteKeyPairResponse, error) {
+	return nil, errNotImplemented
 }

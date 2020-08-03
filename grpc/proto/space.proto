@@ -36,6 +36,13 @@ service SpaceApi {
     };
   }
 
+  rpc DeleteKeyPair(DeleteKeyPairRequest) returns (DeleteKeyPairResponse) {
+    option (google.api.http) = {
+      post: "/v1/keypairs/delete"
+      body: "*"
+    };
+  }
+
   // Force Generation of KeyPair. This will override existing keys stored in daemon.
   rpc GenerateKeyPairWithForce(GenerateKeyPairRequest) returns (GenerateKeyPairResponse) {
     option (google.api.http) = {
@@ -228,6 +235,13 @@ service SpaceApi {
   rpc ReadNotification(ReadNotificationRequest) returns (ReadNotificationResponse) {
     option (google.api.http) = {
       post: "/v1/notifications/{ID}/read"
+      body: "*"
+    };
+  }
+
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {
+    option (google.api.http) = {
+      post: "/v1/deleteAccount"
       body: "*"
     };
   }
@@ -503,6 +517,8 @@ message GetPublicKeyRequest {}
 message GetPublicKeyResponse {
   // Public key encoded in hex
   string publicKey = 1;
+  // Used to verify that the user has access to the private key
+  string hubAuthToken = 2;
 }
 
 message RecoverKeysByLocalBackupRequest {
@@ -517,3 +533,11 @@ message CreateLocalKeysBackupRequest {
 }
 
 message CreateLocalKeysBackupResponse {}
+
+message DeleteAccountRequest {}
+
+message DeleteAccountResponse {}
+
+message DeleteKeyPairRequest {}
+
+message DeleteKeyPairResponse {}

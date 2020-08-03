@@ -252,6 +252,38 @@
         ]
       }
     },
+    "/v1/deleteAccount": {
+      "post": {
+        "operationId": "SpaceApi_DeleteAccount",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceDeleteAccountResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceDeleteAccountRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/directories": {
       "get": {
         "summary": "Get the folder or files in the path directory.\nUnlike ListDirectories, this only returns immediate children at path.",
@@ -556,6 +588,38 @@
         ]
       }
     },
+    "/v1/keypairs/delete": {
+      "post": {
+        "operationId": "SpaceApi_DeleteKeyPair",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceDeleteKeyPairResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceDeleteKeyPairRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/keypairs/forceGenerate": {
       "post": {
         "summary": "Force Generation of KeyPair. This will override existing keys stored in daemon.",
@@ -614,6 +678,70 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/spaceGenerateKeyPairRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/localBackups/backup": {
+      "post": {
+        "operationId": "SpaceApi_CreateLocalKeysBackup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceCreateLocalKeysBackupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceCreateLocalKeysBackupRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/localBackups/recover": {
+      "post": {
+        "operationId": "SpaceApi_RecoverKeysByLocalBackup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceRecoverKeysByLocalBackupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceRecoverKeysByLocalBackupRequest"
             }
           }
         ],
@@ -755,6 +883,38 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/spaceRecoverKeysByPassphraseRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/publicKey": {
+      "post": {
+        "operationId": "SpaceApi_GetPublicKey",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceGetPublicKeyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceGetPublicKeyRequest"
             }
           }
         ],
@@ -1140,6 +1300,30 @@
       "type": "object",
       "title": "not sure we need to return anything other than an error if we failed"
     },
+    "spaceCreateLocalKeysBackupRequest": {
+      "type": "object",
+      "properties": {
+        "pathToKeyBackup": {
+          "type": "string",
+          "title": "The path in which to save the backup"
+        }
+      }
+    },
+    "spaceCreateLocalKeysBackupResponse": {
+      "type": "object"
+    },
+    "spaceDeleteAccountRequest": {
+      "type": "object"
+    },
+    "spaceDeleteAccountResponse": {
+      "type": "object"
+    },
+    "spaceDeleteKeyPairRequest": {
+      "type": "object"
+    },
+    "spaceDeleteKeyPairResponse": {
+      "type": "object"
+    },
     "spaceEventType": {
       "type": "string",
       "enum": [
@@ -1223,6 +1407,22 @@
         "nextOffset": {
           "type": "string",
           "format": "int64"
+        }
+      }
+    },
+    "spaceGetPublicKeyRequest": {
+      "type": "object"
+    },
+    "spaceGetPublicKeyResponse": {
+      "type": "object",
+      "properties": {
+        "publicKey": {
+          "type": "string",
+          "title": "Public key encoded in hex"
+        },
+        "hubAuthToken": {
+          "type": "string",
+          "title": "Used to verify that the user has access to the private key"
         }
       }
     },
@@ -1417,6 +1617,17 @@
       }
     },
     "spaceReadNotificationResponse": {
+      "type": "object"
+    },
+    "spaceRecoverKeysByLocalBackupRequest": {
+      "type": "object",
+      "properties": {
+        "pathToKeyBackup": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceRecoverKeysByLocalBackupResponse": {
       "type": "object"
     },
     "spaceRecoverKeysByPassphraseRequest": {
