@@ -6,6 +6,7 @@ import (
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
+	"github.com/FleekHQ/space-daemon/core/textile/hub"
 )
 
 func (s *Space) GenerateKeyPair(ctx context.Context, useForce bool) (domain.KeyPair, error) {
@@ -52,4 +53,8 @@ func (s *Space) GetPublicKey(ctx context.Context) (string, error) {
 	publicKeyHex := hex.EncodeToString(publicKeyBytes)
 
 	return publicKeyHex, nil
+}
+
+func (s *Space) GetHubAuthToken(ctx context.Context) (string, error) {
+	return hub.GetHubToken(ctx, s.store, s.cfg)
 }
