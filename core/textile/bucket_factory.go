@@ -19,8 +19,8 @@ import (
 	"github.com/textileio/go-threads/db"
 	bc "github.com/textileio/textile/api/buckets/client"
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
-	buckets "github.com/textileio/textile/buckets/local"
 	"github.com/textileio/textile/cmd"
+	tdb "github.com/textileio/textile/threaddb"
 )
 
 func NotFound(slug string) error {
@@ -216,7 +216,7 @@ func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address strin
 	)
 
 	reflector := jsonschema.Reflector{ExpandedStruct: true}
-	schema = reflector.Reflect(&buckets.Bucket{})
+	schema = reflector.Reflect(&tdb.Bucket{})
 	err = tc.threads.NewDBFromAddr(ctx, multiaddress, key, db.WithNewManagedCollections(db.CollectionConfig{
 		Name:    "buckets",
 		Schema:  schema,
