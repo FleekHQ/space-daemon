@@ -18,6 +18,7 @@ import (
 	nc "github.com/textileio/go-threads/net/api/client"
 	bucketsClient "github.com/textileio/textile/api/buckets/client"
 	"github.com/textileio/textile/api/common"
+	uc "github.com/textileio/textile/api/users/client"
 	"github.com/textileio/textile/cmd"
 	"google.golang.org/grpc"
 )
@@ -31,6 +32,7 @@ type textileClient struct {
 	cfg              config.Config
 	isConnectedToHub bool
 	netc             *nc.Client
+	uc               *uc.Client
 }
 
 // Creates a new Textile Client
@@ -40,6 +42,7 @@ func NewClient(store db.Store) *textileClient {
 		threads:          nil,
 		bucketsClient:    nil,
 		netc:             nil,
+		uc:               nil,
 		isRunning:        false,
 		Ready:            make(chan bool),
 		isConnectedToHub: false,
@@ -142,19 +145,41 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.bucketsClient = buckets
 	tc.threads = threads
 	tc.netc = netc
+	tc.uc = getUserClient()
 
 	tc.isRunning = true
 
 	// Attempt to connect to the Hub
-	_, err := tc.getHubCtx(ctx)
+	hubctx, err := tc.getHubCtx(ctx)
 	if err != nil {
 		log.Error("Could not connect to Textile Hub. Starting in offline mode.", err)
 	} else {
 		tc.isConnectedToHub = true
+
+		// setup mailbox
+		mid, err := tc.uc.SetupMailbox(hubctx)
+		if err != nil {
+			log.Error("Unable to setup mailbox", err)
+			return err
+		}
+		log.Info("Mailbox id: ", mid.String())
 	}
 
 	tc.Ready <- true
 	return nil
+}
+
+func getUserClient() *uc.Client {
+	hubTarget := os.Getenv("TXL_HUB_HOST")
+	auth := common.Credentials{}
+	var opts []grpc.DialOption
+	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithPerRPCCredentials(auth))
+	users, err := uc.NewClient(hubTarget, opts...)
+	if err != nil {
+		cmd.Fatal(err)
+	}
+	return users
 }
 
 // StartAndBootstrap starts a Textile Client and also initializes default resources for it like a key pair and default bucket.
