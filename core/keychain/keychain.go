@@ -22,11 +22,12 @@ type keychain struct {
 }
 
 type Keychain interface {
-	GenerateKeyPair() ([]byte, []byte, error)
+	GenerateKeyPair() (pub []byte, priv []byte, err error)
 	GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error)
-	GenerateKeyPairWithForce() ([]byte, []byte, error)
+	GenerateKeyPairWithForce() (pub []byte, priv []byte, err error)
 	GenerateTempKey() ([]byte, error)
 	Sign([]byte) ([]byte, error)
+	ImportExistingKeyPair(priv crypto.PrivKey) error
 }
 
 func New(store db.Store) *keychain {
@@ -91,6 +92,30 @@ func (kc *keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.Pub
 // Warning: If there's already a key pair stored, it overrides it.
 func (kc *keychain) GenerateKeyPairWithForce() ([]byte, []byte, error) {
 	return kc.generateAndStoreKeyPair()
+}
+
+// Stores an existing private key in the keychain
+// Warning: If there's already a key pair stored, this will override it.
+func (kc *keychain) ImportExistingKeyPair(priv crypto.PrivKey) error {
+	privInBytes, err := priv.Raw()
+	if err != nil {
+		return err
+	}
+	pubInBytes, err := priv.GetPublic().Raw()
+	if err != nil {
+		return err
+	}
+
+	// Store the key pair in the db
+	if err = kc.store.Set([]byte(PublicKeyStoreKey), pubInBytes); err != nil {
+		return err
+	}
+
+	if err = kc.store.Set([]byte(PrivateKeyStoreKey), privInBytes); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (kc *keychain) generateKeyPair() ([]byte, []byte, error) {

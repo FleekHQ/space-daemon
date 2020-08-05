@@ -35,6 +35,8 @@ type Service interface {
 	OpenSharedFile(ctx context.Context, cid, key, filename string) (domain.OpenFileInfo, error)
 	ShareBucket(ctx context.Context, slug string) (*domain.ThreadInfo, error)
 	JoinBucket(ctx context.Context, slug string, threadinfo *domain.ThreadInfo) (bool, error)
+	CreateLocalKeysBackup(ctx context.Context, pathToKeyBackup string) error
+	RecoverKeysByLocalBackup(ctx context.Context, pathToKeyBackup string) error
 }
 
 type serviceOptions struct {

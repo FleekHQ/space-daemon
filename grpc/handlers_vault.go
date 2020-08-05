@@ -15,9 +15,15 @@ func (srv *grpcServer) RecoverKeysByPassphrase(ctx context.Context, request *pb.
 }
 
 func (srv *grpcServer) CreateLocalKeysBackup(ctx context.Context, request *pb.CreateLocalKeysBackupRequest) (*pb.CreateLocalKeysBackupResponse, error) {
-	return nil, errNotImplemented
+	resp := &pb.CreateLocalKeysBackupResponse{}
+	err := srv.sv.CreateLocalKeysBackup(ctx, request.PathToKeyBackup)
+
+	return resp, err
 }
 
 func (srv *grpcServer) RecoverKeysByLocalBackup(ctx context.Context, request *pb.RecoverKeysByLocalBackupRequest) (*pb.RecoverKeysByLocalBackupResponse, error) {
-	return nil, errNotImplemented
+	resp := &pb.RecoverKeysByLocalBackupResponse{}
+	err := srv.sv.RecoverKeysByLocalBackup(ctx, request.PathToKeyBackup)
+
+	return resp, err
 }
