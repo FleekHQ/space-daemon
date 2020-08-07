@@ -2,8 +2,10 @@ package textile
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/FleekHQ/space-daemon/config"
@@ -21,6 +23,7 @@ import (
 	uc "github.com/textileio/textile/api/users/client"
 	"github.com/textileio/textile/cmd"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type textileClient struct {
@@ -170,11 +173,19 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 }
 
 func getUserClient() *uc.Client {
-	hubTarget := os.Getenv("TXL_HUB_TARGET")
+	hubTarget := os.Getenv("TXL_HUB_HOST")
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithInsecure())
+
+	if strings.Contains(hubTarget, "443") {
+		creds := credentials.NewTLS(&tls.Config{})
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+		auth.Secure = true
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+	}
 	opts = append(opts, grpc.WithPerRPCCredentials(auth))
+
 	users, err := uc.NewClient(hubTarget, opts...)
 	if err != nil {
 		cmd.Fatal(err)
