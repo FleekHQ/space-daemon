@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -33,6 +34,7 @@ import (
 	uc "github.com/textileio/textile/api/users/client"
 	"github.com/textileio/textile/cmd"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 const ctxTimeout = 30
@@ -350,12 +352,21 @@ func main() {
 		var err error
 
 		host := os.Getenv("TXL_HUB_HOST")
+		threadstarget := os.Getenv("TXL_HUB_THREADS_HOST")
+		fmt.Println("hub host: " + host)
+		fmt.Println("threads host: " + threadstarget)
 
 		auth := common.Credentials{}
 		var opts []grpc.DialOption
 		hubTarget := host
-		threadstarget := host
-		opts = append(opts, grpc.WithInsecure())
+
+		if strings.Contains(host, "443") {
+			creds := credentials.NewTLS(&tls.Config{})
+			opts = append(opts, grpc.WithTransportCredentials(creds))
+			auth.Secure = true
+		} else {
+			opts = append(opts, grpc.WithInsecure())
+		}
 		opts = append(opts, grpc.WithPerRPCCredentials(auth))
 
 		buckets, err = bc.NewClient(hubTarget, opts...)
