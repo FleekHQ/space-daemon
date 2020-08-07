@@ -351,8 +351,8 @@ func main() {
 		// var hub *hc.Client
 		var err error
 
-		host := os.Getenv("TXL_HUB_HOST")
-		threadstarget := os.Getenv("TXL_HUB_THREADS_HOST")
+		host := os.Getenv("TXL_HUB_TARGET")
+		threadstarget := os.Getenv("TXL_THREADS_TARGET")
 		fmt.Println("hub host: " + host)
 		fmt.Println("threads host: " + threadstarget)
 

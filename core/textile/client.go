@@ -170,7 +170,7 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 }
 
 func getUserClient() *uc.Client {
-	hubTarget := os.Getenv("TXL_HUB_HOST")
+	hubTarget := os.Getenv("TXL_HUB_TARGET")
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
