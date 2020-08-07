@@ -232,6 +232,13 @@ func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, netclien
 	defer cancel()
 	opt := tc.ListenOption{}
 
+	mid, err := users.SetupMailbox(newCtx)
+	if err != nil {
+		log.Println("Unable to setup mailbox", err)
+		return nil
+	}
+	log.Println("Mailbox id: ", mid.String())
+
 	//listPath on a folder that doesnt exist
 	lp, err := buckets.ListPath(ctx, buck.Root.Key, "random/folderA/doesntexists")
 	if err != nil {
