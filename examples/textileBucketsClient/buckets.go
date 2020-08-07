@@ -188,10 +188,19 @@ func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, netclien
 	key := os.Getenv("TXL_USER_KEY")
 	secret := os.Getenv("TXL_USER_SECRET")
 
+	if key == "" || secret == "" {
+		return nil
+	}
+
 	// TODO: this should be happening in an auth lambda
 	ctx := context.Background()
 	ctx = common.NewAPIKeyContext(ctx, key)
-	ctx, err := common.CreateAPISigContext(ctx, time.Now().Add(time.Minute*2), secret)
+	var apiSigCtx context.Context
+	var err error
+	if apiSigCtx, err = common.CreateAPISigContext(ctx, time.Now().Add(time.Minute), secret); err != nil {
+		return nil
+	}
+	ctx = apiSigCtx
 
 	if err != nil {
 		log.Println("error creating APISigContext")
@@ -205,6 +214,13 @@ func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, netclien
 	// ctx on next line needs to be rebuilt from the authorization from the lambda
 	tok, err := threads.GetToken(ctx, thread.NewLibp2pIdentity(sk))
 	ctx = thread.NewTokenContext(ctx, tok)
+
+	mid, err := users.SetupMailbox(ctx)
+	if err != nil {
+		log.Println("Unable to setup mailbox", err)
+		return nil
+	}
+	log.Println("Mailbox id: ", mid.String())
 
 	// create thread
 	ctx = common.NewThreadNameContext(ctx, user+"-"+bucketSlug)
@@ -231,13 +247,6 @@ func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, netclien
 	newCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	opt := tc.ListenOption{}
-
-	mid, err := users.SetupMailbox(newCtx)
-	if err != nil {
-		log.Println("Unable to setup mailbox", err)
-		return nil
-	}
-	log.Println("Mailbox id: ", mid.String())
 
 	//listPath on a folder that doesnt exist
 	lp, err := buckets.ListPath(ctx, buck.Root.Key, "random/folderA/doesntexists")

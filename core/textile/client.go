@@ -29,6 +29,7 @@ import (
 type textileClient struct {
 	store            db.Store
 	threads          *threadsClient.Client
+	ht               *threadsClient.Client
 	bucketsClient    *bucketsClient.Client
 	isRunning        bool
 	Ready            chan bool
@@ -46,6 +47,7 @@ func NewClient(store db.Store) *textileClient {
 		bucketsClient:    nil,
 		netc:             nil,
 		uc:               nil,
+		ht:               nil,
 		isRunning:        false,
 		Ready:            make(chan bool),
 		isConnectedToHub: false,
@@ -88,6 +90,7 @@ func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error)
 	if key == "" || secret == "" {
 		return nil, errors.New("Couldn't get Textile key or secret from envs")
 	}
+
 	ctx = common.NewAPIKeyContext(ctx, key)
 	var apiSigCtx context.Context
 	var err error
@@ -103,7 +106,12 @@ func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error)
 	}
 
 	// TODO: CTX has to be made from session key received from lambda
-	tok, err := tc.threads.GetToken(ctx, thread.NewLibp2pIdentity(privateKey))
+	tok, err := tc.ht.GetToken(ctx, thread.NewLibp2pIdentity(privateKey))
+
+	if err != nil {
+		log.Info("error getting token")
+		return nil, err
+	}
 
 	ctx = thread.NewTokenContext(ctx, tok)
 	return ctx, nil
@@ -149,6 +157,7 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.threads = threads
 	tc.netc = netc
 	tc.uc = getUserClient()
+	tc.ht = getHubThreadsClient()
 
 	tc.isRunning = true
 
@@ -165,7 +174,7 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 			log.Error("Unable to setup mailbox", err)
 			return err
 		}
-		log.Info("Mailbox id: ", mid.String())
+		log.Info("Mailbox id: " + mid.String())
 	}
 
 	tc.Ready <- true
@@ -191,6 +200,27 @@ func getUserClient() *uc.Client {
 		cmd.Fatal(err)
 	}
 	return users
+}
+
+func getHubThreadsClient() *threadsClient.Client {
+	hubTarget := os.Getenv("TXL_HUB_HOST")
+	auth := common.Credentials{}
+	var opts []grpc.DialOption
+
+	if strings.Contains(hubTarget, "443") {
+		creds := credentials.NewTLS(&tls.Config{})
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+		auth.Secure = true
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+	}
+	opts = append(opts, grpc.WithPerRPCCredentials(auth))
+
+	tc, err := threadsClient.NewClient(hubTarget, opts...)
+	if err != nil {
+		cmd.Fatal(err)
+	}
+	return tc
 }
 
 // StartAndBootstrap starts a Textile Client and also initializes default resources for it like a key pair and default bucket.
@@ -268,7 +298,7 @@ func (tc *textileClient) IsRunning() bool {
 	return tc.isRunning
 }
 
-func (tc *textileClient) getThreadContext(parentCtx context.Context, threadName string, dbID thread.ID) (context.Context, error) {
+func (tc *textileClient) getThreadContext(parentCtx context.Context, threadName string, dbID thread.ID, hub bool) (context.Context, error) {
 	var err error
 	ctx := parentCtx
 
@@ -276,8 +306,9 @@ func (tc *textileClient) getThreadContext(parentCtx context.Context, threadName 
 		return nil, err
 	}
 
-	// If we are connected to the Hub, add the keys to the context so we can replicate
-	if tc.isConnectedToHub == true {
+	// Some threads will be on the hub and some will be local, this flag lets you specify
+	// where it is, perhaps an improvement could be to save this flag in the store and load it from there
+	if hub {
 		ctx, err = tc.getHubCtx(ctx)
 		if err != nil {
 			return nil, err
