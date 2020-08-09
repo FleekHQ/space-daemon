@@ -27,7 +27,7 @@ type Keychain interface {
 	GenerateKeyPair() (pub []byte, priv []byte, err error)
 	GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error)
 	GenerateKeyPairWithForce() (pub []byte, priv []byte, err error)
-	GeneratePasswordBasedKey(password string, salt []byte) []byte
+	GeneratePasswordBasedKey(password string) (key, salt []byte, iterations int)
 	Sign([]byte) ([]byte, error)
 	ImportExistingKeyPair(priv crypto.PrivKey) error
 }
@@ -53,8 +53,11 @@ func (kc *keychain) GenerateKeyPair() ([]byte, []byte, error) {
 
 // GeneratePasswordBasedKey generates a 256 bit symmetric pbkdf2 key useful for AES encryption.
 // Note: This does not store the generated key, hence the reason they are temp keys.
-func (kc *keychain) GeneratePasswordBasedKey(password string, salt []byte) []byte {
-	return pbkdf2.Key([]byte(password), salt, 4096, 32, sha1.New)
+func (kc *keychain) GeneratePasswordBasedKey(password string) (key, salt []byte, iterations int) {
+	iterations = 4096
+	salt = []byte{}
+	key = pbkdf2.Key([]byte(password), salt, iterations, 32, sha1.New)
+	return key, salt, iterations
 }
 
 // Returns the stored key pair using the same signature than libp2p's GenerateEd25519Key function
