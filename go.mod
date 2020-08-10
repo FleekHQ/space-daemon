@@ -24,11 +24,14 @@ require (
 	github.com/ipfs/go-merkledag v0.3.2
 	github.com/ipfs/go-unixfs v0.2.4
 	github.com/ipfs/interface-go-ipfs-core v0.2.7
+	github.com/jbenet/goprocess v0.1.4
 	github.com/joho/godotenv v1.3.0
 	github.com/libp2p/go-libp2p-connmgr v0.2.4
 	github.com/libp2p/go-libp2p-core v0.6.0
 	github.com/libp2p/go-libp2p-crypto v0.1.0
+	github.com/libp2p/go-libp2p-peerstore v0.2.6
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/multiformats/go-base32 v0.0.3
 	github.com/multiformats/go-multiaddr v0.2.2
 	github.com/multiformats/go-multihash v0.0.13
 	github.com/pkg/errors v0.9.1
@@ -40,6 +43,7 @@ require (
 	github.com/textileio/dcrypto v0.0.1
 	github.com/textileio/go-threads v0.1.24-0.20200728224844-456a1ebdf635
 	github.com/textileio/textile v1.0.14
+	go.etcd.io/etcd v3.3.22+incompatible
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a

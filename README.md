@@ -78,7 +78,7 @@ Currently, local Textile Threads require a running MongoDB database. Space Daemo
 
 ## Running from source
 
-After cloning this repo, you can run it from source by running `go run ./cmd/space-daemon -devMode=true`. Consider that you will need the following environment variables exported in your system:
+After cloning this repo, you can run it from source by running `go run ./cmd/space-daemon -dev`. Consider that you will need the following environment variables exported in your system:
 
 ```
 IPFS_ADDR=[Your IPFS node address]
