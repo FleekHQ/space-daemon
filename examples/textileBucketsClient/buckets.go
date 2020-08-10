@@ -217,10 +217,40 @@ func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, netclien
 
 	mid, err := users.SetupMailbox(ctx)
 	if err != nil {
-		log.Println("Unable to setup mailbox", err)
+		log.Println("Unable to setup sender mailbox", err)
 		return nil
 	}
-	log.Println("Mailbox id: ", mid.String())
+	log.Println("Sender Mailbox id: ", mid.String())
+
+	// generate random recipient
+	rsk, _, err := crypto.GenerateEd25519Key(rand.Reader)
+	id := thread.NewLibp2pIdentity(rsk)
+
+	rctx := context.Background()
+	rctx = common.NewAPIKeyContext(rctx, key)
+	var rapiSigCtx context.Context
+	if rapiSigCtx, err = common.CreateAPISigContext(rctx, time.Now().Add(time.Minute), secret); err != nil {
+		return nil
+	}
+	rctx = rapiSigCtx
+	rtok, err := threads.GetToken(rctx, thread.NewLibp2pIdentity(rsk))
+	rctx = thread.NewTokenContext(rctx, rtok)
+
+	mid2, err := users.SetupMailbox(rctx)
+	if err != nil {
+		log.Println("Unable to setup recipient mailbox", err)
+		return nil
+	}
+	log.Println("Recipient Mailbox id: ", mid2.String())
+
+	msg, err := users.SendMessage(ctx, thread.NewLibp2pIdentity(sk), id.GetPublic(), []byte("hello"))
+
+	if err != nil {
+		log.Println("Unable to send", err)
+		return nil
+	}
+
+	log.Println("msg: " + string(msg.Body))
 
 	// create thread
 	ctx = common.NewThreadNameContext(ctx, user+"-"+bucketSlug)

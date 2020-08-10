@@ -3,6 +3,7 @@ package textile
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	crypto "github.com/libp2p/go-libp2p-crypto"
@@ -30,5 +31,12 @@ func (tc *textileClient) SendMessage(ctx context.Context, recipient string, body
 	if err != nil {
 		return nil, err
 	}
+
 	return &msg, nil
+}
+
+type handleMessage func(context.Context, interface{}) error
+
+func (tc *textileClient) ListenForMessages(ctx context.Context, handler handleMessage) error {
+	return errors.New("Not Implemented")
 }
