@@ -43,6 +43,38 @@
         ]
       }
     },
+    "/v1/backup": {
+      "post": {
+        "operationId": "SpaceApi_ToggleBucketBackup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceToggleBucketBackupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceToggleBucketBackupRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/buckets": {
       "get": {
         "operationId": "SpaceApi_ListBuckets",
@@ -987,6 +1019,38 @@
         ]
       }
     },
+    "/v1/subscriptions/fileinfo": {
+      "get": {
+        "summary": "Subscribe to file info events. This streams responses to the caller",
+        "operationId": "SpaceApi_FileInfoSubscribe",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/spaceFileInfoEventResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/runtimeStreamError"
+                }
+              },
+              "title": "Stream result of spaceFileInfoEventResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/subscriptions/notification": {
       "get": {
         "operationId": "SpaceApi_NotificationSubscribe",
@@ -1036,6 +1100,28 @@
                 }
               },
               "title": "Stream result of spaceTextileEventResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/usage": {
+      "get": {
+        "operationId": "SpaceApi_GetUsageInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceGetUsageInfoResponse"
             }
           },
           "default": {
@@ -1219,6 +1305,10 @@
         "isPersonalBucket": {
           "type": "boolean",
           "format": "boolean"
+        },
+        "backedUp": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },
@@ -1344,6 +1434,22 @@
         }
       }
     },
+    "spaceFileInfoEventResponse": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "$ref": "#/definitions/spaceListDirectoryEntry"
+        }
+      }
+    },
+    "spaceFileMember": {
+      "type": "object",
+      "properties": {
+        "publicKey": {
+          "type": "string"
+        }
+      }
+    },
     "spaceFuseDriveResponse": {
       "type": "object",
       "properties": {
@@ -1423,6 +1529,31 @@
         "hubAuthToken": {
           "type": "string",
           "title": "Used to verify that the user has access to the private key"
+        }
+      }
+    },
+    "spaceGetUsageInfoResponse": {
+      "type": "object",
+      "properties": {
+        "localStarogeUsed": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "localBandwidthUsed": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "spaceStorageUsed": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "spaceBandwidthUsed": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "usageQuota": {
+          "type": "string",
+          "format": "uint64"
         }
       }
     },
@@ -1524,6 +1655,20 @@
         },
         "ipfsHash": {
           "type": "string"
+        },
+        "local": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "backupCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/spaceFileMember"
+          }
         }
       }
     },
@@ -1553,6 +1698,9 @@
         "invitationValue": {
           "$ref": "#/definitions/spaceInvitation"
         },
+        "usageAlert": {
+          "$ref": "#/definitions/spaceUsageAlert"
+        },
         "type": {
           "$ref": "#/definitions/spaceNotificationType"
         },
@@ -1577,7 +1725,8 @@
     "spaceNotificationType": {
       "type": "string",
       "enum": [
-        "INVITATION"
+        "INVITATION",
+        "USAGEALERT"
       ],
       "default": "INVITATION"
     },
@@ -1707,12 +1856,43 @@
         }
       }
     },
+    "spaceToggleBucketBackupRequest": {
+      "type": "object",
+      "properties": {
+        "bucket": {
+          "type": "string"
+        },
+        "backup": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    },
+    "spaceToggleBucketBackupResponse": {
+      "type": "object"
+    },
     "spaceToggleFuseRequest": {
       "type": "object",
       "properties": {
         "mountDrive": {
           "type": "boolean",
           "format": "boolean"
+        }
+      }
+    },
+    "spaceUsageAlert": {
+      "type": "object",
+      "properties": {
+        "used": {
+          "type": "string",
+          "format": "int64"
+        },
+        "limit": {
+          "type": "string",
+          "format": "int64"
+        },
+        "message": {
+          "type": "string"
         }
       }
     }
