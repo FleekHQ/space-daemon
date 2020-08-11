@@ -301,7 +301,7 @@ message ListDirectoryEntry {
   string updated = 6;
   string fileExtension = 7;
   string ipfsHash = 8;
-  bool local = 9;
+  bool isLocallyAvailable = 9;
   int64 backupCount = 10;
   repeated FileMember members = 11;
 }
@@ -338,7 +338,7 @@ message Bucket {
   int64 updatedAt = 5;
   repeated BucketMember members = 6;
   bool isPersonalBucket = 7;
-  bool backedUp = 8;
+  bool isBackupEnabled = 8;
 }
 
 message CreateBucketResponse {
