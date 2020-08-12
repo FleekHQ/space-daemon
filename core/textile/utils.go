@@ -1,12 +1,14 @@
 package textile
 
 import (
+	"crypto/sha512"
 	"encoding/base32"
 	"encoding/binary"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/textileio/go-threads/core/thread"
+	"golang.org/x/crypto/pbkdf2"
 )
 
 func castDbIDToString(dbID thread.ID) string {
@@ -27,10 +29,10 @@ func parseDbIDFromString(dbID string) (*thread.ID, error) {
 	return &id, nil
 }
 
-type deterministicThreadVariant []byte
+type deterministicThreadVariant string
 
 var (
-	metathreadThreadVariant deterministicThreadVariant = []byte{0x15}
+	metathreadThreadVariant deterministicThreadVariant = "metathread"
 )
 
 func newDeterministicThreadID(st *store.Store, threadVariant deterministicThreadVariant) (thread.ID, error) {
@@ -39,13 +41,20 @@ func newDeterministicThreadID(st *store.Store, threadVariant deterministicThread
 
 	kc := keychain.New(*st)
 
-	msg, err := kc.Sign(threadVariant)
+	priv, _, err := kc.GetStoredKeyPairInLibP2PFormat()
 	if err != nil {
 		return thread.ID([]byte{}), err
 	}
 
-	num := make([]byte, size)
-	copy(num, msg[:size])
+	privInBytes, err := priv.Raw()
+	if err != nil {
+		return thread.ID([]byte{}), err
+	}
+
+	num := pbkdf2.Key(privInBytes, []byte("threadID"+threadVariant), 256, size, sha512.New)
+	if err != nil {
+		return thread.ID([]byte{}), err
+	}
 
 	numlen := len(num)
 	// two 8 bytes (max) numbers plus num

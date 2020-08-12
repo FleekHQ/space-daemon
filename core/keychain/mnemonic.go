@@ -70,9 +70,14 @@ func (kc *keychain) GenerateKeyFromMnemonic(opts ...GenerateKeyFromMnemonicOpts)
 		}
 	}
 
-	seed := bip39.NewSeed(mnemonic, o.password)[:32]
+	seed, err := bip39.NewSeedWithErrorChecking(mnemonic, o.password)
+	if err != nil {
+		return "", err
+	}
 
-	_, _, err := kc.generateAndStoreKeyPair(seed)
+	compressedSeed := seed[:32]
+
+	_, _, err = kc.generateAndStoreKeyPair(compressedSeed)
 	if err != nil {
 		return "", err
 	}
