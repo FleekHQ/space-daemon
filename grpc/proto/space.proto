@@ -65,6 +65,13 @@ service SpaceApi {
     };
   }
 
+  // Subscribe to file info events. This streams responses to the caller
+  rpc FileInfoSubscribe(google.protobuf.Empty) returns (stream FileInfoEventResponse) {
+    option (google.api.http) = {
+      get: "/v1/subscriptions/fileinfo"
+    };
+  }
+
   // Subscribe to textile events. This streams responses to the caller
   rpc TxlSubscribe(google.protobuf.Empty) returns (stream TextileEventResponse) {
     option (google.api.http) = {
@@ -245,10 +252,44 @@ service SpaceApi {
       body: "*"
     };
   }
+
+  rpc ToggleBucketBackup(ToggleBucketBackupRequest) returns (ToggleBucketBackupResponse) {
+    option (google.api.http) = {
+      post: "/v1/backup"
+      body: "*"
+    };
+  }
+
+  rpc GetUsageInfo(GetUsageInfoRequest) returns (GetUsageInfoResponse) {
+    option (google.api.http) = {
+      get: "/v1/usage"
+    };
+  }
 }
+
+message GetUsageInfoRequest {}
+
+message GetUsageInfoResponse {
+  uint64 localStarogeUsed = 1;
+  uint64 localBandwidthUsed = 2;
+  uint64 spaceStorageUsed = 3;
+  uint64 spaceBandwidthUsed = 4;
+  uint64 usageQuota = 5;
+}
+
+message ToggleBucketBackupRequest {
+  string bucket = 1;
+  bool backup = 2;
+}
+
+message ToggleBucketBackupResponse {}
 
 message ListDirectoriesRequest {
   string bucket = 1;
+}
+
+message FileMember {
+  string publicKey = 1;
 }
 
 message ListDirectoryEntry {
@@ -260,6 +301,9 @@ message ListDirectoryEntry {
   string updated = 6;
   string fileExtension = 7;
   string ipfsHash = 8;
+  bool isLocallyAvailable = 9;
+  int64 backupCount = 10;
+  repeated FileMember members = 11;
 }
 
 message ListDirectoriesResponse {
@@ -294,6 +338,7 @@ message Bucket {
   int64 updatedAt = 5;
   repeated BucketMember members = 6;
   bool isPersonalBucket = 7;
+  bool isBackupEnabled = 8;
 }
 
 message CreateBucketResponse {
@@ -316,6 +361,10 @@ enum EventType {
 message FileEventResponse {
   EventType type = 1;
   ListDirectoryEntry entry = 2;
+}
+
+message FileInfoEventResponse {
+  ListDirectoryEntry file = 1;
 }
 
 message TextileEventResponse {
@@ -452,6 +501,7 @@ message CopyAndShareFilesResponse {}
 
 enum NotificationType {
   INVITATION = 0;
+  USAGEALERT = 1;
 }
 
 enum InvitationStatus {
@@ -467,17 +517,23 @@ message Invitation {
   repeated string itemPaths = 5;
 }
 
+message UsageAlert {
+  int64 used = 1;
+  int64 limit = 2;
+  string message = 3;
+}
+
 message Notification {
   string ID = 1; // underlying message id from textile
   string subject = 2;
   string body = 3;
   oneof relatedObject {
     Invitation invitationValue = 4;
-    // later we can add other types here
+    UsageAlert usageAlert = 5;
   }
-  NotificationType type = 5;
-  int64 createdAt = 6;
-  int64 readAt = 7;
+  NotificationType type = 6;
+  int64 createdAt = 7;
+  int64 readAt = 8;
 }
 
 message AcceptBucketInvitationRequest {
