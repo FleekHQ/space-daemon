@@ -18,7 +18,7 @@ type BucketSchema struct {
 	DbID string
 }
 
-const metaThreadName = "metathread"
+const metaThreadName = "metathreadV1"
 const bucketCollectionName = "BucketMetadata"
 
 var errBucketNotFound = errors.New("Bucket not found")
@@ -125,7 +125,14 @@ func (tc *textileClient) findOrCreateMetaThreadID(ctx context.Context) (*thread.
 
 	// thread id does not exist yet
 
-	dbID := thread.NewIDV1(thread.Raw, 32)
+	// We need to create an ID that's derived deterministically from the user private key
+	// The reason for this is that the user needs to be able to restore the exact ID when moving across devices.
+	// The only consideration is that we must try to avoid dbID collisions with other users.
+	dbID, err := newDeterministicThreadID(&tc.store, metathreadThreadVariant)
+	if err != nil {
+		return nil, err
+	}
+
 	dbIDInBytes := dbID.Bytes()
 
 	log.Debug("Created meta thread in db " + dbID.String())

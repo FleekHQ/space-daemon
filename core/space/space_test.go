@@ -633,10 +633,7 @@ func TestService_BackupAndRestore(t *testing.T) {
 		"GetStoredKeyPairInLibP2PFormat",
 	).Return(mockPrivKey, mockPubKey, nil)
 
-	mtID := []byte("SomeRandomString")
 	ctx := context.Background()
-
-	textileClient.On("SerializeState", mock.Anything).Return(mtID, nil)
 
 	path := testDir.fileNames[0]
 
@@ -649,11 +646,8 @@ func TestService_BackupAndRestore(t *testing.T) {
 
 	mockKeychain.On("ImportExistingKeyPair", mock.Anything).Return(nil)
 
-	textileClient.On("RestoreState", mock.Anything, mock.Anything).Return(nil)
-
 	err = sv.RecoverKeysByLocalBackup(ctx, path)
 
 	assert.Nil(t, err)
 	mockKeychain.AssertCalled(t, "ImportExistingKeyPair", mockPrivKey)
-	textileClient.AssertCalled(t, "RestoreState", ctx, mtID)
 }

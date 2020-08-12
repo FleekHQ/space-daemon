@@ -68,8 +68,6 @@ type Client interface {
 	Shutdown() error
 	WaitForReady() chan bool
 	Start(ctx context.Context, cfg config.Config) error
-	SerializeState(ctx context.Context) ([]byte, error)
-	RestoreState(ctx context.Context, state []byte) error
 }
 
 type Buckd interface {
