@@ -5,38 +5,28 @@ import (
 	"encoding/hex"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
-	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 )
 
-func (s *Space) GenerateKeyPair(ctx context.Context, useForce bool) (domain.KeyPair, error) {
+func (s *Space) GenerateKeyPair(ctx context.Context, useForce bool) (string, error) {
+	var mnemonic string
+	var err error
 	if useForce {
-		return s.generateKeyPairWithForce(ctx)
-	}
-
-	kc := keychain.New(s.store)
-	if pub, priv, err := kc.GenerateKeyPair(); err != nil {
-		return domain.KeyPair{}, err
+		mnemonic, err = s.keychain.GenerateKeyFromMnemonic(keychain.WithOverride())
 	} else {
-
-		return domain.KeyPair{
-			PublicKey:  hex.EncodeToString(pub),
-			PrivateKey: hex.EncodeToString(priv),
-		}, nil
+		mnemonic, err = s.keychain.GenerateKeyFromMnemonic()
 	}
+	if err != nil {
+		return "", err
+	}
+
+	return mnemonic, nil
 }
 
-func (s *Space) generateKeyPairWithForce(ctx context.Context) (domain.KeyPair, error) {
-	kc := keychain.New(s.store)
-	if pub, priv, err := kc.GenerateKeyPairWithForce(); err != nil {
-		return domain.KeyPair{}, err
-	} else {
+func (s *Space) RestoreKeyPairFromMnemonic(ctx context.Context, mnemonic string) error {
+	_, err := s.keychain.GenerateKeyFromMnemonic(keychain.WithMnemonic(mnemonic), keychain.WithOverride())
 
-		return domain.KeyPair{
-			PublicKey:  hex.EncodeToString(pub),
-			PrivateKey: hex.EncodeToString(priv),
-		}, nil
-	}
+	return err
 }
 
 func (s *Space) GetPublicKey(ctx context.Context) (string, error) {
