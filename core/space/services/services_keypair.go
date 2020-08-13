@@ -8,6 +8,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 )
 
+// Generates a key pair and returns a mnemonic for recovering that key later on
 func (s *Space) GenerateKeyPair(ctx context.Context, useForce bool) (string, error) {
 	var mnemonic string
 	var err error

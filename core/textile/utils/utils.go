@@ -1,4 +1,4 @@
-package textile
+package utils
 
 import (
 	"crypto/sha512"
@@ -6,17 +6,16 @@ import (
 	"encoding/binary"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
-	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/textileio/go-threads/core/thread"
 	"golang.org/x/crypto/pbkdf2"
 )
 
-func castDbIDToString(dbID thread.ID) string {
+func CastDbIDToString(dbID thread.ID) string {
 	bytes := dbID.Bytes()
 	return base32.StdEncoding.EncodeToString(bytes)
 }
 
-func parseDbIDFromString(dbID string) (*thread.ID, error) {
+func ParseDbIDFromString(dbID string) (*thread.ID, error) {
 	bytes, err := base32.StdEncoding.DecodeString(dbID)
 	if err != nil {
 		return nil, err
@@ -29,17 +28,15 @@ func parseDbIDFromString(dbID string) (*thread.ID, error) {
 	return &id, nil
 }
 
-type deterministicThreadVariant string
+type DeterministicThreadVariant string
 
 var (
-	metathreadThreadVariant deterministicThreadVariant = "metathread"
+	MetathreadThreadVariant DeterministicThreadVariant = "metathread"
 )
 
-func newDeterministicThreadID(st *store.Store, threadVariant deterministicThreadVariant) (thread.ID, error) {
+func NewDeterministicThreadID(kc keychain.Keychain, threadVariant DeterministicThreadVariant) (thread.ID, error) {
 	size := 32
 	variant := thread.Raw
-
-	kc := keychain.New(*st)
 
 	priv, _, err := kc.GetStoredKeyPairInLibP2PFormat()
 	if err != nil {
@@ -51,11 +48,14 @@ func newDeterministicThreadID(st *store.Store, threadVariant deterministicThread
 		return thread.ID([]byte{}), err
 	}
 
+	// Do a key derivation based on the private key, a constant nonce, and the thread variant
 	num := pbkdf2.Key(privInBytes, []byte("threadID"+threadVariant), 256, size, sha512.New)
 	if err != nil {
 		return thread.ID([]byte{}), err
 	}
 
+	// The following code just concats the key derived from the private key (num)
+	// with some constants such as the thread version and the textile thread variant
 	numlen := len(num)
 	// two 8 bytes (max) numbers plus num
 	buf := make([]byte, 2*binary.MaxVarintLen64+numlen)

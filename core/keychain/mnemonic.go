@@ -1,9 +1,11 @@
 package keychain
 
 import (
+	"crypto/sha512"
 	"errors"
 
 	"github.com/tyler-smith/go-bip39"
+	"golang.org/x/crypto/pbkdf2"
 )
 
 type generateKeyFromMnemonicOpts struct {
@@ -75,7 +77,10 @@ func (kc *keychain) GenerateKeyFromMnemonic(opts ...GenerateKeyFromMnemonicOpts)
 		return "", err
 	}
 
-	compressedSeed := seed[:32]
+	// The seed returned by bip39 is fixed to size = 64 bytes.
+	// However the seed in ed25519 needs to have size 32.
+	// So to fix this we derive a key again based on the previous one, but with the correct size.
+	compressedSeed := pbkdf2.Key(seed, []byte("iter2"+o.password), 512, 32, sha512.New)
 
 	_, _, err = kc.generateAndStoreKeyPair(compressedSeed)
 	if err != nil {

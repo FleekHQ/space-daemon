@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/FleekHQ/space-daemon/core/keychain"
+	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/textileio/go-threads/api/client"
 	core "github.com/textileio/go-threads/core/db"
@@ -109,12 +111,32 @@ func (tc *textileClient) getBucketsFromCollection(ctx context.Context) ([]*Bucke
 	return buckets, nil
 }
 
-func getThreadIDStoreKey(bucketSlug string) []byte {
-	return []byte(threadIDStoreKey + "_" + bucketSlug)
+// Returns the store key for a thread ID. It uses the keychain to obtain the public key, since the store key depends on it.
+func getThreadIDStoreKey(bucketSlug string, kc keychain.Keychain) ([]byte, error) {
+	_, pub, err := kc.GetStoredKeyPairInLibP2PFormat()
+	if err != nil {
+		return nil, err
+	}
+
+	pubInBytes, err := pub.Raw()
+	if err != nil {
+		return nil, err
+	}
+
+	result := []byte(threadIDStoreKey + "_" + bucketSlug)
+	result = append(result, pubInBytes...)
+
+	return result, nil
 }
 
 func (tc *textileClient) findOrCreateMetaThreadID(ctx context.Context) (*thread.ID, error) {
-	if val, _ := tc.store.Get(getThreadIDStoreKey(metaThreadName)); val != nil {
+	kc := keychain.New(tc.store)
+	storeKey, err := getThreadIDStoreKey(metaThreadName, kc)
+	if err != nil {
+		return nil, err
+	}
+
+	if val, _ := tc.store.Get(storeKey); val != nil {
 		// Cast the stored dbID from bytes to thread.ID
 		if dbID, err := thread.Cast(val); err != nil {
 			return nil, err
@@ -128,7 +150,7 @@ func (tc *textileClient) findOrCreateMetaThreadID(ctx context.Context) (*thread.
 	// We need to create an ID that's derived deterministically from the user private key
 	// The reason for this is that the user needs to be able to restore the exact ID when moving across devices.
 	// The only consideration is that we must try to avoid dbID collisions with other users.
-	dbID, err := newDeterministicThreadID(&tc.store, metathreadThreadVariant)
+	dbID, err := utils.NewDeterministicThreadID(kc, utils.MetathreadThreadVariant)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +163,7 @@ func (tc *textileClient) findOrCreateMetaThreadID(ctx context.Context) (*thread.
 		return nil, err
 	}
 
-	if err := tc.store.Set([]byte(getThreadIDStoreKey(metaThreadName)), dbIDInBytes); err != nil {
+	if err := tc.store.Set(storeKey, dbIDInBytes); err != nil {
 		newErr := errors.New("error while storing thread id: check your local space db accessibility")
 		return nil, newErr
 	}

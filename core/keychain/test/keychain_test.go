@@ -10,6 +10,7 @@ import (
 	"github.com/FleekHQ/space-daemon/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/tyler-smith/go-bip39"
 )
 
 var (
@@ -70,8 +71,8 @@ func TestKeychain_RestoreMnemonicKey(t *testing.T) {
 	mockStore.On("Get", []byte(keychain.PublicKeyStoreKey)).Return(nil, nil)
 
 	mnemonic := "pioneer powder icon lemon pulse struggle title jealous stamp sausage interest govern fault pumpkin fever glove dust buzz skin diesel purse answer pitch cave"
-	pubFromMnemonic, _ := hex.DecodeString("401e174cc48028539a1bc687aaf7aae1bb5320bd3a48a5d69733b211ad88e93d")
-	privFromMnemonic, _ := hex.DecodeString("d7680cca9c019e96b1f0371d504772eb803e1d63c90ad6074ba410400ee7de20401e174cc48028539a1bc687aaf7aae1bb5320bd3a48a5d69733b211ad88e93d")
+	pubFromMnemonic, _ := hex.DecodeString("a29d5030556f55f32d82b71618e97bfe976ebebc713592122b124881b4da6191")
+	privFromMnemonic, _ := hex.DecodeString("d0f36d0f9e3ab47002e0f35ca878a070703dec1b1c6e7298d93053607806c9a2a29d5030556f55f32d82b71618e97bfe976ebebc713592122b124881b4da6191")
 
 	val, err := kc.GenerateKeyFromMnemonic(keychain.WithMnemonic(mnemonic))
 	assert.Nil(t, err)
@@ -87,7 +88,7 @@ func TestKeychain_RestoreMnemonicKeyOnOverrideErr(t *testing.T) {
 	mockStore.On("Set", mock.Anything, mock.Anything).Return(nil)
 
 	mnemonic := "pioneer powder icon lemon pulse struggle title jealous stamp sausage interest govern fault pumpkin fever glove dust buzz skin diesel purse answer pitch cave"
-	pubFromMnemonic, _ := hex.DecodeString("401e174cc48028539a1bc687aaf7aae1bb5320bd3a48a5d69733b211ad88e93d")
+	pubFromMnemonic, _ := hex.DecodeString("a29d5030556f55f32d82b71618e97bfe976ebebc713592122b124881b4da6191")
 
 	mockStore.On("Get", []byte(keychain.PublicKeyStoreKey)).Return(pubFromMnemonic, nil)
 
@@ -96,14 +97,27 @@ func TestKeychain_RestoreMnemonicKeyOnOverrideErr(t *testing.T) {
 	assert.Equal(t, errors.New("Error while executing GenerateKeyFromMnemonic. Key pair already exists."), err)
 }
 
+func TestKeychain_RestoreMnemonicKeyMnemonicErr(t *testing.T) {
+	kc := initTestKeychain(t)
+
+	mockStore.On("Set", mock.Anything, mock.Anything).Return(nil)
+	mockStore.On("Get", []byte(keychain.PublicKeyStoreKey)).Return(nil, nil)
+
+	mnemonic := "pioneer powder icon lemon pulse struggle title jealous stamp sausage interest govern fault pumpkin fever glove dust buzz skin diesel purse answer pitch"
+
+	_, err := kc.GenerateKeyFromMnemonic(keychain.WithMnemonic(mnemonic))
+	assert.NotNil(t, err)
+	assert.Equal(t, bip39.ErrInvalidMnemonic, err)
+}
+
 func TestKeychain_RestoreMnemonicKeyOnOverrideSuccess(t *testing.T) {
 	kc := initTestKeychain(t)
 
 	mockStore.On("Set", mock.Anything, mock.Anything).Return(nil)
 
 	mnemonic := "pioneer powder icon lemon pulse struggle title jealous stamp sausage interest govern fault pumpkin fever glove dust buzz skin diesel purse answer pitch cave"
-	pubFromMnemonic, _ := hex.DecodeString("401e174cc48028539a1bc687aaf7aae1bb5320bd3a48a5d69733b211ad88e93d")
-	privFromMnemonic, _ := hex.DecodeString("d7680cca9c019e96b1f0371d504772eb803e1d63c90ad6074ba410400ee7de20401e174cc48028539a1bc687aaf7aae1bb5320bd3a48a5d69733b211ad88e93d")
+	pubFromMnemonic, _ := hex.DecodeString("a29d5030556f55f32d82b71618e97bfe976ebebc713592122b124881b4da6191")
+	privFromMnemonic, _ := hex.DecodeString("d0f36d0f9e3ab47002e0f35ca878a070703dec1b1c6e7298d93053607806c9a2a29d5030556f55f32d82b71618e97bfe976ebebc713592122b124881b4da6191")
 
 	mockStore.On("Get", []byte(keychain.PublicKeyStoreKey)).Return(pubFromMnemonic, nil)
 
