@@ -181,6 +181,11 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	return nil
 }
 
+// adding for testability
+func (tc *textileClient) SetUc(uc UsersClient) {
+	tc.uc = uc
+}
+
 func getUserClient() UsersClient {
 	hubTarget := os.Getenv("TXL_HUB_HOST")
 	auth := common.Credentials{}
