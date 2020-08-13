@@ -31,10 +31,13 @@ type Service interface {
 	AddItems(ctx context.Context, sourcePaths []string, targetPath string, bucketName string) (<-chan domain.AddItemResult, domain.AddItemsResponse, error)
 	CreateIdentity(ctx context.Context, username string) (*domain.Identity, error)
 	GetIdentityByUsername(ctx context.Context, username string) (*domain.Identity, error)
-	GenerateFileSharingLink(ctx context.Context, path string, bucketName string) (domain.FileSharingInfo, error)
-	OpenSharedFile(ctx context.Context, cid, key, filename string) (domain.OpenFileInfo, error)
+	GenerateFileSharingLink(ctx context.Context, encryptionPassword, path string, bucketName string) (domain.FileSharingInfo, error)
+	GenerateFilesSharingLink(ctx context.Context, encryptionPassword string, paths []string, bucketName string) (domain.FileSharingInfo, error)
+	OpenSharedFile(ctx context.Context, cid, password, filename string) (domain.OpenFileInfo, error)
 	ShareBucket(ctx context.Context, slug string) (*domain.ThreadInfo, error)
 	JoinBucket(ctx context.Context, slug string, threadinfo *domain.ThreadInfo) (bool, error)
+	CreateLocalKeysBackup(ctx context.Context, pathToKeyBackup string) error
+	RecoverKeysByLocalBackup(ctx context.Context, pathToKeyBackup string) error
 }
 
 type serviceOptions struct {

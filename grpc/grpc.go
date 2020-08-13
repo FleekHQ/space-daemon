@@ -48,6 +48,7 @@ type grpcServer struct {
 	fc         *fuse.Controller
 	// TODO: see if we need to clean this up by gc or handle an array
 	fileEventStream         pb.SpaceApi_SubscribeServer
+	fileInfoStream          pb.SpaceApi_FileInfoSubscribeServer
 	txlEventStream          pb.SpaceApi_TxlSubscribeServer
 	notificationEventStream pb.SpaceApi_NotificationSubscribeServer
 	isStarted               bool

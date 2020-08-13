@@ -2,7 +2,6 @@ package textile
 
 import (
 	"context"
-	"encoding/base32"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -181,24 +180,6 @@ func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*t
 	}
 
 	return b, err
-}
-
-func castDbIDToString(dbID thread.ID) string {
-	bytes := dbID.Bytes()
-	return base32.StdEncoding.EncodeToString(bytes)
-}
-
-func parseDbIDFromString(dbID string) (*thread.ID, error) {
-	bytes, err := base32.StdEncoding.DecodeString(dbID)
-	if err != nil {
-		return nil, err
-	}
-	id, err := thread.Cast(bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return &id, nil
 }
 
 func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address string, key thread.Key, bucketSlug string) error {

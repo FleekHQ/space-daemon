@@ -2,7 +2,9 @@ package keychain
 
 import (
 	"crypto/ed25519"
-	"crypto/rand"
+	"crypto/sha1"
+
+	"golang.org/x/crypto/pbkdf2"
 
 	"errors"
 
@@ -22,11 +24,12 @@ type keychain struct {
 }
 
 type Keychain interface {
-	GenerateKeyPair() ([]byte, []byte, error)
+	GenerateKeyPair() (pub []byte, priv []byte, err error)
 	GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error)
-	GenerateKeyPairWithForce() ([]byte, []byte, error)
-	GenerateTempKey() ([]byte, error)
+	GenerateKeyPairWithForce() (pub []byte, priv []byte, err error)
+	GeneratePasswordBasedKey(password string) (key, salt []byte, iterations int)
 	Sign([]byte) ([]byte, error)
+	ImportExistingKeyPair(priv crypto.PrivKey) error
 }
 
 func New(store db.Store) *keychain {
@@ -48,12 +51,13 @@ func (kc *keychain) GenerateKeyPair() ([]byte, []byte, error) {
 	return kc.generateAndStoreKeyPair()
 }
 
-// GenerateTempKey generates a 256 bit symmetric key useful for AES encryption.
+// GeneratePasswordBasedKey generates a 256 bit symmetric pbkdf2 key useful for AES encryption.
 // Note: This does not store the generated key, hence the reason they are temp keys.
-func (kc *keychain) GenerateTempKey() ([]byte, error) {
-	b := make([]byte, 32)
-	_, err := rand.Read(b)
-	return b, err
+func (kc *keychain) GeneratePasswordBasedKey(password string) (key, salt []byte, iterations int) {
+	iterations = 4096
+	salt = []byte{}
+	key = pbkdf2.Key([]byte(password), salt, iterations, 32, sha1.New)
+	return key, salt, iterations
 }
 
 // Returns the stored key pair using the same signature than libp2p's GenerateEd25519Key function
@@ -91,6 +95,30 @@ func (kc *keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.Pub
 // Warning: If there's already a key pair stored, it overrides it.
 func (kc *keychain) GenerateKeyPairWithForce() ([]byte, []byte, error) {
 	return kc.generateAndStoreKeyPair()
+}
+
+// Stores an existing private key in the keychain
+// Warning: If there's already a key pair stored, this will override it.
+func (kc *keychain) ImportExistingKeyPair(priv crypto.PrivKey) error {
+	privInBytes, err := priv.Raw()
+	if err != nil {
+		return err
+	}
+	pubInBytes, err := priv.GetPublic().Raw()
+	if err != nil {
+		return err
+	}
+
+	// Store the key pair in the db
+	if err = kc.store.Set([]byte(PublicKeyStoreKey), pubInBytes); err != nil {
+		return err
+	}
+
+	if err = kc.store.Set([]byte(PrivateKeyStoreKey), privInBytes); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (kc *keychain) generateKeyPair() ([]byte, []byte, error) {

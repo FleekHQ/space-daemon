@@ -206,6 +206,20 @@ func (_m *Client) ListBuckets(ctx context.Context) ([]textile.Bucket, error) {
 	return r0, r1
 }
 
+// RestoreState provides a mock function with given fields: ctx, state
+func (_m *Client) RestoreState(ctx context.Context, state []byte) error {
+	ret := _m.Called(ctx, state)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, []byte) error); ok {
+		r0 = rf(ctx, state)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // SendMessage provides a mock function with given fields: ctx, recipient, body
 func (_m *Client) SendMessage(ctx context.Context, recipient string, body []byte) (*usersclient.Message, error) {
 	ret := _m.Called(ctx, recipient, body)
@@ -222,6 +236,29 @@ func (_m *Client) SendMessage(ctx context.Context, recipient string, body []byte
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, string, []byte) error); ok {
 		r1 = rf(ctx, recipient, body)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// SerializeState provides a mock function with given fields: ctx
+func (_m *Client) SerializeState(ctx context.Context) ([]byte, error) {
+	ret := _m.Called(ctx)
+
+	var r0 []byte
+	if rf, ok := ret.Get(0).(func(context.Context) []byte); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]byte)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}

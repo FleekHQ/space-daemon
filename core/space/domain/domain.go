@@ -67,7 +67,6 @@ type APIError struct {
 
 type FileSharingInfo struct {
 	Bucket            string
-	Path              string
 	SharedFileCid     string
 	SharedFileKey     string
 	SpaceDownloadLink string

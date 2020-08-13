@@ -1,30 +1,121 @@
 package services
 
 import (
+	"archive/zip"
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"encoding/base64"
+	"fmt"
 	"io"
 	"net/url"
+	"os"
 	"path/filepath"
+
+	"github.com/FleekHQ/space-daemon/log"
+
+	"github.com/textileio/dcrypto"
 
 	"github.com/pkg/errors"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
-	cid "github.com/ipfs/go-cid"
+	"github.com/ipfs/go-cid"
 )
 
 func (s *Space) GenerateFileSharingLink(
 	ctx context.Context,
+	encryptionPassword string,
 	path string,
 	bucketName string,
 ) (domain.FileSharingInfo, error) {
 	_, fileName := filepath.Split(path)
-	key, err := s.keychain.GenerateTempKey()
+
+	bucket, err := s.getBucketWithFallback(ctx, bucketName)
 	if err != nil {
 		return domain.FileSharingInfo{}, err
+	}
+
+	// tempFile is written from textile before encryption
+	tempFile, err := s.createTempFileForPath(ctx, path, true)
+	if err != nil {
+		return domain.FileSharingInfo{}, err
+	}
+	defer func() {
+		tempFile.Close()
+		_ = os.Remove(tempFile.Name())
+	}()
+
+	// encrypted file is the final encrypted file
+	encryptedFile, err := s.createTempFileForPath(ctx, path, true)
+	if err != nil {
+		return domain.FileSharingInfo{}, err
+	}
+	defer encryptedFile.Close()
+
+	err = bucket.GetFile(ctx, path, tempFile)
+	if err != nil {
+		return EmptyFileSharingInfo, errors.Wrap(err, "file encryption failed")
+	}
+	_, err = tempFile.Seek(0, 0)
+	if err != nil {
+		return EmptyFileSharingInfo, errors.Wrap(err, "file encryption failed")
+	}
+	encryptedReader, err := dcrypto.NewEncrypterWithPassword(tempFile, []byte(encryptionPassword))
+	if err != nil {
+		return EmptyFileSharingInfo, errors.Wrap(err, "file encryption failed")
+	}
+
+	log.Printf("Copying encrypted file to disk")
+	_, err = io.Copy(encryptedFile, encryptedReader)
+	if err != nil {
+		return EmptyFileSharingInfo, errors.Wrap(err, "file encryption failed")
+	}
+
+	log.Printf("Copy successful")
+	_, err = encryptedFile.Seek(0, 0)
+	if err != nil {
+		return EmptyFileSharingInfo, errors.Wrap(err, "file encryption failed")
+	}
+
+	log.Printf("Uploading shared file")
+	return s.uploadSharedFileToIpfs(
+		ctx,
+		encryptionPassword,
+		encryptedFile,
+		fileName,
+		bucketName,
+	)
+}
+
+func (s *Space) uploadSharedFileToIpfs(
+	ctx context.Context,
+	password string,
+	sharedContent io.Reader,
+	fileName string,
+	bucketName string,
+) (domain.FileSharingInfo, error) {
+	fileUploadResult := s.ic.AddItem(ctx, sharedContent)
+	if err := fileUploadResult.Error; err != nil {
+		return EmptyFileSharingInfo, errors.Wrap(err, "encrypted file upload failed")
+	}
+	encryptedFileHash := fileUploadResult.Resolved.Cid().String()
+
+	urlQuery := url.Values{}
+	urlQuery.Add("fname", fileName)
+	urlQuery.Add("hash", encryptedFileHash)
+
+	return domain.FileSharingInfo{
+		Bucket:            bucketName,
+		SharedFileCid:     encryptedFileHash,
+		SharedFileKey:     password,
+		SpaceDownloadLink: "https://space.storage/files/share?" + urlQuery.Encode(),
+	}, nil
+}
+
+// GenerateFilesSharingLink zips multiple files together
+func (s *Space) GenerateFilesSharingLink(ctx context.Context, encryptionPassword string, paths []string, bucketName string) (domain.FileSharingInfo, error) {
+	if len(paths) == 0 {
+		return EmptyFileSharingInfo, errors.New("no file passed to share link")
+	}
+	if len(paths) == 1 {
+		return s.GenerateFileSharingLink(ctx, encryptionPassword, paths[0], bucketName)
 	}
 
 	bucket, err := s.getBucketWithFallback(ctx, bucketName)
@@ -32,50 +123,75 @@ func (s *Space) GenerateFileSharingLink(
 		return domain.FileSharingInfo{}, err
 	}
 
-	encryptedFile, err := s.createTempFileForPath(ctx, path, true)
+	// create zip file output
+	filename := generateFilesSharingZip()
+	// tempFile is written from textile before encryption
+	tempFile, err := s.createTempFileForPath(ctx, filename, true)
+	if err != nil {
+		return domain.FileSharingInfo{}, err
+	}
+	defer func() {
+		tempFile.Close()
+		_ = os.Remove(tempFile.Name())
+	}()
+
+	encryptedFile, err := s.createTempFileForPath(ctx, filename, true)
 	if err != nil {
 		return domain.FileSharingInfo{}, err
 	}
 	defer encryptedFile.Close()
 
-	writer, err := newEncryptedFileWriter(encryptedFile, key)
-	if err != nil {
-		return domain.FileSharingInfo{}, err
+	zipper := zip.NewWriter(tempFile)
+	// write each file to zip
+	for _, path := range paths {
+		_, fileName := filepath.Split(path)
+		writer, err := zipper.Create(fileName)
+		if err != nil {
+			return EmptyFileSharingInfo, errors.Wrap(err, fmt.Sprintf("failed to compress item: %s", path))
+		}
+
+		err = bucket.GetFile(ctx, path, writer)
+		if err != nil {
+			return EmptyFileSharingInfo, errors.Wrap(err, fmt.Sprintf("failed to compress item: %s", path))
+		}
 	}
 
-	err = bucket.GetFile(ctx, path, writer)
+	err = zipper.Close()
 	if err != nil {
-		return domain.FileSharingInfo{}, errors.Wrap(err, "file encryption failed")
+		return EmptyFileSharingInfo, errors.Wrap(err, "creating compressed file failed")
+	}
+
+	_, err = tempFile.Seek(0, 0)
+	if err != nil {
+		return EmptyFileSharingInfo, errors.Wrap(err, "file encryption failed")
+	}
+	encryptedReader, err := dcrypto.NewEncrypterWithPassword(tempFile, []byte(encryptionPassword))
+	if err != nil {
+		return EmptyFileSharingInfo, errors.Wrap(err, "file encryption failed")
+	}
+
+	_, err = io.Copy(encryptedFile, encryptedReader)
+	if err != nil {
+		return EmptyFileSharingInfo, err
 	}
 
 	_, err = encryptedFile.Seek(0, 0)
 	if err != nil {
-		return domain.FileSharingInfo{}, errors.Wrap(err, "file encryption failed")
+		return EmptyFileSharingInfo, errors.Wrap(err, "encryption failed")
 	}
 
-	fileUploadResult := s.ic.AddItem(ctx, encryptedFile)
-	if err := fileUploadResult.Error; err != nil {
-		return domain.FileSharingInfo{}, errors.Wrap(err, "encrypted file upload failed")
-	}
-	encryptedFileHash := fileUploadResult.Resolved.Cid().String()
-
-	urlQuery := url.Values{}
-	urlQuery.Add("fname", fileName)
-	urlQuery.Add("hash", encryptedFileHash)
-	urlQuery.Add("key", writer.EncodeKey())
-
-	return domain.FileSharingInfo{
-		Bucket:            bucketName,
-		Path:              path,
-		SharedFileCid:     encryptedFileHash,
-		SharedFileKey:     writer.EncodeKey(),
-		SpaceDownloadLink: "https://space.storage/files/share?" + urlQuery.Encode(),
-	}, nil
+	return s.uploadSharedFileToIpfs(
+		ctx,
+		encryptionPassword,
+		encryptedFile,
+		filename,
+		bucketName,
+	)
 }
 
 // OpenSharedFile fetched the ipfs file and decrypts it with the key. Then returns the decrypted
 // files location.
-func (s *Space) OpenSharedFile(ctx context.Context, hash, key, filename string) (domain.OpenFileInfo, error) {
+func (s *Space) OpenSharedFile(ctx context.Context, hash, password, filename string) (domain.OpenFileInfo, error) {
 	parsedCid, err := cid.Parse(hash)
 	if err != nil {
 		return domain.OpenFileInfo{}, err
@@ -93,7 +209,11 @@ func (s *Space) OpenSharedFile(ctx context.Context, hash, key, filename string) 
 	}
 	defer decryptedFile.Close()
 
-	reader, err := newEncryptedFileReader(encryptedFile, key)
+	reader, err := dcrypto.NewDecrypterWithPassword(encryptedFile, []byte(password))
+	if err != nil {
+		return domain.OpenFileInfo{}, err
+	}
+
 	if _, err := io.Copy(decryptedFile, reader); err != nil {
 		return domain.OpenFileInfo{}, errors.Wrap(err, "decryption failed")
 	}
@@ -101,84 +221,4 @@ func (s *Space) OpenSharedFile(ctx context.Context, hash, key, filename string) 
 	return domain.OpenFileInfo{
 		Location: decryptedFile.Name(),
 	}, nil
-}
-
-// EncryptedFileWriter writes while encrypting the written bytes using
-// the encryption key provided
-type EncryptedFileWriter struct {
-	writer io.Writer
-	stream cipher.Stream
-	IV     []byte
-	Key    []byte
-}
-
-func newEncryptedFileWriter(writer io.Writer, key []byte) (*EncryptedFileWriter, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	iv := make([]byte, block.BlockSize())
-	_, err = rand.Read(iv)
-
-	return &EncryptedFileWriter{
-		writer: writer,
-		stream: cipher.NewCTR(block, iv),
-		IV:     iv,
-		Key:    key,
-	}, nil
-}
-
-func (e *EncryptedFileWriter) Write(p []byte) (n int, err error) {
-	e.stream.XORKeyStream(p[:], p[:])
-	// To be considered: Also compute mac of encrypted hash for further verification
-	// not sure how useful it could be though
-	return e.writer.Write(p)
-}
-
-// EncodeKey returns a base64 hash of the IV+Key used for encryption
-func (e *EncryptedFileWriter) EncodeKey() string {
-	return base64.StdEncoding.EncodeToString(append(e.IV[:], e.Key[:]...))
-}
-
-// EncryptedFileReader reads an encrypted stream and decrypts them from the decoded stream
-// decoded bytes are then written to the writer
-type EncryptedFileReader struct {
-	reader io.Reader
-	iv     []byte
-	key    []byte
-	stream cipher.Stream
-}
-
-// Initialization vector size is 16 bytes
-// this corresponds to the block size of the cipher key used in encrypted writer
-var IVBlockSize = 16
-
-func newEncryptedFileReader(reader io.Reader, encodedKey string) (*EncryptedFileReader, error) {
-	encodedKeyBytes, err := base64.StdEncoding.DecodeString(encodedKey)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(encodedKeyBytes) < IVBlockSize {
-		return nil, errors.New("file key is wrong")
-	}
-
-	iv := encodedKeyBytes[:IVBlockSize]
-	key := encodedKeyBytes[IVBlockSize:]
-
-	block, err := aes.NewCipher(key)
-
-	return &EncryptedFileReader{
-		reader: reader,
-		iv:     iv,
-		key:    iv,
-		stream: cipher.NewCTR(block, iv),
-	}, nil
-}
-
-func (e *EncryptedFileReader) Read(b []byte) (int, error) {
-	n, err := e.reader.Read(b)
-	e.stream.XORKeyStream(b[:], b[:])
-	return n, err
 }

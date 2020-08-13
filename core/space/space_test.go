@@ -15,7 +15,7 @@ import (
 
 	"github.com/FleekHQ/space-daemon/config"
 
-	crypto "github.com/libp2p/go-libp2p-crypto"
+	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/FleekHQ/space-daemon/core/space/services"
@@ -26,14 +26,18 @@ import (
 )
 
 var (
-	cfg           *mocks.Config
-	st            *mocks.Store
-	textileClient *mocks.Client
-	mockPath      *mocks.Path
-	mockBucket    *mocks.Bucket
-	mockEnv       *mocks.SpaceEnv
-	mockSync      *mocks.Syncer
-	mockKeychain  *mocks.Keychain
+	cfg            *mocks.Config
+	st             *mocks.Store
+	textileClient  *mocks.Client
+	mockPath       *mocks.Path
+	mockBucket     *mocks.Bucket
+	mockEnv        *mocks.SpaceEnv
+	mockSync       *mocks.Syncer
+	mockKeychain   *mocks.Keychain
+	mockPubKey     crypto.PubKey
+	mockPrivKey    crypto.PrivKey
+	mockPubKeyHex  string
+	mockPrivKeyHex string
 )
 
 type TearDown func()
@@ -94,6 +98,14 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 	cfg.On("GetString", config.Ipfsaddr, mock.Anything).Return(
 		"/ip4/127.0.0.1/tcp/5001",
 	)
+
+	mockPubKeyHex = "67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
+	mockPrivKeyHex = "dd55f8921f90fdf31c6ef9ad86bd90605602fd7d32dc8ea66ab72deb6a82821c67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
+
+	pubKeyBytes, _ := hex.DecodeString(mockPubKeyHex)
+	privKeyBytes, _ := hex.DecodeString(mockPrivKeyHex)
+	mockPubKey, _ = crypto.UnmarshalEd25519PublicKey(pubKeyBytes)
+	mockPrivKey, _ = crypto.UnmarshalEd25519PrivateKey(privKeyBytes)
 
 	// NOTE: if we need to test without the store open we must override on each test
 	st.On("IsOpen").Return(true)
@@ -477,23 +489,15 @@ func TestService_CreateIdentity(t *testing.T) {
 
 	testUsername := "dmerrill"
 
-	mockPubKey := "67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
-	mockPrivKey := "dd55f8921f90fdf31c6ef9ad86bd90605602fd7d32dc8ea66ab72deb6a82821c67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
-
-	pubKeyBytes, _ := hex.DecodeString(mockPubKey)
-	privKeyBytes, _ := hex.DecodeString(mockPrivKey)
-	unmarshalledPub, _ := crypto.UnmarshalEd25519PublicKey(pubKeyBytes)
-	unmarshalledPriv, _ := crypto.UnmarshalEd25519PrivateKey(privKeyBytes)
-
 	mockKeychain.On(
 		"GetStoredKeyPairInLibP2PFormat",
-	).Return(unmarshalledPriv, unmarshalledPub, nil)
+	).Return(mockPrivKey, mockPubKey, nil)
 
 	identity, err := sv.CreateIdentity(context.Background(), testUsername)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, identity)
-	assert.Equal(t, identity.PublicKey, mockPubKey)
+	assert.Equal(t, identity.PublicKey, mockPubKeyHex)
 	assert.Equal(t, identity.Username, testUsername)
 }
 
@@ -524,17 +528,9 @@ func TestService_CreateIdentity_OnError(t *testing.T) {
 
 	testUsername := "dmerrill"
 
-	mockPubKey := "67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
-	mockPrivKey := "dd55f8921f90fdf31c6ef9ad86bd90605602fd7d32dc8ea66ab72deb6a82821c67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
-
-	pubKeyBytes, _ := hex.DecodeString(mockPubKey)
-	privKeyBytes, _ := hex.DecodeString(mockPrivKey)
-	unmarshalledPub, _ := crypto.UnmarshalEd25519PublicKey(pubKeyBytes)
-	unmarshalledPriv, _ := crypto.UnmarshalEd25519PrivateKey(privKeyBytes)
-
 	mockKeychain.On(
 		"GetStoredKeyPairInLibP2PFormat",
-	).Return(unmarshalledPriv, unmarshalledPub, nil)
+	).Return(mockPrivKey, mockPubKey, nil)
 
 	identity, err := sv.CreateIdentity(context.Background(), testUsername)
 
@@ -616,22 +612,48 @@ func TestService_GetPublicKey(t *testing.T) {
 	sv, _, tearDown := initTestService(t)
 	defer tearDown()
 
-	mockPubKey := "67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
-	mockPrivKey := "dd55f8921f90fdf31c6ef9ad86bd90605602fd7d32dc8ea66ab72deb6a82821c67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
-
-	pubKeyBytes, _ := hex.DecodeString(mockPubKey)
-	privKeyBytes, _ := hex.DecodeString(mockPrivKey)
-	unmarshalledPub, _ := crypto.UnmarshalEd25519PublicKey(pubKeyBytes)
-	unmarshalledPriv, _ := crypto.UnmarshalEd25519PrivateKey(privKeyBytes)
-
 	mockKeychain.On(
 		"GetStoredKeyPairInLibP2PFormat",
-	).Return(unmarshalledPriv, unmarshalledPub, nil)
+	).Return(mockPrivKey, mockPubKey, nil)
 
 	pub, err := sv.GetPublicKey(context.Background())
 
 	assert.Nil(t, err)
 	assert.NotNil(t, pub)
-	assert.Equal(t, pub, mockPubKey)
+	assert.Equal(t, pub, mockPubKeyHex)
+}
 
+func TestService_BackupAndRestore(t *testing.T) {
+	sv, getTestDir, tearDown := initTestService(t)
+	defer tearDown()
+
+	testDir := getTestDir()
+
+	mockKeychain.On(
+		"GetStoredKeyPairInLibP2PFormat",
+	).Return(mockPrivKey, mockPubKey, nil)
+
+	mtID := []byte("SomeRandomString")
+	ctx := context.Background()
+
+	textileClient.On("SerializeState", mock.Anything).Return(mtID, nil)
+
+	path := testDir.fileNames[0]
+
+	err := sv.CreateLocalKeysBackup(ctx, path)
+
+	backup, _ := ioutil.ReadFile(path)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, backup)
+
+	mockKeychain.On("ImportExistingKeyPair", mock.Anything).Return(nil)
+
+	textileClient.On("RestoreState", mock.Anything, mock.Anything).Return(nil)
+
+	err = sv.RecoverKeysByLocalBackup(ctx, path)
+
+	assert.Nil(t, err)
+	mockKeychain.AssertCalled(t, "ImportExistingKeyPair", mockPrivKey)
+	textileClient.AssertCalled(t, "RestoreState", ctx, mtID)
 }

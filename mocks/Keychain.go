@@ -77,27 +77,36 @@ func (_m *Keychain) GenerateKeyPairWithForce() ([]byte, []byte, error) {
 	return r0, r1, r2
 }
 
-// GenerateTempKey provides a mock function with given fields:
-func (_m *Keychain) GenerateTempKey() ([]byte, error) {
-	ret := _m.Called()
+// GeneratePasswordBasedKey provides a mock function with given fields: password
+func (_m *Keychain) GeneratePasswordBasedKey(password string) ([]byte, []byte, int) {
+	ret := _m.Called(password)
 
 	var r0 []byte
-	if rf, ok := ret.Get(0).(func() []byte); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(string) []byte); ok {
+		r0 = rf(password)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]byte)
 		}
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	var r1 []byte
+	if rf, ok := ret.Get(1).(func(string) []byte); ok {
+		r1 = rf(password)
 	} else {
-		r1 = ret.Error(1)
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).([]byte)
+		}
 	}
 
-	return r0, r1
+	var r2 int
+	if rf, ok := ret.Get(2).(func(string) int); ok {
+		r2 = rf(password)
+	} else {
+		r2 = ret.Get(2).(int)
+	}
+
+	return r0, r1, r2
 }
 
 // GetStoredKeyPairInLibP2PFormat provides a mock function with given fields:
@@ -130,6 +139,20 @@ func (_m *Keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.Pub
 	}
 
 	return r0, r1, r2
+}
+
+// ImportExistingKeyPair provides a mock function with given fields: priv
+func (_m *Keychain) ImportExistingKeyPair(priv crypto.PrivKey) error {
+	ret := _m.Called(priv)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(crypto.PrivKey) error); ok {
+		r0 = rf(priv)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // Sign provides a mock function with given fields: _a0
