@@ -207,11 +207,11 @@ func (_m *Client) ListBuckets(ctx context.Context) ([]textile.Bucket, error) {
 }
 
 // SendMessage provides a mock function with given fields: ctx, recipient, body
-func (_m *Client) SendMessage(ctx context.Context, recipient string, body interface{}) (*usersclient.Message, error) {
+func (_m *Client) SendMessage(ctx context.Context, recipient string, body []byte) (*usersclient.Message, error) {
 	ret := _m.Called(ctx, recipient, body)
 
 	var r0 *usersclient.Message
-	if rf, ok := ret.Get(0).(func(context.Context, string, interface{}) *usersclient.Message); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, []byte) *usersclient.Message); ok {
 		r0 = rf(ctx, recipient, body)
 	} else {
 		if ret.Get(0) != nil {
@@ -220,7 +220,7 @@ func (_m *Client) SendMessage(ctx context.Context, recipient string, body interf
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string, interface{}) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, []byte) error); ok {
 		r1 = rf(ctx, recipient, body)
 	} else {
 		r1 = ret.Error(1)

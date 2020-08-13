@@ -2,7 +2,6 @@ package textile
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
@@ -16,7 +15,7 @@ type UsersClient interface {
 	SetupMailbox(ctx context.Context) (mailbox thread.ID, err error)
 }
 
-func (tc *textileClient) SendMessage(ctx context.Context, recipient string, body interface{}) (*client.Message, error) {
+func (tc *textileClient) SendMessage(ctx context.Context, recipient string, body []byte) (*client.Message, error) {
 	kc := keychain.New(tc.store)
 	var privateKey crypto.PrivKey
 	var err error
@@ -31,8 +30,7 @@ func (tc *textileClient) SendMessage(ctx context.Context, recipient string, body
 		return nil, err
 	}
 
-	byteData, _ := json.Marshal(body)
-	msg, err := tc.uc.SendMessage(ctx, id, thread.NewLibp2pPubKey(pk), byteData)
+	msg, err := tc.uc.SendMessage(ctx, id, thread.NewLibp2pPubKey(pk), body)
 	if err != nil {
 		return nil, err
 	}

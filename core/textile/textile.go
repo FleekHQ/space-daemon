@@ -66,7 +66,7 @@ type Client interface {
 	ShareBucket(ctx context.Context, bucketSlug string) (*tc.DBInfo, error)
 	JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error)
 	CreateBucket(ctx context.Context, bucketSlug string) (Bucket, error)
-	SendMessage(ctx context.Context, recipient string, body interface{}) (*client.Message, error)
+	SendMessage(ctx context.Context, recipient string, body []byte) (*client.Message, error)
 	Shutdown() error
 	WaitForReady() chan bool
 	Start(ctx context.Context, cfg config.Config) error
