@@ -22,7 +22,7 @@ type TearDown func()
 func initTestMailbox(t *testing.T) (tc.Client, TearDown) {
 	st = new(mocks.Store)
 	client := tc.NewClient(st)
-	mockUc := new(mocks.UsersClient)
+	mockUc = new(mocks.UsersClient)
 	client.SetUc(mockUc)
 
 	tearDown := func() {
