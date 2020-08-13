@@ -11,6 +11,11 @@ import (
 	"github.com/textileio/textile/api/users/client"
 )
 
+type UsersClient interface {
+	SendMessage(ctx context.Context, from thread.Identity, to thread.PubKey, body []byte) (msg client.Message, err error)
+	SetupMailbox(ctx context.Context) (mailbox thread.ID, err error)
+}
+
 func (tc *textileClient) SendMessage(ctx context.Context, recipient string, body interface{}) (*client.Message, error) {
 	kc := keychain.New(tc.store)
 	var privateKey crypto.PrivKey

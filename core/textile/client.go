@@ -36,7 +36,7 @@ type textileClient struct {
 	cfg              config.Config
 	isConnectedToHub bool
 	netc             *nc.Client
-	uc               *uc.Client
+	uc               UsersClient
 }
 
 // Creates a new Textile Client
@@ -181,7 +181,7 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	return nil
 }
 
-func getUserClient() *uc.Client {
+func getUserClient() UsersClient {
 	hubTarget := os.Getenv("TXL_HUB_HOST")
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
