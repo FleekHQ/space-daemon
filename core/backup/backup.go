@@ -11,8 +11,7 @@ import (
 )
 
 type Backup struct {
-	PrivateKey          string `json:"privateKey"`
-	TextileClientBackup string `json:"textileClientBackup"`
+	PrivateKey string `json:"privateKey"`
 }
 
 // Note: Using static key since the goal of this is to obfuscate the file, not to encrypt it

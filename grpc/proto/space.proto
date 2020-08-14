@@ -36,6 +36,15 @@ service SpaceApi {
     };
   }
 
+  // Restores a keypair given a mnemonic.
+  // This will override any existing key pair
+  rpc RestoreKeyPairViaMnemonic(RestoreKeyPairViaMnemonicRequest) returns (RestoreKeyPairViaMnemonicResponse) {
+    option (google.api.http) = {
+      post: "/v1/keypairs/restoreWithMnemonic"
+      body: "*"
+    };
+  }
+
   rpc DeleteKeyPair(DeleteKeyPairRequest) returns (DeleteKeyPairResponse) {
     option (google.api.http) = {
       post: "/v1/keypairs/delete"
@@ -348,9 +357,14 @@ message CreateBucketResponse {
 message GenerateKeyPairRequest {}
 
 message GenerateKeyPairResponse {
-  string publicKey = 1;
-  string privateKey = 2;
+  string mnemonic = 1;
 }
+
+message RestoreKeyPairViaMnemonicRequest {
+  string mnemonic = 1;
+}
+
+message RestoreKeyPairViaMnemonicResponse {}
 
 enum EventType {
   ENTRY_ADDED = 0;

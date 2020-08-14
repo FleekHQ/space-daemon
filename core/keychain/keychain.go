@@ -25,6 +25,7 @@ type keychain struct {
 
 type Keychain interface {
 	GenerateKeyPair() (pub []byte, priv []byte, err error)
+	GenerateKeyFromMnemonic(...GenerateKeyFromMnemonicOpts) (mnemonic string, err error)
 	GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error)
 	GenerateKeyPairWithForce() (pub []byte, priv []byte, err error)
 	GeneratePasswordBasedKey(password string) (key, salt []byte, iterations int)
@@ -48,7 +49,7 @@ func (kc *keychain) GenerateKeyPair() ([]byte, []byte, error) {
 		return nil, nil, newErr
 	}
 
-	return kc.generateAndStoreKeyPair()
+	return kc.generateAndStoreKeyPair(nil)
 }
 
 // GeneratePasswordBasedKey generates a 256 bit symmetric pbkdf2 key useful for AES encryption.
@@ -94,7 +95,7 @@ func (kc *keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.Pub
 // It stores it in the local db and returns the key pair.
 // Warning: If there's already a key pair stored, it overrides it.
 func (kc *keychain) GenerateKeyPairWithForce() ([]byte, []byte, error) {
-	return kc.generateAndStoreKeyPair()
+	return kc.generateAndStoreKeyPair(nil)
 }
 
 // Stores an existing private key in the keychain
@@ -121,15 +122,24 @@ func (kc *keychain) ImportExistingKeyPair(priv crypto.PrivKey) error {
 	return nil
 }
 
-func (kc *keychain) generateKeyPair() ([]byte, []byte, error) {
+func (kc *keychain) generateKeyPair(seed []byte) ([]byte, []byte, error) {
+	if seed != nil {
+		priv := ed25519.NewKeyFromSeed(seed)
+		publicKey := priv.Public()
+		pub, ok := publicKey.(ed25519.PublicKey)
+		if !ok {
+			return nil, nil, errors.New("Error while generating key pair from seed")
+		}
+		return pub, priv, nil
+	}
 	// Compute the key from a random seed
 	pub, priv, err := ed25519.GenerateKey(nil)
 	return pub, priv, err
 }
 
-func (kc *keychain) generateAndStoreKeyPair() ([]byte, []byte, error) {
+func (kc *keychain) generateAndStoreKeyPair(seed []byte) ([]byte, []byte, error) {
 	// Compute the key from a random seed
-	pub, priv, err := ed25519.GenerateKey(nil)
+	pub, priv, err := kc.generateKeyPair(seed)
 
 	if err != nil {
 		return nil, nil, err
