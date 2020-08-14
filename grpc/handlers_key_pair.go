@@ -7,25 +7,26 @@ import (
 )
 
 func (srv *grpcServer) GenerateKeyPair(ctx context.Context, request *pb.GenerateKeyPairRequest) (*pb.GenerateKeyPairResponse, error) {
-	if kp, err := srv.sv.GenerateKeyPair(ctx, false); err != nil {
+	mnemonic, err := srv.sv.GenerateKeyPair(ctx, false)
+	if err != nil {
 		return nil, err
-	} else {
-		return &pb.GenerateKeyPairResponse{
-			PublicKey:  kp.PublicKey,
-			PrivateKey: kp.PrivateKey,
-		}, nil
 	}
+
+	return &pb.GenerateKeyPairResponse{
+		Mnemonic: mnemonic,
+	}, nil
+
 }
 
 func (srv *grpcServer) GenerateKeyPairWithForce(ctx context.Context, request *pb.GenerateKeyPairRequest) (*pb.GenerateKeyPairResponse, error) {
-	if kp, err := srv.sv.GenerateKeyPair(ctx, true); err != nil {
+	mnemonic, err := srv.sv.GenerateKeyPair(ctx, true)
+	if err != nil {
 		return nil, err
-	} else {
-		return &pb.GenerateKeyPairResponse{
-			PublicKey:  kp.PublicKey,
-			PrivateKey: kp.PrivateKey,
-		}, nil
 	}
+
+	return &pb.GenerateKeyPairResponse{
+		Mnemonic: mnemonic,
+	}, nil
 }
 
 func (srv *grpcServer) GetPublicKey(ctx context.Context, request *pb.GetPublicKeyRequest) (*pb.GetPublicKeyResponse, error) {
@@ -47,4 +48,12 @@ func (srv *grpcServer) GetPublicKey(ctx context.Context, request *pb.GetPublicKe
 
 func (srv *grpcServer) DeleteKeyPair(ctx context.Context, request *pb.DeleteKeyPairRequest) (*pb.DeleteKeyPairResponse, error) {
 	return nil, errNotImplemented
+}
+
+func (srv *grpcServer) RestoreKeyPairViaMnemonic(ctx context.Context, request *pb.RestoreKeyPairViaMnemonicRequest) (*pb.RestoreKeyPairViaMnemonicResponse, error) {
+	if err := srv.sv.RestoreKeyPairFromMnemonic(ctx, request.Mnemonic); err != nil {
+		return nil, err
+	}
+
+	return &pb.RestoreKeyPairViaMnemonicResponse{}, nil
 }

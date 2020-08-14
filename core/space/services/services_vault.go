@@ -20,14 +20,8 @@ func (s *Space) CreateLocalKeysBackup(ctx context.Context, path string) error {
 		return err
 	}
 
-	textileState, err := s.tc.SerializeState(ctx)
-	if err != nil {
-		return err
-	}
-
 	b := &backup.Backup{
-		PrivateKey:          hex.EncodeToString(privInBytes),
-		TextileClientBackup: hex.EncodeToString(textileState),
+		PrivateKey: hex.EncodeToString(privInBytes),
 	}
 
 	if err := backup.MarshalBackup(path, b); err != nil {
@@ -51,22 +45,12 @@ func (s *Space) RecoverKeysByLocalBackup(ctx context.Context, path string) error
 		return err
 	}
 
-	textileClientStateInBytes, err := hex.DecodeString(b.TextileClientBackup)
-	if err != nil {
-		return err
-	}
-
 	// Restore keychain
 	priv, err := crypto.UnmarshalEd25519PrivateKey(privInBytes)
 	if err != nil {
 		return err
 	}
 	if err := s.keychain.ImportExistingKeyPair(priv); err != nil {
-		return err
-	}
-
-	// Restore Textile Client state
-	if err := s.tc.RestoreState(ctx, textileClientStateInBytes); err != nil {
 		return err
 	}
 

@@ -11,6 +11,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
+	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/alecthomas/jsonschema"
 	textileApiClient "github.com/textileio/go-threads/api/client"
@@ -52,7 +53,7 @@ func (tc *textileClient) GetBucketContext(ctx context.Context, bucketSlug string
 	bucketSchema, notFoundErr := tc.findBucketInCollection(ctx, bucketSlug)
 
 	if notFoundErr == nil { // This means the bucket was already present in the schema
-		dbID, err := parseDbIDFromString(bucketSchema.DbID)
+		dbID, err := utils.ParseDbIDFromString(bucketSchema.DbID)
 		if err != nil {
 			log.Error("Error casting thread id", err)
 			return nil, nil, err
@@ -75,7 +76,7 @@ func (tc *textileClient) GetBucketContext(ctx context.Context, bucketSlug string
 		return nil, nil, err
 	}
 	log.Debug("GetBucketContext: Thread DB Created")
-	_, err := tc.storeBucketInCollection(ctx, bucketSlug, castDbIDToString(dbID))
+	_, err := tc.storeBucketInCollection(ctx, bucketSlug, utils.CastDbIDToString(dbID))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -168,7 +169,7 @@ func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*t
 		return nil, err
 	}
 
-	dbID, err := parseDbIDFromString(bs.DbID)
+	dbID, err := utils.ParseDbIDFromString(bs.DbID)
 	b, err := tc.threads.GetDBInfo(ctx, *dbID)
 
 	// replicate with the hub
@@ -210,7 +211,7 @@ func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address strin
 
 	dbID, err := thread.FromAddr(multiaddress)
 
-	tc.upsertBucketInCollection(ctx, bucketSlug, castDbIDToString(dbID))
+	tc.upsertBucketInCollection(ctx, bucketSlug, utils.CastDbIDToString(dbID))
 
 	return nil
 }
