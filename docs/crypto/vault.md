@@ -1,8 +1,8 @@
 # Vault
 
-A vault is used to securely store user private keys based on a master password. It is hosted on the cloud and uses the cryptography described here to assure it can't access the data directly. It works very similarly to password managers.
-
 ![banner](https://github.com/FleekHQ/space-daemon/raw/vault/docs/crypto/mario-crypto.jpg)
+
+A vault is used to securely store user private keys based on a master password. It is hosted on the cloud and uses the cryptography described here to assure it can't access the data directly. It works very similarly to password managers.
 
 ## Vault data model
 
