@@ -35,14 +35,14 @@ func (srv *grpcServer) GetPublicKey(ctx context.Context, request *pb.GetPublicKe
 		return nil, err
 	}
 
-	tok, err := srv.sv.GetHubAuthToken(ctx)
-	if err != nil {
-		return nil, err
-	}
+	// tok, err := srv.sv.GetHubAuthToken(ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return &pb.GetPublicKeyResponse{
 		PublicKey:    pub,
-		HubAuthToken: tok,
+		HubAuthToken: "",
 	}, nil
 }
 
