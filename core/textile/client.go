@@ -156,8 +156,8 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.bucketsClient = buckets
 	tc.threads = threads
 	tc.netc = netc
-	tc.uc = getUserClient()
-	tc.ht = getHubThreadsClient()
+	tc.uc = getUserClient(tc.cfg.GetString(config.TextileHubTarget, ""))
+	tc.ht = getHubThreadsClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 
 	tc.isRunning = true
 
@@ -181,13 +181,14 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	return nil
 }
 
-// adding for testability
+// adding for testability but if there is a better
+// way to do this plz advise
 func (tc *textileClient) SetUc(uc UsersClient) {
 	tc.uc = uc
 }
 
-func getUserClient() UsersClient {
-	hubTarget := os.Getenv("TXL_HUB_HOST")
+func getUserClient(host string) UsersClient {
+	hubTarget := host
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
 
@@ -207,8 +208,8 @@ func getUserClient() UsersClient {
 	return users
 }
 
-func getHubThreadsClient() *threadsClient.Client {
-	hubTarget := os.Getenv("TXL_HUB_HOST")
+func getHubThreadsClient(host string) *threadsClient.Client {
+	hubTarget := host
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
 
