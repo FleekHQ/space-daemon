@@ -25,7 +25,7 @@ func NewIpsNode(cfg config.Config) *IpfsNode {
 }
 
 func (node *IpfsNode) Start(ctx context.Context) error {
-    log.Printf("Starting the ipfs node")
+    log.Info("Starting the ipfs node")
 
     proc := process.WithParent(process.Background())
 
