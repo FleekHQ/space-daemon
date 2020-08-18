@@ -58,8 +58,7 @@ func TestSendMessage(t *testing.T) {
 
 	mockUc.On("SendMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(msg, nil)
 	body := "mockbody"
-	rb, _ := rp.Raw()
-	rmsg, err := tc.SendMessage(context.Background(), string(rb), []byte(body))
+	rmsg, err := tc.SendMessage(context.Background(), rp, []byte(body))
 
 	privateKey, _, err := kc.GetStoredKeyPairInLibP2PFormat()
 	id := thread.NewLibp2pIdentity(privateKey)
@@ -70,29 +69,55 @@ func TestSendMessage(t *testing.T) {
 	assert.Equal(t, msg.ID, rmsg.ID)
 }
 
-func TestSendMessageInvalidKey(t *testing.T) {
+func TestSendMessageFailGettingSenderKey(t *testing.T) {
 	tc, kc, tearDown := initTestMailbox(t)
 	defer tearDown()
 
 	assert.NotNil(t, tc)
+
+	_, rp, _ := crypto.GenerateEd25519Key(nil)
+
+	st.On("Set", mock.Anything, mock.Anything).Return(nil)
+	_, priv, _ := kc.GenerateKeyPairWithForce()
+	st.On("Get", []byte(keychain.PublicKeyStoreKey)).Return(nil, keychain.ErrKeyPairNotFound)
+	st.On("Get", []byte(keychain.PrivateKeyStoreKey)).Return(priv, nil)
+
+	msg := uc.Message{
+		ID: "testid",
+	}
+
+	mockUc.On("SendMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(msg, nil)
+	body := "mockbody"
+	rmsg, err := tc.SendMessage(context.Background(), rp, []byte(body))
+
+	assert.Nil(t, rmsg)
+	assert.NotNil(t, err)
+	assert.Equal(t, keychain.ErrKeyPairNotFound, err)
+	mockUc.AssertNotCalled(t, "SendMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestSendMessageFailureOnHub(t *testing.T) {
+	tc, kc, tearDown := initTestMailbox(t)
+	defer tearDown()
+
+	assert.NotNil(t, tc)
+
+	_, rp, _ := crypto.GenerateEd25519Key(nil)
+
+	errToRet := errors.New("failed sending message at the hub")
 
 	st.On("Set", mock.Anything, mock.Anything).Return(nil)
 	pub, priv, _ := kc.GenerateKeyPairWithForce()
 	st.On("Get", []byte(keychain.PublicKeyStoreKey)).Return(pub, nil)
 	st.On("Get", []byte(keychain.PrivateKeyStoreKey)).Return(priv, nil)
 
-	msg := &uc.Message{
-		ID: "testid",
-	}
+	msg := uc.Message{}
 
-	rec := "invalidrecipientpubkey"
+	mockUc.On("SendMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(msg, errToRet)
 	body := "mockbody"
+	rmsg, err := tc.SendMessage(context.Background(), rp, []byte(body))
 
-	mockUc.On("SendMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(msg, nil)
-
-	_, err := tc.SendMessage(context.Background(), rec, []byte(body))
-
+	assert.Nil(t, rmsg)
 	assert.NotNil(t, err)
-	mockUc.AssertNotCalled(t, "SendMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
-	assert.Equal(t, errors.New("expect ed25519 public key data size to be 32"), err)
+	assert.Equal(t, errToRet, err)
 }

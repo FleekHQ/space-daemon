@@ -15,7 +15,7 @@ type UsersClient interface {
 	SetupMailbox(ctx context.Context) (mailbox thread.ID, err error)
 }
 
-func (tc *textileClient) SendMessage(ctx context.Context, recipient string, body []byte) (*client.Message, error) {
+func (tc *textileClient) SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error) {
 	kc := keychain.New(tc.store)
 	var privateKey crypto.PrivKey
 	var err error
@@ -24,13 +24,7 @@ func (tc *textileClient) SendMessage(ctx context.Context, recipient string, body
 	}
 	id := thread.NewLibp2pIdentity(privateKey)
 
-	b := []byte(recipient)
-	pk, err := crypto.UnmarshalEd25519PublicKey(b)
-	if err != nil {
-		return nil, err
-	}
-
-	msg, err := tc.uc.SendMessage(ctx, id, thread.NewLibp2pPubKey(pk), body)
+	msg, err := tc.uc.SendMessage(ctx, id, thread.NewLibp2pPubKey(recipient), body)
 	if err != nil {
 		return nil, err
 	}

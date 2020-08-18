@@ -161,21 +161,7 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 
 	tc.isRunning = true
 
-	// Attempt to connect to the Hub
-	hubctx, err := tc.getHubCtx(ctx)
-	if err != nil {
-		log.Error("Could not connect to Textile Hub. Starting in offline mode.", err)
-	} else {
-		tc.isConnectedToHub = true
-
-		// setup mailbox
-		mid, err := tc.uc.SetupMailbox(hubctx)
-		if err != nil {
-			log.Error("Unable to setup mailbox", err)
-			return err
-		}
-		log.Info("Mailbox id: " + mid.String())
-	}
+	tc.ConnectToHub(ctx)
 
 	tc.Ready <- true
 	return nil
@@ -185,6 +171,27 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 // way to do this plz advise
 func (tc *textileClient) SetUc(uc UsersClient) {
 	tc.uc = uc
+}
+
+// notreturning error rn and this helper does
+// the logging if connection to hub fails, and
+// we continue with startup
+func (tc *textileClient) ConnectToHub(ctx context.Context) {
+	// Attempt to connect to the Hub
+	hubctx, err := tc.getHubCtx(ctx)
+	if err != nil {
+		log.Error("Could not connect to Textile Hub. Starting in offline mode.", err)
+	}
+
+	tc.isConnectedToHub = true
+
+	// setup mailbox
+	mid, err := tc.uc.SetupMailbox(hubctx)
+	if err != nil {
+		log.Error("Unable to setup mailbox", err)
+	}
+
+	log.Info("Mailbox id: " + mid.String())
 }
 
 func getUserClient(host string) UsersClient {
@@ -313,7 +320,7 @@ func (tc *textileClient) getThreadContext(parentCtx context.Context, threadName 
 	}
 
 	// Some threads will be on the hub and some will be local, this flag lets you specify
-	// where it is, perhaps an improvement could be to save this flag in the store and load it from there
+	// where it is
 	if hub {
 		ctx, err = tc.getHubCtx(ctx)
 		if err != nil {
