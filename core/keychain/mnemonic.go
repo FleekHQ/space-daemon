@@ -53,7 +53,7 @@ func (kc *keychain) GenerateKeyFromMnemonic(opts ...GenerateKeyFromMnemonicOpts)
 	for _, opt := range opts {
 		opt(&o)
 	}
-	if val, _ := kc.GetStoredPublicKey(); val != nil && o.override == false {
+	if val, err := kc.GetStoredPublicKey(); val != nil && o.override == false && err != ErrKeyPairNotFound {
 		newErr := errors.New("Error while executing GenerateKeyFromMnemonic. Key pair already exists.")
 		return "", newErr
 	}
@@ -61,7 +61,7 @@ func (kc *keychain) GenerateKeyFromMnemonic(opts ...GenerateKeyFromMnemonicOpts)
 	mnemonic := o.mnemonic
 
 	if mnemonic == "" {
-		entropy, err := bip39.NewEntropy(256)
+		entropy, err := bip39.NewEntropy(128)
 		if err != nil {
 			return "", err
 		}

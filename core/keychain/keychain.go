@@ -8,6 +8,7 @@ import (
 	"errors"
 
 	"github.com/99designs/keyring"
+	ri "github.com/FleekHQ/space-daemon/core/keychain/keyring"
 	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/libp2p/go-libp2p-core/crypto"
 )
@@ -24,6 +25,7 @@ var (
 type keychain struct {
 	fileDir string
 	st      store.Store
+	ring    ri.Keyring
 }
 
 type Keychain interface {
@@ -39,6 +41,9 @@ type Keychain interface {
 type keychainOptions struct {
 	fileDir string
 	store   store.Store
+
+	// Don't use kc.ring directly, use getKeyRing() instead
+	ring ri.Keyring
 }
 
 var defaultKeychainOptions = keychainOptions{
@@ -62,6 +67,15 @@ func WithStore(st store.Store) Option {
 	}
 }
 
+// Used to inject a mock keyring in tests or in case you want to use a custom keyring implementation
+func WithKeyring(ring ri.Keyring) Option {
+	return func(o *keychainOptions) {
+		if ring != nil {
+			o.ring = ring
+		}
+	}
+}
+
 type Option func(o *keychainOptions)
 
 func New(opts ...Option) *keychain {
@@ -79,6 +93,7 @@ func New(opts ...Option) *keychain {
 	return &keychain{
 		fileDir: o.fileDir,
 		st:      o.store,
+		ring:    o.ring,
 	}
 }
 
@@ -127,6 +142,15 @@ func (kc *keychain) GenerateKeyPairWithForce() ([]byte, []byte, error) {
 // Returns an error if there's no public key set.
 // Unlike GetStoredKeyPairInLibP2PFormat, this method does not access the keychain
 func (kc *keychain) GetStoredPublicKey() (crypto.PubKey, error) {
+	ring, err := kc.getKeyRing()
+	if err != nil {
+		return nil, err
+	}
+	_, err = ring.GetMetadata(PrivateKeyStoreKey)
+	if err == keyring.ErrKeyNotFound {
+		return nil, ErrKeyPairNotFound
+	}
+
 	pubInBytes, err := kc.st.Get([]byte(PublicKeyStoreKey))
 	if err != nil {
 		return nil, err
@@ -206,7 +230,11 @@ func (kc *keychain) Sign(message []byte) ([]byte, error) {
 	}
 }
 
-func (kc *keychain) getKeyRing() (keyring.Keyring, error) {
+func (kc *keychain) getKeyRing() (ri.Keyring, error) {
+	if kc.ring != nil {
+		return kc.ring, nil
+	}
+
 	return keyring.Open(keyring.Config{
 		ServiceName:                    "space",
 		FileDir:                        kc.fileDir + "/kc",
