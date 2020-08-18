@@ -1,9 +1,4 @@
 build:
-	cd cmd/space-ipfs-node && \
-	go build \
-	-o ../../bin/space-ipfs-node \
-	main.go
-
 	go build \
 	-o bin/space \
 	-ldflags \
