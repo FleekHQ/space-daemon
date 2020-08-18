@@ -23,6 +23,8 @@ import (
 	"github.com/FleekHQ/space-daemon/core/sync"
 	"github.com/FleekHQ/space-daemon/log"
 
+	node "github.com/FleekHQ/space-daemon/core/ipfs/node"
+
 	"golang.org/x/sync/errgroup"
 
 	"github.com/FleekHQ/space-daemon/config"
@@ -83,6 +85,12 @@ func (a *App) Start(ctx context.Context) error {
 		return err
 	}
 	a.Run("FolderWatcher", watcher)
+
+	// setup local ipfs node
+	node := node.NewIpsNode(a.cfg)
+	a.RunAsync("IpfsNode", node, func() error {
+		return node.Start(ctx)
+	})
 
 	// setup local buckets
 	buckd := textile.NewBuckd(a.cfg)
