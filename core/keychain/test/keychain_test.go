@@ -21,7 +21,7 @@ func initTestKeychain(t *testing.T) keychain.Keychain {
 	mockStore = new(mocks.Store)
 	mockStore.On("IsOpen").Return(true)
 
-	kc := keychain.New(mockStore)
+	kc := keychain.New(keychain.WithStore(mockStore))
 
 	return kc
 }

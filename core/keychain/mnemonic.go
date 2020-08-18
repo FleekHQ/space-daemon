@@ -53,7 +53,7 @@ func (kc *keychain) GenerateKeyFromMnemonic(opts ...GenerateKeyFromMnemonicOpts)
 	for _, opt := range opts {
 		opt(&o)
 	}
-	if val, _ := kc.store.Get([]byte(PublicKeyStoreKey)); val != nil && o.override == false {
+	if val, _ := kc.GetStoredPublicKey(); val != nil && o.override == false {
 		newErr := errors.New("Error while executing GenerateKeyFromMnemonic. Key pair already exists.")
 		return "", newErr
 	}
@@ -82,7 +82,7 @@ func (kc *keychain) GenerateKeyFromMnemonic(opts ...GenerateKeyFromMnemonicOpts)
 	// So to fix this we derive a key again based on the previous one, but with the correct size.
 	compressedSeed := pbkdf2.Key(seed, []byte("iter2"+o.password), 512, 32, sha512.New)
 
-	_, _, err = kc.generateAndStoreKeyPair(compressedSeed)
+	_, _, err = kc.generateAndStoreKeyPair(compressedSeed, mnemonic)
 	if err != nil {
 		return "", err
 	}

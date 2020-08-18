@@ -2,40 +2,83 @@ package keychain
 
 import (
 	"crypto/ed25519"
-	"crypto/sha1"
-
-	"golang.org/x/crypto/pbkdf2"
+	"encoding/hex"
+	"strings"
 
 	"errors"
 
-	db "github.com/FleekHQ/space-daemon/core/store"
+	"github.com/99designs/keyring"
+	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/libp2p/go-libp2p-core/crypto"
 )
 
-const PrivateKeyStoreKey = "private_key"
-const PublicKeyStoreKey = "public_key"
+const PrivateKeyStoreKey = "key"
+const PublicKeyStoreKey = "pub"
+
+const privKeyMnemonicSeparator = "___"
 
 var (
 	ErrKeyPairNotFound = errors.New("No key pair found in the local db.")
 )
 
 type keychain struct {
-	store db.Store
+	fileDir string
+	st      store.Store
 }
 
 type Keychain interface {
 	GenerateKeyPair() (pub []byte, priv []byte, err error)
 	GenerateKeyFromMnemonic(...GenerateKeyFromMnemonicOpts) (mnemonic string, err error)
 	GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error)
+	GetStoredPublicKey() (crypto.PubKey, error)
 	GenerateKeyPairWithForce() (pub []byte, priv []byte, err error)
-	GeneratePasswordBasedKey(password string) (key, salt []byte, iterations int)
 	Sign([]byte) ([]byte, error)
 	ImportExistingKeyPair(priv crypto.PrivKey) error
 }
 
-func New(store db.Store) *keychain {
+type keychainOptions struct {
+	fileDir string
+	store   store.Store
+}
+
+var defaultKeychainOptions = keychainOptions{
+	fileDir: store.DefaultRootDir,
+}
+
+// Helper function for setting keychain file path for Windows/Linux
+func WithPath(path string) Option {
+	return func(o *keychainOptions) {
+		if path != "" {
+			o.fileDir = path
+		}
+	}
+}
+
+func WithStore(st store.Store) Option {
+	return func(o *keychainOptions) {
+		if st != nil {
+			o.store = st
+		}
+	}
+}
+
+type Option func(o *keychainOptions)
+
+func New(opts ...Option) *keychain {
+	o := defaultKeychainOptions
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	defaultStore := store.New(store.WithPath(o.fileDir))
+
+	if o.store == nil {
+		o.store = defaultStore
+	}
+
 	return &keychain{
-		store: store,
+		fileDir: o.fileDir,
+		st:      o.store,
 	}
 }
 
@@ -44,49 +87,31 @@ func New(store db.Store) *keychain {
 // If there's already a key pair stored, it returns an error.
 // Use GenerateKeyPairWithForce if you want to override existing keys
 func (kc *keychain) GenerateKeyPair() ([]byte, []byte, error) {
-	if val, _ := kc.store.Get([]byte(PublicKeyStoreKey)); val != nil {
+	if val, _ := kc.GetStoredPublicKey(); val != nil {
 		newErr := errors.New("Error while executing GenerateKeyPair. Key pair already exists. Use GenerateKeyPairWithForce if you want to override it.")
 		return nil, nil, newErr
 	}
 
-	return kc.generateAndStoreKeyPair(nil)
-}
-
-// GeneratePasswordBasedKey generates a 256 bit symmetric pbkdf2 key useful for AES encryption.
-// Note: This does not store the generated key, hence the reason they are temp keys.
-func (kc *keychain) GeneratePasswordBasedKey(password string) (key, salt []byte, iterations int) {
-	iterations = 4096
-	salt = []byte{}
-	key = pbkdf2.Key([]byte(password), salt, iterations, 32, sha1.New)
-	return key, salt, iterations
+	return kc.generateAndStoreKeyPair(nil, "")
 }
 
 // Returns the stored key pair using the same signature than libp2p's GenerateEd25519Key function
 func (kc *keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error) {
 	var priv []byte
-	var pub []byte
 	var err error
 
-	if pub, err = kc.store.Get([]byte(PublicKeyStoreKey)); err != nil {
-		newErr := ErrKeyPairNotFound
-		return nil, nil, newErr
-	}
-
-	if priv, err = kc.store.Get([]byte(PrivateKeyStoreKey)); err != nil {
+	if priv, _, err = kc.retrieveKeyPair(); err != nil {
 		newErr := ErrKeyPairNotFound
 		return nil, nil, newErr
 	}
 
 	var unmarshalledPriv crypto.PrivKey
-	var unmarshalledPub crypto.PubKey
 
 	if unmarshalledPriv, err = crypto.UnmarshalEd25519PrivateKey(priv); err != nil {
 		return nil, nil, err
 	}
 
-	if unmarshalledPub, err = crypto.UnmarshalEd25519PublicKey(pub); err != nil {
-		return nil, nil, err
-	}
+	unmarshalledPub := unmarshalledPriv.GetPublic()
 
 	return unmarshalledPriv, unmarshalledPub, nil
 }
@@ -95,7 +120,28 @@ func (kc *keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.Pub
 // It stores it in the local db and returns the key pair.
 // Warning: If there's already a key pair stored, it overrides it.
 func (kc *keychain) GenerateKeyPairWithForce() ([]byte, []byte, error) {
-	return kc.generateAndStoreKeyPair(nil)
+	return kc.generateAndStoreKeyPair(nil, "")
+}
+
+// Returns the public key currently in use in LibP2P format.
+// Returns an error if there's no public key set.
+// Unlike GetStoredKeyPairInLibP2PFormat, this method does not access the keychain
+func (kc *keychain) GetStoredPublicKey() (crypto.PubKey, error) {
+	pubInBytes, err := kc.st.Get([]byte(PublicKeyStoreKey))
+	if err != nil {
+		return nil, err
+	}
+
+	if pubInBytes == nil {
+		return nil, ErrKeyPairNotFound
+	}
+
+	pub, err := crypto.UnmarshalEd25519PublicKey(pubInBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return pub, nil
 }
 
 // Stores an existing private key in the keychain
@@ -111,11 +157,7 @@ func (kc *keychain) ImportExistingKeyPair(priv crypto.PrivKey) error {
 	}
 
 	// Store the key pair in the db
-	if err = kc.store.Set([]byte(PublicKeyStoreKey), pubInBytes); err != nil {
-		return err
-	}
-
-	if err = kc.store.Set([]byte(PrivateKeyStoreKey), privInBytes); err != nil {
+	if err := kc.storeKeyPair(privInBytes, pubInBytes, ""); err != nil {
 		return err
 	}
 
@@ -137,7 +179,7 @@ func (kc *keychain) generateKeyPair(seed []byte) ([]byte, []byte, error) {
 	return pub, priv, err
 }
 
-func (kc *keychain) generateAndStoreKeyPair(seed []byte) ([]byte, []byte, error) {
+func (kc *keychain) generateAndStoreKeyPair(seed []byte, mnemonic string) ([]byte, []byte, error) {
 	// Compute the key from a random seed
 	pub, priv, err := kc.generateKeyPair(seed)
 
@@ -146,11 +188,7 @@ func (kc *keychain) generateAndStoreKeyPair(seed []byte) ([]byte, []byte, error)
 	}
 
 	// Store the key pair in the db
-	if err = kc.store.Set([]byte(PublicKeyStoreKey), pub); err != nil {
-		return nil, nil, err
-	}
-
-	if err = kc.store.Set([]byte(PrivateKeyStoreKey), priv); err != nil {
+	if err := kc.storeKeyPair(priv, pub, mnemonic); err != nil {
 		return nil, nil, err
 	}
 
@@ -160,10 +198,74 @@ func (kc *keychain) generateAndStoreKeyPair(seed []byte) ([]byte, []byte, error)
 // Signs a message using the stored private key.
 // Returns an error if the private key cannot be found.
 func (kc *keychain) Sign(message []byte) ([]byte, error) {
-	if priv, err := kc.store.Get([]byte(PrivateKeyStoreKey)); err != nil {
+	if priv, _, err := kc.retrieveKeyPair(); err != nil {
 		return nil, err
 	} else {
 		signedBytes := ed25519.Sign(priv, message)
 		return signedBytes, nil
 	}
+}
+
+func (kc *keychain) getKeyRing() (keyring.Keyring, error) {
+	return keyring.Open(keyring.Config{
+		ServiceName:                    "space",
+		FileDir:                        kc.fileDir + "/kc",
+		PassDir:                        kc.fileDir + "/kcpw",
+		PassPrefix:                     "space",
+		WinCredPrefix:                  "space",
+		KeychainTrustApplication:       true,
+		KeychainAccessibleWhenUnlocked: true,
+	})
+}
+
+func (kc *keychain) storeKeyPair(privKey []byte, pubKey []byte, mnemonic string) error {
+	ring, err := kc.getKeyRing()
+	if err != nil {
+		return err
+	}
+
+	privAsHex := hex.EncodeToString(privKey)
+	privWithMnemonic := privAsHex + privKeyMnemonicSeparator + mnemonic
+
+	// Store private key together with mnemonic
+	// Priv key is stored as 0x1234...890___some mnemonic
+	// The idea behind storing them together is that we avoid asking for keychain access twice
+	if err := ring.Set(keyring.Item{
+		Key:   PrivateKeyStoreKey,
+		Data:  []byte(privWithMnemonic),
+		Label: "Space App",
+	}); err != nil {
+		return err
+	}
+
+	// Store pub key outside of the key ring for quick access
+	if err := kc.st.Set([]byte(PublicKeyStoreKey), pubKey); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (kc *keychain) retrieveKeyPair() (privKey []byte, mnemonic string, err error) {
+	ring, err := kc.getKeyRing()
+	if err != nil {
+		return nil, "", err
+	}
+
+	privKeyItem, err := ring.Get(PrivateKeyStoreKey)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Priv key is stored as 0x1234...890___some mnemonic
+	// Here we split it to return priv key and mnemonic separately
+	privKeyAsStr := string(privKeyItem.Data)
+	privKeyParts := strings.Split(privKeyAsStr, privKeyMnemonicSeparator)
+	mnemonic = privKeyParts[1]
+	privKey, err = hex.DecodeString(privKeyParts[0])
+	if err != nil {
+		return nil, "", err
+	}
+
+	return privKey, mnemonic, nil
 }

@@ -31,7 +31,7 @@ func (s *Space) RestoreKeyPairFromMnemonic(ctx context.Context, mnemonic string)
 }
 
 func (s *Space) GetPublicKey(ctx context.Context) (string, error) {
-	_, pub, err := s.keychain.GetStoredKeyPairInLibP2PFormat()
+	pub, err := s.keychain.GetStoredPublicKey()
 	if err != nil {
 		return "", err
 	}
@@ -47,5 +47,5 @@ func (s *Space) GetPublicKey(ctx context.Context) (string, error) {
 }
 
 func (s *Space) GetHubAuthToken(ctx context.Context) (string, error) {
-	return hub.GetHubToken(ctx, s.store, s.cfg)
+	return hub.GetHubToken(ctx, s.store, s.keychain, s.cfg)
 }
