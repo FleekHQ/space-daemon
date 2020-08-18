@@ -22,7 +22,8 @@ type Service interface {
 	GetConfig(ctx context.Context) domain.AppConfig
 	ListDirs(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error)
 	ListDir(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error)
-	GenerateKeyPair(ctx context.Context, useForce bool) (domain.KeyPair, error)
+	GenerateKeyPair(ctx context.Context, useForce bool) (mnemonic string, err error)
+	RestoreKeyPairFromMnemonic(ctx context.Context, mnemonic string) error
 	GetPublicKey(ctx context.Context) (string, error)
 	GetHubAuthToken(ctx context.Context) (string, error)
 	CreateFolder(ctx context.Context, path string, bucketName string) error

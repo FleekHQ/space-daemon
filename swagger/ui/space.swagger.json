@@ -718,6 +718,39 @@
         ]
       }
     },
+    "/v1/keypairs/restoreWithMnemonic": {
+      "post": {
+        "summary": "Restores a keypair given a mnemonic.\nThis will override any existing key pair",
+        "operationId": "SpaceApi_RestoreKeyPairViaMnemonic",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceRestoreKeyPairViaMnemonicResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceRestoreKeyPairViaMnemonicRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/localBackups/backup": {
       "post": {
         "operationId": "SpaceApi_CreateLocalKeysBackup",
@@ -1465,10 +1498,7 @@
     "spaceGenerateKeyPairResponse": {
       "type": "object",
       "properties": {
-        "publicKey": {
-          "type": "string"
-        },
-        "privateKey": {
+        "mnemonic": {
           "type": "string"
         }
       }
@@ -1799,6 +1829,17 @@
       }
     },
     "spaceRejectBucketInvitationResponse": {
+      "type": "object"
+    },
+    "spaceRestoreKeyPairViaMnemonicRequest": {
+      "type": "object",
+      "properties": {
+        "mnemonic": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceRestoreKeyPairViaMnemonicResponse": {
       "type": "object"
     },
     "spaceShareBucketRequest": {
