@@ -279,7 +279,7 @@ service SpaceApi {
 message GetUsageInfoRequest {}
 
 message GetUsageInfoResponse {
-  uint64 localStarogeUsed = 1;
+  uint64 localStorageUsed = 1;
   uint64 localBandwidthUsed = 2;
   uint64 spaceStorageUsed = 3;
   uint64 spaceBandwidthUsed = 4;

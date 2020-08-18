@@ -8,6 +8,9 @@ package pb
 
 import (
 	context "context"
+	reflect "reflect"
+	sync "sync"
+
 	proto "github.com/golang/protobuf/proto"
 	empty "github.com/golang/protobuf/ptypes/empty"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
@@ -16,8 +19,6 @@ import (
 	status "google.golang.org/grpc/status"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	reflect "reflect"
-	sync "sync"
 )
 
 const (
@@ -218,7 +219,7 @@ type GetUsageInfoResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	LocalStarogeUsed   uint64 `protobuf:"varint,1,opt,name=localStarogeUsed,proto3" json:"localStarogeUsed,omitempty"`
+	localStorageUsed   uint64 `protobuf:"varint,1,opt,name=localStorageUsed,proto3" json:"localStorageUsed,omitempty"`
 	LocalBandwidthUsed uint64 `protobuf:"varint,2,opt,name=localBandwidthUsed,proto3" json:"localBandwidthUsed,omitempty"`
 	SpaceStorageUsed   uint64 `protobuf:"varint,3,opt,name=spaceStorageUsed,proto3" json:"spaceStorageUsed,omitempty"`
 	SpaceBandwidthUsed uint64 `protobuf:"varint,4,opt,name=spaceBandwidthUsed,proto3" json:"spaceBandwidthUsed,omitempty"`
@@ -257,9 +258,9 @@ func (*GetUsageInfoResponse) Descriptor() ([]byte, []int) {
 	return file_space_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GetUsageInfoResponse) GetLocalStarogeUsed() uint64 {
+func (x *GetUsageInfoResponse) GetLocalStorageUsed() uint64 {
 	if x != nil {
-		return x.LocalStarogeUsed
+		return x.localStorageUsed
 	}
 	return 0
 }

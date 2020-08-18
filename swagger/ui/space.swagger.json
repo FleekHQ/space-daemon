@@ -1565,7 +1565,7 @@
     "spaceGetUsageInfoResponse": {
       "type": "object",
       "properties": {
-        "localStarogeUsed": {
+        "localStorageUsed": {
           "type": "string",
           "format": "uint64"
         },
