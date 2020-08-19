@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"os"
 	"strings"
 	"time"
 
@@ -84,8 +83,8 @@ func (tc *textileClient) getHubCtxViaChallenge(ctx context.Context) (context.Con
 func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error) {
 	log.Debug("Authenticating with Textile Hub")
 
-	key := os.Getenv("TXL_USER_KEY")
-	secret := os.Getenv("TXL_USER_SECRET")
+	key := tc.cfg.GetString(config.TextileUserKey, "")
+	secret := tc.cfg.GetString(config.TextileUserSecret, "")
 
 	if key == "" || secret == "" {
 		return nil, errors.New("Couldn't get Textile key or secret from envs")

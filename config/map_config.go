@@ -33,6 +33,8 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[TextileHubTarget] = os.Getenv(env.TextileHubTarget)
 		configStr[TextileHubMa] = os.Getenv(env.TextileHubMa)
 		configStr[TextileThreadsTarget] = os.Getenv(env.TextileThreadsTarget)
+		configStr[TextileUserKey] = os.Getenv(env.TextileUserKey)
+		configStr[TextileUserSecret] = os.Getenv(env.TextileUserSecret)
 	} else {
 		configStr[Ipfsaddr] = flags.Ipfsaddr
 		configStr[Mongousr] = flags.Mongousr
@@ -44,6 +46,8 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[TextileHubTarget] = flags.TextileHubTarget
 		configStr[TextileHubMa] = flags.TextileHubMa
 		configStr[TextileThreadsTarget] = flags.TextileThreadsTarget
+		configStr[TextileUserKey] = flags.TextileUserKey
+		configStr[TextileUserSecret] = flags.TextileUserSecret
 	}
 
 	c := mapConfig{
