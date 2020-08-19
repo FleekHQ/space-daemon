@@ -65,6 +65,7 @@ type Client interface {
 	ShareBucket(ctx context.Context, bucketSlug string) (*tc.DBInfo, error)
 	JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error)
 	CreateBucket(ctx context.Context, bucketSlug string) (Bucket, error)
+	ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) (bool, error)
 	Shutdown() error
 	WaitForReady() chan bool
 	Start(ctx context.Context, cfg config.Config) error

@@ -39,6 +39,7 @@ type Service interface {
 	JoinBucket(ctx context.Context, slug string, threadinfo *domain.ThreadInfo) (bool, error)
 	CreateLocalKeysBackup(ctx context.Context, pathToKeyBackup string) error
 	RecoverKeysByLocalBackup(ctx context.Context, pathToKeyBackup string) error
+	ToggleBucketBackup(ctx context.Context, bucketName string, bucketBackup bool) error
 }
 
 type serviceOptions struct {

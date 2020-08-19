@@ -17,6 +17,7 @@ import (
 type BucketSchema struct {
 	ID   core.InstanceID `json:"_id"`
 	Slug string          `json:"slug"`
+	Backup bool          `json:"backup"`
 	DbID string
 }
 
@@ -72,6 +73,30 @@ func (tc *textileClient) upsertBucketInCollection(ctx context.Context, bucketSlu
 	}
 
 	return tc.storeBucketInCollection(ctx, bucketSlug, dbID)
+}
+
+
+func (tc *textileClient) toggleBucketBackupInCollection(ctx context.Context, bucketSlug string, backup bool) (*BucketSchema, error) {
+	metaCtx, metaDbID, err := tc.initBucketCollection(ctx)
+	if err != nil && metaDbID == nil {
+		return nil, err
+	}
+
+	bucket, err := tc.findBucketInCollection(ctx, bucketSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	bucket.Backup = backup
+
+	instances := client.Instances{bucket}
+
+	err = tc.threads.Save(metaCtx, *metaDbID, bucketCollectionName, instances)
+	if err != nil {
+		return nil, err
+	}
+
+	return bucket, nil
 }
 
 func (tc *textileClient) findBucketInCollection(ctx context.Context, bucketSlug string) (*BucketSchema, error) {
