@@ -85,11 +85,14 @@ func (a *App) Start(ctx context.Context) error {
 	}
 	a.Run("FolderWatcher", watcher)
 
-	// setup local ipfs node
-	node := node.NewIpsNode(a.cfg)
-	a.RunAsync("IpfsNode", node, func() error {
-		return node.Start(ctx)
-	})
+	// setup local ipfs node if the user did not set the ipfsAddr explicitly
+	if a.cfg.GetString(config.Ipfsaddr, "") == "" {
+		// setup local ipfs node
+		node := node.NewIpsNode(a.cfg)
+		a.RunAsync("IpfsNode", node, func() error {
+			return node.Start(ctx)
+		})
+	}
 
 	// setup local buckets
 	buckd := textile.NewBuckd(a.cfg)
