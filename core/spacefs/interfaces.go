@@ -2,7 +2,6 @@ package spacefs
 
 import (
 	"context"
-	"io"
 	"os"
 	"time"
 )
@@ -19,6 +18,8 @@ type DirEntryAttribute interface {
 	Name() string       // base name of the file
 	Size() uint64       // length in bytes for files; can be anything for directories
 	Mode() os.FileMode  // file mode bits
+	Uid() string        // user id of owner of entry
+	Gid() string        // group id of owner of entry
 	Ctime() time.Time   // creation time
 	ModTime() time.Time // modification time
 	IsDir() bool
@@ -44,8 +45,9 @@ type DirOps interface {
 // FileHandler is in charge of reading, writing and closing access to a file
 // It should handle locking and track read and write offsets till it is closed
 type FileHandler interface {
-	io.ReadWriteSeeker
-	io.Closer
+	Read(ctx context.Context, data []byte, offset int64) (int, error)
+	Write(ctx context.Context, data []byte, offset int64) (int, error)
+	Close(ctx context.Context) error
 }
 
 // FileOps are the list of actions that can be done on a file

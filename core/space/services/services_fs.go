@@ -349,6 +349,31 @@ func (s *Space) AddItems(ctx context.Context, sourcePaths []string, targetPath s
 	return results, totalsRes, nil
 }
 
+// AddItemWithReader uploads content of the reader to the targetPath on the bucket specified
+//
+// Note: the AddItemResult returns an empty SourcePath
+func (s *Space) AddItemWithReader(
+	ctx context.Context,
+	reader io.Reader,
+	targetPath, bucketName string,
+) (domain.AddItemResult, error) {
+	b, err := s.getBucketWithFallback(ctx, bucketName)
+	if err != nil {
+		return domain.AddItemResult{}, err
+	}
+
+	countingReader := NewCountingReader(reader)
+	_, root, err := b.UploadFile(ctx, targetPath, countingReader)
+	if err != nil {
+		return domain.AddItemResult{}, err
+	}
+
+	return domain.AddItemResult{
+		BucketPath: root.String(),
+		Bytes:      countingReader.BytesRead,
+	}, nil
+}
+
 // get totals for addItems operation
 func getTotals(sourcePaths []string) (domain.AddItemsResponse, error) {
 	var wg sync.WaitGroup
