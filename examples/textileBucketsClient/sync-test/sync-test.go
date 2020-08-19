@@ -25,7 +25,7 @@ type TextileBucketRoot buckets_pb.Root
 func main() {
 	seed := os.Getenv("KEY_SEED")
 	threadID := os.Getenv("THREAD_ID")
-	host := os.Getenv("TXL_HUB_HOST")
+	host := os.Getenv("TXL_HUB_TARGET")
 	key := os.Getenv("TXL_USER_KEY")
 	secret := os.Getenv("TXL_USER_SECRET")
 
