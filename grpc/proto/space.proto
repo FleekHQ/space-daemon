@@ -36,6 +36,12 @@ service SpaceApi {
     };
   }
 
+  rpc GetStoredMnemonic(GetStoredMnemonicRequest) returns (GetStoredMnemonicResponse) {
+    option (google.api.http) = {
+      get: "/v1/keypairs/mnemonic"
+    };
+  }
+
   // Restores a keypair given a mnemonic.
   // This will override any existing key pair
   rpc RestoreKeyPairViaMnemonic(RestoreKeyPairViaMnemonicRequest) returns (RestoreKeyPairViaMnemonicResponse) {
@@ -357,6 +363,12 @@ message CreateBucketResponse {
 message GenerateKeyPairRequest {}
 
 message GenerateKeyPairResponse {
+  string mnemonic = 1;
+}
+
+message GetStoredMnemonicRequest {}
+
+message GetStoredMnemonicResponse {
   string mnemonic = 1;
 }
 

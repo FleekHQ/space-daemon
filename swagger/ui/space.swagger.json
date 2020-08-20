@@ -718,6 +718,28 @@
         ]
       }
     },
+    "/v1/keypairs/mnemonic": {
+      "get": {
+        "operationId": "SpaceApi_GetStoredMnemonic",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceGetStoredMnemonicResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/keypairs/restoreWithMnemonic": {
       "post": {
         "summary": "Restores a keypair given a mnemonic.\nThis will override any existing key pair",
@@ -1559,6 +1581,14 @@
         "hubAuthToken": {
           "type": "string",
           "title": "Used to verify that the user has access to the private key"
+        }
+      }
+    },
+    "spaceGetStoredMnemonicResponse": {
+      "type": "object",
+      "properties": {
+        "mnemonic": {
+          "type": "string"
         }
       }
     },

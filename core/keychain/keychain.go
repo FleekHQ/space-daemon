@@ -33,6 +33,7 @@ type Keychain interface {
 	GenerateKeyFromMnemonic(...GenerateKeyFromMnemonicOpts) (mnemonic string, err error)
 	GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error)
 	GetStoredPublicKey() (crypto.PubKey, error)
+	GetStoredMnemonic() (string, error)
 	GenerateKeyPairWithForce() (pub []byte, priv []byte, err error)
 	Sign([]byte) ([]byte, error)
 	ImportExistingKeyPair(priv crypto.PrivKey) error
@@ -84,9 +85,8 @@ func New(opts ...Option) *keychain {
 		opt(&o)
 	}
 
-	defaultStore := store.New(store.WithPath(o.fileDir))
-
 	if o.store == nil {
+		defaultStore := store.New(store.WithPath(o.fileDir))
 		o.store = defaultStore
 	}
 
@@ -166,6 +166,15 @@ func (kc *keychain) GetStoredPublicKey() (crypto.PubKey, error) {
 	}
 
 	return pub, nil
+}
+
+func (kc *keychain) GetStoredMnemonic() (string, error) {
+	_, mnemonic, err := kc.retrieveKeyPair()
+	if err != nil {
+		return "", err
+	}
+
+	return mnemonic, nil
 }
 
 // Stores an existing private key in the keychain

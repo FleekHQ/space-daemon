@@ -182,3 +182,21 @@ func TestKeychain_RestoreMnemonicKeyOnOverrideSuccess(t *testing.T) {
 		Label: "Space App",
 	})
 }
+
+func TestKeychain_GetStoredMnemonic(t *testing.T) {
+	kc := initTestKeychain(t)
+
+	mnemonic := "clog chalk blame black uncover frame before decide tuition maple crowd uncle"
+	privAsHex := "6f0938b7f2beb6f1715aaad71f578a94c51cc8ebd2cb221063e28c8a2efcabb6bbfa792cbf0453dde84947e5733c734b1bc11592190517d579ab589ae8107907"
+
+	mockKeyRing.On("Get", keychain.PrivateKeyStoreKey).Return(keyring.Item{
+		Key:   keychain.PrivateKeyStoreKey,
+		Data:  []byte(privAsHex + "___" + mnemonic),
+		Label: "Space App",
+	}, nil)
+
+	mnemonic2, err := kc.GetStoredMnemonic()
+
+	assert.Nil(t, err)
+	assert.Equal(t, mnemonic, mnemonic2)
+}
