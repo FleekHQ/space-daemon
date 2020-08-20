@@ -2,6 +2,7 @@ package textile_test
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"testing"
 
@@ -16,41 +17,52 @@ import (
 )
 
 var (
-	cfg    *mocks.Config
-	st     *mocks.Store
-	mockUc *mocks.UsersClient
+	cfg         *mocks.Config
+	st          *mocks.Store
+	mockUc      *mocks.UsersClient
+	mockKc      *mocks.Keychain
+	mockPubKey  crypto.PubKey
+	mockPrivKey crypto.PrivKey
 )
 
 type TearDown func()
 
-func initTestMailbox(t *testing.T) (tc.Client, keychain.Keychain, TearDown) {
+func initTestMailbox(t *testing.T) (tc.Client, TearDown) {
 	st = new(mocks.Store)
-	client := tc.NewClient(st)
+	mockKc = new(mocks.Keychain)
+	client := tc.NewClient(st, mockKc)
 	mockUc = new(mocks.UsersClient)
 	client.SetUc(mockUc)
-	kc := keychain.New(st)
+
+	mockPubKeyHex := "67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
+	mockPrivKeyHex := "dd55f8921f90fdf31c6ef9ad86bd90605602fd7d32dc8ea66ab72deb6a82821c67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
+
+	pubKeyBytes, _ := hex.DecodeString(mockPubKeyHex)
+	privKeyBytes, _ := hex.DecodeString(mockPrivKeyHex)
+	mockPubKey, _ = crypto.UnmarshalEd25519PublicKey(pubKeyBytes)
+	mockPrivKey, _ = crypto.UnmarshalEd25519PrivateKey(privKeyBytes)
+
 	tearDown := func() {
 		st = nil
-		kc = nil
 		client = nil
 		mockUc = nil
+		mockKc = nil
 	}
 
-	return client, kc, tearDown
+	return client, tearDown
 }
 
 func TestSendMessage(t *testing.T) {
-	tc, kc, tearDown := initTestMailbox(t)
+	tc, tearDown := initTestMailbox(t)
 	defer tearDown()
 
 	assert.NotNil(t, tc)
 
 	_, rp, _ := crypto.GenerateEd25519Key(nil)
 
-	st.On("Set", mock.Anything, mock.Anything).Return(nil)
-	pub, priv, _ := kc.GenerateKeyPairWithForce()
-	st.On("Get", []byte(keychain.PublicKeyStoreKey)).Return(pub, nil)
-	st.On("Get", []byte(keychain.PrivateKeyStoreKey)).Return(priv, nil)
+	mockKc.On(
+		"GetStoredKeyPairInLibP2PFormat",
+	).Return(mockPrivKey, mockPubKey, nil)
 
 	msg := uc.Message{
 		ID: "testid",
@@ -60,8 +72,7 @@ func TestSendMessage(t *testing.T) {
 	body := "mockbody"
 	rmsg, err := tc.SendMessage(context.Background(), rp, []byte(body))
 
-	privateKey, _, err := kc.GetStoredKeyPairInLibP2PFormat()
-	id := thread.NewLibp2pIdentity(privateKey)
+	id := thread.NewLibp2pIdentity(mockPrivKey)
 
 	assert.NotNil(t, rmsg)
 	assert.Nil(t, err)
@@ -70,17 +81,16 @@ func TestSendMessage(t *testing.T) {
 }
 
 func TestSendMessageFailGettingSenderKey(t *testing.T) {
-	tc, kc, tearDown := initTestMailbox(t)
+	tc, tearDown := initTestMailbox(t)
 	defer tearDown()
 
 	assert.NotNil(t, tc)
 
 	_, rp, _ := crypto.GenerateEd25519Key(nil)
 
-	st.On("Set", mock.Anything, mock.Anything).Return(nil)
-	_, priv, _ := kc.GenerateKeyPairWithForce()
-	st.On("Get", []byte(keychain.PublicKeyStoreKey)).Return(nil, keychain.ErrKeyPairNotFound)
-	st.On("Get", []byte(keychain.PrivateKeyStoreKey)).Return(priv, nil)
+	mockKc.On(
+		"GetStoredKeyPairInLibP2PFormat",
+	).Return(nil, nil, keychain.ErrKeyPairNotFound)
 
 	msg := uc.Message{
 		ID: "testid",
@@ -97,7 +107,7 @@ func TestSendMessageFailGettingSenderKey(t *testing.T) {
 }
 
 func TestSendMessageFailureOnHub(t *testing.T) {
-	tc, kc, tearDown := initTestMailbox(t)
+	tc, tearDown := initTestMailbox(t)
 	defer tearDown()
 
 	assert.NotNil(t, tc)
@@ -106,10 +116,9 @@ func TestSendMessageFailureOnHub(t *testing.T) {
 
 	errToRet := errors.New("failed sending message at the hub")
 
-	st.On("Set", mock.Anything, mock.Anything).Return(nil)
-	pub, priv, _ := kc.GenerateKeyPairWithForce()
-	st.On("Get", []byte(keychain.PublicKeyStoreKey)).Return(pub, nil)
-	st.On("Get", []byte(keychain.PrivateKeyStoreKey)).Return(priv, nil)
+	mockKc.On(
+		"GetStoredKeyPairInLibP2PFormat",
+	).Return(mockPrivKey, mockPubKey, nil)
 
 	msg := uc.Message{}
 
