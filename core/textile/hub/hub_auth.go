@@ -191,7 +191,7 @@ func GetHubTokenUsingTextileKeys(ctx context.Context, st store.Store, kc keychai
 		}
 	}
 
-	newtok := thread.Token(tokStr)
-	ctx = thread.NewTokenContext(ctx, newtok)
+	tok := thread.Token(tokStr)
+	ctx = thread.NewTokenContext(ctx, tok)
 	return ctx, nil
 }
