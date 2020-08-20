@@ -69,14 +69,11 @@ func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error)
 	log.Debug("Authenticating with Textile Hub")
 
 	// TODO: Use hub.GetHubToken instead
-	tokStr, err := hub.GetHubTokenUsingTextileKeys(ctx, tc.store, tc.kc, tc.ht)
+	ctx, err := hub.GetHubTokenUsingTextileKeys(ctx, tc.store, tc.kc, tc.ht)
 	if err != nil {
 		return nil, err
 	}
 
-	tok := thread.Token(tokStr)
-
-	ctx = thread.NewTokenContext(ctx, tok)
 	return ctx, nil
 }
 
