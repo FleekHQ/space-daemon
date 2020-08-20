@@ -179,7 +179,7 @@ func (kc *keychain) GetStoredMnemonic() (string, error) {
 
 // Stores an existing private key in the keychain
 // Warning: If there's already a key pair stored, this will override it.
-func (kc *keychain) ImportExistingKeyPair(priv crypto.PrivKey) error {
+func (kc *keychain) ImportExistingKeyPair(priv crypto.PrivKey, mnemonic string) error {
 	privInBytes, err := priv.Raw()
 	if err != nil {
 		return err
@@ -190,7 +190,7 @@ func (kc *keychain) ImportExistingKeyPair(priv crypto.PrivKey) error {
 	}
 
 	// Store the key pair in the db
-	if err := kc.storeKeyPair(privInBytes, pubInBytes, ""); err != nil {
+	if err := kc.storeKeyPair(privInBytes, pubInBytes, mnemonic); err != nil {
 		return err
 	}
 
