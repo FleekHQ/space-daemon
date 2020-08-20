@@ -155,7 +155,6 @@ func GetHubTokenUsingTextileKeys(ctx context.Context, st store.Store, kc keychai
 
 	// prebuild context, needs to happen
 	// whether token is saved or not
-	log.Debug("No hub token in store")
 	key := os.Getenv("TXL_USER_KEY")
 	secret := os.Getenv("TXL_USER_SECRET")
 
