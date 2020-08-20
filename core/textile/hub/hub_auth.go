@@ -150,40 +150,49 @@ func GetHubToken(ctx context.Context, st store.Store, kc keychain.Keychain, cfg 
 
 // This method is just for testing purposes. Keys shouldn't be bundled in the daemon.
 // Use GetHubToken instead.
-func GetHubTokenUsingTextileKeys(ctx context.Context, st store.Store, kc keychain.Keychain, threads *threadsClient.Client) (string, error) {
-	// Try to avoid redoing challenge if we already have the token
-	if valFromStore, err := getHubTokenFromStore(st); err != nil {
-		return "", err
-	} else if valFromStore != "" {
-		log.Debug("Got hub token from store: " + valFromStore)
-		return valFromStore, nil
-	}
+func GetHubTokenUsingTextileKeys(ctx context.Context, st store.Store, kc keychain.Keychain, threads *threadsClient.Client) (context.Context, error) {
+	var tokStr string
 
+	// prebuild context, needs to happen
+	// whether token is saved or not
+	log.Debug("No hub token in store")
 	key := os.Getenv("TXL_USER_KEY")
 	secret := os.Getenv("TXL_USER_SECRET")
 
 	if key == "" || secret == "" {
-		return "", errors.New("Couldn't get Textile key or secret from envs")
+		return nil, errors.New("Couldn't get Textile key or secret from envs")
 	}
 	ctx = common.NewAPIKeyContext(ctx, key)
 
 	apiSigCtx, err := common.CreateAPISigContext(ctx, time.Now().Add(time.Minute), secret)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	ctx = apiSigCtx
 
 	privateKey, _, err := kc.GetStoredKeyPairInLibP2PFormat()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	tok, err := threads.GetToken(ctx, thread.NewLibp2pIdentity(privateKey))
-	tokStr := string(tok)
+	// Try to avoid redoing challenge if we already have the token
+	if tokStr, err = getHubTokenFromStore(st); err != nil {
+		return nil, err
+	} else if tokStr == "" {
 
-	if err := storeHubToken(st, tokStr); err != nil {
-		return "", err
+		tok, err := threads.GetToken(ctx, thread.NewLibp2pIdentity(privateKey))
+		if err != nil {
+			return nil, err
+		}
+
+		tokStr = string(tok)
+
+		if err := storeHubToken(st, tokStr); err != nil {
+			return nil, err
+		}
 	}
 
-	return tokStr, err
+	newtok := thread.Token(tokStr)
+	ctx = thread.NewTokenContext(ctx, newtok)
+	return ctx, nil
 }
