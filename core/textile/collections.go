@@ -113,7 +113,7 @@ func (tc *textileClient) getBucketsFromCollection(ctx context.Context) ([]*Bucke
 
 // Returns the store key for a thread ID. It uses the keychain to obtain the public key, since the store key depends on it.
 func getThreadIDStoreKey(bucketSlug string, kc keychain.Keychain) ([]byte, error) {
-	_, pub, err := kc.GetStoredKeyPairInLibP2PFormat()
+	pub, err := kc.GetStoredPublicKey()
 	if err != nil {
 		return nil, err
 	}
@@ -130,8 +130,7 @@ func getThreadIDStoreKey(bucketSlug string, kc keychain.Keychain) ([]byte, error
 }
 
 func (tc *textileClient) findOrCreateMetaThreadID(ctx context.Context) (*thread.ID, error) {
-	kc := keychain.New(tc.store)
-	storeKey, err := getThreadIDStoreKey(metaThreadName, kc)
+	storeKey, err := getThreadIDStoreKey(metaThreadName, tc.kc)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +149,7 @@ func (tc *textileClient) findOrCreateMetaThreadID(ctx context.Context) (*thread.
 	// We need to create an ID that's derived deterministically from the user private key
 	// The reason for this is that the user needs to be able to restore the exact ID when moving across devices.
 	// The only consideration is that we must try to avoid dbID collisions with other users.
-	dbID, err := utils.NewDeterministicThreadID(kc, utils.MetathreadThreadVariant)
+	dbID, err := utils.NewDeterministicThreadID(tc.kc, utils.MetathreadThreadVariant)
 	if err != nil {
 		return nil, err
 	}

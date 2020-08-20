@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/FleekHQ/space-daemon/core/keychain"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/textile/api/users/client"
@@ -16,10 +15,9 @@ type UsersClient interface {
 }
 
 func (tc *textileClient) SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error) {
-	kc := keychain.New(tc.store)
 	var privateKey crypto.PrivKey
 	var err error
-	if privateKey, _, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
+	if privateKey, _, err = tc.kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
 		return nil, err
 	}
 	id := thread.NewLibp2pIdentity(privateKey)

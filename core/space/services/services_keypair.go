@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
@@ -31,7 +32,7 @@ func (s *Space) RestoreKeyPairFromMnemonic(ctx context.Context, mnemonic string)
 }
 
 func (s *Space) GetPublicKey(ctx context.Context) (string, error) {
-	_, pub, err := s.keychain.GetStoredKeyPairInLibP2PFormat()
+	pub, err := s.keychain.GetStoredPublicKey()
 	if err != nil {
 		return "", err
 	}
@@ -47,5 +48,18 @@ func (s *Space) GetPublicKey(ctx context.Context) (string, error) {
 }
 
 func (s *Space) GetHubAuthToken(ctx context.Context) (string, error) {
-	return hub.GetHubToken(ctx, s.store, s.cfg)
+	return hub.GetHubToken(ctx, s.store, s.keychain, s.cfg)
+}
+
+func (s *Space) GetMnemonic(ctx context.Context) (string, error) {
+	mnemonic, err := s.keychain.GetStoredMnemonic()
+	if err != nil {
+		return "", err
+	}
+
+	if mnemonic == "" {
+		return "", errors.New("No mnemonic seed stored in the keychain")
+	}
+
+	return mnemonic, nil
 }

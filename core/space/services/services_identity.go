@@ -50,7 +50,7 @@ func parseIdentity(resp *http.Response) (*domain.Identity, error) {
 
 // Creates an identity in Space cloud services. Returns the created identity or an error if any.
 func (s *Space) CreateIdentity(ctx context.Context, username string) (*domain.Identity, error) {
-	_, pub, err := s.keychain.GetStoredKeyPairInLibP2PFormat()
+	pub, err := s.keychain.GetStoredPublicKey()
 	if err != nil {
 		return nil, err
 	}
