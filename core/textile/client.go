@@ -2,9 +2,9 @@ package textile
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
-	"os"
-	"time"
+	"strings"
 
 	"github.com/FleekHQ/space-daemon/config"
 	crypto "github.com/libp2p/go-libp2p-crypto"
@@ -18,28 +18,36 @@ import (
 	nc "github.com/textileio/go-threads/net/api/client"
 	bucketsClient "github.com/textileio/textile/api/buckets/client"
 	"github.com/textileio/textile/api/common"
+	uc "github.com/textileio/textile/api/users/client"
 	"github.com/textileio/textile/cmd"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type textileClient struct {
 	store            db.Store
+	kc               keychain.Keychain
 	threads          *threadsClient.Client
+	ht               *threadsClient.Client
 	bucketsClient    *bucketsClient.Client
 	isRunning        bool
 	Ready            chan bool
 	cfg              config.Config
 	isConnectedToHub bool
 	netc             *nc.Client
+	uc               UsersClient
 }
 
 // Creates a new Textile Client
-func NewClient(store db.Store) *textileClient {
+func NewClient(store db.Store, kc keychain.Keychain) *textileClient {
 	return &textileClient{
 		store:            store,
+		kc:               kc,
 		threads:          nil,
 		bucketsClient:    nil,
 		netc:             nil,
+		uc:               nil,
+		ht:               nil,
 		isRunning:        false,
 		Ready:            make(chan bool),
 		isConnectedToHub: false,
@@ -57,47 +65,16 @@ func (tc *textileClient) requiresRunning() error {
 	return nil
 }
 
-func (tc *textileClient) getHubCtxViaChallenge(ctx context.Context) (context.Context, error) {
+func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error) {
 	log.Debug("Authenticating with Textile Hub")
-	tokStr, err := hub.GetHubToken(ctx, tc.store, tc.cfg)
+
+	// TODO: Use hub.GetHubToken instead
+	tokStr, err := hub.GetHubTokenUsingTextileKeys(ctx, tc.store, tc.kc, tc.ht)
 	if err != nil {
-		log.Error("Token Challenge Error:", err)
 		return nil, err
 	}
 
 	tok := thread.Token(tokStr)
-
-	return thread.NewTokenContext(ctx, tok), nil
-}
-
-// This method is just for testing purposes. Keys shouldn't be bundled in the daemon
-// NOTE: Being used right now instead of the challenge flow
-// TODO: Use getHubCtxViaChallenge instead once that's fixed
-func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error) {
-	log.Debug("Authenticating with Textile Hub")
-
-	key := os.Getenv("TXL_USER_KEY")
-	secret := os.Getenv("TXL_USER_SECRET")
-
-	if key == "" || secret == "" {
-		return nil, errors.New("Couldn't get Textile key or secret from envs")
-	}
-	ctx = common.NewAPIKeyContext(ctx, key)
-	var apiSigCtx context.Context
-	var err error
-	if apiSigCtx, err = common.CreateAPISigContext(ctx, time.Now().Add(time.Minute), secret); err != nil {
-		return nil, err
-	}
-	ctx = apiSigCtx
-
-	kc := keychain.New(tc.store)
-	var privateKey crypto.PrivKey
-	if privateKey, _, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
-		return nil, err
-	}
-
-	// TODO: CTX has to be made from session key received from lambda
-	tok, err := tc.threads.GetToken(ctx, thread.NewLibp2pIdentity(privateKey))
 
 	ctx = thread.NewTokenContext(ctx, tok)
 	return ctx, nil
@@ -142,30 +119,103 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.bucketsClient = buckets
 	tc.threads = threads
 	tc.netc = netc
+	tc.uc = getUserClient(tc.cfg.GetString(config.TextileHubTarget, ""))
+	tc.ht = getHubThreadsClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 
 	tc.isRunning = true
 
-	// Attempt to connect to the Hub
-	_, err := tc.getHubCtx(ctx)
-	if err != nil {
-		log.Error("Could not connect to Textile Hub. Starting in offline mode.", err)
-	} else {
-		tc.isConnectedToHub = true
-	}
+	tc.ConnectToHub(ctx)
 
 	tc.Ready <- true
 	return nil
 }
 
+// adding for testability but if there is a better
+// way to do this plz advise
+func (tc *textileClient) SetUc(uc UsersClient) {
+	tc.uc = uc
+}
+
+// notreturning error rn and this helper does
+// the logging if connection to hub fails, and
+// we continue with startup
+func (tc *textileClient) ConnectToHub(ctx context.Context) {
+	// Attempt to connect to the Hub
+	hubctx, err := tc.getHubCtx(ctx)
+	if err != nil {
+		log.Error("Could not connect to Textile Hub. Starting in offline mode.", err)
+	}
+
+	tc.isConnectedToHub = true
+
+	// setup mailbox
+	mid, err := tc.uc.SetupMailbox(hubctx)
+	if err != nil {
+		log.Error("Unable to setup mailbox", err)
+	}
+
+	log.Info("Mailbox id: " + mid.String())
+}
+
+func getUserClient(host string) UsersClient {
+	hubTarget := host
+	auth := common.Credentials{}
+	var opts []grpc.DialOption
+
+	if strings.Contains(hubTarget, "443") {
+		creds := credentials.NewTLS(&tls.Config{})
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+		auth.Secure = true
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+	}
+	opts = append(opts, grpc.WithPerRPCCredentials(auth))
+
+	users, err := uc.NewClient(hubTarget, opts...)
+	if err != nil {
+		cmd.Fatal(err)
+	}
+	return users
+}
+
+func getHubThreadsClient(host string) *threadsClient.Client {
+	hubTarget := host
+	auth := common.Credentials{}
+	var opts []grpc.DialOption
+
+	if strings.Contains(hubTarget, "443") {
+		creds := credentials.NewTLS(&tls.Config{})
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+		auth.Secure = true
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+	}
+	opts = append(opts, grpc.WithPerRPCCredentials(auth))
+
+	tc, err := threadsClient.NewClient(hubTarget, opts...)
+	if err != nil {
+		cmd.Fatal(err)
+	}
+	return tc
+}
+
 // StartAndBootstrap starts a Textile Client and also initializes default resources for it like a key pair and default bucket.
 func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
 	// Create key pair if not present
-	kc := keychain.New(tc.store)
-	log.Debug("Starting Textile Client: Generating key pair...")
-	if _, _, err := kc.GenerateKeyPair(); err != nil {
-		log.Debug("Starting Textile Client: Error generating key pair, key might already exist")
-		log.Debug(err.Error())
-		// Not returning err since it can error if keys already exist
+	log.Debug("Starting Textile Client: Getting key status...")
+	_, err := tc.kc.GetStoredPublicKey()
+	if err != nil {
+		log.Debug("Key pair not found. Generating a new one")
+		if mnemonic, err := tc.kc.GenerateKeyFromMnemonic(); err != nil {
+
+			log.Error("Error generating key pair. Cannot continue Textile initialization", err)
+			return err
+		} else {
+			words := strings.Split(mnemonic, " ")
+			log.Debug("Generated initial key pair using mnemonic using seed: " + words[0] + ", " + words[1] + "...")
+		}
+	} else {
+		log.Debug("Starting Textile Client: Key pair found.")
 	}
 
 	// Start Textile Client
@@ -232,7 +282,7 @@ func (tc *textileClient) IsRunning() bool {
 	return tc.isRunning
 }
 
-func (tc *textileClient) getThreadContext(parentCtx context.Context, threadName string, dbID thread.ID) (context.Context, error) {
+func (tc *textileClient) getThreadContext(parentCtx context.Context, threadName string, dbID thread.ID, hub bool) (context.Context, error) {
 	var err error
 	ctx := parentCtx
 
@@ -240,8 +290,9 @@ func (tc *textileClient) getThreadContext(parentCtx context.Context, threadName 
 		return nil, err
 	}
 
-	// If we are connected to the Hub, add the keys to the context so we can replicate
-	if tc.isConnectedToHub == true {
+	// Some threads will be on the hub and some will be local, this flag lets you specify
+	// where it is
+	if hub {
 		ctx, err = tc.getHubCtx(ctx)
 		if err != nil {
 			return nil, err
@@ -249,8 +300,7 @@ func (tc *textileClient) getThreadContext(parentCtx context.Context, threadName 
 	}
 
 	var publicKey crypto.PubKey
-	kc := keychain.New(tc.store)
-	if _, publicKey, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
+	if publicKey, err = tc.kc.GetStoredPublicKey(); err != nil {
 		return nil, err
 	}
 

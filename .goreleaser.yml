@@ -21,6 +21,8 @@ builds:
       - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
       - -X main.textilehubma={{ .Env.TXL_HUB_MA }}
       - -X main.textilethreads={{ .Env.TXL_THREADS_TARGET }}
+      - -X main.textileuserkey={{ .Env.TXL_USER_KEY }}
+      - -X main.textileusersecret={{ .Env.TXL_USER_SECRET }}
     main: ./cmd/space-daemon/main.go
     binary: space
     goos:
@@ -40,6 +42,8 @@ builds:
       - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
       - -X main.textilehubma={{ .Env.TXL_HUB_MA }}
       - -X main.textilethreads={{ .Env.TXL_THREADS_TARGET }}
+      - -X main.textileuserkey={{ .Env.TXL_USER_KEY }}
+      - -X main.textileusersecret={{ .Env.TXL_USER_SECRET }}
     main: ./cmd/space-daemon/main.go
     binary: space
     goos:
@@ -61,6 +65,8 @@ builds:
       - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
       - -X main.textilehubma={{ .Env.TXL_HUB_MA }}
       - -X main.textilethreads={{ .Env.TXL_THREADS_TARGET }}
+      - -X main.textileuserkey={{ .Env.TXL_USER_KEY }}
+      - -X main.textileusersecret={{ .Env.TXL_USER_SECRET }}
     main: ./cmd/space-daemon/main.go
     binary: space
     goos:

@@ -59,7 +59,7 @@ func (tc *textileClient) GetBucketContext(ctx context.Context, bucketSlug string
 			return nil, nil, err
 		}
 		log.Debug("GetBucketContext: Got dbID from collection: " + dbID.String())
-		ctx, err = tc.getThreadContext(ctx, bucketSlug, *dbID)
+		ctx, err = tc.getThreadContext(ctx, bucketSlug, *dbID, false)
 
 		if err != nil {
 			return nil, nil, err
@@ -81,7 +81,7 @@ func (tc *textileClient) GetBucketContext(ctx context.Context, bucketSlug string
 		return nil, nil, err
 	}
 
-	bucketCtx, err := tc.getThreadContext(ctx, bucketSlug, dbID)
+	bucketCtx, err := tc.getThreadContext(ctx, bucketSlug, dbID, false)
 	log.Debug("GetBucketContext: Returning bucket context")
 	return bucketCtx, &dbID, err
 }
