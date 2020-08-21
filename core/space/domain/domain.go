@@ -71,3 +71,43 @@ type FileSharingInfo struct {
 	SharedFileKey     string
 	SpaceDownloadLink string
 }
+
+type NotificationTypes int
+
+const (
+	INVITATION NotificationTypes = 0
+	USAGEALERT
+)
+
+type InvitationStatus int
+
+const (
+	PENDING InvitationStatus = 0
+	ACCEPTED
+	REJECTED
+)
+
+type Invitation struct {
+	InviterPublicKey string           `json:"inviterPublicKey"`
+	InvitationID     string           `json:"invitationID"`
+	Status           InvitationStatus `json:"status"`
+	ItemPaths        []string         `json:"itemPaths"`
+}
+
+type UsageAlert struct {
+	Used    int64  `json:"used"`
+	Limit   int64  `json:"limit"`
+	Message string `json:message`
+}
+
+type Notification struct {
+	ID               string            `json:"id"`
+	Subject          string            `json:"subject"`
+	Body             string            `json:"body"`
+	NotificationType NotificationTypes `json:"notificationType"`
+	CreatedAt        int64             `json:"createdAt"`
+	ReadAt           int64             `json:"readAt"`
+	// QUESTION: is there a way to enforce that only one of the below is present
+	InvitationValue Invitation `json:"invitationValue"`
+	UsageAlertValue UsageAlert `json:"usageAlertValue"`
+}

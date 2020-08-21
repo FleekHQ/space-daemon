@@ -10,7 +10,29 @@ import (
 )
 
 func (srv *grpcServer) GetNotifications(ctx context.Context, request *pb.GetNotificationsRequest) (*pb.GetNotificationsResponse, error) {
-	return nil, errNotImplemented
+	n, o, err := srv.sv.GetNotifications(ctx, request.Seek, request.Limit)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedNotifs := []*pb.Notification{}
+
+	for _, notif := range n {
+		parsedNotif := &pb.Notification{
+			// TODO: other fields
+			ReadAt:    notif.ReadAt,
+			CreatedAt: notif.CreatedAt,
+		}
+
+		// TODO: set enhanced msg correctly based on type
+
+		parsedNotifs = append(parsedNotifs, parsedNotif)
+	}
+
+	return &pb.GetNotificationsResponse{
+		Notifications: parsedNotifs,
+		NextOffset:    o,
+	}, nil
 }
 
 func (srv *grpcServer) ReadNotification(ctx context.Context, request *pb.ReadNotificationRequest) (*pb.ReadNotificationResponse, error) {

@@ -40,6 +40,7 @@ type Service interface {
 	JoinBucket(ctx context.Context, slug string, threadinfo *domain.ThreadInfo) (bool, error)
 	CreateLocalKeysBackup(ctx context.Context, pathToKeyBackup string) error
 	RecoverKeysByLocalBackup(ctx context.Context, pathToKeyBackup string) error
+	GetNotifications(ctx context.Context, seek string, limit int64) ([]domain.Notification, int64, error)
 }
 
 type serviceOptions struct {
