@@ -15,10 +15,10 @@ import (
 )
 
 type BucketSchema struct {
-	ID   core.InstanceID `json:"_id"`
-	Slug string          `json:"slug"`
-	Backup bool          `json:"backup"`
-	DbID string
+	ID     core.InstanceID `json:"_id"`
+	Slug   string          `json:"slug"`
+	Backup bool            `json:"backup"`
+	DbID   string
 }
 
 const metaThreadName = "metathreadV1"
@@ -40,9 +40,10 @@ func (tc *textileClient) storeBucketInCollection(ctx context.Context, bucketSlug
 	}
 
 	newInstance := &BucketSchema{
-		Slug: bucketSlug,
-		ID:   "",
-		DbID: dbID,
+		Slug:   bucketSlug,
+		ID:     "",
+		DbID:   dbID,
+		Backup: true,
 	}
 
 	instances := client.Instances{newInstance}
@@ -56,9 +57,10 @@ func (tc *textileClient) storeBucketInCollection(ctx context.Context, bucketSlug
 
 	id := res[0]
 	return &BucketSchema{
-		Slug: newInstance.Slug,
-		ID:   core.InstanceID(id),
-		DbID: newInstance.DbID,
+		Slug:   newInstance.Slug,
+		ID:     core.InstanceID(id),
+		DbID:   newInstance.DbID,
+		Backup: newInstance.Backup,
 	}, nil
 }
 
@@ -74,7 +76,6 @@ func (tc *textileClient) upsertBucketInCollection(ctx context.Context, bucketSlu
 
 	return tc.storeBucketInCollection(ctx, bucketSlug, dbID)
 }
-
 
 func (tc *textileClient) toggleBucketBackupInCollection(ctx context.Context, bucketSlug string, backup bool) (*BucketSchema, error) {
 	metaCtx, metaDbID, err := tc.initBucketCollection(ctx)
