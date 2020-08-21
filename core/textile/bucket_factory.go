@@ -248,3 +248,12 @@ func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain
 
 	return true, nil
 }
+
+func (tc *textileClient) ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) (bool, error) {
+	bucketSchema, err := tc.toggleBucketBackupInCollection(ctx, bucketSlug, bucketBackup)
+	if err != nil {
+		return false, err
+	}
+
+	return bucketSchema.Backup, nil
+}
