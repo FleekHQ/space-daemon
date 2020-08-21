@@ -11,7 +11,6 @@ const (
 	LogLevel             = "LOG_LEVEL"
 	IpfsAddr             = "IPFS_ADDR"
 	IpfsNodeAddr         = "IPFS_NODE_ADDR"
-	IpfsNodeHost         = "IPFS_NODE_HOST"
 	IpfsNodePath         = "IPFS_NODE_PATH"
 	MongoUsr             = "MONGO_USR"
 	MongoPw              = "MONGO_PW"
