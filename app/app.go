@@ -85,7 +85,7 @@ func (a *App) Start(ctx context.Context) error {
 	}
 	a.Run("FolderWatcher", watcher)
 
-	// setup local ipfs node if the user did not set the ipfsAddr explicitly
+	// setup local ipfs node if the set the ipfsNodeaddr explicitly
 	if a.cfg.GetString(config.Ipfsnodeaddr, "") != "" {
 		// setup local ipfs node
 		node := node.NewIpsNode(a.cfg)
