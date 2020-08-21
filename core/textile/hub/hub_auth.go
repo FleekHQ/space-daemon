@@ -2,12 +2,17 @@ package hub
 
 import (
 	"context"
+	"errors"
+	"os"
+	"time"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/log"
+	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
+	"github.com/textileio/textile/api/common"
 	"golang.org/x/net/websocket"
 )
 
@@ -59,16 +64,15 @@ func storeHubToken(st store.Store, hubToken string) error {
 	return err
 }
 
-func GetHubToken(ctx context.Context, st store.Store, cfg config.Config) (string, error) {
+func GetHubToken(ctx context.Context, st store.Store, kc keychain.Keychain, cfg config.Config) (string, error) {
 	// Try to avoid redoing challenge if we already have the token
 	if valFromStore, err := getHubTokenFromStore(st); err != nil {
 		return "", err
 	} else if valFromStore != "" {
-		log.Debug("Token Challenge: Got token from store: " + valFromStore)
+		log.Debug("Got hub token from store: " + valFromStore)
 		return valFromStore, nil
 	}
 
-	kc := keychain.New(st)
 	log.Debug("Token Challenge: Connecting through websocket")
 	conn, err := websocket.Dial(cfg.GetString(config.SpaceServicesHubAuthURL, ""), "", "http://localhost/")
 	if err != nil {
@@ -142,4 +146,52 @@ func GetHubToken(ctx context.Context, st store.Store, cfg config.Config) (string
 	}
 
 	return token.Value.Token, nil
+}
+
+// This method is just for testing purposes. Keys shouldn't be bundled in the daemon.
+// Use GetHubToken instead.
+func GetHubTokenUsingTextileKeys(ctx context.Context, st store.Store, kc keychain.Keychain, threads *threadsClient.Client) (context.Context, error) {
+	var tokStr string
+
+	// prebuild context, needs to happen
+	// whether token is saved or not
+	key := os.Getenv("TXL_USER_KEY")
+	secret := os.Getenv("TXL_USER_SECRET")
+
+	if key == "" || secret == "" {
+		return nil, errors.New("Couldn't get Textile key or secret from envs")
+	}
+	ctx = common.NewAPIKeyContext(ctx, key)
+
+	apiSigCtx, err := common.CreateAPISigContext(ctx, time.Now().Add(time.Minute), secret)
+	if err != nil {
+		return nil, err
+	}
+	ctx = apiSigCtx
+
+	privateKey, _, err := kc.GetStoredKeyPairInLibP2PFormat()
+	if err != nil {
+		return nil, err
+	}
+
+	// Try to avoid redoing challenge if we already have the token
+	if tokStr, err = getHubTokenFromStore(st); err != nil {
+		return nil, err
+	} else if tokStr == "" {
+
+		tok, err := threads.GetToken(ctx, thread.NewLibp2pIdentity(privateKey))
+		if err != nil {
+			return nil, err
+		}
+
+		tokStr = string(tok)
+
+		if err := storeHubToken(st, tokStr); err != nil {
+			return nil, err
+		}
+	}
+
+	tok := thread.Token(tokStr)
+	ctx = thread.NewTokenContext(ctx, tok)
+	return ctx, nil
 }

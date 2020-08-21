@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"strings"
-	"time"
 
 	"github.com/FleekHQ/space-daemon/config"
 	crypto "github.com/libp2p/go-libp2p-crypto"
@@ -27,6 +26,7 @@ import (
 
 type textileClient struct {
 	store            db.Store
+	kc               keychain.Keychain
 	threads          *threadsClient.Client
 	ht               *threadsClient.Client
 	bucketsClient    *bucketsClient.Client
@@ -39,9 +39,10 @@ type textileClient struct {
 }
 
 // Creates a new Textile Client
-func NewClient(store db.Store) *textileClient {
+func NewClient(store db.Store, kc keychain.Keychain) *textileClient {
 	return &textileClient{
 		store:            store,
+		kc:               kc,
 		threads:          nil,
 		bucketsClient:    nil,
 		netc:             nil,
@@ -64,55 +65,15 @@ func (tc *textileClient) requiresRunning() error {
 	return nil
 }
 
-func (tc *textileClient) getHubCtxViaChallenge(ctx context.Context) (context.Context, error) {
-	log.Debug("Authenticating with Textile Hub")
-	tokStr, err := hub.GetHubToken(ctx, tc.store, tc.cfg)
-	if err != nil {
-		log.Error("Token Challenge Error:", err)
-		return nil, err
-	}
-
-	tok := thread.Token(tokStr)
-
-	return thread.NewTokenContext(ctx, tok), nil
-}
-
-// This method is just for testing purposes. Keys shouldn't be bundled in the daemon
-// NOTE: Being used right now instead of the challenge flow
-// TODO: Use getHubCtxViaChallenge instead once that's fixed
 func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error) {
 	log.Debug("Authenticating with Textile Hub")
 
-	key := tc.cfg.GetString(config.TextileUserKey, "")
-	secret := tc.cfg.GetString(config.TextileUserSecret, "")
-
-	if key == "" || secret == "" {
-		return nil, errors.New("Couldn't get Textile key or secret from envs")
-	}
-
-	ctx = common.NewAPIKeyContext(ctx, key)
-	var apiSigCtx context.Context
-	var err error
-	if apiSigCtx, err = common.CreateAPISigContext(ctx, time.Now().Add(time.Minute), secret); err != nil {
-		return nil, err
-	}
-	ctx = apiSigCtx
-
-	kc := keychain.New(tc.store)
-	var privateKey crypto.PrivKey
-	if privateKey, _, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
-		return nil, err
-	}
-
-	// TODO: CTX has to be made from session key received from lambda
-	tok, err := tc.ht.GetToken(ctx, thread.NewLibp2pIdentity(privateKey))
-
+	// TODO: Use hub.GetHubToken instead
+	ctx, err := hub.GetHubTokenUsingTextileKeys(ctx, tc.store, tc.kc, tc.ht)
 	if err != nil {
-		log.Info("error getting token")
 		return nil, err
 	}
 
-	ctx = thread.NewTokenContext(ctx, tok)
 	return ctx, nil
 }
 
@@ -238,12 +199,20 @@ func getHubThreadsClient(host string) *threadsClient.Client {
 // StartAndBootstrap starts a Textile Client and also initializes default resources for it like a key pair and default bucket.
 func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
 	// Create key pair if not present
-	kc := keychain.New(tc.store)
-	log.Debug("Starting Textile Client: Generating key pair...")
-	if _, _, err := kc.GenerateKeyPair(); err != nil {
-		log.Debug("Starting Textile Client: Error generating key pair, key might already exist")
-		log.Debug(err.Error())
-		// Not returning err since it can error if keys already exist
+	log.Debug("Starting Textile Client: Getting key status...")
+	_, err := tc.kc.GetStoredPublicKey()
+	if err != nil {
+		log.Debug("Key pair not found. Generating a new one")
+		if mnemonic, err := tc.kc.GenerateKeyFromMnemonic(); err != nil {
+
+			log.Error("Error generating key pair. Cannot continue Textile initialization", err)
+			return err
+		} else {
+			words := strings.Split(mnemonic, " ")
+			log.Debug("Generated initial key pair using mnemonic using seed: " + words[0] + ", " + words[1] + "...")
+		}
+	} else {
+		log.Debug("Starting Textile Client: Key pair found.")
 	}
 
 	// Start Textile Client
@@ -328,8 +297,7 @@ func (tc *textileClient) getThreadContext(parentCtx context.Context, threadName 
 	}
 
 	var publicKey crypto.PubKey
-	kc := keychain.New(tc.store)
-	if _, publicKey, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
+	if publicKey, err = tc.kc.GetStoredPublicKey(); err != nil {
 		return nil, err
 	}
 

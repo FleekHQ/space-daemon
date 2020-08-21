@@ -490,8 +490,8 @@ func TestService_CreateIdentity(t *testing.T) {
 	testUsername := "dmerrill"
 
 	mockKeychain.On(
-		"GetStoredKeyPairInLibP2PFormat",
-	).Return(mockPrivKey, mockPubKey, nil)
+		"GetStoredPublicKey",
+	).Return(mockPubKey, nil)
 
 	identity, err := sv.CreateIdentity(context.Background(), testUsername)
 
@@ -529,8 +529,8 @@ func TestService_CreateIdentity_OnError(t *testing.T) {
 	testUsername := "dmerrill"
 
 	mockKeychain.On(
-		"GetStoredKeyPairInLibP2PFormat",
-	).Return(mockPrivKey, mockPubKey, nil)
+		"GetStoredPublicKey",
+	).Return(mockPubKey, nil)
 
 	identity, err := sv.CreateIdentity(context.Background(), testUsername)
 
@@ -613,8 +613,8 @@ func TestService_GetPublicKey(t *testing.T) {
 	defer tearDown()
 
 	mockKeychain.On(
-		"GetStoredKeyPairInLibP2PFormat",
-	).Return(mockPrivKey, mockPubKey, nil)
+		"GetStoredPublicKey",
+	).Return(mockPubKey, nil)
 
 	pub, err := sv.GetPublicKey(context.Background())
 
