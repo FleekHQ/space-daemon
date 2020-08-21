@@ -19,7 +19,7 @@ const (
 	SpaceServicesAPIURL      = "space/servicesApiUrl"
 	SpaceServicesHubAuthURL  = "space/servicesHubAuthUrl"
 	Ipfsaddr                 = "space/ipfsAddr"
-	Ipfsnodeaddr			 = "space/ipfsNodeAddr"
+	Ipfsnodeaddr             = "space/ipfsNodeAddr"
 	Ipfsnodepath             = "space/ipfsNodePath"
 	Mongousr                 = "space/mongoUsr"
 	Mongopw                  = "space/mongoPw"
