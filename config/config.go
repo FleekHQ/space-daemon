@@ -19,6 +19,8 @@ const (
 	SpaceServicesAPIURL      = "space/servicesApiUrl"
 	SpaceServicesHubAuthURL  = "space/servicesHubAuthUrl"
 	Ipfsaddr                 = "space/ipfsAddr"
+	Ipfsnodeaddr			 = "space/ipfsNodeAddr"
+	Ipfsnodepath             = "space/ipfsNodePath"
 	Mongousr                 = "space/mongoUsr"
 	Mongopw                  = "space/mongoPw"
 	Mongohost                = "space/mongoHost"
@@ -33,6 +35,8 @@ var (
 
 type Flags struct {
 	Ipfsaddr             string
+	Ipfsnodeaddr         string
+	Ipfsnodepath         string
 	Mongousr             string
 	Mongopw              string
 	Mongohost            string

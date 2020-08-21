@@ -23,6 +23,8 @@ var (
 	debugMode      = flag.Bool("debug", true, "run daemon with debug mode for profiling")
 	devMode        = flag.Bool("dev", false, "run daemon in dev mode to use .env file")
 	ipfsaddr       string
+	ipfsnodeaddr   string
+	ipfsnodepath   string
 	mongousr       string
 	mongopw        string
 	mongohost      string
@@ -46,6 +48,8 @@ func main() {
 
 	cf := &config.Flags{
 		Ipfsaddr:             ipfsaddr,
+		Ipfsnodeaddr:		  ipfsnodeaddr,
+		Ipfsnodepath:         ipfsnodepath,
 		Mongousr:             mongousr,
 		Mongopw:              mongopw,
 		Mongohost:            mongohost,

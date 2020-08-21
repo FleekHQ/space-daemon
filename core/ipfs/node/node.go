@@ -7,6 +7,7 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 	"sync"
 
@@ -15,6 +16,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 
 	ipfsconfig "github.com/ipfs/go-ipfs-config"
+	coreiface "github.com/ipfs/interface-go-ipfs-core"
 	"github.com/ipfs/go-ipfs/commands"
 	"github.com/ipfs/go-ipfs/core"
 	"github.com/ipfs/go-ipfs/core/coreapi"
@@ -26,6 +28,10 @@ import (
 )
 
 type IpfsNode struct {
+	coreApi   coreiface.CoreAPI
+	coreNode  *core.IpfsNode
+	cancel    context.CancelFunc
+
 	IsRunning bool
 	Ready     chan bool
 	cfg       config.Config
@@ -41,9 +47,10 @@ func NewIpsNode(cfg config.Config) *IpfsNode {
 func (node *IpfsNode) Start(ctx context.Context) error {
 	log.Info("Starting the ipfs node")
 
-	node.start()
-
-	// TODO: handle errors
+	err := node.start()
+	if err != nil {
+		return err
+	}
 
 	log.Info("Running the ipfs node")
 
@@ -60,7 +67,10 @@ func (node *IpfsNode) WaitForReady() chan bool {
 func (node *IpfsNode) Stop() error {
 	node.IsRunning = false
 
-	// TODO: proper shutdown
+	err := node.stop()
+	if err != nil {
+		return err
+	}
 
 	close(node.Ready)
 
@@ -71,23 +81,36 @@ func (node *IpfsNode) Shutdown() error {
 	return node.Stop()
 }
 
-func (node *IpfsNode) start() {
+func (node *IpfsNode) start() error {
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	node.cancel = cancel
 
-	repoPath, err := ipfsconfig.PathRoot()
+	pathRoot, err := ipfsconfig.PathRoot()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
+	repoPath := node.cfg.GetString(config.Ipfsnodepath, pathRoot)
+
 	if err := setupPlugins(repoPath); err != nil {
-		panic(err)
+		return err
+	}
+
+	// init the repo
+	repoCfg, err := ipfsconfig.Init(ioutil.Discard, 2048)
+	if err != nil {
+		return err
+	}
+
+	err = fsrepo.Init(repoPath, repoCfg)
+	if err != nil {
+		return err
 	}
 
 	// open the repo
 	repo, err := fsrepo.Open(repoPath)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// construct the node
@@ -97,26 +120,27 @@ func (node *IpfsNode) start() {
 		Repo:    repo,
 	}
 
-	ipfsnode, err := core.NewNode(ctx, nodeOptions)
+	node.coreNode, err = core.NewNode(ctx, nodeOptions)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	core, err := coreapi.NewCoreAPI(ipfsnode)
+	node.coreApi, err = coreapi.NewCoreAPI(node.coreNode)
 	if err != nil {
-		panic(fmt.Errorf("failed to spawn a node: %s", err))
+		return err
 	}
 
-	addr := "/ip4/127.0.0.1/tcp/5001"
+	addr := node.cfg.GetString(config.Ipfsnodeaddr, "/ip4/127.0.0.1/tcp/5001")
+
 	var opts = []corehttp.ServeOption{
 		corehttp.GatewayOption(true, "/ipfs", "/ipns"),
 		corehttp.WebUIOption,
-		corehttp.CommandsOption(cmdCtx(ipfsnode, repoPath)),
+		corehttp.CommandsOption(cmdCtx(node.coreNode, repoPath)),
 	}
 
 	go func() {
-		if err := corehttp.ListenAndServe(ipfsnode, addr, opts...); err != nil {
-			panic(err)
+		if err := corehttp.ListenAndServe(node.coreNode, addr, opts...); err != nil {
+			return
 		}
 	}()
 
@@ -130,11 +154,15 @@ func (node *IpfsNode) start() {
 		"/ip4/104.131.131.82/udp/4001/quic/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
 	}
 
-	go connectToPeers(ctx, core, bootstrapNodes)
+	go connectToPeers(ctx, node.coreApi, bootstrapNodes)
 
-	for {
+	return nil
+}
 
-	}
+func (node *IpfsNode) stop() error {
+	node.cancel()
+
+	return nil
 }
 
 func connectToPeers(ctx context.Context, ipfs icore.CoreAPI, peers []string) error {
@@ -163,7 +191,7 @@ func connectToPeers(ctx context.Context, ipfs icore.CoreAPI, peers []string) err
 			defer wg.Done()
 			err := ipfs.Swarm().Connect(ctx, *peerInfo)
 			if err != nil {
-				panic(err)
+				return
 			}
 		}(peerInfo)
 	}

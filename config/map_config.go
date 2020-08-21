@@ -24,6 +24,8 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 	configInt[SpaceRestProxyServerPort] = 9997
 	if flags.DevMode {
 		configStr[Ipfsaddr] = os.Getenv(env.IpfsAddr)
+		configStr[Ipfsnodeaddr] = os.Getenv(env.IpfsNodeAddr)
+		configStr[Ipfsnodepath] = os.Getenv(env.IpfsNodePath)
 		configStr[Mongousr] = os.Getenv(env.MongoUsr)
 		configStr[Mongopw] = os.Getenv(env.MongoPw)
 		configStr[Mongohost] = os.Getenv(env.MongoHost)
@@ -35,6 +37,8 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[TextileThreadsTarget] = os.Getenv(env.TextileThreadsTarget)
 	} else {
 		configStr[Ipfsaddr] = flags.Ipfsaddr
+		configStr[Ipfsnodeaddr] = flags.Ipfsnodeaddr
+		configStr[Ipfsnodeaddr] = flags.Ipfsnodepath
 		configStr[Mongousr] = flags.Mongousr
 		configStr[Mongopw] = flags.Mongopw
 		configStr[Mongohost] = flags.Mongohost
