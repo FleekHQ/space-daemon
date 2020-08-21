@@ -15,9 +15,11 @@ import (
 )
 
 type BucketSchema struct {
-	ID   core.InstanceID `json:"_id"`
-	Slug string          `json:"slug"`
-	DbID string
+	ID         core.InstanceID `json:"_id"`
+	Slug       string          `json:"slug"`
+	DbID       string
+	RemoteDbID string `json:"remoteDbId"`
+	HubAddr    string `json:"HubAddr"`
 }
 
 const metaThreadName = "metathreadV1"

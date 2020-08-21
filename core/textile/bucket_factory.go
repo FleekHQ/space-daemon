@@ -150,7 +150,20 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 		return nil, err
 	}
 
+	//create mirror bucket on hub
+	ctx, err := tc.getHubCtx(ctx)
+
+	// TODO: need to create new thread
+
+	// make context with that thread id
+	b2, err := tc.HubbucketsClient.Init(ctx, bc.WithName(bucketSlug), bc.WithPrivate(true))
+	if err != nil {
+		return nil, err
+	}
+
 	// We store the bucket in a meta thread so that we can later fetch a list of all buckets
+	// TODO: pass hub addr and hub bucket db id to collection
+	// TODO: switch context back to local
 	log.Debug("Bucket " + bucketSlug + " created. Storing metadata.")
 	_, err = tc.storeBucketInCollection(ctx, bucketSlug, dbID.String())
 	if err != nil {
