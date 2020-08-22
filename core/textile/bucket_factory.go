@@ -59,7 +59,7 @@ func (tc *textileClient) GetBucketContext(ctx context.Context, bucketSlug string
 			return nil, nil, err
 		}
 		log.Debug("GetBucketContext: Got dbID from collection: " + dbID.String())
-		ctx, err = tc.getThreadContext(ctx, bucketSlug, *dbID)
+		ctx, err = tc.getThreadContext(ctx, bucketSlug, *dbID, false)
 
 		if err != nil {
 			return nil, nil, err
@@ -81,7 +81,7 @@ func (tc *textileClient) GetBucketContext(ctx context.Context, bucketSlug string
 		return nil, nil, err
 	}
 
-	bucketCtx, err := tc.getThreadContext(ctx, bucketSlug, dbID)
+	bucketCtx, err := tc.getThreadContext(ctx, bucketSlug, dbID, false)
 	log.Debug("GetBucketContext: Returning bucket context")
 	return bucketCtx, &dbID, err
 }
@@ -247,4 +247,13 @@ func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain
 	}
 
 	return true, nil
+}
+
+func (tc *textileClient) ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) (bool, error) {
+	bucketSchema, err := tc.toggleBucketBackupInCollection(ctx, bucketSlug, bucketBackup)
+	if err != nil {
+		return false, err
+	}
+
+	return bucketSchema.Backup, nil
 }

@@ -84,7 +84,3 @@ func (srv *grpcServer) JoinBucket(ctx context.Context, request *pb.JoinBucketReq
 		Result: r,
 	}, nil
 }
-
-func (srv *grpcServer) CopyAndShareFiles(ctx context.Context, request *pb.CopyAndShareFilesRequest) (*pb.CopyAndShareFilesResponse, error) {
-	return nil, errNotImplemented
-}

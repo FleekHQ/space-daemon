@@ -8,6 +8,7 @@ replace github.com/ipfs/go-ds-badger v0.2.4 => github.com/textileio/go-ds-badger
 
 require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
+	github.com/99designs/keyring v1.1.5
 	github.com/alecthomas/jsonschema v0.0.0-20191017121752-4bb6e3fae4f2
 	github.com/creamdog/gonfig v0.0.0-20160810132730-80d86bfb5a37
 	github.com/dgraph-io/badger v1.6.1
@@ -55,4 +56,5 @@ require (
 	google.golang.org/grpc v1.30.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.3.0 // indirect
+	grpc.go4.org v0.0.0-20170609214715-11d0a25b4919
 )

@@ -35,14 +35,14 @@ func (srv *grpcServer) GetPublicKey(ctx context.Context, request *pb.GetPublicKe
 		return nil, err
 	}
 
-	tok, err := srv.sv.GetHubAuthToken(ctx)
-	if err != nil {
-		return nil, err
-	}
+	// tok, err := srv.sv.GetHubAuthToken(ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return &pb.GetPublicKeyResponse{
 		PublicKey:    pub,
-		HubAuthToken: tok,
+		HubAuthToken: "",
 	}, nil
 }
 
@@ -56,4 +56,15 @@ func (srv *grpcServer) RestoreKeyPairViaMnemonic(ctx context.Context, request *p
 	}
 
 	return &pb.RestoreKeyPairViaMnemonicResponse{}, nil
+}
+
+func (srv *grpcServer) GetStoredMnemonic(ctx context.Context, request *pb.GetStoredMnemonicRequest) (*pb.GetStoredMnemonicResponse, error) {
+	mnemonic, err := srv.sv.GetMnemonic(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetStoredMnemonicResponse{
+		Mnemonic: mnemonic,
+	}, nil
 }

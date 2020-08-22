@@ -15,9 +15,10 @@ import (
 )
 
 type BucketSchema struct {
-	ID   core.InstanceID `json:"_id"`
-	Slug string          `json:"slug"`
-	DbID string
+	ID     core.InstanceID `json:"_id"`
+	Slug   string          `json:"slug"`
+	Backup bool            `json:"backup"`
+	DbID   string
 }
 
 const metaThreadName = "metathreadV1"
@@ -39,9 +40,10 @@ func (tc *textileClient) storeBucketInCollection(ctx context.Context, bucketSlug
 	}
 
 	newInstance := &BucketSchema{
-		Slug: bucketSlug,
-		ID:   "",
-		DbID: dbID,
+		Slug:   bucketSlug,
+		ID:     "",
+		DbID:   dbID,
+		Backup: true,
 	}
 
 	instances := client.Instances{newInstance}
@@ -55,9 +57,10 @@ func (tc *textileClient) storeBucketInCollection(ctx context.Context, bucketSlug
 
 	id := res[0]
 	return &BucketSchema{
-		Slug: newInstance.Slug,
-		ID:   core.InstanceID(id),
-		DbID: newInstance.DbID,
+		Slug:   newInstance.Slug,
+		ID:     core.InstanceID(id),
+		DbID:   newInstance.DbID,
+		Backup: newInstance.Backup,
 	}, nil
 }
 
@@ -72,6 +75,29 @@ func (tc *textileClient) upsertBucketInCollection(ctx context.Context, bucketSlu
 	}
 
 	return tc.storeBucketInCollection(ctx, bucketSlug, dbID)
+}
+
+func (tc *textileClient) toggleBucketBackupInCollection(ctx context.Context, bucketSlug string, backup bool) (*BucketSchema, error) {
+	metaCtx, metaDbID, err := tc.initBucketCollection(ctx)
+	if err != nil && metaDbID == nil {
+		return nil, err
+	}
+
+	bucket, err := tc.findBucketInCollection(ctx, bucketSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	bucket.Backup = backup
+
+	instances := client.Instances{bucket}
+
+	err = tc.threads.Save(metaCtx, *metaDbID, bucketCollectionName, instances)
+	if err != nil {
+		return nil, err
+	}
+
+	return bucket, nil
 }
 
 func (tc *textileClient) findBucketInCollection(ctx context.Context, bucketSlug string) (*BucketSchema, error) {
@@ -113,7 +139,7 @@ func (tc *textileClient) getBucketsFromCollection(ctx context.Context) ([]*Bucke
 
 // Returns the store key for a thread ID. It uses the keychain to obtain the public key, since the store key depends on it.
 func getThreadIDStoreKey(bucketSlug string, kc keychain.Keychain) ([]byte, error) {
-	_, pub, err := kc.GetStoredKeyPairInLibP2PFormat()
+	pub, err := kc.GetStoredPublicKey()
 	if err != nil {
 		return nil, err
 	}
@@ -130,8 +156,7 @@ func getThreadIDStoreKey(bucketSlug string, kc keychain.Keychain) ([]byte, error
 }
 
 func (tc *textileClient) findOrCreateMetaThreadID(ctx context.Context) (*thread.ID, error) {
-	kc := keychain.New(tc.store)
-	storeKey, err := getThreadIDStoreKey(metaThreadName, kc)
+	storeKey, err := getThreadIDStoreKey(metaThreadName, tc.kc)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +175,7 @@ func (tc *textileClient) findOrCreateMetaThreadID(ctx context.Context) (*thread.
 	// We need to create an ID that's derived deterministically from the user private key
 	// The reason for this is that the user needs to be able to restore the exact ID when moving across devices.
 	// The only consideration is that we must try to avoid dbID collisions with other users.
-	dbID, err := utils.NewDeterministicThreadID(kc, utils.MetathreadThreadVariant)
+	dbID, err := utils.NewDeterministicThreadID(tc.kc, utils.MetathreadThreadVariant)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +204,7 @@ func (tc *textileClient) getMetaThreadContext(ctx context.Context, useHub bool) 
 		return nil, nil, err
 	}
 
-	metathreadCtx, err := tc.getThreadContext(ctx, metaThreadName, *dbID)
+	metathreadCtx, err := tc.getThreadContext(ctx, metaThreadName, *dbID, false)
 	return metathreadCtx, dbID, nil
 }
 

@@ -79,6 +79,9 @@ func (a *App) Start(ctx context.Context) error {
 	}
 	a.Run("Store", appStore)
 
+	// Init keychain
+	kc := keychain.New(keychain.WithPath(a.cfg.GetString(config.SpaceStorePath, "")), keychain.WithStore(appStore))
+
 	watcher, err := w.New()
 	if err != nil {
 		return err
@@ -101,7 +104,7 @@ func (a *App) Start(ctx context.Context) error {
 	})
 
 	// setup textile client
-	textileClient := textile.NewClient(appStore)
+	textileClient := textile.NewClient(appStore, kc)
 	a.RunAsync("TextileClient", textileClient, func() error {
 		return textileClient.Start(ctx, a.cfg)
 	})
@@ -115,7 +118,7 @@ func (a *App) Start(ctx context.Context) error {
 		textileClient,
 		bucketSync,
 		a.cfg,
-		keychain.New(appStore),
+		kc,
 		space.WithEnv(a.env),
 	)
 	if svErr != nil {

@@ -1,4 +1,4 @@
-export TXL_HUB_HOST=
+export TXL_HUB_TARGET=
 export TXL_USER_KEY=
 export TXL_USER_SECRET=
 export MONGO_PW=

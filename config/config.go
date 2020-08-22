@@ -13,6 +13,8 @@ const (
 	TextileHubTarget         = "space/textileHubTarget"
 	TextileHubMa             = "space/textileHubMa"
 	TextileThreadsTarget     = "space/textileThreadsTarget"
+	TextileUserKey           = "space/textileUserKey"
+	TextileUserSecret        = "space/textileUserSecret"
 	MountFuseDrive           = "space/mountFuseDrive"
 	FuseMountPath            = "space/fuseMountPath"
 	FuseDriveName            = "space/fuseDriveName"
@@ -47,6 +49,8 @@ type Flags struct {
 	TextileHubTarget     string
 	TextileHubMa         string
 	TextileThreadsTarget string
+	TextileUserKey       string
+	TextileUserSecret    string
 }
 
 // Config used to fetch config information
