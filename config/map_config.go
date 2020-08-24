@@ -7,13 +7,15 @@ import (
 )
 
 type mapConfig struct {
-	configStr map[string]string
-	configInt map[string]int
+	configStr  map[string]string
+	configInt  map[string]int
+	configBool map[string]bool
 }
 
 func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 	configStr := make(map[string]string)
 	configInt := make(map[string]int)
+	configBool := make(map[string]bool)
 
 	// default values
 	configStr[SpaceStorePath] = "~/.fleek-space"
@@ -37,8 +39,13 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[TextileThreadsTarget] = os.Getenv(env.TextileThreadsTarget)
 		configStr[TextileUserKey] = os.Getenv(env.TextileUserKey)
 		configStr[TextileUserSecret] = os.Getenv(env.TextileUserSecret)
+
+		if os.Getenv(env.IpfsNode) != "" {
+			configBool[Ipfsnode] = true
+		}
 	} else {
 		configStr[Ipfsaddr] = flags.Ipfsaddr
+		configBool[Ipfsnodeaddr] = flags.Ipfsnode
 		configStr[Ipfsnodeaddr] = flags.Ipfsnodeaddr
 		configStr[Ipfsnodeaddr] = flags.Ipfsnodepath
 		configStr[Mongousr] = flags.Mongousr
@@ -55,8 +62,9 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 	}
 
 	c := mapConfig{
-		configStr: configStr,
-		configInt: configInt,
+		configStr:  configStr,
+		configInt:  configInt,
+		configBool: configBool,
 	}
 
 	return c
@@ -84,4 +92,16 @@ func (m mapConfig) GetInt(key string, defaultValue interface{}) int {
 	}
 
 	return 0
+}
+
+func (m mapConfig) GetBool(key string, defaultValue interface{}) bool {
+	if val, exists := m.configBool[key]; exists {
+		return val
+	}
+
+	if boolVal, ok := defaultValue.(bool); ok {
+		return boolVal
+	}
+
+	return false
 }

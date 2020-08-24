@@ -21,6 +21,7 @@ const (
 	SpaceServicesAPIURL      = "space/servicesApiUrl"
 	SpaceServicesHubAuthURL  = "space/servicesHubAuthUrl"
 	Ipfsaddr                 = "space/ipfsAddr"
+	Ipfsnode                 = "space/ipfsNode"
 	Ipfsnodeaddr             = "space/ipfsNodeAddr"
 	Ipfsnodepath             = "space/ipfsNodePath"
 	Mongousr                 = "space/mongoUsr"
@@ -37,6 +38,7 @@ var (
 
 type Flags struct {
 	Ipfsaddr             string
+	Ipfsnode             bool
 	Ipfsnodeaddr         string
 	Ipfsnodepath         string
 	Mongousr             string
@@ -57,4 +59,5 @@ type Flags struct {
 type Config interface {
 	GetString(key string, defaultValue interface{}) string
 	GetInt(key string, defaultValue interface{}) int
+	GetBool(key string, defaultValue interface{}) bool
 }

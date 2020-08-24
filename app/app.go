@@ -19,9 +19,9 @@ import (
 	"github.com/FleekHQ/space-daemon/core/env"
 	"github.com/FleekHQ/space-daemon/core/space"
 
+	node "github.com/FleekHQ/space-daemon/core/ipfs/node"
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/sync"
-	node "github.com/FleekHQ/space-daemon/core/ipfs/node"
 	"github.com/FleekHQ/space-daemon/log"
 
 	"golang.org/x/sync/errgroup"
@@ -89,7 +89,7 @@ func (a *App) Start(ctx context.Context) error {
 	a.Run("FolderWatcher", watcher)
 
 	// setup local ipfs node if ipfsNodeaddr is set
-	if a.cfg.GetString(config.Ipfsnodeaddr, "") != "" {
+	if a.cfg.GetBool(config.Ipfsnode, false) {
 		// setup local ipfs node
 		node := node.NewIpsNode(a.cfg)
 		a.RunAsync("IpfsNode", node, func() error {
