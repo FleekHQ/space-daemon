@@ -43,6 +43,28 @@
         ]
       }
     },
+    "/v1/apiSessionTokens": {
+      "get": {
+        "operationId": "SpaceApi_GetAPISessionTokens",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceGetAPISessionTokensResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/backup": {
       "post": {
         "operationId": "SpaceApi_ToggleBucketBackup",
@@ -1528,6 +1550,17 @@
           "type": "string"
         },
         "fileCid": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceGetAPISessionTokensResponse": {
+      "type": "object",
+      "properties": {
+        "hubToken": {
+          "type": "string"
+        },
+        "servicesToken": {
           "type": "string"
         }
       }

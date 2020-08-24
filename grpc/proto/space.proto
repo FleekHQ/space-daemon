@@ -278,6 +278,12 @@ service SpaceApi {
       get: "/v1/usage"
     };
   }
+
+  rpc GetAPISessionTokens(GetAPISessionTokensRequest) returns (GetAPISessionTokensResponse) {
+    option (google.api.http) = {
+      get: "/v1/apiSessionTokens"
+    };
+  }
 }
 
 message GetSharedWithMeFilesRequest {
@@ -623,3 +629,10 @@ message DeleteAccountResponse {}
 message DeleteKeyPairRequest {}
 
 message DeleteKeyPairResponse {}
+
+message GetAPISessionTokensRequest {}
+
+message GetAPISessionTokensResponse {
+  string hubToken = 1;
+  string servicesToken = 2;
+}
