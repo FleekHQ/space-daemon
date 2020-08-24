@@ -35,15 +35,29 @@ const (
 	VkVersion1 VkVersion = "V1"
 )
 
-const vaultKeyLength = 64
+// AES requires key length equal to 16, 24 or 32 bytes
+const vaultKeyLength = 32
 
 type VaultItem struct {
 	ItemType VaultItemType
 	Value    string
 }
 
+type storeVaultRequest struct {
+	Vault string `json:"vault"`
+	Vsk   string `json:"vsk"`
+}
+
+type retrieveVaultRequest struct {
+	Vsk string `json:"vsk"`
+}
+
+type retrieveVaultResponse struct {
+	EncryptedVault string `json:"encryptedVault"`
+}
+
 type Vault interface {
-	Store(uuid string, passphrase string, items []VaultItem) error
+	Store(uuid string, passphrase string, items []VaultItem) (*storeVaultRequest, error)
 	Retrieve(uuid string, passphrase string) ([]VaultItem, error)
 }
 
@@ -54,16 +68,11 @@ func New(vaultAPIURL string, vaultSaltSecret string) *vault {
 	}
 }
 
-type storeVaultRequest struct {
-	Vault string `json:"vault"`
-	Vsk   string `json:"vsk"`
-}
-
-func (v *vault) Store(uuid string, passphrase string, items []VaultItem) error {
+func (v *vault) Store(uuid string, passphrase string, items []VaultItem) (*storeVaultRequest, error) {
 	// Generate vault file
 	vf, err := json.Marshal(items)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Compute vault key
@@ -71,17 +80,21 @@ func (v *vault) Store(uuid string, passphrase string, items []VaultItem) error {
 
 	// Encrypt vault file using vault key
 	encVf, err := encrypt(vf, vk)
+	if err != nil {
+		return nil, err
+	}
 
 	// Compute vault service key
 	vsk := v.computeVsk(vk, passphrase, VkVersion1)
 
 	// Submit encrypted file and vsk to vault service
-	reqJSON, err := json.Marshal(&storeVaultRequest{
+	storeRequest := &storeVaultRequest{
 		Vault: base64.RawStdEncoding.EncodeToString(encVf),
 		Vsk:   base64.RawStdEncoding.EncodeToString(vsk),
-	})
+	}
+	reqJSON, err := json.Marshal(storeRequest)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, err := http.Post(
@@ -90,23 +103,16 @@ func (v *vault) Store(uuid string, passphrase string, items []VaultItem) error {
 		bytes.NewBuffer(reqJSON),
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	if apiErr := parseAPIErrors(resp); apiErr != nil {
-		return err
+	_, err = parseAPIResponse(resp)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
-}
-
-type retrieveVaultRequest struct {
-	Vsk string `json:"vsk"`
-}
-
-type retrieveVaultResponse struct {
-	EncryptedVault string `json:"encryptedVault"`
+	return storeRequest, nil
 }
 
 func (v *vault) Retrieve(uuid string, passphrase string) ([]VaultItem, error) {
@@ -134,17 +140,13 @@ func (v *vault) Retrieve(uuid string, passphrase string) ([]VaultItem, error) {
 	}
 	defer resp.Body.Close()
 
-	if apiErr := parseAPIErrors(resp); apiErr != nil {
-		return nil, err
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := parseAPIResponse(resp)
 	if err != nil {
 		return nil, err
 	}
 
 	var parsedBody retrieveVaultResponse
-	err = json.Unmarshal(body, parsedBody)
+	err = json.Unmarshal(body, &parsedBody)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +164,7 @@ func (v *vault) Retrieve(uuid string, passphrase string) ([]VaultItem, error) {
 	}
 
 	var items []VaultItem
-	err = json.Unmarshal(vf, items)
+	err = json.Unmarshal(vf, &items)
 	if err != nil {
 		return nil, err
 	}
@@ -228,23 +230,25 @@ func decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 	)
 }
 
-func parseAPIErrors(resp *http.Response) error {
+func parseAPIResponse(resp *http.Response) ([]byte, error) {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
 		var returnedErr domain.APIError
 		err = json.Unmarshal(body, &returnedErr)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if returnedErr.Message != "" {
-			return errors.New(returnedErr.Message)
+			return nil, errors.New(returnedErr.Message)
 		}
 
-		return errors.New("Unexpected API error")
+		return nil, errors.New("Unexpected API error")
 	}
+
+	return body, nil
 }
