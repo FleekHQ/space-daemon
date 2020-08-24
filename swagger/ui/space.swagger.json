@@ -1503,6 +1503,9 @@
       "properties": {
         "publicKey": {
           "type": "string"
+        },
+        "address": {
+          "type": "string"
         }
       }
     },
@@ -1589,10 +1592,6 @@
         "publicKey": {
           "type": "string",
           "title": "Public key encoded in hex"
-        },
-        "hubAuthToken": {
-          "type": "string",
-          "title": "Used to verify that the user has access to the private key"
         }
       }
     },
