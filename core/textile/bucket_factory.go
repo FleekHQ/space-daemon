@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/FleekHQ/space-daemon/core/textile/common"
+
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	ma "github.com/multiformats/go-multiaddr"
@@ -40,7 +42,14 @@ func (tc *textileClient) getBucket(ctx context.Context, slug string) (Bucket, er
 	if err != nil {
 		return nil, err
 	}
-	b := bucket.New(root, tc.getOrCreateBucketContext, tc.bucketsClient)
+	b := bucket.New(
+		root,
+		tc.getOrCreateBucketContext,
+		NewSecureBucketsClient(
+			tc.bucketsClient,
+			slug,
+		),
+	)
 
 	return b, nil
 }
@@ -83,6 +92,8 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 		if err != nil {
 			return nil, nil, err
 		}
+
+		ctx = common.NewBucketEncryptionKeyContext(ctx, bucketSchema.EncryptionKey)
 		return ctx, dbID, err
 	}
 
@@ -95,7 +106,7 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 		return nil, nil, err
 	}
 	log.Debug("getOrCreateBucketContext: Thread DB Created")
-	_, err := tc.storeBucketInCollection(ctx, bucketSlug, utils.CastDbIDToString(dbID))
+	bucketSchema, err := tc.storeBucketInCollection(ctx, bucketSlug, utils.CastDbIDToString(dbID))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -105,6 +116,9 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 		return nil, nil, err
 	}
 	log.Debug("getOrCreateBucketContext: Returning bucket context")
+
+	bucketCtx = common.NewBucketEncryptionKeyContext(bucketCtx, bucketSchema.EncryptionKey)
+
 	return bucketCtx, &dbID, err
 }
 
@@ -195,7 +209,14 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 		return nil, err
 	}
 
-	newB := bucket.New(b.Root, tc.getOrCreateBucketContext, tc.bucketsClient)
+	newB := bucket.New(
+		b.Root,
+		tc.getOrCreateBucketContext,
+		NewSecureBucketsClient(
+			tc.bucketsClient,
+			bucketSlug,
+		),
+	)
 
 	return newB, nil
 }
