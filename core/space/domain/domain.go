@@ -2,8 +2,6 @@ package domain
 
 import (
 	"time"
-
-	core "github.com/textileio/go-threads/core/db"
 )
 
 type AppConfig struct {
@@ -107,16 +105,4 @@ type Invitation struct {
 	Paths            []string         `json:"Paths"`
 	ReadAt           time.Time        `json:"readAt"`
 	CreatedAt        time.Time        `json:"createdAt"`
-}
-
-type Member struct {
-	ID               core.InstanceID  `json:"_id"`
-	PublicKey        string           `json:"publicKey"`
-	IsOwner          bool             `json:"isOwner"`
-	InvitationID     string           `json:"invitationID"`
-	InviterPublicKey string           `json:"inviterPublicKey"`
-	CreatedAt        time.Time        `json:"createdAt"`
-	Status           InvitationStatus `json:"status"`
-	ReadAt           time.Time        `json:"readAt"`
-	CustomMessage    string           `json:"customMessage"`
 }
