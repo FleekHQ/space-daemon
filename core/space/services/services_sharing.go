@@ -3,6 +3,7 @@ package services
 import (
 	"archive/zip"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/url"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/FleekHQ/space-daemon/log"
+	crypto "github.com/libp2p/go-libp2p-crypto"
 
 	"github.com/textileio/dcrypto"
 
@@ -221,4 +223,35 @@ func (s *Space) OpenSharedFile(ctx context.Context, hash, password, filename str
 	return domain.OpenFileInfo{
 		Location: decryptedFile.Name(),
 	}, nil
+}
+
+func (s *Space) ShareFilesViaPublicKey(ctx context.Context, bucketName string, paths []string, pubkeys []crypto.PubKey) error {
+	err := s.tc.ShareFilesViaPublicKey(ctx, bucketName, paths, pubkeys)
+	if err != nil {
+		return err
+	}
+	for _, pk := range pubkeys {
+		err := s.tc.SetMember(ctx, bucketName, pk, nil)
+		if err != nil {
+			return err
+		}
+
+		d := &domain.Invitation{
+			Paths: paths,
+			// Key: TODO - get from keys thread for each file
+		}
+
+		j, err := json.Marshal(d)
+		if err != nil {
+			return err
+		}
+
+		// TEMP: sending message for testing but to be removed
+		// once integrated to textile share
+		_, err = s.tc.SendMessage(ctx, pk, j)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -3,10 +3,14 @@ package textile
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
+	"github.com/google/uuid"
+	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/textileio/go-threads/api/client"
 	core "github.com/textileio/go-threads/core/db"
 	"github.com/textileio/go-threads/core/thread"
@@ -23,6 +27,7 @@ type BucketSchema struct {
 
 const metaThreadName = "metathreadV1"
 const bucketCollectionName = "BucketMetadata"
+const membersCollectionName = "Members"
 
 var errBucketNotFound = errors.New("Bucket not found")
 
@@ -229,4 +234,96 @@ func (tc *textileClient) initBucketCollection(ctx context.Context) (context.Cont
 	}
 
 	return metaCtx, dbID, nil
+}
+
+func (tc *textileClient) initBucketThreadMetaCollection(ctx context.Context, slug string) (context.Context, *thread.ID, error) {
+	bctx, dbID, err := tc.GetBucketContext(ctx, slug)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err := tc.threads.NewCollection(bctx, *dbID, db.CollectionConfig{
+		Name:   membersCollectionName,
+		Schema: util.SchemaFromInstance(&domain.Member{}, false),
+	}); err != nil {
+		return nil, nil, err
+	}
+
+	return bctx, dbID, nil
+}
+
+func (tc *textileClient) GetMembers(ctx context.Context, slug string) ([]*domain.Member, error) {
+	bctx, dbID, err := tc.GetBucketContext(ctx, slug)
+	rawms, err := tc.threads.Find(bctx, *dbID, membersCollectionName, &db.Query{}, &domain.Member{})
+	if err != nil {
+		return nil, err
+	}
+	ms := rawms.([]*domain.Member)
+	return ms, nil
+}
+
+func (tc *textileClient) getSessionKeyAsNativePubKey() ([]byte, error) {
+	p2ppk, err := tc.kc.GetStoredPublicKey()
+	if err != nil {
+		return []byte{}, err
+	}
+
+	pk, err := crypto.MarshalPublicKey(p2ppk)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return pk, nil
+}
+
+func (tc *textileClient) SetMember(ctx context.Context, slug string, pk crypto.PubKey, msg *string) error {
+	iid := uuid.New()
+
+	inviter, err := tc.getSessionKeyAsNativePubKey()
+	if err != nil {
+		return err
+	}
+
+	invitee, err := crypto.MarshalPublicKey(pk)
+	if err != nil {
+		return err
+	}
+
+	var customMsg string
+	if msg != nil {
+		customMsg = *msg
+	}
+	m := &domain.Member{
+		ID:               "",
+		PublicKey:        string(invitee),
+		InvitationID:     iid.String(),
+		InviterPublicKey: string(inviter),
+		CreatedAt:        time.Now(),
+		CustomMessage:    customMsg,
+	}
+	bctx, dbID, err := tc.GetBucketContext(ctx, slug)
+	_, err = tc.threads.Create(bctx, *dbID, membersCollectionName, client.Instances{m})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (tc *textileClient) SetOwner(ctx context.Context, slug string) error {
+	pk, err := tc.getSessionKeyAsNativePubKey()
+	if err != nil {
+		return err
+	}
+
+	m := &domain.Member{
+		ID:        "",
+		PublicKey: string(pk),
+		CreatedAt: time.Now(),
+	}
+	bctx, dbID, err := tc.GetBucketContext(ctx, slug)
+	_, err = tc.threads.Create(bctx, *dbID, membersCollectionName, client.Instances{m})
+	if err != nil {
+		return err
+	}
+	return nil
 }

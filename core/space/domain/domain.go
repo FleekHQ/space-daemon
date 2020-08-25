@@ -1,5 +1,11 @@
 package domain
 
+import (
+	"time"
+
+	core "github.com/textileio/go-threads/core/db"
+)
+
 type AppConfig struct {
 	Port                 int
 	AppPath              string
@@ -70,4 +76,37 @@ type FileSharingInfo struct {
 	SharedFileCid     string
 	SharedFileKey     string
 	SpaceDownloadLink string
+}
+
+type InvitationStatus int
+
+const (
+	Pending InvitationStatus = 0
+	Accepted
+	Rejected
+)
+
+type Invitation struct {
+	CustomMessage    string           `json:"customMessage"`
+	InvitationID     string           `json:"invitationID"`
+	InviteePublicKey string           `json:"inviteePublicKey"`
+	InviterPublicKey string           `json:"inviterPublicKey"`
+	Status           InvitationStatus `json:"status"`
+	Paths            []string         `json:"Paths"`
+	// NOTE: these will move to notifications
+	// when we integrate hub inboxing
+	ReadAt    time.Time `json:"readAt"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+type Member struct {
+	ID               core.InstanceID  `json:"_id"`
+	PublicKey        string           `json:"publicKey"`
+	IsOwner          bool             `json:"isOwner"`
+	InvitationID     string           `json:"invitationID"`
+	InviterPublicKey string           `json:"inviterPublicKey"`
+	CreatedAt        time.Time        `json:"createdAt"`
+	Status           InvitationStatus `json:"status"`
+	ReadAt           time.Time        `json:"readAt"`
+	CustomMessage    string           `json:"customMessage"`
 }

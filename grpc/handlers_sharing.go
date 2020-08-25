@@ -4,10 +4,27 @@ import (
 	"context"
 
 	"github.com/FleekHQ/space-daemon/grpc/pb"
+	crypto "github.com/libp2p/go-libp2p-crypto"
 )
 
 func (srv *grpcServer) ShareFilesViaPublicKey(ctx context.Context, request *pb.ShareFilesViaPublicKeyRequest) (*pb.ShareFilesViaPublicKeyResponse, error) {
-	return nil, errNotImplemented
+
+	var pks []crypto.PubKey
+
+	for _, pk := range request.PublicKeys {
+		p, err := crypto.UnmarshalEd25519PublicKey([]byte(pk))
+		if err != nil {
+			return nil, err
+		}
+		pks = append(pks, p)
+	}
+
+	err := srv.sv.ShareFilesViaPublicKey(ctx, request.Bucket, request.Paths, pks)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.ShareFilesViaPublicKeyResponse{}, nil
 }
 
 func (srv *grpcServer) GetSharedWithMeFiles(ctx context.Context, request *pb.GetSharedWithMeFilesRequest) (*pb.GetSharedWithMeFilesResponse, error) {

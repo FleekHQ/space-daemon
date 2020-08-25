@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/FleekHQ/space-daemon/core/ipfs"
+	crypto "github.com/libp2p/go-libp2p-crypto"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/env"
@@ -41,6 +42,7 @@ type Service interface {
 	CreateLocalKeysBackup(ctx context.Context, pathToKeyBackup string) error
 	RecoverKeysByLocalBackup(ctx context.Context, pathToKeyBackup string) error
 	ToggleBucketBackup(ctx context.Context, bucketName string, bucketBackup bool) error
+	ShareFilesViaPublicKey(ctx context.Context, bucketName string, paths []string, pubkeys []crypto.PubKey) error
 }
 
 type serviceOptions struct {
