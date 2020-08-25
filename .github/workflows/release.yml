@@ -39,3 +39,5 @@ jobs:
           TXL_HUB_TARGET: ${{ secrets.TXL_HUB_TARGET }}
           TXL_HUB_MA: ${{ secrets.TXL_HUB_MA }}
           TXL_THREADS_TARGET: ${{ secrets.TXL_THREADS_TARGET }}
+          TXL_USER_KEY: ${{ secrets.TXL_USER_KEY }}
+          TXL_USER_SECRET: ${{ secrets.TXL_USER_SECRET }}

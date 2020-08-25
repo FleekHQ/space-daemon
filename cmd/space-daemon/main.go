@@ -18,20 +18,25 @@ import (
 )
 
 var (
-	cpuprofile     = flag.String("cpuprofile", "", "write cpu profile to `file`")
-	memprofile     = flag.String("memprofile", "", "write memory profile to `file`")
-	debugMode      = flag.Bool("debug", true, "run daemon with debug mode for profiling")
-	devMode        = flag.Bool("dev", false, "run daemon in dev mode to use .env file")
-	ipfsaddr       string
-	mongousr       string
-	mongopw        string
-	mongohost      string
-	mongorepset    string
-	spaceapi       string
-	spacehubauth   string
-	textilehub     string
-	textilehubma   string
-	textilethreads string
+	cpuprofile        = flag.String("cpuprofile", "", "write cpu profile to `file`")
+	memprofile        = flag.String("memprofile", "", "write memory profile to `file`")
+	debugMode         = flag.Bool("debug", true, "run daemon with debug mode for profiling")
+	devMode           = flag.Bool("dev", false, "run daemon in dev mode to use .env file")
+	ipfsaddr          string
+	ipfsnode 		  bool
+	ipfsnodeaddr      string
+	ipfsnodepath      string
+	mongousr          string
+	mongopw           string
+	mongohost         string
+	mongorepset       string
+	spaceapi          string
+	spacehubauth      string
+	textilehub        string
+	textilehubma      string
+	textilethreads    string
+	textileuserkey    string
+	textileusersecret string
 )
 
 func main() {
@@ -46,6 +51,8 @@ func main() {
 
 	cf := &config.Flags{
 		Ipfsaddr:             ipfsaddr,
+		Ipfsnodeaddr:         ipfsnodeaddr,
+		Ipfsnodepath:         ipfsnodepath,
 		Mongousr:             mongousr,
 		Mongopw:              mongopw,
 		Mongohost:            mongohost,
@@ -56,6 +63,8 @@ func main() {
 		TextileHubTarget:     textilehub,
 		TextileHubMa:         textilehubma,
 		TextileThreadsTarget: textilethreads,
+		TextileUserKey:       textileuserkey,
+		TextileUserSecret:    textileusersecret,
 	}
 
 	// CPU profiling

@@ -36,8 +36,8 @@ func TestUtils_NewDeterministicThreadID(t *testing.T) {
 	initMocks(t)
 
 	mockKeychain.On(
-		"GetStoredKeyPairInLibP2PFormat",
-	).Return(mockPrivKey, mockPubKey, nil)
+		"GetStoredPublicKey",
+	).Return(mockPubKey, nil)
 
 	threadID, err := utils.NewDeterministicThreadID(mockKeychain, utils.MetathreadThreadVariant)
 	assert.Nil(t, err)
@@ -45,13 +45,13 @@ func TestUtils_NewDeterministicThreadID(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Generate a thread ID from a different private key (changed the last char)
-	mockPrivKeyHex := "dd55f8921f90fdf31c6ef9ad86bd90605602fd7d32dc8ea66ab72deb6a82821c67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a8"
-	privKeyBytes, _ := hex.DecodeString(mockPrivKeyHex)
-	diffPrivKey, _ := crypto.UnmarshalEd25519PrivateKey(privKeyBytes)
+	mockPubKeyHex := "67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a8"
+	pubKeyBytes, _ := hex.DecodeString(mockPubKeyHex)
+	diffPubKey, _ := crypto.UnmarshalEd25519PublicKey(pubKeyBytes)
 	newMockKeychain := new(mocks.Keychain)
 	newMockKeychain.On(
-		"GetStoredKeyPairInLibP2PFormat",
-	).Return(diffPrivKey, mockPubKey, nil)
+		"GetStoredPublicKey",
+	).Return(diffPubKey, nil)
 
 	diffThreadID, err := utils.NewDeterministicThreadID(newMockKeychain, utils.MetathreadThreadVariant)
 	assert.Nil(t, err)

@@ -1,13 +1,10 @@
 build:
-	cd cmd/space-ipfs-node && \
-	go build \
-	-o ../../bin/space-ipfs-node \
-	main.go
-
 	go build \
 	-o bin/space \
 	-ldflags \
 	"-X 'main.ipfsaddr=${IPFS_ADDR}'\
+	-X 'main.ipfsnodeaddr=${IPFS_NODE_ADDR}' \
+	-X 'main.ipfsnodepath=${IPFS_NODE_PATH}' \
 	-X 'main.mongousr=${MONGO_USR}' \
 	-X 'main.mongopw=${MONGO_PW}' \
 	-X 'main.spaceapi=${SERVICES_API_URL}' \
@@ -15,6 +12,8 @@ build:
 	-X 'main.textilehub=${TXL_HUB_TARGET}' \
 	-X 'main.textilehubma=${TXL_HUB_MA}' \
 	-X 'main.textilethreads=${TXL_THREADS_TARGET}' \
+  -X 'main.textileuserkey=${TXL_USER_KEY}' \
+	-X 'main.textileusersecret=${TXL_USER_SECRET}' \
 	-X 'main.mongohost=${MONGO_HOST}' \
 	-X 'main.mongorepset=${MONGO_REPLICA_SET}'" \
 	cmd/space-daemon/main.go

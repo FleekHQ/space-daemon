@@ -91,6 +91,10 @@ SERVICES_HUB_AUTH_URL=[The URL where Space Services Textile Hub Authorizer is lo
 TXL_HUB_TARGET=[The URL of the Textile Hub]
 TXL_HUB_MA=[The multiaddress for the Textile hub]
 TXL_THREADS_TARGET=[The URL of the Textile Hub where Threads are hosted, can be the same that TXL_HUB_TARGET]
+
+# NOTE: the following are required temporarily and will be removed once hub auth wrapper is setup
+TXL_USER_KEY=[Space level key for hub access]
+TXL_USER_SECRET=[Space level secret for hub access]
 ```
 
 Alternatively, you can run `make` to compile the binary. Make sure you have these environment variables exposed though. You can see some example environment variables in `.env.example`.
@@ -130,7 +134,7 @@ Mocks are generated using https://github.com/vektra/mockery.
 
 For Linux it needs to be built from source.
 
-`mockery -name InterfaceToMock -dir path/to/go/files`
+`mockery --name InterfaceToMock --dir path/to/go/files`
 
 ### Protobuf
 

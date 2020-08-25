@@ -245,15 +245,15 @@
         ]
       }
     },
-    "/v1/buckets/{bucket}/shareViaPublicKey": {
+    "/v1/buckets/{bucket}/shareFilesViaPublicKey": {
       "post": {
         "summary": "Share bucket via public key using Textile Hub inboxing",
-        "operationId": "SpaceApi_ShareBucketViaPublicKey",
+        "operationId": "SpaceApi_ShareFilesViaPublicKey",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/spaceShareBucketViaPublicKeyResponse"
+              "$ref": "#/definitions/spaceShareFilesViaPublicKeyResponse"
             }
           },
           "default": {
@@ -275,7 +275,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/spaceShareBucketViaPublicKeyRequest"
+              "$ref": "#/definitions/spaceShareFilesViaPublicKeyRequest"
             }
           }
         ],
@@ -533,6 +533,44 @@
         ]
       }
     },
+    "/v1/files/sharedWithMe": {
+      "get": {
+        "summary": "Gets the files that are shared with this recipient",
+        "operationId": "SpaceApi_GetSharedWithMeFiles",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceGetSharedWithMeFilesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "seek",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/fuse": {
       "get": {
         "summary": "Get status of FUSE drive. If mounted or unmounted",
@@ -579,39 +617,6 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/spaceToggleFuseRequest"
-            }
-          }
-        ],
-        "tags": [
-          "SpaceApi"
-        ]
-      }
-    },
-    "/v1/items/copyAndShareFiles": {
-      "post": {
-        "summary": "Copies a set of files in a new or existing bucket that's shared with a group of public keys\nAuxiliary method that internally calls CreateBucket, ShareBucketViaPublicKey, AddFile.",
-        "operationId": "SpaceApi_CopyAndShareFiles",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/spaceCopyAndShareFilesResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response",
-            "schema": {
-              "$ref": "#/definitions/runtimeError"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/spaceCopyAndShareFilesRequest"
             }
           }
         ],
@@ -713,6 +718,28 @@
             }
           }
         ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/keypairs/mnemonic": {
+      "get": {
+        "operationId": "SpaceApi_GetStoredMnemonic",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceGetStoredMnemonicResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
         "tags": [
           "SpaceApi"
         ]
@@ -1364,32 +1391,6 @@
         }
       }
     },
-    "spaceCopyAndShareFilesRequest": {
-      "type": "object",
-      "properties": {
-        "bucket": {
-          "type": "string"
-        },
-        "itemPaths": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "publicKeys": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "customMessage": {
-          "type": "string"
-        }
-      }
-    },
-    "spaceCopyAndShareFilesResponse": {
-      "type": "object"
-    },
     "spaceCreateBucketRequest": {
       "type": "object",
       "properties": {
@@ -1559,6 +1560,29 @@
         "hubAuthToken": {
           "type": "string",
           "title": "Used to verify that the user has access to the private key"
+        }
+      }
+    },
+    "spaceGetSharedWithMeFilesResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/spaceListDirectoryEntry"
+          }
+        },
+        "nextOffset": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "spaceGetStoredMnemonicResponse": {
+      "type": "object",
+      "properties": {
+        "mnemonic": {
+          "type": "string"
         }
       }
     },
@@ -1858,7 +1882,7 @@
         }
       }
     },
-    "spaceShareBucketViaPublicKeyRequest": {
+    "spaceShareFilesViaPublicKeyRequest": {
       "type": "object",
       "properties": {
         "publicKeys": {
@@ -1869,10 +1893,16 @@
         },
         "bucket": {
           "type": "string"
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
-    "spaceShareBucketViaPublicKeyResponse": {
+    "spaceShareFilesViaPublicKeyResponse": {
       "type": "object"
     },
     "spaceTextileEventResponse": {

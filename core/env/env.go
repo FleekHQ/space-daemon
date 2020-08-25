@@ -10,6 +10,9 @@ const (
 	SpaceWorkingDir      = "SPACE_APP_DIR"
 	LogLevel             = "LOG_LEVEL"
 	IpfsAddr             = "IPFS_ADDR"
+	IpfsNode             = "IPFS_NODE"
+	IpfsNodeAddr         = "IPFS_NODE_ADDR"
+	IpfsNodePath         = "IPFS_NODE_PATH"
 	MongoUsr             = "MONGO_USR"
 	MongoPw              = "MONGO_PW"
 	MongoHost            = "MONGO_HOST"
@@ -19,6 +22,8 @@ const (
 	TextileHubTarget     = "TXL_HUB_TARGET"
 	TextileHubMa         = "TXL_HUB_MA"
 	TextileThreadsTarget = "TXL_THREADS_TARGET"
+	TextileUserKey       = "TXL_USER_KEY"
+	TextileUserSecret    = "TXL_USER_SECRET"
 )
 
 type SpaceEnv interface {

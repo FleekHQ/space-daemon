@@ -38,18 +38,18 @@ func NewDeterministicThreadID(kc keychain.Keychain, threadVariant DeterministicT
 	size := 32
 	variant := thread.Raw
 
-	priv, _, err := kc.GetStoredKeyPairInLibP2PFormat()
+	pub, err := kc.GetStoredPublicKey()
 	if err != nil {
 		return thread.ID([]byte{}), err
 	}
 
-	privInBytes, err := priv.Raw()
+	pubInBytes, err := pub.Raw()
 	if err != nil {
 		return thread.ID([]byte{}), err
 	}
 
 	// Do a key derivation based on the private key, a constant nonce, and the thread variant
-	num := pbkdf2.Key(privInBytes, []byte("threadID"+threadVariant), 256, size, sha512.New)
+	num := pbkdf2.Key(pubInBytes, []byte("threadID"+threadVariant), 256, size, sha512.New)
 	if err != nil {
 		return thread.ID([]byte{}), err
 	}

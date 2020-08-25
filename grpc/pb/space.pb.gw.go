@@ -138,6 +138,24 @@ func local_request_SpaceApi_GenerateKeyPair_0(ctx context.Context, marshaler run
 
 }
 
+func request_SpaceApi_GetStoredMnemonic_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetStoredMnemonicRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := client.GetStoredMnemonic(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_SpaceApi_GetStoredMnemonic_0(ctx context.Context, marshaler runtime.Marshaler, server SpaceApiServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetStoredMnemonicRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := server.GetStoredMnemonic(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 func request_SpaceApi_RestoreKeyPairViaMnemonic_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq RestoreKeyPairViaMnemonicRequest
 	var metadata runtime.ServerMetadata
@@ -425,6 +443,42 @@ func local_request_SpaceApi_GeneratePublicFileLink_0(ctx context.Context, marsha
 	}
 
 	msg, err := server.GeneratePublicFileLink(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+var (
+	filter_SpaceApi_GetSharedWithMeFiles_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_SpaceApi_GetSharedWithMeFiles_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetSharedWithMeFilesRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_SpaceApi_GetSharedWithMeFiles_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.GetSharedWithMeFiles(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_SpaceApi_GetSharedWithMeFiles_0(ctx context.Context, marshaler runtime.Marshaler, server SpaceApiServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetSharedWithMeFilesRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_SpaceApi_GetSharedWithMeFiles_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.GetSharedWithMeFiles(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -886,8 +940,8 @@ func local_request_SpaceApi_JoinBucket_0(ctx context.Context, marshaler runtime.
 
 }
 
-func request_SpaceApi_ShareBucketViaPublicKey_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ShareBucketViaPublicKeyRequest
+func request_SpaceApi_ShareFilesViaPublicKey_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ShareFilesViaPublicKeyRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -916,13 +970,13 @@ func request_SpaceApi_ShareBucketViaPublicKey_0(ctx context.Context, marshaler r
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "bucket", err)
 	}
 
-	msg, err := client.ShareBucketViaPublicKey(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.ShareFilesViaPublicKey(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_SpaceApi_ShareBucketViaPublicKey_0(ctx context.Context, marshaler runtime.Marshaler, server SpaceApiServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ShareBucketViaPublicKeyRequest
+func local_request_SpaceApi_ShareFilesViaPublicKey_0(ctx context.Context, marshaler runtime.Marshaler, server SpaceApiServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ShareFilesViaPublicKeyRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -951,7 +1005,7 @@ func local_request_SpaceApi_ShareBucketViaPublicKey_0(ctx context.Context, marsh
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "bucket", err)
 	}
 
-	msg, err := server.ShareBucketViaPublicKey(ctx, &protoReq)
+	msg, err := server.ShareFilesViaPublicKey(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -1055,40 +1109,6 @@ func local_request_SpaceApi_ListBuckets_0(ctx context.Context, marshaler runtime
 	var metadata runtime.ServerMetadata
 
 	msg, err := server.ListBuckets(ctx, &protoReq)
-	return msg, metadata, err
-
-}
-
-func request_SpaceApi_CopyAndShareFiles_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CopyAndShareFilesRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	msg, err := client.CopyAndShareFiles(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-
-}
-
-func local_request_SpaceApi_CopyAndShareFiles_0(ctx context.Context, marshaler runtime.Marshaler, server SpaceApiServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CopyAndShareFilesRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	msg, err := server.CopyAndShareFiles(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -1351,6 +1371,26 @@ func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 
 	})
 
+	mux.Handle("GET", pattern_SpaceApi_GetStoredMnemonic_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_SpaceApi_GetStoredMnemonic_0(rctx, inboundMarshaler, server, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_SpaceApi_GetStoredMnemonic_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("POST", pattern_SpaceApi_RestoreKeyPairViaMnemonic_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -1489,6 +1529,26 @@ func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 		}
 
 		forward_SpaceApi_GeneratePublicFileLink_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_SpaceApi_GetSharedWithMeFiles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_SpaceApi_GetSharedWithMeFiles_0(rctx, inboundMarshaler, server, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_SpaceApi_GetSharedWithMeFiles_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1719,7 +1779,7 @@ func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 
 	})
 
-	mux.Handle("POST", pattern_SpaceApi_ShareBucketViaPublicKey_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SpaceApi_ShareFilesViaPublicKey_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -1728,14 +1788,14 @@ func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_SpaceApi_ShareBucketViaPublicKey_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SpaceApi_ShareFilesViaPublicKey_0(rctx, inboundMarshaler, server, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_SpaceApi_ShareBucketViaPublicKey_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SpaceApi_ShareFilesViaPublicKey_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1803,26 +1863,6 @@ func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 		}
 
 		forward_SpaceApi_ListBuckets_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
-	mux.Handle("POST", pattern_SpaceApi_CopyAndShareFiles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_SpaceApi_CopyAndShareFiles_0(rctx, inboundMarshaler, server, req, pathParams)
-		ctx = runtime.NewServerMetadataContext(ctx, md)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_SpaceApi_CopyAndShareFiles_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -2027,6 +2067,26 @@ func RegisterSpaceApiHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 
 	})
 
+	mux.Handle("GET", pattern_SpaceApi_GetStoredMnemonic_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_SpaceApi_GetStoredMnemonic_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_SpaceApi_GetStoredMnemonic_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("POST", pattern_SpaceApi_RestoreKeyPairViaMnemonic_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -2204,6 +2264,26 @@ func RegisterSpaceApiHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 		}
 
 		forward_SpaceApi_GeneratePublicFileLink_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_SpaceApi_GetSharedWithMeFiles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_SpaceApi_GetSharedWithMeFiles_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_SpaceApi_GetSharedWithMeFiles_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -2447,7 +2527,7 @@ func RegisterSpaceApiHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 
 	})
 
-	mux.Handle("POST", pattern_SpaceApi_ShareBucketViaPublicKey_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SpaceApi_ShareFilesViaPublicKey_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -2456,14 +2536,14 @@ func RegisterSpaceApiHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_SpaceApi_ShareBucketViaPublicKey_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SpaceApi_ShareFilesViaPublicKey_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_SpaceApi_ShareBucketViaPublicKey_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SpaceApi_ShareFilesViaPublicKey_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -2544,26 +2624,6 @@ func RegisterSpaceApiHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 		}
 
 		forward_SpaceApi_ListBuckets_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
-	mux.Handle("POST", pattern_SpaceApi_CopyAndShareFiles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_SpaceApi_CopyAndShareFiles_0(rctx, inboundMarshaler, client, req, pathParams)
-		ctx = runtime.NewServerMetadataContext(ctx, md)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_SpaceApi_CopyAndShareFiles_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -2677,6 +2737,8 @@ var (
 
 	pattern_SpaceApi_GenerateKeyPair_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "keypairs", "generate"}, "", runtime.AssumeColonVerbOpt(true)))
 
+	pattern_SpaceApi_GetStoredMnemonic_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "keypairs", "mnemonic"}, "", runtime.AssumeColonVerbOpt(true)))
+
 	pattern_SpaceApi_RestoreKeyPairViaMnemonic_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "keypairs", "restoreWithMnemonic"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_SpaceApi_DeleteKeyPair_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "keypairs", "delete"}, "", runtime.AssumeColonVerbOpt(true)))
@@ -2694,6 +2756,8 @@ var (
 	pattern_SpaceApi_OpenFile_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "files", "open"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_SpaceApi_GeneratePublicFileLink_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "buckets", "bucket", "generatePublicFileLink"}, "", runtime.AssumeColonVerbOpt(true)))
+
+	pattern_SpaceApi_GetSharedWithMeFiles_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "files", "sharedWithMe"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_SpaceApi_OpenPublicFile_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "files", "openPublic"}, "", runtime.AssumeColonVerbOpt(true)))
 
@@ -2719,7 +2783,7 @@ var (
 
 	pattern_SpaceApi_JoinBucket_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "buckets", "bucket", "join"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_SpaceApi_ShareBucketViaPublicKey_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "buckets", "bucket", "shareViaPublicKey"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_SpaceApi_ShareFilesViaPublicKey_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "buckets", "bucket", "shareFilesViaPublicKey"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_SpaceApi_AcceptBucketInvitation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "acceptInvitation"}, "", runtime.AssumeColonVerbOpt(true)))
 
@@ -2728,8 +2792,6 @@ var (
 	pattern_SpaceApi_NotificationSubscribe_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "subscriptions", "notification"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_SpaceApi_ListBuckets_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "buckets"}, "", runtime.AssumeColonVerbOpt(true)))
-
-	pattern_SpaceApi_CopyAndShareFiles_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "items", "copyAndShareFiles"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_SpaceApi_GetNotifications_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "notifications"}, "", runtime.AssumeColonVerbOpt(true)))
 
@@ -2749,6 +2811,8 @@ var (
 
 	forward_SpaceApi_GenerateKeyPair_0 = runtime.ForwardResponseMessage
 
+	forward_SpaceApi_GetStoredMnemonic_0 = runtime.ForwardResponseMessage
+
 	forward_SpaceApi_RestoreKeyPairViaMnemonic_0 = runtime.ForwardResponseMessage
 
 	forward_SpaceApi_DeleteKeyPair_0 = runtime.ForwardResponseMessage
@@ -2766,6 +2830,8 @@ var (
 	forward_SpaceApi_OpenFile_0 = runtime.ForwardResponseMessage
 
 	forward_SpaceApi_GeneratePublicFileLink_0 = runtime.ForwardResponseMessage
+
+	forward_SpaceApi_GetSharedWithMeFiles_0 = runtime.ForwardResponseMessage
 
 	forward_SpaceApi_OpenPublicFile_0 = runtime.ForwardResponseMessage
 
@@ -2791,7 +2857,7 @@ var (
 
 	forward_SpaceApi_JoinBucket_0 = runtime.ForwardResponseMessage
 
-	forward_SpaceApi_ShareBucketViaPublicKey_0 = runtime.ForwardResponseMessage
+	forward_SpaceApi_ShareFilesViaPublicKey_0 = runtime.ForwardResponseMessage
 
 	forward_SpaceApi_AcceptBucketInvitation_0 = runtime.ForwardResponseMessage
 
@@ -2800,8 +2866,6 @@ var (
 	forward_SpaceApi_NotificationSubscribe_0 = runtime.ForwardResponseStream
 
 	forward_SpaceApi_ListBuckets_0 = runtime.ForwardResponseMessage
-
-	forward_SpaceApi_CopyAndShareFiles_0 = runtime.ForwardResponseMessage
 
 	forward_SpaceApi_GetNotifications_0 = runtime.ForwardResponseMessage
 

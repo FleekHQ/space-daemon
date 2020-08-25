@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -33,6 +34,7 @@ import (
 	uc "github.com/textileio/textile/api/users/client"
 	"github.com/textileio/textile/cmd"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 const ctxTimeout = 30
@@ -186,10 +188,19 @@ func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, netclien
 	key := os.Getenv("TXL_USER_KEY")
 	secret := os.Getenv("TXL_USER_SECRET")
 
+	if key == "" || secret == "" {
+		return nil
+	}
+
 	// TODO: this should be happening in an auth lambda
 	ctx := context.Background()
 	ctx = common.NewAPIKeyContext(ctx, key)
-	ctx, err := common.CreateAPISigContext(ctx, time.Now().Add(time.Minute*2), secret)
+	var apiSigCtx context.Context
+	var err error
+	if apiSigCtx, err = common.CreateAPISigContext(ctx, time.Now().Add(time.Minute), secret); err != nil {
+		return nil
+	}
+	ctx = apiSigCtx
 
 	if err != nil {
 		log.Println("error creating APISigContext")
@@ -203,6 +214,43 @@ func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, netclien
 	// ctx on next line needs to be rebuilt from the authorization from the lambda
 	tok, err := threads.GetToken(ctx, thread.NewLibp2pIdentity(sk))
 	ctx = thread.NewTokenContext(ctx, tok)
+
+	mid, err := users.SetupMailbox(ctx)
+	if err != nil {
+		log.Println("Unable to setup sender mailbox", err)
+		return nil
+	}
+	log.Println("Sender Mailbox id: ", mid.String())
+
+	// generate random recipient
+	rsk, _, err := crypto.GenerateEd25519Key(rand.Reader)
+	id := thread.NewLibp2pIdentity(rsk)
+
+	rctx := context.Background()
+	rctx = common.NewAPIKeyContext(rctx, key)
+	var rapiSigCtx context.Context
+	if rapiSigCtx, err = common.CreateAPISigContext(rctx, time.Now().Add(time.Minute), secret); err != nil {
+		return nil
+	}
+	rctx = rapiSigCtx
+	rtok, err := threads.GetToken(rctx, thread.NewLibp2pIdentity(rsk))
+	rctx = thread.NewTokenContext(rctx, rtok)
+
+	mid2, err := users.SetupMailbox(rctx)
+	if err != nil {
+		log.Println("Unable to setup recipient mailbox", err)
+		return nil
+	}
+	log.Println("Recipient Mailbox id: ", mid2.String())
+
+	msg, err := users.SendMessage(ctx, thread.NewLibp2pIdentity(sk), id.GetPublic(), []byte("hello"))
+
+	if err != nil {
+		log.Println("Unable to send", err)
+		return nil
+	}
+
+	log.Println("msg: " + string(msg.Body))
 
 	// create thread
 	ctx = common.NewThreadNameContext(ctx, user+"-"+bucketSlug)
@@ -349,13 +397,22 @@ func main() {
 		// var hub *hc.Client
 		var err error
 
-		host := os.Getenv("TXL_HUB_HOST")
+		host := os.Getenv("TXL_HUB_TARGET")
+		threadstarget := os.Getenv("TXL_THREADS_TARGET")
+		fmt.Println("hub host: " + host)
+		fmt.Println("threads host: " + threadstarget)
 
 		auth := common.Credentials{}
 		var opts []grpc.DialOption
 		hubTarget := host
-		threadstarget := host
-		opts = append(opts, grpc.WithInsecure())
+
+		if strings.Contains(host, "443") {
+			creds := credentials.NewTLS(&tls.Config{})
+			opts = append(opts, grpc.WithTransportCredentials(creds))
+			auth.Secure = true
+		} else {
+			opts = append(opts, grpc.WithInsecure())
+		}
 		opts = append(opts, grpc.WithPerRPCCredentials(auth))
 
 		buckets, err = bc.NewClient(hubTarget, opts...)

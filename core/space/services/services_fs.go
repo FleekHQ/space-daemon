@@ -68,6 +68,15 @@ func (s *Space) JoinBucket(ctx context.Context, slug string, threadinfo *domain.
 	return r, nil
 }
 
+func (s *Space) ToggleBucketBackup(ctx context.Context, bucketName string, bucketBackup bool) (error) {
+	_, err := s.tc.ToggleBucketBackup(ctx, bucketName, bucketBackup)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Returns the bucket given the name, and if the name is "" returns the default bucket
 func (s *Space) getBucketWithFallback(ctx context.Context, bucketName string) (textile.Bucket, error) {
 	var b textile.Bucket

@@ -19,9 +19,9 @@ import (
 	"github.com/FleekHQ/space-daemon/core/env"
 	"github.com/FleekHQ/space-daemon/core/space"
 
+	node "github.com/FleekHQ/space-daemon/core/ipfs/node"
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/sync"
-	node "github.com/FleekHQ/space-daemon/core/ipfs/node"
 	"github.com/FleekHQ/space-daemon/log"
 
 	"golang.org/x/sync/errgroup"
@@ -79,17 +79,23 @@ func (a *App) Start(ctx context.Context) error {
 	}
 	a.Run("Store", appStore)
 
+	// Init keychain
+	kc := keychain.New(keychain.WithPath(a.cfg.GetString(config.SpaceStorePath, "")), keychain.WithStore(appStore))
+
 	watcher, err := w.New()
 	if err != nil {
 		return err
 	}
 	a.Run("FolderWatcher", watcher)
 
-	// setup local ipfs node
-	node := node.NewIpsNode(a.cfg)
-	a.RunAsync("IpfsNode", node, func() error {
-		return node.Start(ctx)
-	})
+	// setup local ipfs node if ipfsNodeaddr is set
+	if a.cfg.GetBool(config.Ipfsnode, false) {
+		// setup local ipfs node
+		node := node.NewIpsNode(a.cfg)
+		a.RunAsync("IpfsNode", node, func() error {
+			return node.Start(ctx)
+		})
+	}
 
 	// setup local buckets
 	buckd := textile.NewBuckd(a.cfg)
@@ -98,7 +104,7 @@ func (a *App) Start(ctx context.Context) error {
 	})
 
 	// setup textile client
-	textileClient := textile.NewClient(appStore)
+	textileClient := textile.NewClient(appStore, kc)
 	a.RunAsync("TextileClient", textileClient, func() error {
 		return textileClient.Start(ctx, a.cfg)
 	})
@@ -112,7 +118,7 @@ func (a *App) Start(ctx context.Context) error {
 		textileClient,
 		bucketSync,
 		a.cfg,
-		keychain.New(appStore),
+		kc,
 		space.WithEnv(a.env),
 	)
 	if svErr != nil {

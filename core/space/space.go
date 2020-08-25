@@ -23,6 +23,7 @@ type Service interface {
 	ListDirs(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error)
 	ListDir(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error)
 	GenerateKeyPair(ctx context.Context, useForce bool) (mnemonic string, err error)
+	GetMnemonic(ctx context.Context) (mnemonic string, err error)
 	RestoreKeyPairFromMnemonic(ctx context.Context, mnemonic string) error
 	GetPublicKey(ctx context.Context) (string, error)
 	GetHubAuthToken(ctx context.Context) (string, error)
@@ -39,6 +40,7 @@ type Service interface {
 	JoinBucket(ctx context.Context, slug string, threadinfo *domain.ThreadInfo) (bool, error)
 	CreateLocalKeysBackup(ctx context.Context, pathToKeyBackup string) error
 	RecoverKeysByLocalBackup(ctx context.Context, pathToKeyBackup string) error
+	ToggleBucketBackup(ctx context.Context, bucketName string, bucketBackup bool) error
 }
 
 type serviceOptions struct {
