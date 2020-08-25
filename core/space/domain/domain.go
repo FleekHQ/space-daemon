@@ -105,10 +105,8 @@ type Invitation struct {
 	InviterPublicKey string           `json:"inviterPublicKey"`
 	Status           InvitationStatus `json:"status"`
 	Paths            []string         `json:"Paths"`
-	// NOTE: these will move to notifications
-	// when we integrate hub inboxing
-	ReadAt    time.Time `json:"readAt"`
-	CreatedAt time.Time `json:"createdAt"`
+	ReadAt           time.Time        `json:"readAt"`
+	CreatedAt        time.Time        `json:"createdAt"`
 }
 
 type Member struct {
