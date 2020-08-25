@@ -45,7 +45,6 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		}
 	} else {
 		configStr[Ipfsaddr] = flags.Ipfsaddr
-		configBool[Ipfsnodeaddr] = flags.Ipfsnode
 		configStr[Ipfsnodeaddr] = flags.Ipfsnodeaddr
 		configStr[Ipfsnodeaddr] = flags.Ipfsnodepath
 		configStr[Mongousr] = flags.Mongousr
@@ -59,6 +58,8 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[TextileThreadsTarget] = flags.TextileThreadsTarget
 		configStr[TextileUserKey] = flags.TextileUserKey
 		configStr[TextileUserSecret] = flags.TextileUserSecret
+
+		configBool[Ipfsnode] = flags.Ipfsnode
 	}
 
 	c := mapConfig{

@@ -51,7 +51,7 @@ func main() {
 
 	cf := &config.Flags{
 		Ipfsaddr:             ipfsaddr,
-		Ipfsnode: 			  ipfsnode,
+		Ipfsnode:             ipfsnode,
 		Ipfsnodeaddr:         ipfsnodeaddr,
 		Ipfsnodepath:         ipfsnodepath,
 		Mongousr:             mongousr,
