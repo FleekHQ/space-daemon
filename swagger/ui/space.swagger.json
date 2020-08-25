@@ -43,6 +43,28 @@
         ]
       }
     },
+    "/v1/apiSessionTokens": {
+      "get": {
+        "operationId": "SpaceApi_GetAPISessionTokens",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceGetAPISessionTokensResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/backup": {
       "post": {
         "operationId": "SpaceApi_ToggleBucketBackup",
@@ -1481,6 +1503,9 @@
       "properties": {
         "publicKey": {
           "type": "string"
+        },
+        "address": {
+          "type": "string"
         }
       }
     },
@@ -1532,6 +1557,17 @@
         }
       }
     },
+    "spaceGetAPISessionTokensResponse": {
+      "type": "object",
+      "properties": {
+        "hubToken": {
+          "type": "string"
+        },
+        "servicesToken": {
+          "type": "string"
+        }
+      }
+    },
     "spaceGetNotificationsResponse": {
       "type": "object",
       "properties": {
@@ -1556,10 +1592,6 @@
         "publicKey": {
           "type": "string",
           "title": "Public key encoded in hex"
-        },
-        "hubAuthToken": {
-          "type": "string",
-          "title": "Used to verify that the user has access to the private key"
         }
       }
     },
