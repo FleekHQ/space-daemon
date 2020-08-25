@@ -231,11 +231,6 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, bucketName string, p
 		return err
 	}
 	for _, pk := range pubkeys {
-		err := s.tc.SetMember(ctx, bucketName, pk, nil)
-		if err != nil {
-			return err
-		}
-
 		d := &domain.Invitation{
 			Paths: paths,
 			// Key: TODO - get from keys thread for each file

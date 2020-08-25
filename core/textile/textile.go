@@ -72,9 +72,6 @@ type Client interface {
 	Shutdown() error
 	WaitForReady() chan bool
 	Start(ctx context.Context, cfg config.Config) error
-	SetOwner(ctx context.Context, slug string) error
-	SetMember(ctx context.Context, slug string, pk crypto.PubKey, msg *string) error
-	GetMembers(ctx context.Context, slug string) ([]*domain.Member, error)
 	ShareFilesViaPublicKey(ctx context.Context, bucketName string, paths []string, pubkeys []crypto.PubKey) error
 }
 

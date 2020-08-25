@@ -127,29 +127,6 @@ func (_m *Client) GetDefaultBucket(ctx context.Context) (textile.Bucket, error) 
 	return r0, r1
 }
 
-// GetMembers provides a mock function with given fields: ctx, slug
-func (_m *Client) GetMembers(ctx context.Context, slug string) ([]*domain.Member, error) {
-	ret := _m.Called(ctx, slug)
-
-	var r0 []*domain.Member
-	if rf, ok := ret.Get(0).(func(context.Context, string) []*domain.Member); ok {
-		r0 = rf(ctx, slug)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*domain.Member)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, slug)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetThreadsConnection provides a mock function with given fields:
 func (_m *Client) GetThreadsConnection() (*client.Client, error) {
 	ret := _m.Called()
@@ -252,34 +229,6 @@ func (_m *Client) SendMessage(ctx context.Context, recipient crypto.PubKey, body
 	}
 
 	return r0, r1
-}
-
-// SetMember provides a mock function with given fields: ctx, slug, pk, msg
-func (_m *Client) SetMember(ctx context.Context, slug string, pk crypto.PubKey, msg *string) error {
-	ret := _m.Called(ctx, slug, pk, msg)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, crypto.PubKey, *string) error); ok {
-		r0 = rf(ctx, slug, pk, msg)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// SetOwner provides a mock function with given fields: ctx, slug
-func (_m *Client) SetOwner(ctx context.Context, slug string) error {
-	ret := _m.Called(ctx, slug)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, slug)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 // ShareBucket provides a mock function with given fields: ctx, bucketSlug
