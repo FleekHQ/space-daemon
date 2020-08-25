@@ -241,7 +241,12 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, bucketName string, p
 			// Key: TODO - get from keys thread for each file
 		}
 
-		j, err := json.Marshal(d)
+		b := &domain.MessageBody{
+			Type: domain.InvitationMessage,
+			Body: d,
+		}
+
+		j, err := json.Marshal(b)
 		if err != nil {
 			return err
 		}

@@ -86,6 +86,18 @@ const (
 	Rejected
 )
 
+type MessageType int
+
+const (
+	InvitationMessage MessageType = 0
+	UsageAlertMessage
+)
+
+type MessageBody struct {
+	Type MessageType `json:"type"`
+	Body interface{} `json:"body`
+}
+
 type Invitation struct {
 	CustomMessage    string           `json:"customMessage"`
 	InvitationID     string           `json:"invitationID"`
