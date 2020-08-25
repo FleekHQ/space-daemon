@@ -23,7 +23,7 @@ var (
 	debugMode         = flag.Bool("debug", true, "run daemon with debug mode for profiling")
 	devMode           = flag.Bool("dev", false, "run daemon in dev mode to use .env file")
 	ipfsaddr          string
-	ipfsnode 		  bool
+	ipfsnode          bool
 	ipfsnodeaddr      string
 	ipfsnodepath      string
 	mongousr          string
