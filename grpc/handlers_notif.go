@@ -58,6 +58,10 @@ func mapToPbNotification(n domain.Notification) (*pb.Notification, error) {
 	}
 }
 
+func (srv *grpcServer) ClearNewNotifications(ctx context.Context, request *pb.ClearNewNotificationsRequest) (*pb.ClearNewNotificationsResponse, error) {
+	return nil, errNotImplemented
+}
+
 func (srv *grpcServer) GetNotifications(ctx context.Context, request *pb.GetNotificationsRequest) (*pb.GetNotificationsResponse, error) {
 	// textile expects int instead of int64 for limit field
 	n, err := srv.sv.GetNotifications(ctx, request.Seek, int(request.Limit))
@@ -87,11 +91,11 @@ func (srv *grpcServer) ReadNotification(ctx context.Context, request *pb.ReadNot
 	return nil, errNotImplemented
 }
 
-func (srv *grpcServer) AcceptBucketInvitation(ctx context.Context, request *pb.AcceptBucketInvitationRequest) (*pb.AcceptBucketInvitationResponse, error) {
+func (srv *grpcServer) AcceptFilesInvitation(ctx context.Context, request *pb.AcceptFilesInvitationRequest) (*pb.AcceptFilesInvitationResponse, error) {
 	return nil, errNotImplemented
 }
 
-func (srv *grpcServer) RejectBucketInvitation(ctx context.Context, request *pb.RejectBucketInvitationRequest) (*pb.RejectBucketInvitationResponse, error) {
+func (srv *grpcServer) RejectFilesInvitation(ctx context.Context, request *pb.RejectFilesInvitationRequest) (*pb.RejectFilesInvitationResponse, error) {
 	return nil, errNotImplemented
 }
 
