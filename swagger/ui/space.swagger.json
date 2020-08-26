@@ -1069,6 +1069,29 @@
         ]
       }
     },
+    "/v1/sharedWithList": {
+      "get": {
+        "summary": "Returns a list of addresses / public keys of clients to which files where shared or received, ordered by date",
+        "operationId": "SpaceApi_GetRecentlySharedWith",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceGetRecentlySharedWithResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/subscriptions/file": {
       "get": {
         "summary": "Subscribe to file events. This streams responses to the caller",
@@ -1350,6 +1373,9 @@
     "spaceBackupKeysByPassphraseRequest": {
       "type": "object",
       "properties": {
+        "uuid": {
+          "type": "string"
+        },
         "passphrase": {
           "type": "string"
         }
@@ -1592,6 +1618,17 @@
         "publicKey": {
           "type": "string",
           "title": "Public key encoded in hex"
+        }
+      }
+    },
+    "spaceGetRecentlySharedWithResponse": {
+      "type": "object",
+      "properties": {
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/spaceFileMember"
+          }
         }
       }
     },
@@ -1868,6 +1905,9 @@
     "spaceRecoverKeysByPassphraseRequest": {
       "type": "object",
       "properties": {
+        "uuid": {
+          "type": "string"
+        },
         "passphrase": {
           "type": "string"
         }
