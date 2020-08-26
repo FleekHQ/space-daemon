@@ -9,6 +9,10 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 )
 
+func (srv *grpcServer) ClearNewNotifications(ctx context.Context, request *pb.ClearNewNotificationsRequest) (*pb.ClearNewNotificationsResponse, error) {
+	return nil, errNotImplemented
+}
+
 func (srv *grpcServer) GetNotifications(ctx context.Context, request *pb.GetNotificationsRequest) (*pb.GetNotificationsResponse, error) {
 	return nil, errNotImplemented
 }
@@ -17,11 +21,11 @@ func (srv *grpcServer) ReadNotification(ctx context.Context, request *pb.ReadNot
 	return nil, errNotImplemented
 }
 
-func (srv *grpcServer) AcceptBucketInvitation(ctx context.Context, request *pb.AcceptBucketInvitationRequest) (*pb.AcceptBucketInvitationResponse, error) {
+func (srv *grpcServer) AcceptFilesInvitation(ctx context.Context, request *pb.AcceptFilesInvitationRequest) (*pb.AcceptFilesInvitationResponse, error) {
 	return nil, errNotImplemented
 }
 
-func (srv *grpcServer) RejectBucketInvitation(ctx context.Context, request *pb.RejectBucketInvitationRequest) (*pb.RejectBucketInvitationResponse, error) {
+func (srv *grpcServer) RejectFilesInvitation(ctx context.Context, request *pb.RejectFilesInvitationRequest) (*pb.RejectFilesInvitationResponse, error) {
 	return nil, errNotImplemented
 }
 
