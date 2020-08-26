@@ -67,10 +67,12 @@ type Client interface {
 	ShareBucket(ctx context.Context, bucketSlug string) (*tc.DBInfo, error)
 	JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error)
 	CreateBucket(ctx context.Context, bucketSlug string) (Bucket, error)
+	ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) (bool, error)
 	SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error)
 	Shutdown() error
 	WaitForReady() chan bool
 	Start(ctx context.Context, cfg config.Config) error
+	ShareFilesViaPublicKey(ctx context.Context, bucketName string, paths []string, pubkeys []crypto.PubKey) error
 }
 
 type Buckd interface {

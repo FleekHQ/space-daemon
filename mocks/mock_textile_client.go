@@ -254,6 +254,20 @@ func (_m *Client) ShareBucket(ctx context.Context, bucketSlug string) (*client.D
 	return r0, r1
 }
 
+// ShareFilesViaPublicKey provides a mock function with given fields: ctx, bucketName, paths, pubkeys
+func (_m *Client) ShareFilesViaPublicKey(ctx context.Context, bucketName string, paths []string, pubkeys []crypto.PubKey) error {
+	ret := _m.Called(ctx, bucketName, paths, pubkeys)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, []string, []crypto.PubKey) error); ok {
+		r0 = rf(ctx, bucketName, paths, pubkeys)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Shutdown provides a mock function with given fields:
 func (_m *Client) Shutdown() error {
 	ret := _m.Called()
@@ -280,6 +294,27 @@ func (_m *Client) Start(ctx context.Context, cfg config.Config) error {
 	}
 
 	return r0
+}
+
+// ToggleBucketBackup provides a mock function with given fields: ctx, bucketSlug, bucketBackup
+func (_m *Client) ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) (bool, error) {
+	ret := _m.Called(ctx, bucketSlug, bucketBackup)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, string, bool) bool); ok {
+		r0 = rf(ctx, bucketSlug, bucketBackup)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string, bool) error); ok {
+		r1 = rf(ctx, bucketSlug, bucketBackup)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // WaitForReady provides a mock function with given fields:

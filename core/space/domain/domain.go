@@ -89,6 +89,7 @@ const (
 
 type Invitation struct {
 	InviterPublicKey string           `json:"inviterPublicKey"`
+	InviteePublicKey string           `json:"inviteePublicKey"`
 	InvitationID     string           `json:"invitationID"`
 	Status           InvitationStatus `json:"status"`
 	ItemPaths        []string         `json:"itemPaths"`
@@ -98,6 +99,11 @@ type UsageAlert struct {
 	Used    int64  `json:"used"`
 	Limit   int64  `json:"limit"`
 	Message string `json:message`
+}
+
+type MessageBody struct {
+	Type NotificationTypes `json:"type"`
+	Body interface{}       `json:"body`
 }
 
 type Notification struct {

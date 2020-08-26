@@ -134,7 +134,7 @@ Mocks are generated using https://github.com/vektra/mockery.
 
 For Linux it needs to be built from source.
 
-`mockery -name InterfaceToMock -dir path/to/go/files`
+`mockery --name InterfaceToMock --dir path/to/go/files`
 
 ### Protobuf
 
