@@ -2,15 +2,65 @@ package grpc
 
 import (
 	"context"
+	"errors"
 
 	"github.com/FleekHQ/space-daemon/core/events"
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/grpc/pb"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/golang/protobuf/ptypes/empty"
 )
 
+func mapToPbNotification(n domain.Notification) (*pb.Notification, error) {
+	// maybe there is a cooler way to do this (e.g., with reflection)
+	switch n.NotificationType {
+	case domain.INVITATION:
+		inv := n.InvitationValue
+		pbinv := &pb.Invitation{
+			InvitationID:     n.ID,
+			InviterPublicKey: inv.InviterPublicKey,
+			// TODO: Status: come form shared with me thread,
+			ItemPaths: inv.ItemPaths,
+		}
+		ro := &pb.Notification_InvitationValue{
+			InvitationValue: pbinv,
+		}
+		parsedNotif := &pb.Notification{
+			ID:            n.ID,
+			Body:          n.Body,
+			ReadAt:        n.ReadAt,
+			CreatedAt:     n.CreatedAt,
+			RelatedObject: ro,
+			Type:          pb.NotificationType(n.NotificationType),
+		}
+		return parsedNotif, nil
+	case domain.USAGEALERT:
+		ua := n.UsageAlertValue
+		pbua := &pb.UsageAlert{
+			Used:    ua.Used,
+			Limit:   ua.Limit,
+			Message: ua.Message,
+		}
+		ro := &pb.Notification_UsageAlert{
+			UsageAlert: pbua,
+		}
+		parsedNotif := &pb.Notification{
+			ID:            n.ID,
+			Body:          n.Body,
+			ReadAt:        n.ReadAt,
+			CreatedAt:     n.CreatedAt,
+			RelatedObject: ro,
+			Type:          pb.NotificationType(n.NotificationType),
+		}
+		return parsedNotif, nil
+	default:
+		return nil, errors.New("Unsupported message type")
+	}
+}
+
 func (srv *grpcServer) GetNotifications(ctx context.Context, request *pb.GetNotificationsRequest) (*pb.GetNotificationsResponse, error) {
-	n, o, err := srv.sv.GetNotifications(ctx, request.Seek, request.Limit)
+	// textile expects int instead of int64 for limit field
+	n, err := srv.sv.GetNotifications(ctx, request.Seek, int(request.Limit))
 	if err != nil {
 		return nil, err
 	}
@@ -18,20 +68,18 @@ func (srv *grpcServer) GetNotifications(ctx context.Context, request *pb.GetNoti
 	parsedNotifs := []*pb.Notification{}
 
 	for _, notif := range n {
-		parsedNotif := &pb.Notification{
-			// TODO: other fields
-			ReadAt:    notif.ReadAt,
-			CreatedAt: notif.CreatedAt,
+		parsedNotif, err := mapToPbNotification(*notif)
+		if err != nil {
+			return nil, err
 		}
-
-		// TODO: set enhanced msg correctly based on type
-
 		parsedNotifs = append(parsedNotifs, parsedNotif)
 	}
 
+	no := parsedNotifs[len(parsedNotifs)].ID
+
 	return &pb.GetNotificationsResponse{
 		Notifications: parsedNotifs,
-		NextOffset:    o,
+		NextOffset:    no,
 	}, nil
 }
 

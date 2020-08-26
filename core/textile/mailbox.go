@@ -2,6 +2,7 @@ package textile
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
@@ -29,6 +30,46 @@ type UsersClient interface {
 	SetupMailbox(ctx context.Context) (mailbox thread.ID, err error)
 }
 
+func parseMessage(msg client.Message) (*domain.Notification, error) {
+	var b *domain.MessageBody
+	err := json.Unmarshal([]byte(msg.Body), b)
+
+	if err != nil {
+		return nil, err
+	}
+
+	n := &domain.Notification{
+		ID:               msg.ID,
+		Body:             string(msg.Body),
+		NotificationType: (*b).Type,
+		CreatedAt:        msg.CreatedAt.Unix(),
+		ReadAt:           msg.ReadAt.Unix(),
+	}
+
+	switch (*b).Type {
+	case domain.INVITATION:
+		var i *domain.Invitation
+		err := json.Unmarshal((*b).Body, i)
+		if err != nil {
+			return nil, err
+		}
+
+		n.InvitationValue = *i
+	case domain.USAGEALERT:
+		var u *domain.UsageAlert
+		err := json.Unmarshal((*b).Body, u)
+
+		if err != nil {
+			return nil, err
+		}
+		n.UsageAlertValue = *u
+	default:
+		return nil, errors.New("Unsupported message type")
+	}
+
+	return n, nil
+}
+
 func (tc *textileClient) SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error) {
 	var privateKey crypto.PrivKey
 	var err error
@@ -45,12 +86,30 @@ func (tc *textileClient) SendMessage(ctx context.Context, recipient crypto.PubKe
 	return &msg, nil
 }
 
-func (tc *textileClient) GetMailAsNotifications(ctx context.Context, seek string, limit int64) ([]domain.Notification, error) {
-	// call sortmail and format each message
-	return []domain.Notification{}, nil
-}
+func (tc *textileClient) GetMailAsNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error) {
+	ns := []*domain.Notification{}
 
-func (tc *textileClient) sortMail() {}
+	ctx, err := tc.getHubCtx(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	notifs, err := tc.uc.ListInboxMessages(ctx, client.WithSeek(seek), client.WithLimit(limit))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, n := range notifs {
+		notif, err := parseMessage(n)
+		if err != nil {
+			return nil, err
+		}
+
+		ns = append(ns, notif)
+	}
+
+	return ns, nil
+}
 
 type handleMessage func(context.Context, interface{}) error
 

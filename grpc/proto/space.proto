@@ -592,7 +592,7 @@ message GetNotificationsRequest {
 
 message GetNotificationsResponse {
   repeated Notification notifications= 1;
-  int64 nextOffset = 2;
+  string nextOffset = 2;
 }
 message ReadNotificationRequest {
   string ID = 1;

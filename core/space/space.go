@@ -41,7 +41,7 @@ type Service interface {
 	JoinBucket(ctx context.Context, slug string, threadinfo *domain.ThreadInfo) (bool, error)
 	CreateLocalKeysBackup(ctx context.Context, pathToKeyBackup string) error
 	RecoverKeysByLocalBackup(ctx context.Context, pathToKeyBackup string) error
-	GetNotifications(ctx context.Context, seek string, limit int64) ([]domain.Notification, int64, error)
+	GetNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error)
 	ToggleBucketBackup(ctx context.Context, bucketName string, bucketBackup bool) error
 	ShareFilesViaPublicKey(ctx context.Context, bucketName string, paths []string, pubkeys []crypto.PubKey) error
 }

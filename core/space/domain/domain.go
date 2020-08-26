@@ -76,15 +76,15 @@ type NotificationTypes int
 
 const (
 	INVITATION NotificationTypes = 0
-	USAGEALERT
+	USAGEALERT NotificationTypes = 1
 )
 
 type InvitationStatus int
 
 const (
-	PENDING InvitationStatus = 0
-	ACCEPTED
-	REJECTED
+	PENDING  InvitationStatus = 0
+	ACCEPTED InvitationStatus = 1
+	REJECTED InvitationStatus = 2
 )
 
 type Invitation struct {
@@ -103,7 +103,7 @@ type UsageAlert struct {
 
 type MessageBody struct {
 	Type NotificationTypes `json:"type"`
-	Body interface{}       `json:"body`
+	Body []byte            `json:"body`
 }
 
 type Notification struct {

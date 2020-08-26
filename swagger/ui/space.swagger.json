@@ -1578,8 +1578,7 @@
           }
         },
         "nextOffset": {
-          "type": "string",
-          "format": "int64"
+          "type": "string"
         }
       }
     },

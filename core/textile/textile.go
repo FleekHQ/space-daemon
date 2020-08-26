@@ -73,6 +73,7 @@ type Client interface {
 	WaitForReady() chan bool
 	Start(ctx context.Context, cfg config.Config) error
 	ShareFilesViaPublicKey(ctx context.Context, bucketName string, paths []string, pubkeys []crypto.PubKey) error
+	GetMailAsNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error)
 }
 
 type Buckd interface {
