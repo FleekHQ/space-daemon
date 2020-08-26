@@ -36,3 +36,7 @@ func (srv *grpcServer) OpenPublicFile(ctx context.Context, request *pb.OpenPubli
 		Location: res.Location,
 	}, nil
 }
+
+func (srv *grpcServer) GetRecentlySharedWith(ctx context.Context, request *pb.GetRecentlySharedWithRequest) (*pb.GetRecentlySharedWithResponse, error) {
+	return nil, errNotImplemented
+}
