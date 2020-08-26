@@ -465,13 +465,15 @@ message CreateFolderResponse {
 }
 
 message BackupKeysByPassphraseRequest {
-  string passphrase = 1;
+  string uuid = 1;
+  string passphrase = 2;
 }
 
 message BackupKeysByPassphraseResponse {}
 
 message RecoverKeysByPassphraseRequest {
-  string passphrase = 1;
+  string uuid = 1;
+  string passphrase = 2;
 }
 
 message RecoverKeysByPassphraseResponse {}

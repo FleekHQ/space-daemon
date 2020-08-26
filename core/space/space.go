@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/FleekHQ/space-daemon/core/ipfs"
+	"github.com/FleekHQ/space-daemon/core/vault"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/env"
@@ -25,6 +26,8 @@ type Service interface {
 	GenerateKeyPair(ctx context.Context, useForce bool) (mnemonic string, err error)
 	GetMnemonic(ctx context.Context) (mnemonic string, err error)
 	RestoreKeyPairFromMnemonic(ctx context.Context, mnemonic string) error
+	RecoverKeysByPassphrase(ctx context.Context, uuid string, pass string) error
+	BackupKeysByPassphrase(ctx context.Context, uuid string, pass string) error
 	GetPublicKey(ctx context.Context) (string, error)
 	GetHubAuthToken(ctx context.Context) (string, error)
 	CreateFolder(ctx context.Context, path string, bucketName string) error
@@ -41,6 +44,7 @@ type Service interface {
 	CreateLocalKeysBackup(ctx context.Context, pathToKeyBackup string) error
 	RecoverKeysByLocalBackup(ctx context.Context, pathToKeyBackup string) error
 	ToggleBucketBackup(ctx context.Context, bucketName string, bucketBackup bool) error
+	GetAPISessionTokens(ctx context.Context) (domain.APISessionTokens, error)
 }
 
 type serviceOptions struct {
@@ -58,6 +62,7 @@ func NewService(
 	sync services.Syncer,
 	cfg config.Config,
 	kc keychain.Keychain,
+	v vault.Vault,
 	opts ...ServiceOption,
 ) (Service, error) {
 	if !store.IsOpen() {
@@ -76,7 +81,7 @@ func NewService(
 		return nil, err
 	}
 
-	sv := services.NewSpace(store, tc, sync, cfg, o.env, kc, ic)
+	sv := services.NewSpace(store, tc, sync, cfg, o.env, kc, v, ic)
 
 	return sv, nil
 }

@@ -1350,6 +1350,9 @@
     "spaceBackupKeysByPassphraseRequest": {
       "type": "object",
       "properties": {
+        "uuid": {
+          "type": "string"
+        },
         "passphrase": {
           "type": "string"
         }
@@ -1868,6 +1871,9 @@
     "spaceRecoverKeysByPassphraseRequest": {
       "type": "object",
       "properties": {
+        "uuid": {
+          "type": "string"
+        },
         "passphrase": {
           "type": "string"
         }

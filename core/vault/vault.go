@@ -48,6 +48,11 @@ type storeVaultRequest struct {
 	Vsk   string `json:"vsk"`
 }
 
+type StoredVault struct {
+	Vault string
+	Vsk   string
+}
+
 type retrieveVaultRequest struct {
 	Vsk string `json:"vsk"`
 }
@@ -57,7 +62,7 @@ type retrieveVaultResponse struct {
 }
 
 type Vault interface {
-	Store(uuid string, passphrase string, items []VaultItem) (*storeVaultRequest, error)
+	Store(uuid string, passphrase string, apiToken string, items []VaultItem) (*StoredVault, error)
 	Retrieve(uuid string, passphrase string) ([]VaultItem, error)
 }
 
@@ -68,7 +73,7 @@ func New(vaultAPIURL string, vaultSaltSecret string) *vault {
 	}
 }
 
-func (v *vault) Store(uuid string, passphrase string, items []VaultItem) (*storeVaultRequest, error) {
+func (v *vault) Store(uuid string, passphrase string, apiToken string, items []VaultItem) (*StoredVault, error) {
 	// Generate vault file
 	vf, err := json.Marshal(items)
 	if err != nil {
@@ -97,11 +102,13 @@ func (v *vault) Store(uuid string, passphrase string, items []VaultItem) (*store
 		return nil, err
 	}
 
-	resp, err := http.Post(
-		v.vaultAPIURL+"/vaults",
-		"application/json",
-		bytes.NewBuffer(reqJSON),
-	)
+	client := &http.Client{
+		CheckRedirect: http.DefaultClient.CheckRedirect,
+	}
+	req, err := http.NewRequest("POST", v.vaultAPIURL+"/vaults", bytes.NewBuffer(reqJSON))
+	req.Header.Add("Authorization", apiToken)
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +119,11 @@ func (v *vault) Store(uuid string, passphrase string, items []VaultItem) (*store
 		return nil, err
 	}
 
-	return storeRequest, nil
+	result := &StoredVault{
+		Vault: storeRequest.Vault,
+		Vsk:   storeRequest.Vsk,
+	}
+	return result, nil
 }
 
 func (v *vault) Retrieve(uuid string, passphrase string) ([]VaultItem, error) {

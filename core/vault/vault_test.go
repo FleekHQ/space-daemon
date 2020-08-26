@@ -10,8 +10,9 @@ import (
 )
 
 const testSaltSecret = "someSecret"
-const testUuid = "1"
-const testPassphrase = "banana"
+const testUuid = "c907e7ef-7b36-4ab1-8a56-f788d7526a2c"
+const testPassphrase = "banana1234"
+const testAPIToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwdWJrZXkiOiJhZTRiMmFiNjU4ZmJiNzcyMjE0MDRkNjU3YzZiNzQyZDJlZjdjNTI2YjZhNWE5YzIwMGNjZjkzZmNhMWRjZTYzIiwidXVpZCI6ImM5MDdlN2VmLTdiMzYtNGFiMS04YTU2LWY3ODhkNzUyNmEyYyIsImlhdCI6MTU5ODI4NTA0MSwiZXhwIjoxNjAwODc3MDQxfQ.dgp8UhWCLjsU0SjxXwSb3g0jEurt2jAKPaY3B_eO-qE"
 
 func TestVault_StoreAndRetrieve(t *testing.T) {
 	testVaultItems := []vault.VaultItem{
@@ -37,14 +38,17 @@ func TestVault_StoreAndRetrieve(t *testing.T) {
 	defer server.Close()
 
 	v := vault.New(
-		// "https://td4uiovozc.execute-api.us-west-2.amazonaws.com/dev", // UNCOMMENT TO TEST REAL SERVER
+		// "https://f4nmmmkstb.execute-api.us-west-2.amazonaws.com/dev", // UNCOMMENT TO TEST REAL SERVER
 		server.URL,
 		testSaltSecret,
 	)
 
-	storeRequest, err := v.Store(testUuid, testPassphrase, testVaultItems)
+	storeRequest, err := v.Store(testUuid, testPassphrase, testAPIToken, testVaultItems)
 
 	assert.Nil(t, err)
+	if err != nil {
+		return
+	}
 	assert.NotNil(t, storeRequest)
 	assert.NotNil(t, storeRequest.Vault)
 	assert.NotEqual(t, "", storeRequest.Vault)
@@ -67,13 +71,16 @@ func TestVault_StoreAndRetrieve(t *testing.T) {
 	defer server2.Close()
 
 	v2 := vault.New(
-		// "https://td4uiovozc.execute-api.us-west-2.amazonaws.com/dev", // UNCOMMENT TO TEST REAL SERVER
+		// "https://f4nmmmkstb.execute-api.us-west-2.amazonaws.com/dev", // UNCOMMENT TO TEST REAL SERVER
 		server2.URL,
 		testSaltSecret,
 	)
 
 	retrievedItems, err := v2.Retrieve(testUuid, testPassphrase)
 	assert.Nil(t, err)
+	if err != nil {
+		return
+	}
 	assert.NotNil(t, retrievedItems)
 
 	// Assert response matches what we initially vaulted
@@ -106,12 +113,12 @@ func TestVault_StoreServerError(t *testing.T) {
 	defer server.Close()
 
 	v := vault.New(
-		// "https://td4uiovozc.execute-api.us-west-2.amazonaws.com/dev", // UNCOMMENT TO TEST REAL SERVER
+		// "https://f4nmmmkstb.execute-api.us-west-2.amazonaws.com/dev", // UNCOMMENT TO TEST REAL SERVER
 		server.URL,
 		testSaltSecret,
 	)
 
-	storeRequest, err := v.Store(testUuid, testPassphrase, testVaultItems)
+	storeRequest, err := v.Store(testUuid, testPassphrase, testAPIToken, testVaultItems)
 
 	assert.NotNil(t, err)
 	assert.Nil(t, storeRequest)
@@ -135,7 +142,7 @@ func TestVault_RetrieveServerError(t *testing.T) {
 	defer server.Close()
 
 	v := vault.New(
-		// "https://td4uiovozc.execute-api.us-west-2.amazonaws.com/dev", // UNCOMMENT TO TEST REAL SERVER
+		// "https://f4nmmmkstb.execute-api.us-west-2.amazonaws.com/dev", // UNCOMMENT TO TEST REAL SERVER
 		server.URL,
 		testSaltSecret,
 	)
