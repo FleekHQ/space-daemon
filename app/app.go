@@ -20,6 +20,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/env"
 	"github.com/FleekHQ/space-daemon/core/space"
 
+	node "github.com/FleekHQ/space-daemon/core/ipfs/node"
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/sync"
 	"github.com/FleekHQ/space-daemon/log"
@@ -90,6 +91,17 @@ func (a *App) Start(ctx context.Context) error {
 		return err
 	}
 	a.Run("FolderWatcher", watcher)
+
+	// setup local ipfs node if Ipfsnode is set
+	if a.cfg.GetBool(config.Ipfsnode, true) {
+		// setup local ipfs node
+		node := node.NewIpsNode(a.cfg)
+		a.RunAsync("IpfsNode", node, func() error {
+			return node.Start(ctx)
+		})
+	} else {
+		log.Info("Skipping embedded IPFS node")
+	}
 
 	// setup local buckets
 	buckd := textile.NewBuckd(a.cfg)
