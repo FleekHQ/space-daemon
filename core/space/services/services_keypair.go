@@ -63,3 +63,7 @@ func (s *Space) GetMnemonic(ctx context.Context) (string, error) {
 
 	return mnemonic, nil
 }
+
+func (s *Space) DeleteKeypair(ctx context.Context) error {
+	return s.keychain.DeleteKeypair()
+}

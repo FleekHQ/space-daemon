@@ -181,6 +181,14 @@ service SpaceApi {
     };
   }
 
+  // Tests a passphrase to see if it matches the one previously used
+  rpc TestKeysPassphrase(TestKeysPassphraseRequest) returns (TestKeysPassphraseResponse) {
+    option (google.api.http) = {
+      post: "/v1/passphrases/test"
+      body: "*"
+    };
+  }
+
   rpc CreateLocalKeysBackup(CreateLocalKeysBackupRequest) returns (CreateLocalKeysBackupResponse) {
     option (google.api.http) = {
       post: "/v1/localBackups/backup"
@@ -219,16 +227,16 @@ service SpaceApi {
     };
   }
 
-  rpc AcceptFilesInvitation(AcceptFilesInvitationRequest) returns (AcceptFilesInvitationResponse) {
+  rpc AcceptBucketInvitation(AcceptBucketInvitationRequest) returns (AcceptBucketInvitationResponse) {
     option (google.api.http) = {
-      post: "/v1/acceptFilesInvitation"
+      post: "/v1/acceptInvitation"
       body: "*"
     };
   }
 
-  rpc RejectFilesInvitation(RejectFilesInvitationRequest) returns (RejectFilesInvitationResponse) {
+  rpc RejectBucketInvitation(RejectBucketInvitationRequest) returns (RejectBucketInvitationResponse) {
     option (google.api.http) = {
-      post: "/v1/rejectFilesInvitation"
+      post: "/v1/rejectInvitation"
       body: "*"
     };
   }
@@ -291,21 +299,7 @@ service SpaceApi {
       get: "/v1/sharedWithList"
     };
   }
-
-  // This will set the last notification received before clearing the bell so that it could
-  // be used in GetNotifications to indicate if a new message is included
-  rpc ClearNewNotifications(ClearNewNotificationsRequest) returns (ClearNewNotificationsResponse) {
-    option (google.api.http) = {
-      get: "/v1/sharedWithList"
-    };
-  }
 }
-
-message ClearNewNotificationsRequest {
-  string ID = 1;
-}
-
-message ClearNewNotificationsResponse {}
 
 message GetSharedWithMeFilesRequest {
   string seek = 1;
@@ -499,6 +493,13 @@ message RecoverKeysByPassphraseRequest {
 
 message RecoverKeysByPassphraseResponse {}
 
+message TestKeysPassphraseRequest {
+  string uuid = 1;
+  string passphrase = 2;
+}
+
+message TestKeysPassphraseResponse {}
+
 message ThreadInfo {
   repeated string addresses = 1;
   string key = 2;
@@ -592,17 +593,17 @@ message Notification {
   int64 readAt = 8;
 }
 
-message AcceptFilesInvitationRequest {
+message AcceptBucketInvitationRequest {
   string invitationID = 1;
 }
 
-message AcceptFilesInvitationResponse {}
+message AcceptBucketInvitationResponse {}
 
-message RejectFilesInvitationRequest {
+message RejectBucketInvitationRequest {
   string invitationID = 1;
 }
 
-message RejectFilesInvitationResponse {}
+message RejectBucketInvitationResponse {}
 
 message NotificationEventResponse {
   Notification notification = 1;
@@ -615,8 +616,7 @@ message GetNotificationsRequest {
 
 message GetNotificationsResponse {
   repeated Notification notifications= 1;
-  string nextOffset = 2;
-  bool new = 3; // will use the last mark clear ID to see if there are new ones
+  int64 nextOffset = 2;
 }
 message ReadNotificationRequest {
   string ID = 1;

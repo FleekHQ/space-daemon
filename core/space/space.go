@@ -24,10 +24,12 @@ type Service interface {
 	ListDirs(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error)
 	ListDir(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error)
 	GenerateKeyPair(ctx context.Context, useForce bool) (mnemonic string, err error)
+	DeleteKeypair(ctx context.Context) error
 	GetMnemonic(ctx context.Context) (mnemonic string, err error)
 	RestoreKeyPairFromMnemonic(ctx context.Context, mnemonic string) error
 	RecoverKeysByPassphrase(ctx context.Context, uuid string, pass string) error
 	BackupKeysByPassphrase(ctx context.Context, uuid string, pass string) error
+	TestPassphrase(ctx context.Context, uuid string, pass string) error
 	GetPublicKey(ctx context.Context) (string, error)
 	GetHubAuthToken(ctx context.Context) (string, error)
 	CreateFolder(ctx context.Context, path string, bucketName string) error

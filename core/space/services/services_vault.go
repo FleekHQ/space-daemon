@@ -128,3 +128,17 @@ func (s *Space) BackupKeysByPassphrase(ctx context.Context, uuid string, pass st
 
 	return nil
 }
+
+// Tests a passphrase without storing anything to check if the passphrase is correct
+func (s *Space) TestPassphrase(ctx context.Context, uuid string, pass string) error {
+	items, err := s.vault.Retrieve(uuid, pass)
+	if err != nil {
+		return err
+	}
+
+	if len(items) == 0 {
+		return errors.New("Retrieved vault does not contain keys")
+	}
+
+	return nil
+}
