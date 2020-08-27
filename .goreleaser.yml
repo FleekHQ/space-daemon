@@ -17,6 +17,8 @@ builds:
       - -X main.mongohost={{ .Env.MONGO_HOST }}
       - -X main.mongorepset={{ .Env.MONGO_REPLICA_SET }}
       - -X main.spaceapi={{ .Env.SERVICES_API_URL }}
+      - -X main.vaultapi={{ .Env.VAULT_API_URL }}
+      - -X main.vaultsaltsecret={{ .Env.VAULT_SALT_SECRET }}
       - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
       - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
       - -X main.textilehubma={{ .Env.TXL_HUB_MA }}
@@ -38,6 +40,8 @@ builds:
       - -X main.mongohost={{ .Env.MONGO_HOST }}
       - -X main.mongorepset={{ .Env.MONGO_REPLICA_SET }}
       - -X main.spaceapi={{ .Env.SERVICES_API_URL }}
+      - -X main.vaultapi={{ .Env.VAULT_API_URL }}
+      - -X main.vaultsaltsecret={{ .Env.VAULT_SALT_SECRET }}
       - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
       - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
       - -X main.textilehubma={{ .Env.TXL_HUB_MA }}
@@ -61,6 +65,8 @@ builds:
       - -X main.mongohost={{ .Env.MONGO_HOST }}
       - -X main.mongorepset={{ .Env.MONGO_REPLICA_SET }}
       - -X main.spaceapi={{ .Env.SERVICES_API_URL }}
+      - -X main.vaultapi={{ .Env.VAULT_API_URL }}
+      - -X main.vaultsaltsecret={{ .Env.VAULT_SALT_SECRET }}
       - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
       - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
       - -X main.textilehubma={{ .Env.TXL_HUB_MA }}

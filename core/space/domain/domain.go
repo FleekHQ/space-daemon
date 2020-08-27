@@ -71,3 +71,8 @@ type FileSharingInfo struct {
 	SharedFileKey     string
 	SpaceDownloadLink string
 }
+
+type APISessionTokens struct {
+	HubToken      string
+	ServicesToken string
+}

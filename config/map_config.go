@@ -29,6 +29,8 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[Mongohost] = os.Getenv(env.MongoHost)
 		configStr[Mongorepset] = os.Getenv(env.MongoRepSet)
 		configStr[SpaceServicesAPIURL] = os.Getenv(env.ServicesAPIURL)
+		configStr[SpaceVaultAPIURL] = os.Getenv(env.VaultAPIURL)
+		configStr[SpaceVaultSaltSecret] = os.Getenv(env.VaultSaltSecret)
 		configStr[SpaceServicesHubAuthURL] = os.Getenv(env.ServicesHubAuthURL)
 		configStr[TextileHubTarget] = os.Getenv(env.TextileHubTarget)
 		configStr[TextileHubMa] = os.Getenv(env.TextileHubMa)
@@ -42,6 +44,8 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[Mongohost] = flags.Mongohost
 		configStr[Mongorepset] = flags.Mongorepset
 		configStr[SpaceServicesAPIURL] = flags.ServicesAPIURL
+		configStr[SpaceVaultAPIURL] = flags.VaultAPIURL
+		configStr[SpaceVaultSaltSecret] = flags.VaultSaltSecret
 		configStr[SpaceServicesHubAuthURL] = flags.ServicesHubAuthURL
 		configStr[TextileHubTarget] = flags.TextileHubTarget
 		configStr[TextileHubMa] = flags.TextileHubMa
