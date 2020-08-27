@@ -22,8 +22,8 @@ var (
 	memprofile        = flag.String("memprofile", "", "write memory profile to `file`")
 	debugMode         = flag.Bool("debug", true, "run daemon with debug mode for profiling")
 	devMode           = flag.Bool("dev", false, "run daemon in dev mode to use .env file")
-	ipfsaddr          string
-	ipfsnode          bool
+	ipfsaddr          = flag.String("ipfsaddr", "/ip4/127.0.0.1/tcp/5001", "IPFS multiaddress to connect to (defaults to local node)")
+	ipfsnode          = flag.Bool("ipfsnode", true, "run IPFS embedded into the daemon (defaults to true)")
 	ipfsnodeaddr      string
 	ipfsnodepath      string
 	mongousr          string
@@ -52,8 +52,8 @@ func main() {
 	log.Debug("Running mode", fmt.Sprintf("DevMode:%v", *devMode))
 
 	cf := &config.Flags{
-		Ipfsaddr:             ipfsaddr,
-		Ipfsnode:             ipfsnode,
+		Ipfsaddr:             *ipfsaddr,
+		Ipfsnode:             *ipfsnode == true,
 		Ipfsnodeaddr:         ipfsnodeaddr,
 		Ipfsnodepath:         ipfsnodepath,
 		Mongousr:             mongousr,

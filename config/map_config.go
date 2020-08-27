@@ -42,7 +42,7 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[TextileUserKey] = os.Getenv(env.TextileUserKey)
 		configStr[TextileUserSecret] = os.Getenv(env.TextileUserSecret)
 
-		if os.Getenv(env.IpfsNode) != "" {
+		if os.Getenv(env.IpfsNode) != "false" {
 			configBool[Ipfsnode] = true
 		}
 	} else {
@@ -62,7 +62,6 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[TextileThreadsTarget] = flags.TextileThreadsTarget
 		configStr[TextileUserKey] = flags.TextileUserKey
 		configStr[TextileUserSecret] = flags.TextileUserSecret
-
 		configBool[Ipfsnode] = flags.Ipfsnode
 	}
 

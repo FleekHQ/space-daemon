@@ -2,8 +2,7 @@ build:
 	go build \
 	-o bin/space \
 	-ldflags \
-	"-X 'main.ipfsaddr=${IPFS_ADDR}'\
-	-X 'main.ipfsnodeaddr=${IPFS_NODE_ADDR}' \
+	"-X 'main.ipfsnodeaddr=${IPFS_NODE_ADDR}' \
 	-X 'main.ipfsnodepath=${IPFS_NODE_PATH}' \
 	-X 'main.mongousr=${MONGO_USR}' \
 	-X 'main.mongopw=${MONGO_PW}' \

@@ -92,13 +92,15 @@ func (a *App) Start(ctx context.Context) error {
 	}
 	a.Run("FolderWatcher", watcher)
 
-	// setup local ipfs node if ipfsNodeaddr is set
-	if a.cfg.GetBool(config.Ipfsnode, false) {
+	// setup local ipfs node if Ipfsnode is set
+	if a.cfg.GetBool(config.Ipfsnode, true) {
 		// setup local ipfs node
 		node := node.NewIpsNode(a.cfg)
 		a.RunAsync("IpfsNode", node, func() error {
 			return node.Start(ctx)
 		})
+	} else {
+		log.Info("Skipping embedded IPFS node")
 	}
 
 	// setup local buckets
