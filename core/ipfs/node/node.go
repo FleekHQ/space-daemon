@@ -134,6 +134,9 @@ func (node *IpfsNode) start() error {
 	}
 
 	addr := node.cfg.GetString(config.Ipfsnodeaddr, "/ip4/127.0.0.1/tcp/5001")
+	if addr == "" {
+		addr = "/ip4/127.0.0.1/tcp/5001"
+	}
 
 	var opts = []corehttp.ServeOption{
 		corehttp.GatewayOption(true, "/ipfs", "/ipns"),
