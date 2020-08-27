@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"os/user"
+	"path/filepath"
 	"strings"
 
 	"github.com/FleekHQ/space-daemon/config"
@@ -20,6 +22,7 @@ import (
 	"github.com/textileio/textile/api/common"
 	uc "github.com/textileio/textile/api/users/client"
 	"github.com/textileio/textile/cmd"
+	mail "github.com/textileio/textile/mail/local"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -30,6 +33,7 @@ type textileClient struct {
 	threads          *threadsClient.Client
 	ht               *threadsClient.Client
 	bucketsClient    *bucketsClient.Client
+	mb               Mailbox
 	isRunning        bool
 	Ready            chan bool
 	cfg              config.Config
@@ -45,6 +49,7 @@ func NewClient(store db.Store, kc keychain.Keychain) *textileClient {
 		kc:               kc,
 		threads:          nil,
 		bucketsClient:    nil,
+		mb:               nil,
 		netc:             nil,
 		uc:               nil,
 		ht:               nil,
@@ -133,6 +138,50 @@ func (tc *textileClient) SetUc(uc UsersClient) {
 	tc.uc = uc
 }
 
+func (tc *textileClient) SetMb(mb Mailbox) {
+	tc.mb = mb
+}
+
+func (tc *textileClient) setupMailBox(ctx context.Context) error {
+	maillib := mail.NewMail(cmd.NewClients("api.textile.io:443", true), mail.DefaultConfConfig())
+
+	usr, _ := user.Current()
+	mbpath := filepath.Join(usr.HomeDir, ".fleek-space/textile/mail")
+
+	var mailbox *mail.Mailbox
+	dbid, err := tc.store.Get([]byte(inboxDbIdStoreKey))
+	if err == nil && len(dbid) > 0 {
+		// restore
+		mailbox, err = maillib.GetLocalMailbox(ctx, mbpath)
+		if err != nil {
+			return err
+		}
+	} else {
+		// create
+		priv, _, err := tc.kc.GetStoredKeyPairInLibP2PFormat()
+		if err != nil {
+			return err
+		}
+
+		id := thread.NewLibp2pIdentity(priv)
+
+		mailbox, err = maillib.NewMailbox(ctx, mail.Config{
+			Path:      mbpath,
+			Identity:  id,
+			APIKey:    tc.cfg.GetString(config.TextileUserKey, ""),
+			APISecret: tc.cfg.GetString(config.TextileUserSecret, ""),
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	mid := mailbox.Identity()
+	log.Info("Mailbox identity: " + mid.GetPublic().String())
+	tc.mb = mailbox
+	return nil
+}
+
 // notreturning error rn and this helper does
 // the logging if connection to hub fails, and
 // we continue with startup
@@ -145,13 +194,10 @@ func (tc *textileClient) ConnectToHub(ctx context.Context) {
 
 	tc.isConnectedToHub = true
 
-	// setup mailbox
-	mid, err := tc.uc.SetupMailbox(hubctx)
+	err = tc.setupMailBox(hubctx)
 	if err != nil {
-		log.Error("Unable to setup mailbox", err)
+		log.Warn("Unable to setup mailbox, continuing startup.")
 	}
-
-	log.Info("Mailbox id: " + mid.String())
 }
 
 func getUserClient(host string) UsersClient {

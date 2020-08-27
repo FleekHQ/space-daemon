@@ -11,23 +11,18 @@ import (
 	"github.com/textileio/textile/api/users/client"
 )
 
-// Seek:      args.seek, string
-// Limit:     int64(args.limit),
-// Ascending: args.ascending, bool
-// Status:    pb.ListInboxMessagesRequest_Status(args.status),
-
-// type ListInboxMessagesRequest_Status int32
-
-// const (
-// 	ListInboxMessagesRequest_ALL    ListInboxMessagesRequest_Status = 0
-// 	ListInboxMessagesRequest_READ   ListInboxMessagesRequest_Status = 1
-// 	ListInboxMessagesRequest_UNREAD ListInboxMessagesRequest_Status = 2
-// )
+const inboxDbIdStoreKey = "inboxDbId"
+const sentboxDbIdStoreKey = "sentboxDbId"
 
 type UsersClient interface {
 	ListInboxMessages(ctx context.Context, opts ...client.ListOption) ([]client.Message, error)
 	SendMessage(ctx context.Context, from thread.Identity, to thread.PubKey, body []byte) (msg client.Message, err error)
 	SetupMailbox(ctx context.Context) (mailbox thread.ID, err error)
+}
+
+type Mailbox interface {
+	ListInboxMessages(ctx context.Context, opts ...client.ListOption) ([]client.Message, error)
+	SendMessage(ctx context.Context, to thread.PubKey, body []byte) (msg client.Message, err error)
 }
 
 func parseMessage(msg client.Message) (*domain.Notification, error) {
@@ -71,14 +66,7 @@ func parseMessage(msg client.Message) (*domain.Notification, error) {
 }
 
 func (tc *textileClient) SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error) {
-	var privateKey crypto.PrivKey
-	var err error
-	if privateKey, _, err = tc.kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
-		return nil, err
-	}
-	id := thread.NewLibp2pIdentity(privateKey)
-
-	msg, err := tc.uc.SendMessage(ctx, id, thread.NewLibp2pPubKey(recipient), body)
+	msg, err := tc.mb.SendMessage(ctx, thread.NewLibp2pPubKey(recipient), body)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +82,7 @@ func (tc *textileClient) GetMailAsNotifications(ctx context.Context, seek string
 		return nil, err
 	}
 
-	notifs, err := tc.uc.ListInboxMessages(ctx, client.WithSeek(seek), client.WithLimit(limit))
+	notifs, err := tc.mb.ListInboxMessages(ctx, client.WithSeek(seek), client.WithLimit(limit))
 	if err != nil {
 		return nil, err
 	}
