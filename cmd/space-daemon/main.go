@@ -26,6 +26,7 @@ var (
 	ipfsnode          = flag.Bool("ipfsnode", true, "run IPFS embedded into the daemon (defaults to true)")
 	ipfsnodeaddr      string
 	ipfsnodepath      string
+	powergate         = flag.Bool("filecoin", false, "run a devnet powergate daemon on port 9995")
 	mongousr          string
 	mongopw           string
 	mongohost         string
@@ -70,6 +71,7 @@ func main() {
 		TextileThreadsTarget: textilethreads,
 		TextileUserKey:       textileuserkey,
 		TextileUserSecret:    textileusersecret,
+		StartPowergate:       *powergate,
 	}
 
 	// CPU profiling

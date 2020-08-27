@@ -24,6 +24,11 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 	configInt[SpaceServerPort] = 9999
 	configInt[SpaceProxyServerPort] = 9998
 	configInt[SpaceRestProxyServerPort] = 9997
+	if flags.StartPowergate {
+		configStr[StartPowergate] = "true"
+	} else {
+		configStr[StartPowergate] = "false"
+	}
 	if flags.DevMode {
 		configStr[Ipfsaddr] = os.Getenv(env.IpfsAddr)
 		configStr[Ipfsnodeaddr] = os.Getenv(env.IpfsNodeAddr)

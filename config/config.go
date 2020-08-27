@@ -32,6 +32,7 @@ const (
 	Mongorepset              = "space/mongoRepSet"
 	MinThreadsConnection     = "space/minThreadsConn"
 	MaxThreadsConnection     = "space/maxThreadsConn"
+	StartPowergate           = "space/startPowergate"
 )
 
 var (
@@ -57,6 +58,7 @@ type Flags struct {
 	TextileThreadsTarget string
 	TextileUserKey       string
 	TextileUserSecret    string
+	StartPowergate       bool
 }
 
 // Config used to fetch config information

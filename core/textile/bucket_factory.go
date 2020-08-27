@@ -145,7 +145,7 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 
 	log.Debug("Creating Bucket in db " + dbID.String())
 	// create bucket
-	b, err := tc.bucketsClient.Init(ctx, bc.WithName(bucketSlug), bc.WithPrivate(true))
+	b, err := tc.bucketsClient.Create(ctx, bc.WithName(bucketSlug), bc.WithPrivate(true))
 	if err != nil {
 		return nil, err
 	}

@@ -170,6 +170,15 @@ func (a *App) Start(ctx context.Context) error {
 		return srv.Start(ctx)
 	})
 
+	// start powergate if enabled
+	if a.cfg.GetString(config.StartPowergate, "false") == "true" {
+		powd, err := textile.StartPowd(a.cfg)
+		if err != nil {
+			return err
+		}
+		a.Run("Powergate Daemon", powd)
+	}
+
 	log.Info("Daemon ready")
 
 	// wait for interruption or done signal

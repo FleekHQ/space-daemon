@@ -151,9 +151,9 @@ func (tc *textileClient) ConnectToHub(ctx context.Context) {
 	mid, err := tc.uc.SetupMailbox(hubctx)
 	if err != nil {
 		log.Error("Unable to setup mailbox", err)
+	} else {
+		log.Info("Mailbox id: " + mid.String())
 	}
-
-	log.Info("Mailbox id: " + mid.String())
 }
 
 func getUserClient(host string) UsersClient {
