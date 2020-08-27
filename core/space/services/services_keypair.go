@@ -7,6 +7,8 @@ import (
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
+	"github.com/textileio/go-threads/core/thread"
+
 )
 
 // Generates a key pair and returns a mnemonic for recovering that key later on
@@ -48,7 +50,19 @@ func (s *Space) GetPublicKey(ctx context.Context) (string, error) {
 }
 
 func (s *Space) GetHubAuthToken(ctx context.Context) (string, error) {
-	return hub.GetHubToken(ctx, s.store, s.keychain, s.cfg)
+	tokenCtx, err := hub.GetHubToken(ctx, s.store, s.keychain, s.cfg)
+
+	if err != nil {
+		return "", err
+	}
+
+	threadToken, ok := thread.TokenFromContext(tokenCtx)
+
+	if ok {
+		return string(threadToken), nil;
+	}
+
+	return "", nil;
 }
 
 func (s *Space) GetMnemonic(ctx context.Context) (string, error) {

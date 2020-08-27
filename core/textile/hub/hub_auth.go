@@ -38,6 +38,10 @@ type inMessageChallenge struct {
 
 type inMessageTokenValue struct {
 	Token string `json:"token"`
+	Key string `json:"key"`
+	Msg string `json:"msg"`
+	Sig []byte `json:"sig"`
+	AppToken string `json:"appToken"`
 }
 
 type inMessageToken struct {
@@ -64,26 +68,27 @@ func storeHubToken(st store.Store, hubToken string) error {
 	return err
 }
 
-func GetHubToken(ctx context.Context, st store.Store, kc keychain.Keychain, cfg config.Config) (string, error) {
+func GetHubToken(ctx context.Context, st store.Store, kc keychain.Keychain, cfg config.Config) (context.Context, error) {
 	// Try to avoid redoing challenge if we already have the token
-	if valFromStore, err := getHubTokenFromStore(st); err != nil {
-		return "", err
-	} else if valFromStore != "" {
-		log.Debug("Got hub token from store: " + valFromStore)
-		return valFromStore, nil
-	}
+	// if valFromStore, err := getHubTokenFromStore(st); err != nil {
+	// 	return nil, err
+	// } else if valFromStore != "" {
+	// 	log.Debug("Got hub token from store: " + valFromStore)
+	// 	return valFromStore, nil
+	// }
 
 	log.Debug("Token Challenge: Connecting through websocket")
 	conn, err := websocket.Dial(cfg.GetString(config.SpaceServicesHubAuthURL, ""), "", "http://localhost/")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer conn.Close()
 	log.Debug("Token Challenge: Connected")
 
 	privateKey, _, err := kc.GetStoredKeyPairInLibP2PFormat()
+
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	identity := thread.NewLibp2pIdentity(privateKey)
@@ -99,18 +104,18 @@ func GetHubToken(ctx context.Context, st store.Store, kc keychain.Keychain, cfg 
 	}
 	err = websocket.JSON.Send(conn, tokenRequest)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	challenge := inMessageChallenge{}
 	if err := websocket.JSON.Receive(conn, &challenge); err != nil {
-		return "", err
+		return nil, err
 	}
 	log.Debug("Token Challenge: Received challenge")
 
 	solution, err := identity.Sign(ctx, challenge.Value.Data)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// Send back channel solution
@@ -124,7 +129,7 @@ func GetHubToken(ctx context.Context, st store.Store, kc keychain.Keychain, cfg 
 	log.Debug("Token Challenge: Sending signature")
 	err = websocket.JSON.Send(conn, solMessage)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// Receive the token
@@ -132,7 +137,7 @@ func GetHubToken(ctx context.Context, st store.Store, kc keychain.Keychain, cfg 
 	for token.Type != "token" {
 		currToken := inMessageToken{}
 		if err := websocket.JSON.Receive(conn, &token); err != nil {
-			return "", err
+			return nil, err
 		}
 
 		if currToken.Type == "token" {
@@ -141,11 +146,20 @@ func GetHubToken(ctx context.Context, st store.Store, kc keychain.Keychain, cfg 
 	}
 	log.Debug("Token Challenge: Received token successfully")
 
-	if err := storeHubToken(st, token.Value.Token); err != nil {
-		return "", err
-	}
+	ctx = common.NewAPIKeyContext(ctx, token.Value.Key)
+	ctx = common.NewAPISigContext(ctx, token.Value.Msg, token.Value.Sig)
 
-	return token.Value.Token, nil
+	tok := thread.Token(token.Value.Token)
+	ctx = thread.NewTokenContext(ctx, tok)
+
+	// @todo: Store appToken
+
+	// this might not be ideal, we need to store also key + msg + sig
+	// if err := storeHubToken(st, token.Value.Token); err != nil {
+	// 	return nil, err
+	// }
+
+	return ctx, nil
 }
 
 // This method is just for testing purposes. Keys shouldn't be bundled in the daemon.
