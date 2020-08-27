@@ -20,6 +20,7 @@ import (
 
 	"github.com/FleekHQ/space-daemon/core/space/services"
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
+	"github.com/FleekHQ/space-daemon/core/vault"
 	"github.com/FleekHQ/space-daemon/mocks"
 	"github.com/stretchr/testify/assert"
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
@@ -34,6 +35,7 @@ var (
 	mockEnv        *mocks.SpaceEnv
 	mockSync       *mocks.Syncer
 	mockKeychain   *mocks.Keychain
+	mockVault      *mocks.Vault
 	mockPubKey     crypto.PubKey
 	mockPrivKey    crypto.PrivKey
 	mockPubKeyHex  string
@@ -63,6 +65,7 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 	mockEnv = new(mocks.SpaceEnv)
 	mockSync = new(mocks.Syncer)
 	mockKeychain = new(mocks.Keychain)
+	mockVault = new(mocks.Vault)
 	var dir string
 	var err error
 	if dir, err = ioutil.TempDir("", "space-test-folders"); err != nil {
@@ -110,7 +113,7 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 	// NOTE: if we need to test without the store open we must override on each test
 	st.On("IsOpen").Return(true)
 
-	sv, err := NewService(st, textileClient, mockSync, cfg, mockKeychain, WithEnv(mockEnv))
+	sv, err := NewService(st, textileClient, mockSync, cfg, mockKeychain, mockVault, WithEnv(mockEnv))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -644,10 +647,57 @@ func TestService_BackupAndRestore(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, backup)
 
-	mockKeychain.On("ImportExistingKeyPair", mock.Anything).Return(nil)
+	mockKeychain.On("ImportExistingKeyPair", mock.Anything, mock.Anything).Return(nil)
 
 	err = sv.RecoverKeysByLocalBackup(ctx, path)
 
 	assert.Nil(t, err)
-	mockKeychain.AssertCalled(t, "ImportExistingKeyPair", mockPrivKey)
+	mockKeychain.AssertCalled(t, "ImportExistingKeyPair", mockPrivKey, "")
+}
+
+func TestService_VaultBackup(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	defer tearDown()
+
+	pass := "strawberry123"
+	uuid := "c907e7ef-7b36-4ab1-8a56-f788d7526a2c"
+	ctx := context.Background()
+	mnemonic := "clog chalk blame black uncover frame before decide tuition maple crowd uncle"
+
+	mockKeychain.On(
+		"GetStoredKeyPairInLibP2PFormat",
+	).Return(mockPrivKey, mockPubKey, nil)
+
+	mockKeychain.On("GetStoredMnemonic").Return(mnemonic, nil)
+
+	mockVault.On("Store", uuid, pass, mock.Anything, mock.Anything).Return(nil, nil)
+
+	err := sv.BackupKeysByPassphrase(ctx, uuid, pass)
+	assert.Nil(t, err)
+	mockVault.AssertCalled(t, "Store", uuid, pass, mock.Anything, mock.Anything)
+}
+
+func TestService_VaultRestore(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	defer tearDown()
+
+	pass := "strawberry123"
+	uuid := "c907e7ef-7b36-4ab1-8a56-f788d7526a2c"
+	ctx := context.Background()
+	mnemonic := "clog chalk blame black uncover frame before decide tuition maple crowd uncle"
+
+	mockItem := vault.VaultItem{
+		ItemType: vault.PrivateKeyWithMnemonic,
+		Value:    mockPrivKeyHex + "___" + mnemonic,
+	}
+
+	mockItems := []vault.VaultItem{mockItem}
+
+	mockVault.On("Retrieve", uuid, pass).Return(mockItems, nil)
+
+	mockKeychain.On("ImportExistingKeyPair", mock.Anything, mock.Anything).Return(nil)
+
+	err := sv.RecoverKeysByPassphrase(ctx, uuid, pass)
+	assert.Nil(t, err)
+	mockKeychain.AssertCalled(t, "ImportExistingKeyPair", mockPrivKey, mnemonic)
 }

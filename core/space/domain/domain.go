@@ -117,3 +117,8 @@ type Notification struct {
 	InvitationValue Invitation `json:"invitationValue"`
 	UsageAlertValue UsageAlert `json:"usageAlertValue"`
 }
+
+type APISessionTokens struct {
+	HubToken      string
+	ServicesToken string
+}

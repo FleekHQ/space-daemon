@@ -7,11 +7,17 @@ import (
 )
 
 func (srv *grpcServer) BackupKeysByPassphrase(ctx context.Context, request *pb.BackupKeysByPassphraseRequest) (*pb.BackupKeysByPassphraseResponse, error) {
-	return nil, errNotImplemented
+	resp := &pb.BackupKeysByPassphraseResponse{}
+	err := srv.sv.BackupKeysByPassphrase(ctx, request.Uuid, request.Passphrase)
+
+	return resp, err
 }
 
 func (srv *grpcServer) RecoverKeysByPassphrase(ctx context.Context, request *pb.RecoverKeysByPassphraseRequest) (*pb.RecoverKeysByPassphraseResponse, error) {
-	return nil, errNotImplemented
+	resp := &pb.RecoverKeysByPassphraseResponse{}
+	err := srv.sv.RecoverKeysByPassphrase(ctx, request.Uuid, request.Passphrase)
+
+	return resp, err
 }
 
 func (srv *grpcServer) CreateLocalKeysBackup(ctx context.Context, request *pb.CreateLocalKeysBackupRequest) (*pb.CreateLocalKeysBackupResponse, error) {

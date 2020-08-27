@@ -2,10 +2,13 @@ build:
 	go build \
 	-o bin/space \
 	-ldflags \
-	"-X 'main.ipfsaddr=${IPFS_ADDR}'\
+	"-X 'main.ipfsnodeaddr=${IPFS_NODE_ADDR}' \
+	-X 'main.ipfsnodepath=${IPFS_NODE_PATH}' \
 	-X 'main.mongousr=${MONGO_USR}' \
 	-X 'main.mongopw=${MONGO_PW}' \
 	-X 'main.spaceapi=${SERVICES_API_URL}' \
+	-X 'main.vaultapi=${VAULT_API_URL}' \
+	-X 'main.vaultsaltsecret=${VAULT_SALT_SECRET}' \
 	-X 'main.spacehubauth=${SERVICES_HUB_AUTH_URL}' \
 	-X 'main.textilehub=${TXL_HUB_TARGET}' \
 	-X 'main.textilehubma=${TXL_HUB_MA}' \
