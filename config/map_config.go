@@ -27,7 +27,11 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 	if flags.DevMode {
 		configStr[Ipfsaddr] = os.Getenv(env.IpfsAddr)
 		configStr[Ipfsnodeaddr] = os.Getenv(env.IpfsNodeAddr)
-		configStr[Ipfsnodepath] = os.Getenv(env.IpfsNodePath)
+
+		if os.Getenv(env.IpfsNodePath) != "" {
+			configStr[Ipfsnodepath] = os.Getenv(env.IpfsNodePath)
+		}
+
 		configStr[Mongousr] = os.Getenv(env.MongoUsr)
 		configStr[Mongopw] = os.Getenv(env.MongoPw)
 		configStr[Mongohost] = os.Getenv(env.MongoHost)
