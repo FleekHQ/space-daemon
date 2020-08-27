@@ -31,6 +31,8 @@ var (
 	mongohost         string
 	mongorepset       string
 	spaceapi          string
+	vaultapi          string
+	vaultsaltsecret   string
 	spacehubauth      string
 	textilehub        string
 	textilehubma      string
@@ -59,6 +61,8 @@ func main() {
 		Mongohost:            mongohost,
 		Mongorepset:          mongorepset,
 		ServicesAPIURL:       spaceapi,
+		VaultAPIURL:          vaultapi,
+		VaultSaltSecret:      vaultsaltsecret,
 		ServicesHubAuthURL:   spacehubauth,
 		DevMode:              *devMode == true,
 		TextileHubTarget:     textilehub,

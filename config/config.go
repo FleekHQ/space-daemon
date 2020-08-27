@@ -19,6 +19,8 @@ const (
 	FuseMountPath            = "space/fuseMountPath"
 	FuseDriveName            = "space/fuseDriveName"
 	SpaceServicesAPIURL      = "space/servicesApiUrl"
+	SpaceVaultAPIURL         = "space/vaultApiUrl"
+	SpaceVaultSaltSecret     = "space/vaultSaltSecret"
 	SpaceServicesHubAuthURL  = "space/servicesHubAuthUrl"
 	Ipfsaddr                 = "space/ipfsAddr"
 	Ipfsnode                 = "space/ipfsNode"
@@ -47,6 +49,8 @@ type Flags struct {
 	Mongorepset          string
 	DevMode              bool
 	ServicesAPIURL       string
+	VaultAPIURL          string
+	VaultSaltSecret      string
 	ServicesHubAuthURL   string
 	TextileHubTarget     string
 	TextileHubMa         string

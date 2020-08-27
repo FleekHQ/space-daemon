@@ -10,6 +10,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core"
 
 	"github.com/FleekHQ/space-daemon/core/space/fuse"
+	"github.com/FleekHQ/space-daemon/core/vault"
 
 	"github.com/FleekHQ/space-daemon/core/fsds"
 
@@ -82,6 +83,9 @@ func (a *App) Start(ctx context.Context) error {
 	// Init keychain
 	kc := keychain.New(keychain.WithPath(a.cfg.GetString(config.SpaceStorePath, "")), keychain.WithStore(appStore))
 
+	// Init Vault
+	v := vault.New(a.cfg.GetString(config.SpaceVaultAPIURL, ""), a.cfg.GetString(config.SpaceVaultSaltSecret, ""))
+
 	watcher, err := w.New()
 	if err != nil {
 		return err
@@ -119,6 +123,7 @@ func (a *App) Start(ctx context.Context) error {
 		bucketSync,
 		a.cfg,
 		kc,
+		v,
 		space.WithEnv(a.env),
 	)
 	if svErr != nil {

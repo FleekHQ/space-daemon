@@ -219,16 +219,16 @@ service SpaceApi {
     };
   }
 
-  rpc AcceptBucketInvitation(AcceptBucketInvitationRequest) returns (AcceptBucketInvitationResponse) {
+  rpc AcceptFilesInvitation(AcceptFilesInvitationRequest) returns (AcceptFilesInvitationResponse) {
     option (google.api.http) = {
-      post: "/v1/acceptInvitation"
+      post: "/v1/acceptFilesInvitation"
       body: "*"
     };
   }
 
-  rpc RejectBucketInvitation(RejectBucketInvitationRequest) returns (RejectBucketInvitationResponse) {
+  rpc RejectFilesInvitation(RejectFilesInvitationRequest) returns (RejectFilesInvitationResponse) {
     option (google.api.http) = {
-      post: "/v1/rejectInvitation"
+      post: "/v1/rejectFilesInvitation"
       body: "*"
     };
   }
@@ -284,7 +284,28 @@ service SpaceApi {
       get: "/v1/apiSessionTokens"
     };
   }
+
+  // Returns a list of addresses / public keys of clients to which files where shared or received, ordered by date
+  rpc GetRecentlySharedWith(GetRecentlySharedWithRequest) returns (GetRecentlySharedWithResponse) {
+    option (google.api.http) = {
+      get: "/v1/sharedWithList"
+    };
+  }
+
+  // This will set the last notification received before clearing the bell so that it could
+  // be used in GetNotifications to indicate if a new message is included
+  rpc ClearNewNotifications(ClearNewNotificationsRequest) returns (ClearNewNotificationsResponse) {
+    option (google.api.http) = {
+      get: "/v1/sharedWithList"
+    };
+  }
 }
+
+message ClearNewNotificationsRequest {
+  string ID = 1;
+}
+
+message ClearNewNotificationsResponse {}
 
 message GetSharedWithMeFilesRequest {
   string seek = 1;
@@ -465,13 +486,15 @@ message CreateFolderResponse {
 }
 
 message BackupKeysByPassphraseRequest {
-  string passphrase = 1;
+  string uuid = 1;
+  string passphrase = 2;
 }
 
 message BackupKeysByPassphraseResponse {}
 
 message RecoverKeysByPassphraseRequest {
-  string passphrase = 1;
+  string uuid = 1;
+  string passphrase = 2;
 }
 
 message RecoverKeysByPassphraseResponse {}
@@ -569,17 +592,17 @@ message Notification {
   int64 readAt = 8;
 }
 
-message AcceptBucketInvitationRequest {
+message AcceptFilesInvitationRequest {
   string invitationID = 1;
 }
 
-message AcceptBucketInvitationResponse {}
+message AcceptFilesInvitationResponse {}
 
-message RejectBucketInvitationRequest {
+message RejectFilesInvitationRequest {
   string invitationID = 1;
 }
 
-message RejectBucketInvitationResponse {}
+message RejectFilesInvitationResponse {}
 
 message NotificationEventResponse {
   Notification notification = 1;
@@ -592,7 +615,8 @@ message GetNotificationsRequest {
 
 message GetNotificationsResponse {
   repeated Notification notifications= 1;
-  int64 nextOffset = 2;
+  string nextOffset = 2;
+  bool new = 3; // will use the last mark clear ID to see if there are new ones
 }
 message ReadNotificationRequest {
   string ID = 1;
@@ -634,4 +658,10 @@ message GetAPISessionTokensRequest {}
 message GetAPISessionTokensResponse {
   string hubToken = 1;
   string servicesToken = 2;
+}
+
+message GetRecentlySharedWithRequest {}
+
+message GetRecentlySharedWithResponse {
+ repeated FileMember members = 1;
 }

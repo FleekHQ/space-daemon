@@ -18,6 +18,8 @@ const (
 	MongoHost            = "MONGO_HOST"
 	MongoRepSet          = "MONGO_REPLICA_SET"
 	ServicesAPIURL       = "SERVICES_API_URL"
+	VaultAPIURL          = "VAULT_API_URL"
+	VaultSaltSecret      = "VAULT_SALT_SECRET"
 	ServicesHubAuthURL   = "SERVICES_HUB_AUTH_URL"
 	TextileHubTarget     = "TXL_HUB_TARGET"
 	TextileHubMa         = "TXL_HUB_MA"
