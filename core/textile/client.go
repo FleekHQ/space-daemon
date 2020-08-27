@@ -70,6 +70,7 @@ func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error)
 
 	// TODO: Use hub.GetHubToken instead
 	ctx, err := hub.GetHubToken(ctx, tc.store, tc.kc, tc.cfg)
+
 	if err != nil {
 		return nil, err
 	}

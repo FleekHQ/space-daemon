@@ -3,7 +3,6 @@ package hub
 import (
 	"context"
 	"errors"
-	"os"
 	"time"
 	b64 "encoding/base64"
 	"github.com/FleekHQ/space-daemon/config"
@@ -174,13 +173,13 @@ func GetHubToken(ctx context.Context, st store.Store, kc keychain.Keychain, cfg 
 
 // This method is just for testing purposes. Keys shouldn't be bundled in the daemon.
 // Use GetHubToken instead.
-func GetHubTokenUsingTextileKeys(ctx context.Context, st store.Store, kc keychain.Keychain, threads *threadsClient.Client) (context.Context, error) {
+func GetHubTokenUsingTextileKeys(ctx context.Context, st store.Store, kc keychain.Keychain, threads *threadsClient.Client, cfg config.Config) (context.Context, error) {
 	var tokStr string
 
 	// prebuild context, needs to happen
 	// whether token is saved or not
-	key := os.Getenv("TXL_USER_KEY")
-	secret := os.Getenv("TXL_USER_SECRET")
+	key := cfg.GetString(config.TextileUserKey, "")
+	secret := cfg.GetString(config.TextileUserSecret, "")
 
 	if key == "" || secret == "" {
 		return nil, errors.New("Couldn't get Textile key or secret from envs")
