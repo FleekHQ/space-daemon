@@ -28,6 +28,9 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[Ipfsaddr] = os.Getenv(env.IpfsAddr)
 		configStr[Ipfsnodeaddr] = os.Getenv(env.IpfsNodeAddr)
 
+		// NOTE: this is a temp fix since it's not happening
+		// on other vars.  real fix could be using viper like
+		// @maurycy suggested
 		if os.Getenv(env.IpfsNodePath) != "" {
 			configStr[Ipfsnodepath] = os.Getenv(env.IpfsNodePath)
 		}
@@ -51,8 +54,15 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		}
 	} else {
 		configStr[Ipfsaddr] = flags.Ipfsaddr
-		configStr[Ipfsnodeaddr] = flags.Ipfsnodeaddr
-		configStr[Ipfsnodeaddr] = flags.Ipfsnodepath
+
+		if flags.Ipfsnodeaddr != "" {
+			configStr[Ipfsnodeaddr] = flags.Ipfsnodeaddr
+		}
+
+		if flags.Ipfsnodepath != "" {
+			configStr[Ipfsnodepath] = flags.Ipfsnodepath
+		}
+
 		configStr[Mongousr] = flags.Mongousr
 		configStr[Mongopw] = flags.Mongopw
 		configStr[Mongohost] = flags.Mongohost
