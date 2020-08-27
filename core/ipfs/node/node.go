@@ -91,6 +91,9 @@ func (node *IpfsNode) start() error {
 	}
 
 	repoPath := node.cfg.GetString(config.Ipfsnodepath, pathRoot)
+	if repoPath == "" {
+		repoPath = pathRoot
+	}
 
 	if err := setupPlugins(repoPath); err != nil {
 		return err
