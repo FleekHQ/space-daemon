@@ -5,7 +5,7 @@ import (
 	"errors"
 	"os"
 	"time"
-
+	b64 "encoding/base64"
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/store"
@@ -14,10 +14,11 @@ import (
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/textile/api/common"
 	"golang.org/x/net/websocket"
+	mbase "github.com/multiformats/go-multibase"
 )
 
 type sentMessageData struct {
-	Signature []byte `json:"sig"`
+	Signature string `json:"sig"`
 	PublicKey string `json:"pubkey"`
 }
 
@@ -40,7 +41,7 @@ type inMessageTokenValue struct {
 	Token string `json:"token"`
 	Key string `json:"key"`
 	Msg string `json:"msg"`
-	Sig []byte `json:"sig"`
+	Sig string `json:"sig"`
 	AppToken string `json:"appToken"`
 }
 
@@ -111,18 +112,21 @@ func GetHubToken(ctx context.Context, st store.Store, kc keychain.Keychain, cfg 
 	if err := websocket.JSON.Receive(conn, &challenge); err != nil {
 		return nil, err
 	}
-	log.Debug("Token Challenge: Received challenge")
+	log.Debug("Token Challenge: Received challenge" + string(challenge.Value.Data))
 
 	solution, err := identity.Sign(ctx, challenge.Value.Data)
+
 	if err != nil {
 		return nil, err
 	}
+
+	signature := b64.StdEncoding.EncodeToString(solution);
 
 	// Send back channel solution
 	solMessage := &outMessage{
 		Action: "challenge",
 		Data: sentMessageData{
-			Signature: solution,
+			Signature: signature,
 			PublicKey: pub,
 		},
 	}
@@ -146,8 +150,14 @@ func GetHubToken(ctx context.Context, st store.Store, kc keychain.Keychain, cfg 
 	}
 	log.Debug("Token Challenge: Received token successfully")
 
+	_, sig, err := mbase.Decode(token.Value.Sig)
+
+	if err != nil {
+		return nil, err
+	}
+
 	ctx = common.NewAPIKeyContext(ctx, token.Value.Key)
-	ctx = common.NewAPISigContext(ctx, token.Value.Msg, token.Value.Sig)
+	ctx = common.NewAPISigContext(ctx, token.Value.Msg, sig)
 
 	tok := thread.Token(token.Value.Token)
 	ctx = thread.NewTokenContext(ctx, tok)

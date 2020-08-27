@@ -139,6 +139,7 @@ func (tc *textileClient) SetUc(uc UsersClient) {
 func (tc *textileClient) ConnectToHub(ctx context.Context) {
 	// Attempt to connect to the Hub
 	hubctx, err := tc.getHubCtx(ctx)
+
 	if err != nil {
 		log.Error("Could not connect to Textile Hub. Starting in offline mode.", err)
 	}
