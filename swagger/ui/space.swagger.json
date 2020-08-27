@@ -1069,6 +1069,40 @@
         ]
       }
     },
+    "/v1/remoteFiles": {
+      "post": {
+        "summary": "Add a file via bytestream to the bucket.",
+        "operationId": "SpaceApi_AddRemoteItem",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceAddRemoteItemResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": " (streaming inputs)",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceAddRemoteItemRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/sharedWithList": {
       "get": {
         "summary": "This will set the last notification received before clearing the bell so that it could\nbe used in GetNotifications to indicate if a new message is included",
@@ -1377,6 +1411,32 @@
           "format": "int64"
         }
       }
+    },
+    "spaceAddRemoteItemRequest": {
+      "type": "object",
+      "properties": {
+        "info": {
+          "$ref": "#/definitions/spaceAddRemoteItemRequestInfo"
+        },
+        "dataChunk": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "spaceAddRemoteItemRequestInfo": {
+      "type": "object",
+      "properties": {
+        "targetPath": {
+          "type": "string"
+        },
+        "bucket": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceAddRemoteItemResponse": {
+      "type": "object"
     },
     "spaceBackupKeysByPassphraseRequest": {
       "type": "object",

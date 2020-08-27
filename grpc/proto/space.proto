@@ -134,6 +134,14 @@ service SpaceApi {
     };
   }
 
+  // Add a file via bytestream to the bucket.
+  rpc AddRemoteItem(stream AddRemoteItemRequest) returns (AddRemoteItemResponse) {
+    option (google.api.http) = {
+      post: "/v1/remoteFiles"
+      body: "*"
+    };
+  }
+
   // Creates a folder/directory at the specified path
   rpc CreateFolder(CreateFolderRequest) returns (CreateFolderResponse) {
     option (google.api.http) = {
@@ -473,6 +481,22 @@ message AddItemsResponse {
   int64 totalBytes = 3;
   int64 completedFiles = 4;
   int64 completedBytes = 5;
+}
+
+message AddRemoteItemRequestInfo {
+  string targetPath = 1;
+  string bucket = 2;
+}
+
+message AddRemoteItemRequest {
+  oneof data {
+    AddRemoteItemRequestInfo info = 1;
+    bytes dataChunk = 2;
+  }
+}
+
+message AddRemoteItemResponse {
+
 }
 
 message CreateFolderRequest {

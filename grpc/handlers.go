@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"errors"
+	"io"
 
 	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
@@ -225,6 +226,39 @@ func (srv *grpcServer) AddItems(request *pb.AddItemsRequest, stream pb.SpaceApi_
 	log.Printf("closing stream for addFiles")
 
 	return nil
+}
+
+// Add a file via bytestream to the bucket.
+func (srv *grpcServer) AddRemoteItem(stream pb.SpaceApi_AddRemoteItemServer) error {
+	path := ""
+	bucket := ""
+
+	go func() {
+		for {
+			d, err := stream.Recv()
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				//return err
+			}
+
+			if d.GetInfo() != nil {
+				path = d.GetInfo().TargetPath
+				bucket = d.GetInfo().Bucket
+			}
+
+			if d.GetDataChunk() != nil {
+				// Write file chunk
+			}
+		}
+	}()
+
+	go func() {
+
+	}()
+
+	return stream.SendAndClose(&pb.AddRemoteItemResponse{})
 }
 
 func (srv *grpcServer) CreateFolder(ctx context.Context, request *pb.CreateFolderRequest) (*pb.CreateFolderResponse, error) {
