@@ -284,6 +284,13 @@ service SpaceApi {
       get: "/v1/apiSessionTokens"
     };
   }
+
+  // Returns a list of addresses / public keys of clients to which files where shared or received, ordered by date
+  rpc GetRecentlySharedWith(GetRecentlySharedWithRequest) returns (GetRecentlySharedWithResponse) {
+    option (google.api.http) = {
+      get: "/v1/sharedWithList"
+    };
+  }
 }
 
 message GetSharedWithMeFilesRequest {
@@ -636,4 +643,10 @@ message GetAPISessionTokensRequest {}
 message GetAPISessionTokensResponse {
   string hubToken = 1;
   string servicesToken = 2;
+}
+
+message GetRecentlySharedWithRequest {}
+
+message GetRecentlySharedWithResponse {
+ repeated FileMember members = 1;
 }
