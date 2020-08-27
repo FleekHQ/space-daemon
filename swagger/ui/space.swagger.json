@@ -11,14 +11,14 @@
     "application/json"
   ],
   "paths": {
-    "/v1/acceptInvitation": {
+    "/v1/acceptFilesInvitation": {
       "post": {
-        "operationId": "SpaceApi_AcceptBucketInvitation",
+        "operationId": "SpaceApi_AcceptFilesInvitation",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/spaceAcceptBucketInvitationResponse"
+              "$ref": "#/definitions/spaceAcceptFilesInvitationResponse"
             }
           },
           "default": {
@@ -34,7 +34,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/spaceAcceptBucketInvitationRequest"
+              "$ref": "#/definitions/spaceAcceptFilesInvitationRequest"
             }
           }
         ],
@@ -1070,14 +1070,14 @@
         ]
       }
     },
-    "/v1/rejectInvitation": {
+    "/v1/rejectFilesInvitation": {
       "post": {
-        "operationId": "SpaceApi_RejectBucketInvitation",
+        "operationId": "SpaceApi_RejectFilesInvitation",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/spaceRejectBucketInvitationResponse"
+              "$ref": "#/definitions/spaceRejectFilesInvitationResponse"
             }
           },
           "default": {
@@ -1093,7 +1093,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/spaceRejectBucketInvitationRequest"
+              "$ref": "#/definitions/spaceRejectFilesInvitationRequest"
             }
           }
         ],
@@ -1104,13 +1104,13 @@
     },
     "/v1/sharedWithList": {
       "get": {
-        "summary": "Returns a list of addresses / public keys of clients to which files where shared or received, ordered by date",
-        "operationId": "SpaceApi_GetRecentlySharedWith",
+        "summary": "This will set the last notification received before clearing the bell so that it could\nbe used in GetNotifications to indicate if a new message is included",
+        "operationId": "SpaceApi_ClearNewNotifications",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/spaceGetRecentlySharedWithResponse"
+              "$ref": "#/definitions/spaceClearNewNotificationsResponse"
             }
           },
           "default": {
@@ -1120,6 +1120,14 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "ID",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "SpaceApi"
         ]
@@ -1334,7 +1342,7 @@
         }
       }
     },
-    "spaceAcceptBucketInvitationRequest": {
+    "spaceAcceptFilesInvitationRequest": {
       "type": "object",
       "properties": {
         "invitationID": {
@@ -1342,7 +1350,7 @@
         }
       }
     },
-    "spaceAcceptBucketInvitationResponse": {
+    "spaceAcceptFilesInvitationResponse": {
       "type": "object"
     },
     "spaceAddItemResult": {
@@ -1471,6 +1479,9 @@
           "format": "boolean"
         }
       }
+    },
+    "spaceClearNewNotificationsResponse": {
+      "type": "object"
     },
     "spaceCreateBucketRequest": {
       "type": "object",
@@ -1637,8 +1648,11 @@
           }
         },
         "nextOffset": {
-          "type": "string",
-          "format": "int64"
+          "type": "string"
+        },
+        "new": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },
@@ -1949,7 +1963,7 @@
     "spaceRecoverKeysByPassphraseResponse": {
       "type": "object"
     },
-    "spaceRejectBucketInvitationRequest": {
+    "spaceRejectFilesInvitationRequest": {
       "type": "object",
       "properties": {
         "invitationID": {
@@ -1957,7 +1971,7 @@
         }
       }
     },
-    "spaceRejectBucketInvitationResponse": {
+    "spaceRejectFilesInvitationResponse": {
       "type": "object"
     },
     "spaceRestoreKeyPairViaMnemonicRequest": {

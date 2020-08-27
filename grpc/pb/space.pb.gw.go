@@ -1044,8 +1044,8 @@ func local_request_SpaceApi_ShareFilesViaPublicKey_0(ctx context.Context, marsha
 
 }
 
-func request_SpaceApi_AcceptBucketInvitation_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AcceptBucketInvitationRequest
+func request_SpaceApi_AcceptFilesInvitation_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq AcceptFilesInvitationRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1056,13 +1056,13 @@ func request_SpaceApi_AcceptBucketInvitation_0(ctx context.Context, marshaler ru
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.AcceptBucketInvitation(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.AcceptFilesInvitation(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_SpaceApi_AcceptBucketInvitation_0(ctx context.Context, marshaler runtime.Marshaler, server SpaceApiServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AcceptBucketInvitationRequest
+func local_request_SpaceApi_AcceptFilesInvitation_0(ctx context.Context, marshaler runtime.Marshaler, server SpaceApiServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq AcceptFilesInvitationRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1073,13 +1073,13 @@ func local_request_SpaceApi_AcceptBucketInvitation_0(ctx context.Context, marsha
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.AcceptBucketInvitation(ctx, &protoReq)
+	msg, err := server.AcceptFilesInvitation(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
-func request_SpaceApi_RejectBucketInvitation_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq RejectBucketInvitationRequest
+func request_SpaceApi_RejectFilesInvitation_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq RejectFilesInvitationRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1090,13 +1090,13 @@ func request_SpaceApi_RejectBucketInvitation_0(ctx context.Context, marshaler ru
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.RejectBucketInvitation(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.RejectFilesInvitation(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_SpaceApi_RejectBucketInvitation_0(ctx context.Context, marshaler runtime.Marshaler, server SpaceApiServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq RejectBucketInvitationRequest
+func local_request_SpaceApi_RejectFilesInvitation_0(ctx context.Context, marshaler runtime.Marshaler, server SpaceApiServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq RejectFilesInvitationRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -1107,7 +1107,7 @@ func local_request_SpaceApi_RejectBucketInvitation_0(ctx context.Context, marsha
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.RejectBucketInvitation(ctx, &protoReq)
+	msg, err := server.RejectFilesInvitation(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -1371,6 +1371,42 @@ func local_request_SpaceApi_GetRecentlySharedWith_0(ctx context.Context, marshal
 	var metadata runtime.ServerMetadata
 
 	msg, err := server.GetRecentlySharedWith(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+var (
+	filter_SpaceApi_ClearNewNotifications_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_SpaceApi_ClearNewNotifications_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ClearNewNotificationsRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_SpaceApi_ClearNewNotifications_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.ClearNewNotifications(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_SpaceApi_ClearNewNotifications_0(ctx context.Context, marshaler runtime.Marshaler, server SpaceApiServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ClearNewNotificationsRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_SpaceApi_ClearNewNotifications_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.ClearNewNotifications(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -1889,7 +1925,7 @@ func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 
 	})
 
-	mux.Handle("POST", pattern_SpaceApi_AcceptBucketInvitation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SpaceApi_AcceptFilesInvitation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -1898,18 +1934,18 @@ func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_SpaceApi_AcceptBucketInvitation_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SpaceApi_AcceptFilesInvitation_0(rctx, inboundMarshaler, server, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_SpaceApi_AcceptBucketInvitation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SpaceApi_AcceptFilesInvitation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_SpaceApi_RejectBucketInvitation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SpaceApi_RejectFilesInvitation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -1918,14 +1954,14 @@ func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_SpaceApi_RejectBucketInvitation_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SpaceApi_RejectFilesInvitation_0(rctx, inboundMarshaler, server, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_SpaceApi_RejectBucketInvitation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SpaceApi_RejectFilesInvitation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -2093,6 +2129,26 @@ func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 		}
 
 		forward_SpaceApi_GetRecentlySharedWith_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_SpaceApi_ClearNewNotifications_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_SpaceApi_ClearNewNotifications_0(rctx, inboundMarshaler, server, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_SpaceApi_ClearNewNotifications_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -2697,7 +2753,7 @@ func RegisterSpaceApiHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 
 	})
 
-	mux.Handle("POST", pattern_SpaceApi_AcceptBucketInvitation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SpaceApi_AcceptFilesInvitation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -2706,18 +2762,18 @@ func RegisterSpaceApiHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_SpaceApi_AcceptBucketInvitation_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SpaceApi_AcceptFilesInvitation_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_SpaceApi_AcceptBucketInvitation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SpaceApi_AcceptFilesInvitation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_SpaceApi_RejectBucketInvitation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_SpaceApi_RejectFilesInvitation_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -2726,14 +2782,14 @@ func RegisterSpaceApiHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_SpaceApi_RejectBucketInvitation_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SpaceApi_RejectFilesInvitation_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_SpaceApi_RejectBucketInvitation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SpaceApi_RejectFilesInvitation_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -2917,6 +2973,26 @@ func RegisterSpaceApiHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 
 	})
 
+	mux.Handle("GET", pattern_SpaceApi_ClearNewNotifications_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_SpaceApi_ClearNewNotifications_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_SpaceApi_ClearNewNotifications_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	return nil
 }
 
@@ -2977,9 +3053,9 @@ var (
 
 	pattern_SpaceApi_ShareFilesViaPublicKey_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "buckets", "bucket", "shareFilesViaPublicKey"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_SpaceApi_AcceptBucketInvitation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "acceptInvitation"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_SpaceApi_AcceptFilesInvitation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "acceptFilesInvitation"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_SpaceApi_RejectBucketInvitation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "rejectInvitation"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_SpaceApi_RejectFilesInvitation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "rejectFilesInvitation"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_SpaceApi_NotificationSubscribe_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "subscriptions", "notification"}, "", runtime.AssumeColonVerbOpt(true)))
 
@@ -2998,6 +3074,8 @@ var (
 	pattern_SpaceApi_GetAPISessionTokens_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "apiSessionTokens"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_SpaceApi_GetRecentlySharedWith_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "sharedWithList"}, "", runtime.AssumeColonVerbOpt(true)))
+
+	pattern_SpaceApi_ClearNewNotifications_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "sharedWithList"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (
@@ -3057,9 +3135,9 @@ var (
 
 	forward_SpaceApi_ShareFilesViaPublicKey_0 = runtime.ForwardResponseMessage
 
-	forward_SpaceApi_AcceptBucketInvitation_0 = runtime.ForwardResponseMessage
+	forward_SpaceApi_AcceptFilesInvitation_0 = runtime.ForwardResponseMessage
 
-	forward_SpaceApi_RejectBucketInvitation_0 = runtime.ForwardResponseMessage
+	forward_SpaceApi_RejectFilesInvitation_0 = runtime.ForwardResponseMessage
 
 	forward_SpaceApi_NotificationSubscribe_0 = runtime.ForwardResponseStream
 
@@ -3078,4 +3156,6 @@ var (
 	forward_SpaceApi_GetAPISessionTokens_0 = runtime.ForwardResponseMessage
 
 	forward_SpaceApi_GetRecentlySharedWith_0 = runtime.ForwardResponseMessage
+
+	forward_SpaceApi_ClearNewNotifications_0 = runtime.ForwardResponseMessage
 )
