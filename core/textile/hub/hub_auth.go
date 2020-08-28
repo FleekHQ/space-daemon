@@ -6,11 +6,13 @@ import (
 	b64 "encoding/base64"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/log"
+	"github.com/dgrijalva/jwt-go"
 	mbase "github.com/multiformats/go-multibase"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/textile/api/common"
@@ -58,10 +60,57 @@ type AuthTokens struct {
 	Msg      string
 }
 
+type HubAuth interface {
+	GetTokensWithCache(ctx context.Context) (*AuthTokens, error)
+	GetHubContext(ctx context.Context) (context.Context, error)
+}
+
+type hub struct {
+	st  store.Store
+	kc  keychain.Keychain
+	cfg config.Config
+}
+
+func New(st store.Store, kc keychain.Keychain, cfg config.Config) *hub {
+	return &hub{
+		st:  st,
+		kc:  kc,
+		cfg: cfg,
+	}
+}
+
 const tokensStoreKey = "hubTokens"
 
-func retrieveTokens(st store.Store) (*inMessageTokenValue, error) {
-	stored, err := st.Get([]byte(tokensStoreKey))
+func isTokenExpired(t string) bool {
+	token, _, err := new(jwt.Parser).ParseUnverified(t, jwt.MapClaims{})
+	if err != nil {
+		return true
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return true
+	}
+
+	var expiryTime time.Time
+	switch exp := claims["exp"].(type) {
+	case float64:
+		expiryTime = time.Unix(int64(exp), 0)
+	case json.Number:
+		v, err := exp.Int64()
+		if err != nil {
+			return true
+		}
+		expiryTime = time.Unix(v, 0)
+	}
+
+	now := time.Now()
+
+	return expiryTime.Before(now)
+}
+
+func (h *hub) retrieveTokens() (*inMessageTokenValue, error) {
+	stored, err := h.st.Get([]byte(tokensStoreKey))
 	if err != nil {
 		return nil, err
 	}
@@ -73,32 +122,37 @@ func retrieveTokens(st store.Store) (*inMessageTokenValue, error) {
 		return nil, err
 	}
 
+	expired := isTokenExpired(tokens.AppToken)
+	if expired {
+		return nil, errors.New("App token is expired")
+	}
+
 	return tokens, nil
 }
 
-func storeTokens(st store.Store, tokens *inMessageTokenValue) error {
+func (h *hub) storeTokens(tokens *inMessageTokenValue) error {
 	tokensBytes := new(bytes.Buffer)
 	if err := json.NewEncoder(tokensBytes).Encode(tokens); err != nil {
 		return err
 	}
 
-	if err := st.Set([]byte(tokensStoreKey), tokensBytes.Bytes()); err != nil {
+	if err := h.st.Set([]byte(tokensStoreKey), tokensBytes.Bytes()); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func getTokensThroughChallenge(ctx context.Context, kc keychain.Keychain, cfg config.Config) (*inMessageTokenValue, error) {
+func (h *hub) getTokensThroughChallenge(ctx context.Context) (*inMessageTokenValue, error) {
 	log.Debug("Token Challenge: Connecting through websocket")
-	conn, err := websocket.Dial(cfg.GetString(config.SpaceServicesHubAuthURL, ""), "", "http://localhost/")
+	conn, err := websocket.Dial(h.cfg.GetString(config.SpaceServicesHubAuthURL, ""), "", "http://localhost/")
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
 	log.Debug("Token Challenge: Connected")
 
-	privateKey, _, err := kc.GetStoredKeyPairInLibP2PFormat()
+	privateKey, _, err := h.kc.GetStoredKeyPairInLibP2PFormat()
 
 	if err != nil {
 		return nil, err
@@ -168,8 +222,8 @@ func getTokensThroughChallenge(ctx context.Context, kc keychain.Keychain, cfg co
 	return nil, errors.New("Did not receive a correct token challenge response")
 }
 
-func GetTokensWithCache(ctx context.Context, st store.Store, kc keychain.Keychain, cfg config.Config) (*AuthTokens, error) {
-	if tokensInStore, _ := retrieveTokens(st); tokensInStore != nil {
+func (h *hub) GetTokensWithCache(ctx context.Context) (*AuthTokens, error) {
+	if tokensInStore, _ := h.retrieveTokens(); tokensInStore != nil {
 		return &AuthTokens{
 			HubToken: tokensInStore.Token,
 			AppToken: tokensInStore.AppToken,
@@ -179,12 +233,12 @@ func GetTokensWithCache(ctx context.Context, st store.Store, kc keychain.Keychai
 		}, nil
 	}
 
-	tokens, err := getTokensThroughChallenge(ctx, kc, cfg)
+	tokens, err := h.getTokensThroughChallenge(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := storeTokens(st, tokens); err != nil {
+	if err := h.storeTokens(tokens); err != nil {
 		return nil, err
 	}
 
@@ -197,8 +251,8 @@ func GetTokensWithCache(ctx context.Context, st store.Store, kc keychain.Keychai
 	}, nil
 }
 
-func GetHubContext(ctx context.Context, st store.Store, kc keychain.Keychain, cfg config.Config) (context.Context, error) {
-	tokens, err := GetTokensWithCache(ctx, st, kc, cfg)
+func (h *hub) GetHubContext(ctx context.Context) (context.Context, error) {
+	tokens, err := h.GetTokensWithCache(ctx)
 	if err != nil {
 		return nil, err
 	}

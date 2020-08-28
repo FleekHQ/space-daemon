@@ -16,6 +16,7 @@ import (
 
 	"github.com/FleekHQ/space-daemon/core/spacefs"
 	textile "github.com/FleekHQ/space-daemon/core/textile"
+	"github.com/FleekHQ/space-daemon/core/textile/hub"
 
 	"github.com/FleekHQ/space-daemon/core/env"
 	"github.com/FleekHQ/space-daemon/core/space"
@@ -114,6 +115,7 @@ func (a *App) Start(ctx context.Context) error {
 		a.cfg,
 		kc,
 		v,
+		hub.New(appStore, kc, a.cfg),
 		space.WithEnv(a.env),
 	)
 	if svErr != nil {
