@@ -23,6 +23,9 @@ const (
 	SpaceVaultSaltSecret     = "space/vaultSaltSecret"
 	SpaceServicesHubAuthURL  = "space/servicesHubAuthUrl"
 	Ipfsaddr                 = "space/ipfsAddr"
+	Ipfsnode                 = "space/ipfsNode"
+	Ipfsnodeaddr             = "space/ipfsNodeAddr"
+	Ipfsnodepath             = "space/ipfsNodePath"
 	Mongousr                 = "space/mongoUsr"
 	Mongopw                  = "space/mongoPw"
 	Mongohost                = "space/mongoHost"
@@ -37,6 +40,9 @@ var (
 
 type Flags struct {
 	Ipfsaddr             string
+	Ipfsnode             bool
+	Ipfsnodeaddr         string
+	Ipfsnodepath         string
 	Mongousr             string
 	Mongopw              string
 	Mongohost            string
@@ -57,4 +63,5 @@ type Flags struct {
 type Config interface {
 	GetString(key string, defaultValue interface{}) string
 	GetInt(key string, defaultValue interface{}) int
+	GetBool(key string, defaultValue interface{}) bool
 }
