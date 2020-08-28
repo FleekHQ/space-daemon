@@ -37,6 +37,7 @@ type Keychain interface {
 	GenerateKeyPairWithForce() (pub []byte, priv []byte, err error)
 	Sign([]byte) ([]byte, error)
 	ImportExistingKeyPair(priv crypto.PrivKey, mnemonic string) error
+	DeleteKeypair() error
 }
 
 type keychainOptions struct {
@@ -192,6 +193,27 @@ func (kc *keychain) ImportExistingKeyPair(priv crypto.PrivKey, mnemonic string) 
 	// Store the key pair in the db
 	if err := kc.storeKeyPair(privInBytes, pubInBytes, mnemonic); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (kc *keychain) DeleteKeypair() error {
+	ring, err := kc.getKeyRing()
+	if err != nil {
+		return err
+	}
+
+	err = ring.Remove(PrivateKeyStoreKey)
+
+	err2 := kc.st.Remove([]byte(PublicKeyStoreKey))
+
+	if err != nil {
+		return err
+	}
+
+	if err2 != nil {
+		return err2
 	}
 
 	return nil

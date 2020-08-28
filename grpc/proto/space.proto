@@ -181,6 +181,14 @@ service SpaceApi {
     };
   }
 
+  // Tests a passphrase to see if it matches the one previously used
+  rpc TestKeysPassphrase(TestKeysPassphraseRequest) returns (TestKeysPassphraseResponse) {
+    option (google.api.http) = {
+      post: "/v1/passphrases/test"
+      body: "*"
+    };
+  }
+
   rpc CreateLocalKeysBackup(CreateLocalKeysBackupRequest) returns (CreateLocalKeysBackupResponse) {
     option (google.api.http) = {
       post: "/v1/localBackups/backup"
@@ -499,6 +507,13 @@ message RecoverKeysByPassphraseRequest {
 }
 
 message RecoverKeysByPassphraseResponse {}
+
+message TestKeysPassphraseRequest {
+  string uuid = 1;
+  string passphrase = 2;
+}
+
+message TestKeysPassphraseResponse {}
 
 message ThreadInfo {
   repeated string addresses = 1;
