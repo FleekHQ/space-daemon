@@ -3,9 +3,12 @@
 package mocks
 
 import (
+	client "github.com/textileio/textile/api/users/client"
+	cmd "github.com/textileio/textile/cmd"
+
 	context "context"
 
-	client "github.com/textileio/textile/api/users/client"
+	local "github.com/textileio/textile/mail/local"
 
 	mock "github.com/stretchr/testify/mock"
 
@@ -61,6 +64,29 @@ func (_m *Mailbox) SendMessage(ctx context.Context, to thread.PubKey, body []byt
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, thread.PubKey, []byte) error); ok {
 		r1 = rf(ctx, to, body)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// WatchInbox provides a mock function with given fields: ctx, mevents, offline
+func (_m *Mailbox) WatchInbox(ctx context.Context, mevents chan<- local.MailboxEvent, offline bool) (<-chan cmd.WatchState, error) {
+	ret := _m.Called(ctx, mevents, offline)
+
+	var r0 <-chan cmd.WatchState
+	if rf, ok := ret.Get(0).(func(context.Context, chan<- local.MailboxEvent, bool) <-chan cmd.WatchState); ok {
+		r0 = rf(ctx, mevents, offline)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(<-chan cmd.WatchState)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, chan<- local.MailboxEvent, bool) error); ok {
+		r1 = rf(ctx, mevents, offline)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -200,7 +200,6 @@ func (tc *textileClient) ConnectToHub(ctx context.Context) {
 	err = tc.setupMailBox(hubctx)
 	if err != nil {
 		log.Warn("Unable to setup mailbox, continuing startup.")
-		log.Error("error: ", err)
 	}
 }
 
