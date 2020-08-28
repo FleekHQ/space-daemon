@@ -93,7 +93,7 @@ func (a *App) Start(ctx context.Context) error {
 	a.Run("FolderWatcher", watcher)
 
 	// setup local ipfs node if Ipfsnode is set
-	if a.cfg.GetBool(config.Ipfsnode, true) {
+	if a.cfg.GetBool(config.Ipfsnode, false) {
 		// setup local ipfs node
 		node := node.NewIpsNode(a.cfg)
 		a.RunAsync("IpfsNode", node, func() error {
