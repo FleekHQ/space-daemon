@@ -901,6 +901,39 @@
         ]
       }
     },
+    "/v1/notifications/lastSeenAt": {
+      "post": {
+        "summary": "This will set the last read timestamp for the user so that the client\ncan check if newer notifications are present for UX",
+        "operationId": "SpaceApi_SetNotificationsLastSeenAt",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceSetNotificationsLastSeenAtResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceSetNotificationsLastSeenAtRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/notifications/{ID}/read": {
       "post": {
         "operationId": "SpaceApi_ReadNotification",
@@ -1104,13 +1137,13 @@
     },
     "/v1/sharedWithList": {
       "get": {
-        "summary": "This will set the last notification received before clearing the bell so that it could\nbe used in GetNotifications to indicate if a new message is included",
-        "operationId": "SpaceApi_ClearNewNotifications",
+        "summary": "Returns a list of addresses / public keys of clients to which files where shared or received, ordered by date",
+        "operationId": "SpaceApi_GetRecentlySharedWith",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/spaceClearNewNotificationsResponse"
+              "$ref": "#/definitions/spaceGetRecentlySharedWithResponse"
             }
           },
           "default": {
@@ -1120,14 +1153,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "ID",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
         "tags": [
           "SpaceApi"
         ]
@@ -1480,9 +1505,6 @@
         }
       }
     },
-    "spaceClearNewNotificationsResponse": {
-      "type": "object"
-    },
     "spaceCreateBucketRequest": {
       "type": "object",
       "properties": {
@@ -1650,9 +1672,9 @@
         "nextOffset": {
           "type": "string"
         },
-        "new": {
-          "type": "boolean",
-          "format": "boolean"
+        "lastSeenAt": {
+          "type": "string",
+          "format": "int64"
         }
       }
     },
@@ -1983,6 +2005,18 @@
       }
     },
     "spaceRestoreKeyPairViaMnemonicResponse": {
+      "type": "object"
+    },
+    "spaceSetNotificationsLastSeenAtRequest": {
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "spaceSetNotificationsLastSeenAtResponse": {
       "type": "object"
     },
     "spaceShareBucketRequest": {

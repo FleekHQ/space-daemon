@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/FleekHQ/space-daemon/core/ipfs"
+	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/vault"
 
 	"github.com/FleekHQ/space-daemon/config"
@@ -46,7 +47,7 @@ type Service interface {
 	CreateLocalKeysBackup(ctx context.Context, pathToKeyBackup string) error
 	RecoverKeysByLocalBackup(ctx context.Context, pathToKeyBackup string) error
 	ToggleBucketBackup(ctx context.Context, bucketName string, bucketBackup bool) error
-	GetAPISessionTokens(ctx context.Context) (domain.APISessionTokens, error)
+	GetAPISessionTokens(ctx context.Context) (*domain.APISessionTokens, error)
 }
 
 type serviceOptions struct {
@@ -65,6 +66,7 @@ func NewService(
 	cfg config.Config,
 	kc keychain.Keychain,
 	v vault.Vault,
+	h hub.HubAuth,
 	opts ...ServiceOption,
 ) (Service, error) {
 	if !store.IsOpen() {
@@ -83,7 +85,7 @@ func NewService(
 		return nil, err
 	}
 
-	sv := services.NewSpace(store, tc, sync, cfg, o.env, kc, v, ic)
+	sv := services.NewSpace(store, tc, sync, cfg, o.env, kc, v, h, ic)
 
 	return sv, nil
 }
