@@ -6,13 +6,15 @@ import (
 	"errors"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
+	"github.com/FleekHQ/space-daemon/log"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/textile/api/users/client"
+	"github.com/textileio/textile/cmd"
+	mail "github.com/textileio/textile/mail/local"
 )
 
-const inboxDbIdStoreKey = "inboxDbId"
-const sentboxDbIdStoreKey = "sentboxDbId"
+const mailboxSetupFlagStoreKey = "mailboxSetupFlag"
 
 type UsersClient interface {
 	ListInboxMessages(ctx context.Context, opts ...client.ListOption) ([]client.Message, error)
@@ -23,6 +25,7 @@ type UsersClient interface {
 type Mailbox interface {
 	ListInboxMessages(ctx context.Context, opts ...client.ListOption) ([]client.Message, error)
 	SendMessage(ctx context.Context, to thread.PubKey, body []byte) (msg client.Message, err error)
+	WatchInbox(ctx context.Context, mevents chan<- mail.MailboxEvent, offline bool) (<-chan cmd.WatchState, error)
 }
 
 func parseMessage(msg client.Message) (*domain.Notification, error) {
@@ -101,6 +104,32 @@ func (tc *textileClient) GetMailAsNotifications(ctx context.Context, seek string
 
 type handleMessage func(context.Context, interface{}) error
 
-func (tc *textileClient) ListenForMessages(ctx context.Context, handler handleMessage) error {
-	return errors.New("Not Implemented")
+func (tc *textileClient) ListenForMessages(ctx context.Context) error {
+	log.Info("Starting to listen for mailbox messages")
+
+	// Handle mailbox events as they arrive
+	go func() {
+		for e := range tc.mailEvents {
+			switch e.Type {
+			case mail.NewMessage:
+				// handle new message
+				log.Info("Received mail: " + e.MessageID.String())
+			case mail.MessageRead:
+				// handle message read (inbox only)
+			case mail.MessageDeleted:
+				// handle message deleted
+			}
+		}
+	}()
+
+	// Start watching (the third param indicates we want to keep watching when offline)
+	_, err := tc.mb.WatchInbox(context.Background(), tc.mailEvents, true)
+	if err != nil {
+		return err
+	}
+	// TODO: handle connectivity state if needed
+	// for s := range state {
+	// 	// handle connectivity state
+	// }
+	return nil
 }

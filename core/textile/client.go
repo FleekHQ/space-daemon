@@ -40,6 +40,7 @@ type textileClient struct {
 	isConnectedToHub bool
 	netc             *nc.Client
 	uc               UsersClient
+	mailEvents       chan mail.MailboxEvent
 }
 
 // Creates a new Textile Client
@@ -149,7 +150,7 @@ func (tc *textileClient) setupMailBox(ctx context.Context) error {
 	mbpath := filepath.Join(usr.HomeDir, ".fleek-space/textile/mail")
 
 	var mailbox *mail.Mailbox
-	dbid, err := tc.store.Get([]byte(inboxDbIdStoreKey))
+	dbid, err := tc.store.Get([]byte(mailboxSetupFlagStoreKey))
 	if err == nil && len(dbid) > 0 {
 		// restore
 		mailbox, err = maillib.GetLocalMailbox(ctx, mbpath)
@@ -171,6 +172,7 @@ func (tc *textileClient) setupMailBox(ctx context.Context) error {
 			APIKey:    tc.cfg.GetString(config.TextileUserKey, ""),
 			APISecret: tc.cfg.GetString(config.TextileUserSecret, ""),
 		})
+		tc.store.Set([]byte(mailboxSetupFlagStoreKey), []byte("true"))
 		if err != nil {
 			return err
 		}
@@ -179,6 +181,7 @@ func (tc *textileClient) setupMailBox(ctx context.Context) error {
 	mid := mailbox.Identity()
 	log.Info("Mailbox identity: " + mid.GetPublic().String())
 	tc.mb = mailbox
+	tc.mailEvents = make(chan mail.MailboxEvent)
 	return nil
 }
 
@@ -197,6 +200,7 @@ func (tc *textileClient) ConnectToHub(ctx context.Context) {
 	err = tc.setupMailBox(hubctx)
 	if err != nil {
 		log.Warn("Unable to setup mailbox, continuing startup.")
+		log.Error("error: ", err)
 	}
 }
 
@@ -298,6 +302,7 @@ func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
 func (tc *textileClient) Shutdown() error {
 	tc.isRunning = false
 	close(tc.Ready)
+	close(tc.mailEvents)
 	if err := tc.bucketsClient.Close(); err != nil {
 		return err
 	}
