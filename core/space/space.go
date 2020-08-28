@@ -44,7 +44,7 @@ type Service interface {
 	CreateLocalKeysBackup(ctx context.Context, pathToKeyBackup string) error
 	RecoverKeysByLocalBackup(ctx context.Context, pathToKeyBackup string) error
 	ToggleBucketBackup(ctx context.Context, bucketName string, bucketBackup bool) error
-	GetAPISessionTokens(ctx context.Context) (domain.APISessionTokens, error)
+	GetAPISessionTokens(ctx context.Context) (*domain.APISessionTokens, error)
 }
 
 type serviceOptions struct {
