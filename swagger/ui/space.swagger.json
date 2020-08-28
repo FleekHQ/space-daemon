@@ -1635,6 +1635,10 @@
         },
         "password": {
           "type": "string"
+        },
+        "dbId": {
+          "type": "string",
+          "title": "optional field to specify db id\nfor shared with me files"
         }
       }
     },
@@ -1707,12 +1711,11 @@
         "items": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/spaceListDirectoryEntry"
+            "$ref": "#/definitions/spaceSharedListDirectoryEntry"
           }
         },
         "nextOffset": {
-          "type": "string",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -2057,6 +2060,20 @@
     },
     "spaceShareFilesViaPublicKeyResponse": {
       "type": "object"
+    },
+    "spaceSharedListDirectoryEntry": {
+      "type": "object",
+      "properties": {
+        "entry": {
+          "$ref": "#/definitions/spaceListDirectoryEntry"
+        },
+        "dbId": {
+          "type": "string"
+        },
+        "bucket": {
+          "type": "string"
+        }
+      }
     },
     "spaceTestKeysPassphraseRequest": {
       "type": "object",
