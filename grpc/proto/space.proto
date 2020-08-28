@@ -322,8 +322,8 @@ message GetSharedWithMeFilesRequest {
 }
 
 message GetSharedWithMeFilesResponse {
-  repeated ListDirectoryEntry items = 1;
-  int64 nextOffset = 2;
+  repeated SharedListDirectoryEntry items = 1;
+  string nextOffset = 2;
 }
 
 message GetUsageInfoRequest {}
@@ -364,6 +364,12 @@ message ListDirectoryEntry {
   bool isLocallyAvailable = 9;
   int64 backupCount = 10;
   repeated FileMember members = 11;
+}
+
+message SharedListDirectoryEntry {
+  ListDirectoryEntry entry = 1;
+  string dbId = 2;
+  string bucket = 3;
 }
 
 message ListDirectoriesResponse {
@@ -550,6 +556,9 @@ message GeneratePublicFileLinkRequest {
   string bucket = 1;
   repeated string itemPaths = 2;
   string password = 3;
+  // optional field to specify db id
+  // for shared with me files
+  string dbId = 4;
 }
 
 message GeneratePublicFileLinkResponse {
