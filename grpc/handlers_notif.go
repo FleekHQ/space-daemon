@@ -58,7 +58,7 @@ func mapToPbNotification(n domain.Notification) (*pb.Notification, error) {
 	}
 }
 
-func (srv *grpcServer) ClearNewNotifications(ctx context.Context, request *pb.ClearNewNotificationsRequest) (*pb.ClearNewNotificationsResponse, error) {
+func (srv *grpcServer) SetNotificationsLastSeenAt(ctx context.Context, request *pb.SetNotificationsLastSeenAtRequest) (*pb.SetNotificationsLastSeenAtResponse, error) {
 	return nil, errNotImplemented
 }
 

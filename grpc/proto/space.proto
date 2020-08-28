@@ -292,20 +292,21 @@ service SpaceApi {
     };
   }
 
-  // This will set the last notification received before clearing the bell so that it could
-  // be used in GetNotifications to indicate if a new message is included
-  rpc ClearNewNotifications(ClearNewNotificationsRequest) returns (ClearNewNotificationsResponse) {
+  // This will set the last read timestamp for the user so that the client
+  // can check if newer notifications are present for UX
+  rpc SetNotificationsLastSeenAt(SetNotificationsLastSeenAtRequest) returns (SetNotificationsLastSeenAtResponse) {
     option (google.api.http) = {
-      get: "/v1/sharedWithList"
+      post: "/v1/notifications/lastSeenAt"
+      body: "*"
     };
   }
 }
 
-message ClearNewNotificationsRequest {
-  string ID = 1;
+message SetNotificationsLastSeenAtRequest {
+  int64 timestamp = 1;
 }
 
-message ClearNewNotificationsResponse {}
+message SetNotificationsLastSeenAtResponse {}
 
 message GetSharedWithMeFilesRequest {
   string seek = 1;
@@ -616,7 +617,7 @@ message GetNotificationsRequest {
 message GetNotificationsResponse {
   repeated Notification notifications= 1;
   string nextOffset = 2;
-  bool new = 3; // will use the last mark clear ID to see if there are new ones
+  int64 lastSeenAt = 3;
 }
 message ReadNotificationRequest {
   string ID = 1;
