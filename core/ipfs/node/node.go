@@ -16,7 +16,6 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 
 	ipfsconfig "github.com/ipfs/go-ipfs-config"
-	coreiface "github.com/ipfs/interface-go-ipfs-core"
 	"github.com/ipfs/go-ipfs/commands"
 	"github.com/ipfs/go-ipfs/core"
 	"github.com/ipfs/go-ipfs/core/coreapi"
@@ -24,13 +23,14 @@ import (
 	"github.com/ipfs/go-ipfs/core/node/libp2p"
 	"github.com/ipfs/go-ipfs/plugin/loader"
 	"github.com/ipfs/go-ipfs/repo/fsrepo"
+	coreiface "github.com/ipfs/interface-go-ipfs-core"
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
 type IpfsNode struct {
-	coreApi   coreiface.CoreAPI
-	coreNode  *core.IpfsNode
-	cancel    context.CancelFunc
+	coreApi  coreiface.CoreAPI
+	coreNode *core.IpfsNode
+	cancel   context.CancelFunc
 
 	IsRunning bool
 	Ready     chan bool
@@ -91,6 +91,9 @@ func (node *IpfsNode) start() error {
 	}
 
 	repoPath := node.cfg.GetString(config.Ipfsnodepath, pathRoot)
+	if repoPath == "" {
+		repoPath = pathRoot
+	}
 
 	if err := setupPlugins(repoPath); err != nil {
 		return err
@@ -131,6 +134,9 @@ func (node *IpfsNode) start() error {
 	}
 
 	addr := node.cfg.GetString(config.Ipfsnodeaddr, "/ip4/127.0.0.1/tcp/5001")
+	if addr == "" {
+		addr = "/ip4/127.0.0.1/tcp/5001"
+	}
 
 	var opts = []corehttp.ServeOption{
 		corehttp.GatewayOption(true, "/ipfs", "/ipns"),
@@ -140,6 +146,7 @@ func (node *IpfsNode) start() error {
 
 	go func() {
 		if err := corehttp.ListenAndServe(node.coreNode, addr, opts...); err != nil {
+			log.Error("Error starting api: ", err)
 			return
 		}
 	}()
@@ -227,5 +234,6 @@ func cmdCtx(node *core.IpfsNode, repoPath string) commands.Context {
 		ConstructNode: func() (*core.IpfsNode, error) {
 			return node, nil
 		},
+		ReqLog: &commands.ReqLog{},
 	}
 }
