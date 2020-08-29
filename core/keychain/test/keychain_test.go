@@ -54,7 +54,7 @@ func TestKeychain_GenerateAndRestore(t *testing.T) {
 	mockStore.On("Set", mock.Anything, mock.Anything).Return(nil)
 	mockKeyRing.On("Set", mock.Anything).Return(nil)
 
-	kc.ImportExistingKeyPair(libp2pPriv)
+	kc.ImportExistingKeyPair(libp2pPriv, "")
 
 	mockStore.AssertCalled(t, "Set", []byte(keychain.PublicKeyStoreKey), pub)
 	mockKeyRing.AssertCalled(t, "Set", privKeyItem)

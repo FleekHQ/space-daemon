@@ -10,15 +10,18 @@ import (
 	"github.com/FleekHQ/space-daemon/core"
 
 	"github.com/FleekHQ/space-daemon/core/space/fuse"
+	"github.com/FleekHQ/space-daemon/core/vault"
 
 	"github.com/FleekHQ/space-daemon/core/fsds"
 
 	"github.com/FleekHQ/space-daemon/core/spacefs"
 	textile "github.com/FleekHQ/space-daemon/core/textile"
+	"github.com/FleekHQ/space-daemon/core/textile/hub"
 
 	"github.com/FleekHQ/space-daemon/core/env"
 	"github.com/FleekHQ/space-daemon/core/space"
 
+	node "github.com/FleekHQ/space-daemon/core/ipfs/node"
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/sync"
 	"github.com/FleekHQ/space-daemon/log"
@@ -81,11 +84,25 @@ func (a *App) Start(ctx context.Context) error {
 	// Init keychain
 	kc := keychain.New(keychain.WithPath(a.cfg.GetString(config.SpaceStorePath, "")), keychain.WithStore(appStore))
 
+	// Init Vault
+	v := vault.New(a.cfg.GetString(config.SpaceVaultAPIURL, ""), a.cfg.GetString(config.SpaceVaultSaltSecret, ""))
+
 	watcher, err := w.New()
 	if err != nil {
 		return err
 	}
 	a.Run("FolderWatcher", watcher)
+
+	// setup local ipfs node if Ipfsnode is set
+	if a.cfg.GetBool(config.Ipfsnode, true) {
+		// setup local ipfs node
+		node := node.NewIpsNode(a.cfg)
+		a.RunAsync("IpfsNode", node, func() error {
+			return node.Start(ctx)
+		})
+	} else {
+		log.Info("Skipping embedded IPFS node")
+	}
 
 	// setup local buckets
 	buckd := textile.NewBuckd(a.cfg)
@@ -109,6 +126,8 @@ func (a *App) Start(ctx context.Context) error {
 		bucketSync,
 		a.cfg,
 		kc,
+		v,
+		hub.New(appStore, kc, a.cfg),
 		space.WithEnv(a.env),
 	)
 	if svErr != nil {

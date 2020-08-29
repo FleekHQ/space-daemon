@@ -12,6 +12,7 @@ require (
 	github.com/alecthomas/jsonschema v0.0.0-20191017121752-4bb6e3fae4f2
 	github.com/creamdog/gonfig v0.0.0-20160810132730-80d86bfb5a37
 	github.com/dgraph-io/badger v1.6.1
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/protobuf v1.4.2
@@ -19,19 +20,25 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.14.6
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/ipfs/go-cid v0.0.6
+	github.com/ipfs/go-ipfs v0.6.1-0.20200817102359-90a573354af2
 	github.com/ipfs/go-ipfs-chunker v0.0.5
+	github.com/ipfs/go-ipfs-config v0.9.0
 	github.com/ipfs/go-ipfs-files v0.0.8
-	github.com/ipfs/go-ipfs-http-client v0.0.6-0.20200512220018-7002cce28cb1
+	github.com/ipfs/go-ipfs-http-client v0.0.6-0.20200731172059-4e8a6c8b981f
 	github.com/ipfs/go-ipld-format v0.2.0
 	github.com/ipfs/go-merkledag v0.3.2
 	github.com/ipfs/go-unixfs v0.2.4
-	github.com/ipfs/interface-go-ipfs-core v0.2.7
+	github.com/ipfs/interface-go-ipfs-core v0.4.0
+	github.com/jbenet/goprocess v0.1.4
 	github.com/joho/godotenv v1.3.0
 	github.com/libp2p/go-libp2p-connmgr v0.2.4
 	github.com/libp2p/go-libp2p-core v0.6.0
 	github.com/libp2p/go-libp2p-crypto v0.1.0
+	github.com/libp2p/go-libp2p-peerstore v0.2.6
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/multiformats/go-base32 v0.0.3
 	github.com/multiformats/go-multiaddr v0.2.2
+	github.com/multiformats/go-multibase v0.0.3
 	github.com/multiformats/go-multihash v0.0.13
 	github.com/pkg/errors v0.9.1
 	github.com/radovskyb/watcher v1.0.7
@@ -43,7 +50,11 @@ require (
 	github.com/textileio/go-threads v0.1.24-0.20200728224844-456a1ebdf635
 	github.com/textileio/textile v1.0.14
 	github.com/tyler-smith/go-bip39 v1.0.2
+<<<<<<< HEAD
 	go.etcd.io/etcd v3.3.25+incompatible
+=======
+	go.etcd.io/etcd v3.3.22+incompatible
+>>>>>>> master
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a

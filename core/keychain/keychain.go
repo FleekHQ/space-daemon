@@ -36,7 +36,8 @@ type Keychain interface {
 	GetStoredMnemonic() (string, error)
 	GenerateKeyPairWithForce() (pub []byte, priv []byte, err error)
 	Sign([]byte) ([]byte, error)
-	ImportExistingKeyPair(priv crypto.PrivKey) error
+	ImportExistingKeyPair(priv crypto.PrivKey, mnemonic string) error
+	DeleteKeypair() error
 }
 
 type keychainOptions struct {
@@ -179,7 +180,7 @@ func (kc *keychain) GetStoredMnemonic() (string, error) {
 
 // Stores an existing private key in the keychain
 // Warning: If there's already a key pair stored, this will override it.
-func (kc *keychain) ImportExistingKeyPair(priv crypto.PrivKey) error {
+func (kc *keychain) ImportExistingKeyPair(priv crypto.PrivKey, mnemonic string) error {
 	privInBytes, err := priv.Raw()
 	if err != nil {
 		return err
@@ -190,8 +191,29 @@ func (kc *keychain) ImportExistingKeyPair(priv crypto.PrivKey) error {
 	}
 
 	// Store the key pair in the db
-	if err := kc.storeKeyPair(privInBytes, pubInBytes, ""); err != nil {
+	if err := kc.storeKeyPair(privInBytes, pubInBytes, mnemonic); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (kc *keychain) DeleteKeypair() error {
+	ring, err := kc.getKeyRing()
+	if err != nil {
+		return err
+	}
+
+	err = ring.Remove(PrivateKeyStoreKey)
+
+	err2 := kc.st.Remove([]byte(PublicKeyStoreKey))
+
+	if err != nil {
+		return err
+	}
+
+	if err2 != nil {
+		return err2
 	}
 
 	return nil

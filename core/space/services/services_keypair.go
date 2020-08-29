@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
-	"github.com/FleekHQ/space-daemon/core/textile/hub"
 )
 
 // Generates a key pair and returns a mnemonic for recovering that key later on
@@ -48,7 +47,12 @@ func (s *Space) GetPublicKey(ctx context.Context) (string, error) {
 }
 
 func (s *Space) GetHubAuthToken(ctx context.Context) (string, error) {
-	return hub.GetHubToken(ctx, s.store, s.keychain, s.cfg)
+	tokens, err := s.hub.GetTokensWithCache(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	return tokens.HubToken, nil
 }
 
 func (s *Space) GetMnemonic(ctx context.Context) (string, error) {
@@ -62,4 +66,8 @@ func (s *Space) GetMnemonic(ctx context.Context) (string, error) {
 	}
 
 	return mnemonic, nil
+}
+
+func (s *Space) DeleteKeypair(ctx context.Context) error {
+	return s.keychain.DeleteKeypair()
 }

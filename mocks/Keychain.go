@@ -14,6 +14,20 @@ type Keychain struct {
 	mock.Mock
 }
 
+// DeleteKeypair provides a mock function with given fields:
+func (_m *Keychain) DeleteKeypair() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GenerateKeyFromMnemonic provides a mock function with given fields: _a0
 func (_m *Keychain) GenerateKeyFromMnemonic(_a0 ...keychain.GenerateKeyFromMnemonicOpts) (string, error) {
 	_va := make([]interface{}, len(_a0))
@@ -181,13 +195,13 @@ func (_m *Keychain) GetStoredPublicKey() (crypto.PubKey, error) {
 	return r0, r1
 }
 
-// ImportExistingKeyPair provides a mock function with given fields: priv
-func (_m *Keychain) ImportExistingKeyPair(priv crypto.PrivKey) error {
-	ret := _m.Called(priv)
+// ImportExistingKeyPair provides a mock function with given fields: priv, mnemonic
+func (_m *Keychain) ImportExistingKeyPair(priv crypto.PrivKey, mnemonic string) error {
+	ret := _m.Called(priv, mnemonic)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(crypto.PrivKey) error); ok {
-		r0 = rf(priv)
+	if rf, ok := ret.Get(0).(func(crypto.PrivKey, string) error); ok {
+		r0 = rf(priv, mnemonic)
 	} else {
 		r0 = ret.Error(0)
 	}

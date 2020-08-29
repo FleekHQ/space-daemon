@@ -36,6 +36,7 @@ type textileClient struct {
 	isConnectedToHub bool
 	netc             *nc.Client
 	uc               UsersClient
+	hubAuth          hub.HubAuth
 }
 
 // Creates a new Textile Client
@@ -51,6 +52,7 @@ func NewClient(store db.Store, kc keychain.Keychain) *textileClient {
 		isRunning:        false,
 		Ready:            make(chan bool),
 		isConnectedToHub: false,
+		hubAuth:          nil,
 	}
 }
 
@@ -67,9 +69,7 @@ func (tc *textileClient) requiresRunning() error {
 
 func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error) {
 	log.Debug("Authenticating with Textile Hub")
-
-	// TODO: Use hub.GetHubToken instead
-	ctx, err := hub.GetHubTokenUsingTextileKeys(ctx, tc.store, tc.kc, tc.ht)
+	ctx, err := tc.hubAuth.GetHubContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -80,6 +80,7 @@ func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error)
 // Starts the Textile Client
 func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.cfg = cfg
+	tc.hubAuth = hub.New(tc.store, tc.kc, cfg)
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
 
@@ -139,6 +140,7 @@ func (tc *textileClient) SetUc(uc UsersClient) {
 func (tc *textileClient) ConnectToHub(ctx context.Context) {
 	// Attempt to connect to the Hub
 	hubctx, err := tc.getHubCtx(ctx)
+
 	if err != nil {
 		log.Error("Could not connect to Textile Hub. Starting in offline mode.", err)
 	}

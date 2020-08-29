@@ -50,7 +50,11 @@ Space Daemon requires a few modules to run successfully. If you downloaded the b
 
 ### IPFS Node
 
-All encrypted files are stored in an IPFS node. For convenience, Space Daemon connects to a hosted IPFS node by default. You can connect to one of your choosing by providing the `-ipfsaddr` flag (e.g. `-ipfsaddr=/ip4/127.0.0.1/tcp/5001`)
+All encrypted files are stored in an IPFS node. For convenience, Space Daemon runs an embedded node within the daemon that can be configured as well as the option to specify an external node to connect to. 
+
+If you have your own node outside of the daemon, then set the flag `-ipfsnode` to `false`.  This will not spin up an embedded node. You can then connect to your external node by providing the `-ipfsaddr` flag (e.g. `-ipfsaddr=/ip4/127.0.0.1/tcp/5001`).
+
+In the case you are running the embedded IPFS node, you can further configure the listen address and data directory by setting these flags respectively: `-ipfsnodeaddr` and `-ipfsnodepath`.
 
 ### Textile Hub
 
@@ -78,7 +82,7 @@ Currently, local Textile Threads require a running MongoDB database. Space Daemo
 
 ## Running from source
 
-After cloning this repo, you can run it from source by running `go run ./cmd/space-daemon -devMode=true`. Consider that you will need the following environment variables exported in your system:
+After cloning this repo, you can run it from source by running `go run ./cmd/space-daemon -dev`. Consider that you will need the following environment variables exported in your system:
 
 ```
 IPFS_ADDR=[Your IPFS node address]
@@ -87,6 +91,8 @@ MONGO_USR=[The user of a MongoDB database]
 MONGO_HOST=[The host of a MongoDB database]
 MONGO_REPLICA_SET=[The replica set for a MongoDB database]
 SERVICES_API_URL=[The URL where Space Services API is located]
+VAULT_API_URL=[The URL where Space Vault API is located]
+VAULT_SALT_SECRET=[A random string used for kdf functions before storing keys to the vault]
 SERVICES_HUB_AUTH_URL=[The URL where Space Services Textile Hub Authorizer is located]
 TXL_HUB_TARGET=[The URL of the Textile Hub]
 TXL_HUB_MA=[The multiaddress for the Textile hub]

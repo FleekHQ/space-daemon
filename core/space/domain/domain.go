@@ -106,3 +106,8 @@ type Invitation struct {
 	ReadAt           time.Time        `json:"readAt"`
 	CreatedAt        time.Time        `json:"createdAt"`
 }
+
+type APISessionTokens struct {
+	HubToken      string
+	ServicesToken string
+}

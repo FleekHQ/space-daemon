@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/FleekHQ/space-daemon/core/ipfs"
+	"github.com/FleekHQ/space-daemon/core/textile/hub"
+	"github.com/FleekHQ/space-daemon/core/vault"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/env"
@@ -21,6 +23,8 @@ type Space struct {
 	tc       textile.Client
 	sync     Syncer
 	keychain keychain.Keychain
+	vault    vault.Vault
+	hub      hub.HubAuth
 	ic       ipfs.Client
 }
 
@@ -52,6 +56,8 @@ func NewSpace(
 	cfg config.Config,
 	env env.SpaceEnv,
 	kc keychain.Keychain,
+	v vault.Vault,
+	h hub.HubAuth,
 	ic ipfs.Client,
 ) *Space {
 	return &Space{
@@ -61,6 +67,8 @@ func NewSpace(
 		tc:       tc,
 		sync:     syncer,
 		keychain: kc,
+		vault:    v,
+		hub:      h,
 		ic:       ic,
 	}
 }

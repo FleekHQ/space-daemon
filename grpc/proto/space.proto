@@ -181,6 +181,14 @@ service SpaceApi {
     };
   }
 
+  // Tests a passphrase to see if it matches the one previously used
+  rpc TestKeysPassphrase(TestKeysPassphraseRequest) returns (TestKeysPassphraseResponse) {
+    option (google.api.http) = {
+      post: "/v1/passphrases/test"
+      body: "*"
+    };
+  }
+
   rpc CreateLocalKeysBackup(CreateLocalKeysBackupRequest) returns (CreateLocalKeysBackupResponse) {
     option (google.api.http) = {
       post: "/v1/localBackups/backup"
@@ -219,16 +227,16 @@ service SpaceApi {
     };
   }
 
-  rpc AcceptBucketInvitation(AcceptBucketInvitationRequest) returns (AcceptBucketInvitationResponse) {
+  rpc AcceptFilesInvitation(AcceptFilesInvitationRequest) returns (AcceptFilesInvitationResponse) {
     option (google.api.http) = {
-      post: "/v1/acceptInvitation"
+      post: "/v1/acceptFilesInvitation"
       body: "*"
     };
   }
 
-  rpc RejectBucketInvitation(RejectBucketInvitationRequest) returns (RejectBucketInvitationResponse) {
+  rpc RejectFilesInvitation(RejectFilesInvitationRequest) returns (RejectFilesInvitationResponse) {
     option (google.api.http) = {
-      post: "/v1/rejectInvitation"
+      post: "/v1/rejectFilesInvitation"
       body: "*"
     };
   }
@@ -284,7 +292,29 @@ service SpaceApi {
       get: "/v1/apiSessionTokens"
     };
   }
+
+  // Returns a list of addresses / public keys of clients to which files where shared or received, ordered by date
+  rpc GetRecentlySharedWith(GetRecentlySharedWithRequest) returns (GetRecentlySharedWithResponse) {
+    option (google.api.http) = {
+      get: "/v1/sharedWithList"
+    };
+  }
+
+  // This will set the last read timestamp for the user so that the client
+  // can check if newer notifications are present for UX
+  rpc SetNotificationsLastSeenAt(SetNotificationsLastSeenAtRequest) returns (SetNotificationsLastSeenAtResponse) {
+    option (google.api.http) = {
+      post: "/v1/notifications/lastSeenAt"
+      body: "*"
+    };
+  }
 }
+
+message SetNotificationsLastSeenAtRequest {
+  int64 timestamp = 1;
+}
+
+message SetNotificationsLastSeenAtResponse {}
 
 message GetSharedWithMeFilesRequest {
   string seek = 1;
@@ -292,8 +322,8 @@ message GetSharedWithMeFilesRequest {
 }
 
 message GetSharedWithMeFilesResponse {
-  repeated ListDirectoryEntry items = 1;
-  int64 nextOffset = 2;
+  repeated SharedListDirectoryEntry items = 1;
+  string nextOffset = 2;
 }
 
 message GetUsageInfoRequest {}
@@ -334,6 +364,12 @@ message ListDirectoryEntry {
   bool isLocallyAvailable = 9;
   int64 backupCount = 10;
   repeated FileMember members = 11;
+}
+
+message SharedListDirectoryEntry {
+  ListDirectoryEntry entry = 1;
+  string dbId = 2;
+  string bucket = 3;
 }
 
 message ListDirectoriesResponse {
@@ -465,16 +501,25 @@ message CreateFolderResponse {
 }
 
 message BackupKeysByPassphraseRequest {
-  string passphrase = 1;
+  string uuid = 1;
+  string passphrase = 2;
 }
 
 message BackupKeysByPassphraseResponse {}
 
 message RecoverKeysByPassphraseRequest {
-  string passphrase = 1;
+  string uuid = 1;
+  string passphrase = 2;
 }
 
 message RecoverKeysByPassphraseResponse {}
+
+message TestKeysPassphraseRequest {
+  string uuid = 1;
+  string passphrase = 2;
+}
+
+message TestKeysPassphraseResponse {}
 
 message ThreadInfo {
   repeated string addresses = 1;
@@ -511,6 +556,9 @@ message GeneratePublicFileLinkRequest {
   string bucket = 1;
   repeated string itemPaths = 2;
   string password = 3;
+  // optional field to specify db id
+  // for shared with me files
+  string dbId = 4;
 }
 
 message GeneratePublicFileLinkResponse {
@@ -569,17 +617,17 @@ message Notification {
   int64 readAt = 8;
 }
 
-message AcceptBucketInvitationRequest {
+message AcceptFilesInvitationRequest {
   string invitationID = 1;
 }
 
-message AcceptBucketInvitationResponse {}
+message AcceptFilesInvitationResponse {}
 
-message RejectBucketInvitationRequest {
+message RejectFilesInvitationRequest {
   string invitationID = 1;
 }
 
-message RejectBucketInvitationResponse {}
+message RejectFilesInvitationResponse {}
 
 message NotificationEventResponse {
   Notification notification = 1;
@@ -592,7 +640,8 @@ message GetNotificationsRequest {
 
 message GetNotificationsResponse {
   repeated Notification notifications= 1;
-  int64 nextOffset = 2;
+  string nextOffset = 2;
+  int64 lastSeenAt = 3;
 }
 message ReadNotificationRequest {
   string ID = 1;
@@ -634,4 +683,10 @@ message GetAPISessionTokensRequest {}
 message GetAPISessionTokensResponse {
   string hubToken = 1;
   string servicesToken = 2;
+}
+
+message GetRecentlySharedWithRequest {}
+
+message GetRecentlySharedWithResponse {
+ repeated FileMember members = 1;
 }

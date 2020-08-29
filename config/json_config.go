@@ -82,6 +82,21 @@ func (c jsonConfig) GetInt(key string, defaultValue interface{}) int {
 	return v
 }
 
+// Gets the configuration value given a path in the json config file
+// defaults to empty value if non is found and just logs errors
+func (c jsonConfig) GetBool(key string, defaultValue interface{}) bool {
+	if c.cfg == nil {
+		return false
+	}
+	v, err := c.cfg.GetBool(key, defaultValue)
+	if err != nil {
+		log.Error(fmt.Sprintf("error getting key %s from config", key), err)
+		return false
+	}
+
+	return v
+}
+
 func CreateConfigJson() error {
 	fmt.Println("Generating default config file")
 	spaceJson := defaultSpaceJson{

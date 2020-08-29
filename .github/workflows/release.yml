@@ -35,6 +35,8 @@ jobs:
           MONGO_HOST: ${{ secrets.MONGO_HOST }}
           MONGO_REPLICA_SET: ${{ secrets.MONGO_REPLICA_SET }}
           SERVICES_API_URL: ${{ secrets.SERVICES_API_URL }}
+          VAULT_API_URL: ${{ secrets.VAULT_API_URL }}
+          VAULT_SALT_SECRET: ${{ secrets.VAULT_SALT_SECRET }}
           SERVICES_HUB_AUTH_URL: ${{ secrets.SERVICES_HUB_AUTH_URL }}
           TXL_HUB_TARGET: ${{ secrets.TXL_HUB_TARGET }}
           TXL_HUB_MA: ${{ secrets.TXL_HUB_MA }}
