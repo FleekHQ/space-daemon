@@ -97,24 +97,34 @@ func (a *App) Start(ctx context.Context) error {
 	if a.cfg.GetBool(config.Ipfsnode, true) {
 		// setup local ipfs node
 		node := node.NewIpsNode(a.cfg)
-		a.RunAsync("IpfsNode", node, func() error {
+
+		err = a.RunAsync("IpfsNode", node, func() error {
 			return node.Start(ctx)
 		})
+		if err != nil {
+			return err
+		}
 	} else {
 		log.Info("Skipping embedded IPFS node")
 	}
 
 	// setup local buckets
 	buckd := textile.NewBuckd(a.cfg)
-	a.RunAsync("BucketDaemon", buckd, func() error {
+	err = a.RunAsync("BucketDaemon", buckd, func() error {
 		return buckd.Start(ctx)
 	})
+	if err != nil {
+		return err
+	}
 
 	// setup textile client
 	textileClient := textile.NewClient(appStore, kc)
-	a.RunAsync("TextileClient", textileClient, func() error {
+	err = a.RunAsync("TextileClient", textileClient, func() error {
 		return textileClient.Start(ctx, a.cfg)
 	})
+	if err != nil {
+		return err
+	}
 
 	// watcher is started inside bucket sync
 	bucketSync := sync.New(watcher, textileClient, appStore, nil)
@@ -160,15 +170,21 @@ func (a *App) Start(ctx context.Context) error {
 		grpc.WithRestProxyPort(a.cfg.GetInt(config.SpaceRestProxyServerPort, 0)),
 	)
 
-	a.RunAsync("BucketSync", bucketSync, func() error {
+	err = a.RunAsync("BucketSync", bucketSync, func() error {
 		bucketSync.RegisterNotifier(srv)
 		return bucketSync.Start(ctx)
 	})
+	if err != nil {
+		return err
+	}
 
 	// start the gRPC server
-	a.RunAsync("gRPCServer", srv, func() error {
+	err = a.RunAsync("gRPCServer", srv, func() error {
 		return srv.Start(ctx)
 	})
+	if err != nil {
+		return err
+	}
 
 	log.Info("Daemon ready")
 
@@ -197,22 +213,32 @@ func (a *App) Run(name string, component core.Component) {
 
 // RunAsync performs the same function as Run() but also accepts an function to be run
 // async to initialize the component.
-func (a *App) RunAsync(name string, component core.AsyncComponent, fn func() error) {
+func (a *App) RunAsync(name string, component core.AsyncComponent, fn func() error) error {
 	log.Debug("Starting Async Component", "name:"+name)
 	if a.eg == nil {
 		log.Warn("App.RunAsync() should be called after App.Start()")
-		return
+		return nil
 	}
 
+	errc := make(chan error)
+
 	a.eg.Go(func() error {
-		return fn()
+		err := fn()
+		errc <- err
+		return err
 	})
 
-	<-component.WaitForReady()
-	a.components.Push(&componentMap{
-		name:      name,
-		component: component,
-	})
+	select {
+	case err := <-errc:
+		return err
+	case <-component.WaitForReady():
+		a.components.Push(&componentMap{
+			name:      name,
+			component: component,
+		})
+	}
+
+	return nil
 }
 
 // Shutdown would perform a graceful shutdown of all components added through the
