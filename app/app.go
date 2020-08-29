@@ -224,7 +224,10 @@ func (a *App) RunAsync(name string, component core.AsyncComponent, fn func() err
 
 	a.eg.Go(func() error {
 		err := fn()
-		errc <- err
+		if err != nil {
+			errc <- err
+		}
+
 		return err
 	})
 
