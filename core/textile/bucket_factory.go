@@ -132,13 +132,11 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 	if b, _ := tc.GetBucket(ctx, bucketSlug); b != nil {
 		return b, nil
 	}
-
 	if err != nil {
 		return nil, err
 	}
 
 	ctx, dbID, err := tc.GetBucketContext(ctx, bucketSlug)
-
 	if err != nil {
 		return nil, err
 	}
@@ -152,9 +150,23 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 
 	// We store the bucket in a meta thread so that we can later fetch a list of all buckets
 	log.Debug("Bucket " + bucketSlug + " created. Storing metadata.")
-	_, err = tc.storeBucketInCollection(ctx, bucketSlug, dbID.String())
+	schema, err := tc.storeBucketInCollection(ctx, bucketSlug, dbID.String())
 	if err != nil {
 		return nil, err
+	}
+
+	if schema.Backup {
+		mirrorSchema, err := tc.createMirrorBucket(ctx, *schema)
+		if err != nil {
+			return nil, err
+		}
+
+		if mirrorSchema != nil {
+			_, err = tc.storeBucketMirrorSchema(ctx, bucketSlug, mirrorSchema)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	newB := bucket.New(b.Root, tc.GetBucketContext, tc.bucketsClient)

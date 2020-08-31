@@ -19,6 +19,7 @@ type BucketSchema struct {
 	Slug   string          `json:"slug"`
 	Backup bool            `json:"backup"`
 	DbID   string
+	*BucketMirrorSchema
 }
 
 const metaThreadName = "metathreadV1"
@@ -89,6 +90,30 @@ func (tc *textileClient) toggleBucketBackupInCollection(ctx context.Context, buc
 	}
 
 	bucket.Backup = backup
+
+	instances := client.Instances{bucket}
+
+	err = tc.threads.Save(metaCtx, *metaDbID, bucketCollectionName, instances)
+	if err != nil {
+		return nil, err
+	}
+
+	return bucket, nil
+}
+
+func (tc *textileClient) storeBucketMirrorSchema(ctx context.Context, bucketSlug string, mirrorSchema *BucketMirrorSchema) (*BucketSchema, error) {
+	metaCtx, metaDbID, err := tc.initBucketCollection(ctx)
+	if err != nil && metaDbID == nil {
+		return nil, err
+	}
+
+	bucket, err := tc.findBucketInCollection(ctx, bucketSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	bucket.RemoteDbID = mirrorSchema.RemoteDbID
+	bucket.HubAddr = mirrorSchema.HubAddr
 
 	instances := client.Instances{bucket}
 
