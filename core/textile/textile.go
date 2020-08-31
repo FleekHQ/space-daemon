@@ -72,6 +72,7 @@ type Client interface {
 	Shutdown() error
 	WaitForReady() chan bool
 	Start(ctx context.Context, cfg config.Config) error
+	ShareFilesViaPublicKey(ctx context.Context, bucketName string, paths []string, pubkeys []crypto.PubKey) error
 }
 
 type Buckd interface {
