@@ -227,16 +227,9 @@ service SpaceApi {
     };
   }
 
-  rpc AcceptFilesInvitation(AcceptFilesInvitationRequest) returns (AcceptFilesInvitationResponse) {
+  rpc HandleFilesInvitation(HandleFilesInvitationRequest) returns (HandleFilesInvitationResponse) {
     option (google.api.http) = {
-      post: "/v1/acceptFilesInvitation"
-      body: "*"
-    };
-  }
-
-  rpc RejectFilesInvitation(RejectFilesInvitationRequest) returns (RejectFilesInvitationResponse) {
-    option (google.api.http) = {
-      post: "/v1/rejectFilesInvitation"
+      post: "/v1/filesinvitation/{invitationID}"
       body: "*"
     };
   }
@@ -617,17 +610,12 @@ message Notification {
   int64 readAt = 8;
 }
 
-message AcceptFilesInvitationRequest {
+message HandleFilesInvitationRequest {
   string invitationID = 1;
+  bool accept = 2;
 }
 
-message AcceptFilesInvitationResponse {}
-
-message RejectFilesInvitationRequest {
-  string invitationID = 1;
-}
-
-message RejectFilesInvitationResponse {}
+message HandleFilesInvitationResponse {}
 
 message NotificationEventResponse {
   Notification notification = 1;
