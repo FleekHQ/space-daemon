@@ -28,3 +28,5 @@ dist/
 main
 devtools/grpc-ecosystem
 __debug_bin
+node_modules
+*error.log

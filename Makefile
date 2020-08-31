@@ -34,3 +34,13 @@ gen_rest_swagger:
 		&& statik -src=swagger/ui -f -dest=swagger -p=bin_ui
 
 gen_all: proto_gen gen_rest gen_rest_swagger
+
+localnet-down:
+	docker-compose -p localnet \
+		-f docker-compose-localnet.yaml \
+		down
+
+localnet-up:
+	docker-compose -p localnet \
+		-f docker/docker-compose-localnet.yaml \
+		up --build -V

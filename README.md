@@ -62,6 +62,18 @@ Required for sharing files between users and backing it up. It stores all backed
 
 If you want to host your own Textile Hub node, you can [read its documentation here](https://github.com/textileio/textile)
 
+### Powergate
+
+The space daemon can launch a powergate daemon. This is by default exposed on port `6005`.
+This feature is currently in alpha and therefore only runs when built from source. To start it you need to do the follow:
+
+1. Startup the filecoin lotus local devnet. Run `make localnet-up` in this repositories root directory.
+2. Run `make && ./bin/space --filecoin` in this repos root directory. This would start space daemon with filecoin enabled.
+
+See [these test files](powergate_test/powergate.test.js) for how to interact with the powergate daemon using the powergate client.
+
+NOTE: Due to current limitation on the underlying filecoin server powergate depends on, this powergate daemon would not work on windows.
+
 ### Space Services
 
 We provide hosted alternatives for these services. You can deploy your own by following the instructions in its repo:
