@@ -11,38 +11,6 @@
     "application/json"
   ],
   "paths": {
-    "/v1/acceptFilesInvitation": {
-      "post": {
-        "operationId": "SpaceApi_AcceptFilesInvitation",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/spaceAcceptFilesInvitationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response",
-            "schema": {
-              "$ref": "#/definitions/runtimeError"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/spaceAcceptFilesInvitationRequest"
-            }
-          }
-        ],
-        "tags": [
-          "SpaceApi"
-        ]
-      }
-    },
     "/v1/apiSessionTokens": {
       "get": {
         "operationId": "SpaceApi_GetAPISessionTokens",
@@ -593,6 +561,44 @@
         ]
       }
     },
+    "/v1/filesinvitation/{invitationID}": {
+      "post": {
+        "operationId": "SpaceApi_HandleFilesInvitation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceHandleFilesInvitationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "invitationID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceHandleFilesInvitationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/fuse": {
       "get": {
         "summary": "Get status of FUSE drive. If mounted or unmounted",
@@ -1103,38 +1109,6 @@
         ]
       }
     },
-    "/v1/rejectFilesInvitation": {
-      "post": {
-        "operationId": "SpaceApi_RejectFilesInvitation",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/spaceRejectFilesInvitationResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response",
-            "schema": {
-              "$ref": "#/definitions/runtimeError"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/spaceRejectFilesInvitationRequest"
-            }
-          }
-        ],
-        "tags": [
-          "SpaceApi"
-        ]
-      }
-    },
     "/v1/sharedWithList": {
       "get": {
         "summary": "Returns a list of addresses / public keys of clients to which files where shared or received, ordered by date",
@@ -1366,17 +1340,6 @@
           }
         }
       }
-    },
-    "spaceAcceptFilesInvitationRequest": {
-      "type": "object",
-      "properties": {
-        "invitationID": {
-          "type": "string"
-        }
-      }
-    },
-    "spaceAcceptFilesInvitationResponse": {
-      "type": "object"
     },
     "spaceAddItemResult": {
       "type": "object",
@@ -1752,6 +1715,21 @@
         }
       }
     },
+    "spaceHandleFilesInvitationRequest": {
+      "type": "object",
+      "properties": {
+        "invitationID": {
+          "type": "string"
+        },
+        "accept": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
+    },
+    "spaceHandleFilesInvitationResponse": {
+      "type": "object"
+    },
     "spaceInvitation": {
       "type": "object",
       "properties": {
@@ -1986,17 +1964,6 @@
       }
     },
     "spaceRecoverKeysByPassphraseResponse": {
-      "type": "object"
-    },
-    "spaceRejectFilesInvitationRequest": {
-      "type": "object",
-      "properties": {
-        "invitationID": {
-          "type": "string"
-        }
-      }
-    },
-    "spaceRejectFilesInvitationResponse": {
       "type": "object"
     },
     "spaceRestoreKeyPairViaMnemonicRequest": {
