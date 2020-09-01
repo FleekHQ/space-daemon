@@ -74,6 +74,12 @@ See [these test files](powergate_test/powergate.test.js) for how to interact wit
 
 NOTE: Due to current limitation on the underlying filecoin server powergate depends on, this powergate daemon would not work on windows.
 
+Other configurable values for powergate (after specifying -filecoin to launch it)
+- `-lotusaddr`: multi address pointing to lotus server (defaults to /ip4/127.0.0.1/tcp/7777)
+- `-powdgrpchostaddr`: powergate grpc host multi address (defaults to /ip4/0.0.0.0/tcp/5005)
+- `-powdgrpcwebproxyaddr`: powergate grpc web proxy address (defaults to 0.0.0.0:6005)
+- `-powdgatewayhostaddr`: powergate gateway host address (defaults to 0.0.0.0:7001)
+
 ### Space Services
 
 We provide hosted alternatives for these services. You can deploy your own by following the instructions in its repo:
