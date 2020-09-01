@@ -134,9 +134,9 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.healthcheck(ctx)
 	for {
 		timeAfterNextCheck := 60 * time.Second
-		if tc.isConnectedToHub == false || tc.isInitialized == false {
+		// Do more frequent checks if the client is not initialized/running
+		if err := tc.requiresRunning(); err != nil {
 			timeAfterNextCheck = 5 * time.Second
-
 		}
 		select {
 		case <-time.After(timeAfterNextCheck):
