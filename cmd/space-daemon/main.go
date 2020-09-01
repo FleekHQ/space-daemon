@@ -18,28 +18,32 @@ import (
 )
 
 var (
-	cpuprofile        = flag.String("cpuprofile", "", "write cpu profile to `file`")
-	memprofile        = flag.String("memprofile", "", "write memory profile to `file`")
-	debugMode         = flag.Bool("debug", true, "run daemon with debug mode for profiling")
-	devMode           = flag.Bool("dev", false, "run daemon in dev mode to use .env file")
-	ipfsaddr          = flag.String("ipfsaddr", "/ip4/127.0.0.1/tcp/5001", "IPFS multiaddress to connect to (defaults to local node)")
-	ipfsnode          = flag.Bool("ipfsnode", true, "run IPFS embedded into the daemon (defaults to true)")
-	ipfsnodeaddr      string
-	ipfsnodepath      string
-	powergate         = flag.Bool("filecoin", false, "run a devnet powergate daemon on port 9995")
-	mongousr          string
-	mongopw           string
-	mongohost         string
-	mongorepset       string
-	spaceapi          string
-	vaultapi          string
-	vaultsaltsecret   string
-	spacehubauth      string
-	textilehub        string
-	textilehubma      string
-	textilethreads    string
-	textileuserkey    string
-	textileusersecret string
+	cpuprofile           = flag.String("cpuprofile", "", "write cpu profile to `file`")
+	memprofile           = flag.String("memprofile", "", "write memory profile to `file`")
+	debugMode            = flag.Bool("debug", true, "run daemon with debug mode for profiling")
+	devMode              = flag.Bool("dev", false, "run daemon in dev mode to use .env file")
+	ipfsaddr             = flag.String("ipfsaddr", "/ip4/127.0.0.1/tcp/5001", "IPFS multiaddress to connect to (defaults to local node)")
+	ipfsnode             = flag.Bool("ipfsnode", true, "run IPFS embedded into the daemon (defaults to true)")
+	ipfsnodeaddr         string
+	ipfsnodepath         string
+	powergate            = flag.Bool("filecoin", false, "run a devnet powergate daemon on port 9995")
+	lotusaddr            = flag.String("lotusaddr", "/ip4/127.0.0.1/tcp/7777", "multi address pointing to lotus server (defaults to /ip4/127.0.0.1/tcp/7777)")
+	powdgrpchostaddr     = flag.String("powdgrpchostaddr", "/ip4/0.0.0.0/tcp/5005", "powergate grpc host multi address")
+	powdgrpcwebproxyaddr = flag.String("powdgrpcwebproxyaddr", "0.0.0.0:6005", "powergate grpc web proxy address (defaults to 0.0.0.0:6005)")
+	powdgatewayhostaddr  = flag.String("powdgatewayhostaddr", "0.0.0.0:7001", "powergate gateway host address (defaults to 0.0.0.0:7001)")
+	mongousr             string
+	mongopw              string
+	mongohost            string
+	mongorepset          string
+	spaceapi             string
+	vaultapi             string
+	vaultsaltsecret      string
+	spacehubauth         string
+	textilehub           string
+	textilehubma         string
+	textilethreads       string
+	textileuserkey       string
+	textileusersecret    string
 )
 
 func main() {
@@ -53,25 +57,29 @@ func main() {
 	log.Debug("Running mode", fmt.Sprintf("DevMode:%v", *devMode))
 
 	cf := &config.Flags{
-		Ipfsaddr:             *ipfsaddr,
-		Ipfsnode:             *ipfsnode == true,
-		Ipfsnodeaddr:         ipfsnodeaddr,
-		Ipfsnodepath:         ipfsnodepath,
-		Mongousr:             mongousr,
-		Mongopw:              mongopw,
-		Mongohost:            mongohost,
-		Mongorepset:          mongorepset,
-		ServicesAPIURL:       spaceapi,
-		VaultAPIURL:          vaultapi,
-		VaultSaltSecret:      vaultsaltsecret,
-		ServicesHubAuthURL:   spacehubauth,
-		DevMode:              *devMode == true,
-		TextileHubTarget:     textilehub,
-		TextileHubMa:         textilehubma,
-		TextileThreadsTarget: textilethreads,
-		TextileUserKey:       textileuserkey,
-		TextileUserSecret:    textileusersecret,
-		StartPowergate:       *powergate,
+		Ipfsaddr:                *ipfsaddr,
+		Ipfsnode:                *ipfsnode == true,
+		Ipfsnodeaddr:            ipfsnodeaddr,
+		Ipfsnodepath:            ipfsnodepath,
+		Mongousr:                mongousr,
+		Mongopw:                 mongopw,
+		Mongohost:               mongohost,
+		Mongorepset:             mongorepset,
+		ServicesAPIURL:          spaceapi,
+		VaultAPIURL:             vaultapi,
+		VaultSaltSecret:         vaultsaltsecret,
+		ServicesHubAuthURL:      spacehubauth,
+		DevMode:                 *devMode == true,
+		TextileHubTarget:        textilehub,
+		TextileHubMa:            textilehubma,
+		TextileThreadsTarget:    textilethreads,
+		TextileUserKey:          textileuserkey,
+		TextileUserSecret:       textileusersecret,
+		StartPowergate:          *powergate,
+		LotusAddress:            *lotusaddr,
+		PowdGrpcHostAddress:     *powdgrpchostaddr,
+		PowdGrpcWebProxyAddress: *powdgrpcwebproxyaddr,
+		PowdGatewayHostAddress:  *powdgatewayhostaddr,
 	}
 
 	// CPU profiling

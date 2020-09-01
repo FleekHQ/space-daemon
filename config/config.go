@@ -33,6 +33,10 @@ const (
 	MinThreadsConnection     = "space/minThreadsConn"
 	MaxThreadsConnection     = "space/maxThreadsConn"
 	StartPowergate           = "space/startPowergate"
+	LotusAddress             = "space/lotusAddress"
+	PowdGrpcHostAddress      = "space/powergateGrpcHostAddress"
+	PowdGrpcWebProxyAddress  = "space/powergateGrpcWebProxyAddress"
+	PowdGatewayHostAddress   = "space/powergateGrpcGatewayHostAddress"
 )
 
 var (
@@ -40,25 +44,29 @@ var (
 )
 
 type Flags struct {
-	Ipfsaddr             string
-	Ipfsnode             bool
-	Ipfsnodeaddr         string
-	Ipfsnodepath         string
-	Mongousr             string
-	Mongopw              string
-	Mongohost            string
-	Mongorepset          string
-	DevMode              bool
-	ServicesAPIURL       string
-	VaultAPIURL          string
-	VaultSaltSecret      string
-	ServicesHubAuthURL   string
-	TextileHubTarget     string
-	TextileHubMa         string
-	TextileThreadsTarget string
-	TextileUserKey       string
-	TextileUserSecret    string
-	StartPowergate       bool
+	Ipfsaddr                string
+	Ipfsnode                bool
+	Ipfsnodeaddr            string
+	Ipfsnodepath            string
+	Mongousr                string
+	Mongopw                 string
+	Mongohost               string
+	Mongorepset             string
+	DevMode                 bool
+	ServicesAPIURL          string
+	VaultAPIURL             string
+	VaultSaltSecret         string
+	ServicesHubAuthURL      string
+	TextileHubTarget        string
+	TextileHubMa            string
+	TextileThreadsTarget    string
+	TextileUserKey          string
+	TextileUserSecret       string
+	StartPowergate          bool
+	LotusAddress            string
+	PowdGrpcHostAddress     string
+	PowdGrpcWebProxyAddress string
+	PowdGatewayHostAddress  string
 }
 
 // Config used to fetch config information

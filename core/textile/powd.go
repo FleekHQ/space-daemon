@@ -38,20 +38,19 @@ func StartPowd(cfg config.Config) (*PowergateDaemon, error) {
 
 	// because we are running in Devnet === true, all config are default set to work with it
 	// make sure you have run `make localnet-up` first.
-	// TODO: get addresses and ports from the config variable
 	serverConfig := server.Config{
 		Devnet:               true,
 		WalletInitialFunds:   *big.NewInt(4000000000000000),
 		IpfsAPIAddr:          util.MustParseAddr(cfg.GetString(config.Ipfsaddr, "/ip4/127.0.0.1/tcp/5001")),
-		LotusAddress:         util.MustParseAddr("/ip4/127.0.0.1/tcp/7777"),
+		LotusAddress:         util.MustParseAddr(cfg.GetString(config.LotusAddress, "/ip4/127.0.0.1/tcp/7777")),
 		LotusAuthToken:       "",
 		LotusMasterAddr:      "",
 		AutocreateMasterAddr: false,
 		GrpcServerOpts:       nil,
 		GrpcHostNetwork:      "tcp",
-		GrpcHostAddress:      util.MustParseAddr("/ip4/0.0.0.0/tcp/5005"),
-		GrpcWebProxyAddress:  "0.0.0.0:6005",
-		GatewayHostAddr:      "0.0.0.0:7001",
+		GrpcHostAddress:      util.MustParseAddr(cfg.GetString(config.PowdGrpcHostAddress, "/ip4/0.0.0.0/tcp/5005")),
+		GrpcWebProxyAddress:  cfg.GetString(config.PowdGrpcWebProxyAddress, "0.0.0.0:6005"),
+		GatewayHostAddr:      cfg.GetString(config.PowdGatewayHostAddress, "0.0.0.0:7001"),
 		RepoPath:             repPath,
 		MaxMindDBFolder:      "./iplocation",
 	}
@@ -61,7 +60,10 @@ func StartPowd(cfg config.Config) (*PowergateDaemon, error) {
 		return nil, errors.Wrap(err, "powergate server failed to start")
 	}
 
-	log.Info("Powergate server started")
+	log.Info(
+		"Powergate server started.",
+		"grpcwebproxyaddress:"+serverConfig.GrpcWebProxyAddress,
+	)
 
 	return &PowergateDaemon{
 		server: newServer,
