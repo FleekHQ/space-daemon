@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/FleekHQ/space-daemon/config"
 	crypto "github.com/libp2p/go-libp2p-crypto"
@@ -31,7 +32,10 @@ type textileClient struct {
 	ht               *threadsClient.Client
 	bucketsClient    *bucketsClient.Client
 	isRunning        bool
+	isInitialized    bool
 	Ready            chan bool
+	keypairDeleted   chan bool
+	shuttingDown     chan bool
 	cfg              config.Config
 	isConnectedToHub bool
 	netc             *nc.Client
@@ -50,7 +54,10 @@ func NewClient(store db.Store, kc keychain.Keychain) *textileClient {
 		uc:               nil,
 		ht:               nil,
 		isRunning:        false,
+		isInitialized:    false,
 		Ready:            make(chan bool),
+		keypairDeleted:   make(chan bool),
+		shuttingDown:     make(chan bool),
 		isConnectedToHub: false,
 		hubAuth:          nil,
 	}
@@ -61,14 +68,13 @@ func (tc *textileClient) WaitForReady() chan bool {
 }
 
 func (tc *textileClient) requiresRunning() error {
-	if tc.isRunning == false {
-		return errors.New("ran an operation that requires starting textileClient first")
+	if tc.isRunning == false || tc.isInitialized == false {
+		return errors.New("ran an operation that requires starting and initializing textileClient first")
 	}
 	return nil
 }
 
 func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error) {
-	log.Debug("Authenticating with Textile Hub")
 	ctx, err := tc.hubAuth.GetHubContext(ctx)
 	if err != nil {
 		return nil, err
@@ -122,10 +128,38 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 
 	tc.isRunning = true
 
-	tc.ConnectToHub(ctx)
+	tc.healthcheck(ctx)
 
 	tc.Ready <- true
-	return nil
+
+	// Repeating healthcheck
+	for {
+		timeAfterNextCheck := 60 * time.Second
+		// Do more frequent checks if the client is not initialized/running
+		if tc.isConnectedToHub == false || tc.isInitialized == false {
+			timeAfterNextCheck = 5 * time.Second
+		}
+
+		// If it's trying to shutdown we return right away
+		if tc.isRunning == false {
+			return nil
+		}
+
+		select {
+		case <-time.After(timeAfterNextCheck):
+			tc.healthcheck(ctx)
+
+		// If we get notified that the keypair got deleted, start checking right away
+		case <-tc.keypairDeleted:
+			tc.healthcheck(ctx)
+
+		// If it's trying to shutdown we return right away
+		case <-ctx.Done():
+			return nil
+		case <-tc.shuttingDown:
+			return nil
+		}
+	}
 }
 
 // adding for testability but if there is a better
@@ -137,23 +171,37 @@ func (tc *textileClient) SetUc(uc UsersClient) {
 // notreturning error rn and this helper does
 // the logging if connection to hub fails, and
 // we continue with startup
-func (tc *textileClient) ConnectToHub(ctx context.Context) {
+func (tc *textileClient) checkHubConnection(ctx context.Context) error {
+	// Get the public key to see if we have any
+	// Reject right away if not
+	_, err := tc.kc.GetStoredPublicKey()
+	if err != nil {
+		tc.isConnectedToHub = false
+		return err
+	}
+
 	// Attempt to connect to the Hub
 	hubctx, err := tc.getHubCtx(ctx)
-
 	if err != nil {
+		tc.isConnectedToHub = false
 		log.Error("Could not connect to Textile Hub. Starting in offline mode.", err)
+		return err
+	}
+
+	if tc.isConnectedToHub == false {
+		// setup mailbox
+		mid, err := tc.uc.SetupMailbox(hubctx)
+		if err != nil {
+			log.Error("Unable to setup mailbox", err)
+			tc.isConnectedToHub = false
+			return err
+		}
+		log.Debug("Mailbox id: " + mid.String())
 	}
 
 	tc.isConnectedToHub = true
 
-	// setup mailbox
-	mid, err := tc.uc.SetupMailbox(hubctx)
-	if err != nil {
-		log.Error("Unable to setup mailbox", err)
-	}
-
-	log.Info("Mailbox id: " + mid.String())
+	return nil
 }
 
 func getUserClient(host string) UsersClient {
@@ -198,35 +246,9 @@ func getHubThreadsClient(host string) *threadsClient.Client {
 	return tc
 }
 
-// StartAndBootstrap starts a Textile Client and also initializes default resources for it like a key pair and default bucket.
-func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
-	// Create key pair if not present
-	log.Debug("Starting Textile Client: Getting key status...")
-	_, err := tc.kc.GetStoredPublicKey()
+func (tc *textileClient) initialize(ctx context.Context) error {
+	buckets, err := tc.listBuckets(ctx)
 	if err != nil {
-		log.Debug("Key pair not found. Generating a new one")
-		if mnemonic, err := tc.kc.GenerateKeyFromMnemonic(); err != nil {
-
-			log.Error("Error generating key pair. Cannot continue Textile initialization", err)
-			return err
-		} else {
-			words := strings.Split(mnemonic, " ")
-			log.Debug("Generated initial key pair using mnemonic using seed: " + words[0] + ", " + words[1] + "...")
-		}
-	} else {
-		log.Debug("Starting Textile Client: Key pair found.")
-	}
-
-	// Start Textile Client
-	if err := tc.start(ctx, cfg); err != nil {
-		log.Error("Error starting Textile Client", err)
-		return err
-	}
-
-	log.Debug("Listing buckets...")
-	buckets, err := tc.ListBuckets(ctx)
-	if err != nil {
-		log.Error("Error listing buckets on Textile client start", err)
 		return err
 	}
 
@@ -238,20 +260,28 @@ func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
 		}
 	}
 	if defaultBucketExists == false {
-		log.Debug("Creating default bucket...")
-		_, err := tc.CreateBucket(ctx, defaultPersonalBucketSlug)
+		_, err := tc.createBucket(ctx, defaultPersonalBucketSlug)
 		if err != nil {
 			log.Error("Error creating default bucket", err)
 			return err
 		}
 	}
 
+	tc.isInitialized = true
 	log.Debug("Textile Client initialized successfully")
 	return nil
 }
 
+// Starts a Textile Client and also initializes default resources for it (default bucket and metathread).
+// Then leaves the process running to attempt to connect or to initialize if it's not already initialized
+func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
+	// Start Textile Client
+	return tc.start(ctx, cfg)
+}
+
 // Closes connection to Textile
 func (tc *textileClient) Shutdown() error {
+	tc.shuttingDown <- true
 	tc.isRunning = false
 	close(tc.Ready)
 	if err := tc.bucketsClient.Close(); err != nil {
@@ -285,10 +315,6 @@ func (tc *textileClient) getThreadContext(parentCtx context.Context, threadName 
 	var err error
 	ctx := parentCtx
 
-	if err = tc.requiresRunning(); err != nil {
-		return nil, err
-	}
-
 	// Some threads will be on the hub and some will be local, this flag lets you specify
 	// where it is
 	if hub {
@@ -312,4 +338,30 @@ func (tc *textileClient) getThreadContext(parentCtx context.Context, threadName 
 	ctx = common.NewThreadIDContext(ctx, dbID)
 
 	return ctx, nil
+}
+
+// Checks for connection and initialization needs.
+func (tc *textileClient) healthcheck(ctx context.Context) {
+	log.Debug("Textile Client healthcheck... Start.")
+
+	if tc.isInitialized == false {
+		tc.initialize(ctx)
+	}
+
+	tc.checkHubConnection(ctx)
+
+	switch {
+	case tc.isInitialized == false:
+		log.Debug("Textile Client healthcheck... Not initialized yet.")
+	case tc.isConnectedToHub == false:
+		log.Debug("Textile Client healthcheck... Not connected to hub.")
+	default:
+		log.Debug("Textile Client healthcheck... OK.")
+	}
+}
+
+func (tc *textileClient) RemoveKeys() {
+	tc.isInitialized = false
+	tc.isConnectedToHub = false
+	tc.keypairDeleted <- true
 }
