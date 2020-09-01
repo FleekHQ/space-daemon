@@ -97,9 +97,12 @@ func (a *App) Start(ctx context.Context) error {
 	if a.cfg.GetBool(config.Ipfsnode, true) {
 		// setup local ipfs node
 		node := node.NewIpsNode(a.cfg)
-
-		err = a.RunAsync("IpfsNode", node, func() error {
-			return node.Start(ctx)
+		a.RunAsync("IpfsNode", node, func() error {
+			if err := node.Start(ctx); err != nil {
+				log.Error("Error starting embedded IPFS node", err)
+				return err
+			}
+			return nil
 		})
 		if err != nil {
 			return err

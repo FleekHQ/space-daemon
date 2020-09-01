@@ -41,7 +41,12 @@ func (srv *grpcServer) GetPublicKey(ctx context.Context, request *pb.GetPublicKe
 }
 
 func (srv *grpcServer) DeleteKeyPair(ctx context.Context, request *pb.DeleteKeyPairRequest) (*pb.DeleteKeyPairResponse, error) {
-	return nil, srv.sv.DeleteKeypair(ctx)
+	err := srv.sv.DeleteKeypair(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.DeleteKeyPairResponse{}, nil
 }
 
 func (srv *grpcServer) RestoreKeyPairViaMnemonic(ctx context.Context, request *pb.RestoreKeyPairViaMnemonicRequest) (*pb.RestoreKeyPairViaMnemonicResponse, error) {

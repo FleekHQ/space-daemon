@@ -10,7 +10,6 @@ import (
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	tc "github.com/textileio/go-threads/api/client"
-	"github.com/textileio/go-threads/core/thread"
 
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
 	"github.com/textileio/textile/api/users/client"
@@ -62,7 +61,6 @@ type Client interface {
 	GetDefaultBucket(ctx context.Context) (Bucket, error)
 	GetBucket(ctx context.Context, slug string) (Bucket, error)
 	GetThreadsConnection() (*threadsClient.Client, error)
-	GetBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error)
 	ListBuckets(ctx context.Context) ([]Bucket, error)
 	ShareBucket(ctx context.Context, bucketSlug string) (*tc.DBInfo, error)
 	JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error)
@@ -73,6 +71,7 @@ type Client interface {
 	WaitForReady() chan bool
 	Start(ctx context.Context, cfg config.Config) error
 	ShareFilesViaPublicKey(ctx context.Context, bucketName string, paths []string, pubkeys []crypto.PubKey) error
+	RemoveKeys()
 }
 
 type Buckd interface {
