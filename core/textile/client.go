@@ -35,6 +35,7 @@ type textileClient struct {
 	isInitialized    bool
 	Ready            chan bool
 	keypairDeleted   chan bool
+	shuttingDown     chan bool
 	cfg              config.Config
 	isConnectedToHub bool
 	netc             *nc.Client
@@ -56,6 +57,7 @@ func NewClient(store db.Store, kc keychain.Keychain) *textileClient {
 		isInitialized:    false,
 		Ready:            make(chan bool),
 		keypairDeleted:   make(chan bool),
+		shuttingDown:     make(chan bool),
 		isConnectedToHub: false,
 		hubAuth:          nil,
 	}
@@ -126,18 +128,23 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 
 	tc.isRunning = true
 
-	tc.ConnectToHub(ctx)
+	tc.healthcheck(ctx)
 
 	tc.Ready <- true
 
-	// Healthcheck flow
-	tc.healthcheck(ctx)
+	// Repeating healthcheck
 	for {
 		timeAfterNextCheck := 60 * time.Second
 		// Do more frequent checks if the client is not initialized/running
-		if err := tc.requiresRunning(); err != nil {
+		if tc.isConnectedToHub == false || tc.isInitialized == false {
 			timeAfterNextCheck = 5 * time.Second
 		}
+
+		// If it's trying to shutdown we return right away
+		if tc.isRunning == false {
+			return nil
+		}
+
 		select {
 		case <-time.After(timeAfterNextCheck):
 			tc.healthcheck(ctx)
@@ -148,6 +155,8 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 
 		// If it's trying to shutdown we return right away
 		case <-ctx.Done():
+			return nil
+		case <-tc.shuttingDown:
 			return nil
 		}
 	}
@@ -162,35 +171,36 @@ func (tc *textileClient) SetUc(uc UsersClient) {
 // notreturning error rn and this helper does
 // the logging if connection to hub fails, and
 // we continue with startup
-func (tc *textileClient) ConnectToHub(ctx context.Context) error {
+func (tc *textileClient) checkHubConnection(ctx context.Context) error {
 	// Get the public key to see if we have any
 	// Reject right away if not
 	_, err := tc.kc.GetStoredPublicKey()
-	if err == keychain.ErrKeyPairNotFound {
+	if err != nil {
+		tc.isConnectedToHub = false
 		return err
 	}
 
 	// Attempt to connect to the Hub
 	hubctx, err := tc.getHubCtx(ctx)
 	if err != nil {
+		tc.isConnectedToHub = false
 		log.Error("Could not connect to Textile Hub. Starting in offline mode.", err)
 		return err
 	}
 
-	wasConnectedToHub := tc.isConnectedToHub
+	if tc.isConnectedToHub == false {
+		// setup mailbox
+		mid, err := tc.uc.SetupMailbox(hubctx)
+		if err != nil {
+			log.Error("Unable to setup mailbox", err)
+			tc.isConnectedToHub = false
+			return err
+		}
+		log.Debug("Mailbox id: " + mid.String())
+	}
 
 	tc.isConnectedToHub = true
 
-	// setup mailbox
-	mid, err := tc.uc.SetupMailbox(hubctx)
-	if err != nil {
-		log.Error("Unable to setup mailbox", err)
-		return err
-	}
-
-	if wasConnectedToHub == false {
-		log.Debug("Mailbox id: " + mid.String())
-	}
 	return nil
 }
 
@@ -258,25 +268,20 @@ func (tc *textileClient) initialize(ctx context.Context) error {
 	}
 
 	tc.isInitialized = true
-	return nil
-}
-
-// Starts a Textile Client and also initializes default resources for it like a key pair and default bucket.
-// Then leaves the process running to attempt to connect or to initialize if it's not already initialized
-func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
-	// Create key pair if not present
-	// Start Textile Client
-	if err := tc.start(ctx, cfg); err != nil {
-		log.Error("Error starting Textile Client", err)
-		return err
-	}
-
 	log.Debug("Textile Client initialized successfully")
 	return nil
 }
 
+// Starts a Textile Client and also initializes default resources for it (default bucket and metathread).
+// Then leaves the process running to attempt to connect or to initialize if it's not already initialized
+func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
+	// Start Textile Client
+	return tc.start(ctx, cfg)
+}
+
 // Closes connection to Textile
 func (tc *textileClient) Shutdown() error {
+	tc.shuttingDown <- true
 	tc.isRunning = false
 	close(tc.Ready)
 	if err := tc.bucketsClient.Close(); err != nil {
@@ -343,7 +348,7 @@ func (tc *textileClient) healthcheck(ctx context.Context) {
 		tc.initialize(ctx)
 	}
 
-	tc.ConnectToHub(ctx)
+	tc.checkHubConnection(ctx)
 
 	switch {
 	case tc.isInitialized == false:
@@ -353,7 +358,6 @@ func (tc *textileClient) healthcheck(ctx context.Context) {
 	default:
 		log.Debug("Textile Client healthcheck... OK.")
 	}
-
 }
 
 func (tc *textileClient) RemoveKeys() {
