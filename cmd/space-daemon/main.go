@@ -114,6 +114,11 @@ func main() {
 }
 
 func setULimit() {
+	if runtime.GOOS == "windows" {
+		// Only available on UNIX systems
+		return
+	}
+
 	var rLimit syscall.Rlimit
 
 	err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
