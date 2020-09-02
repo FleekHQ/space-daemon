@@ -204,12 +204,12 @@ func (tc *textileClient) getMetaThreadContext(ctx context.Context, useHub bool) 
 		return nil, nil, err
 	}
 
-	metathreadCtx, err := tc.getThreadContext(ctx, metaThreadName, *dbID, useHub)
+	metathreadCtx, err := tc.getThreadContext(ctx, metaThreadName, *dbID, false)
 	if err != nil {
 		return nil, nil, err
 	}
 
-  return metathreadCtx, dbID, nil
+	return metathreadCtx, dbID, nil
 }
 
 func (tc *textileClient) initBucketCollection(ctx context.Context) (context.Context, *thread.ID, error) {
