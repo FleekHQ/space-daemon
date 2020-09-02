@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	db "github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
+	"github.com/FleekHQ/space-daemon/core/util/address"
 	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
@@ -249,6 +251,12 @@ func (tc *textileClient) initialize(ctx context.Context) error {
 	buckets, err := tc.listBuckets(ctx)
 	if err != nil {
 		return err
+	}
+
+	pub, _ := tc.kc.GetStoredPublicKey()
+	if pub != nil {
+		address := address.DeriveAddress(pub)
+		log.Debug("Initializing Textile client", fmt.Sprintf("address:%s", address))
 	}
 
 	// Create default bucket if it doesnt exist
