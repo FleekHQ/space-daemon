@@ -160,7 +160,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 		return nil, err
 	}
 
-	ctx, dbID, err := tc.GetBucketContext(ctx, bucketSlug)
+	ctx, dbID, err := tc.getBucketContext(ctx, bucketSlug)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 		}
 	}
 
-	newB := bucket.New(b.Root, tc.GetBucketContext, tc.bucketsClient)
+	newB := bucket.New(b.Root, tc.getBucketContext, tc.bucketsClient)
 
 	return newB, nil
 }

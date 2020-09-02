@@ -32,7 +32,7 @@ func (tc *textileClient) createMirrorBucket(ctx context.Context, schema BucketSc
 		return nil, err
 	}
 
-	hubCtx, dbID, err := tc.GetBucketContext(hubCtx, bucketSlug)
+	hubCtx, dbID, err := tc.getBucketContext(hubCtx, bucketSlug)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (tc *textileClient) storeMirrorBucketInCollection(hubCtx context.Context, i
 		return nil, err
 	}
 
-	hubCtx, remoteDbID, err := tc.GetBucketContext(hubCtx, bucketSlug)
+	hubCtx, remoteDbID, err := tc.getBucketContext(hubCtx, bucketSlug)
 	if err != nil {
 		return nil, err
 	}
