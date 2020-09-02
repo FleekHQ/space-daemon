@@ -69,13 +69,14 @@ func (s *Space) GetMnemonic(ctx context.Context) (string, error) {
 }
 
 func (s *Space) DeleteKeypair(ctx context.Context) error {
-	err := s.keychain.DeleteKeypair()
-	if err != nil {
+	if err := s.keychain.DeleteKeypair(); err != nil {
 		return err
 	}
 
 	// Tell the textile client to stop operations
-	s.tc.RemoveKeys()
+	if err := s.tc.RemoveKeys(); err != nil {
+		return err
+	}
 
 	return nil
 }

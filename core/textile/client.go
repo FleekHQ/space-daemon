@@ -359,8 +359,14 @@ func (tc *textileClient) healthcheck(ctx context.Context) {
 	}
 }
 
-func (tc *textileClient) RemoveKeys() {
+func (tc *textileClient) RemoveKeys() error {
+	if err := tc.hubAuth.ClearCache(); err != nil {
+		return err
+	}
+
 	tc.isInitialized = false
 	tc.isConnectedToHub = false
 	tc.keypairDeleted <- true
+
+	return nil
 }

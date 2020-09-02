@@ -63,6 +63,7 @@ type AuthTokens struct {
 type HubAuth interface {
 	GetTokensWithCache(ctx context.Context) (*AuthTokens, error)
 	GetHubContext(ctx context.Context) (context.Context, error)
+	ClearCache() error
 }
 
 type hub struct {
@@ -141,6 +142,11 @@ func (h *hub) storeTokens(tokens *inMessageTokenValue) error {
 	}
 
 	return nil
+}
+
+// Removes the stored tokens
+func (h *hub) ClearCache() error {
+	return h.st.Remove([]byte(tokensStoreKey))
 }
 
 func (h *hub) getTokensThroughChallenge(ctx context.Context) (*inMessageTokenValue, error) {
