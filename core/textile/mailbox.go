@@ -15,14 +15,18 @@ type UsersClient interface {
 }
 
 func (tc *textileClient) SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error) {
-	var privateKey crypto.PrivKey
 	var err error
+	hubCtx, err := tc.getHubCtx(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var privateKey crypto.PrivKey
 	if privateKey, _, err = tc.kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
 		return nil, err
 	}
 	id := thread.NewLibp2pIdentity(privateKey)
 
-	msg, err := tc.uc.SendMessage(ctx, id, thread.NewLibp2pPubKey(recipient), body)
+	msg, err := tc.uc.SendMessage(hubCtx, id, thread.NewLibp2pPubKey(recipient), body)
 	if err != nil {
 		return nil, err
 	}
