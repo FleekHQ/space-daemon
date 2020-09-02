@@ -119,7 +119,7 @@ func (srv *grpcServer) sendNotificationEvent(event *pb.NotificationEventResponse
 	}
 }
 
-func (srv *grpcServer) SendInvitationEvent(event events.NotificationEvent) {
+func (srv *grpcServer) SendNotificationEvent(event events.NotificationEvent) {
 	pe := &pb.NotificationEventResponse{}
 
 	srv.sendNotificationEvent(pe)

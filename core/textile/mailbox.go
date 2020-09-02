@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
 	crypto "github.com/libp2p/go-libp2p-crypto"
@@ -13,6 +14,10 @@ import (
 	"github.com/textileio/textile/cmd"
 	mail "github.com/textileio/textile/mail/local"
 )
+
+type GrpcMailboxNotifier interface {
+	SendNotificationEvent(event events.NotificationEvent)
+}
 
 const mailboxSetupFlagStoreKey = "mailboxSetupFlag"
 
@@ -53,6 +58,7 @@ func parseMessage(msg client.Message) (*domain.Notification, error) {
 		}
 
 		n.InvitationValue = *i
+		n.RelatedObject = i
 	case domain.USAGEALERT:
 		var u *domain.UsageAlert
 		err := json.Unmarshal((*b).Body, u)
@@ -61,6 +67,7 @@ func parseMessage(msg client.Message) (*domain.Notification, error) {
 			return nil, err
 		}
 		n.UsageAlertValue = *u
+		n.RelatedObject = u
 	default:
 		return nil, errors.New("Unsupported message type")
 	}
@@ -104,7 +111,7 @@ func (tc *textileClient) GetMailAsNotifications(ctx context.Context, seek string
 
 type handleMessage func(context.Context, interface{}) error
 
-func (tc *textileClient) ListenForMessages(ctx context.Context) error {
+func (tc *textileClient) ListenForMessages(ctx context.Context, srv GrpcMailboxNotifier) error {
 	log.Info("Starting to listen for mailbox messages")
 
 	// Handle mailbox events as they arrive
@@ -114,6 +121,21 @@ func (tc *textileClient) ListenForMessages(ctx context.Context) error {
 			case mail.NewMessage:
 				// handle new message
 				log.Info("Received mail: " + e.MessageID.String())
+
+				p, err := parseMessage(e.Message)
+				if err != nil {
+					log.Error("Unable to parse incoming message: ", err)
+				}
+
+				i := events.NotificationEvent{
+					Body:          p.Body,
+					RelatedObject: p.RelatedObject,
+					Type:          events.NotificationType(p.NotificationType),
+					CreatedAt:     e.Message.CreatedAt.Unix(),
+					ReadAt:        e.Message.ReadAt.Unix(),
+				}
+
+				srv.SendNotificationEvent(i)
 			case mail.MessageRead:
 				// handle message read (inbox only)
 			case mail.MessageDeleted:

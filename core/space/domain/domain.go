@@ -114,8 +114,9 @@ type Notification struct {
 	CreatedAt        int64             `json:"createdAt"`
 	ReadAt           int64             `json:"readAt"`
 	// QUESTION: is there a way to enforce that only one of the below is present
-	InvitationValue Invitation `json:"invitationValue"`
-	UsageAlertValue UsageAlert `json:"usageAlertValue"`
+	InvitationValue Invitation  `json:"invitationValue"`
+	UsageAlertValue UsageAlert  `json:"usageAlertValue"`
+	RelatedObject   interface{} `json:"relatedObject`
 }
 
 type APISessionTokens struct {
