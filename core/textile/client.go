@@ -44,7 +44,7 @@ type textileClient struct {
 }
 
 // Creates a new Textile Client
-func NewClient(store db.Store, kc keychain.Keychain) *textileClient {
+func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth) *textileClient {
 	return &textileClient{
 		store:            store,
 		kc:               kc,
@@ -59,7 +59,7 @@ func NewClient(store db.Store, kc keychain.Keychain) *textileClient {
 		keypairDeleted:   make(chan bool),
 		shuttingDown:     make(chan bool),
 		isConnectedToHub: false,
-		hubAuth:          nil,
+		hubAuth:          hubAuth,
 	}
 }
 
@@ -86,7 +86,6 @@ func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error)
 // Starts the Textile Client
 func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.cfg = cfg
-	tc.hubAuth = hub.New(tc.store, tc.kc, cfg)
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
 
