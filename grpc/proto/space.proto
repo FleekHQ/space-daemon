@@ -181,6 +181,14 @@ service SpaceApi {
     };
   }
 
+  // Tests a passphrase to see if it matches the one previously used
+  rpc TestKeysPassphrase(TestKeysPassphraseRequest) returns (TestKeysPassphraseResponse) {
+    option (google.api.http) = {
+      post: "/v1/passphrases/test"
+      body: "*"
+    };
+  }
+
   rpc CreateLocalKeysBackup(CreateLocalKeysBackupRequest) returns (CreateLocalKeysBackupResponse) {
     option (google.api.http) = {
       post: "/v1/localBackups/backup"
@@ -219,16 +227,9 @@ service SpaceApi {
     };
   }
 
-  rpc AcceptFilesInvitation(AcceptFilesInvitationRequest) returns (AcceptFilesInvitationResponse) {
+  rpc HandleFilesInvitation(HandleFilesInvitationRequest) returns (HandleFilesInvitationResponse) {
     option (google.api.http) = {
-      post: "/v1/acceptFilesInvitation"
-      body: "*"
-    };
-  }
-
-  rpc RejectFilesInvitation(RejectFilesInvitationRequest) returns (RejectFilesInvitationResponse) {
-    option (google.api.http) = {
-      post: "/v1/rejectFilesInvitation"
+      post: "/v1/filesinvitation/{invitationID}"
       body: "*"
     };
   }
@@ -314,8 +315,8 @@ message GetSharedWithMeFilesRequest {
 }
 
 message GetSharedWithMeFilesResponse {
-  repeated ListDirectoryEntry items = 1;
-  int64 nextOffset = 2;
+  repeated SharedListDirectoryEntry items = 1;
+  string nextOffset = 2;
 }
 
 message GetUsageInfoRequest {}
@@ -356,6 +357,12 @@ message ListDirectoryEntry {
   bool isLocallyAvailable = 9;
   int64 backupCount = 10;
   repeated FileMember members = 11;
+}
+
+message SharedListDirectoryEntry {
+  ListDirectoryEntry entry = 1;
+  string dbId = 2;
+  string bucket = 3;
 }
 
 message ListDirectoriesResponse {
@@ -500,6 +507,13 @@ message RecoverKeysByPassphraseRequest {
 
 message RecoverKeysByPassphraseResponse {}
 
+message TestKeysPassphraseRequest {
+  string uuid = 1;
+  string passphrase = 2;
+}
+
+message TestKeysPassphraseResponse {}
+
 message ThreadInfo {
   repeated string addresses = 1;
   string key = 2;
@@ -535,6 +549,9 @@ message GeneratePublicFileLinkRequest {
   string bucket = 1;
   repeated string itemPaths = 2;
   string password = 3;
+  // optional field to specify db id
+  // for shared with me files
+  string dbId = 4;
 }
 
 message GeneratePublicFileLinkResponse {
@@ -593,17 +610,12 @@ message Notification {
   int64 readAt = 8;
 }
 
-message AcceptFilesInvitationRequest {
+message HandleFilesInvitationRequest {
   string invitationID = 1;
+  bool accept = 2;
 }
 
-message AcceptFilesInvitationResponse {}
-
-message RejectFilesInvitationRequest {
-  string invitationID = 1;
-}
-
-message RejectFilesInvitationResponse {}
+message HandleFilesInvitationResponse {}
 
 message NotificationEventResponse {
   Notification notification = 1;

@@ -91,11 +91,7 @@ func (srv *grpcServer) ReadNotification(ctx context.Context, request *pb.ReadNot
 	return nil, errNotImplemented
 }
 
-func (srv *grpcServer) AcceptFilesInvitation(ctx context.Context, request *pb.AcceptFilesInvitationRequest) (*pb.AcceptFilesInvitationResponse, error) {
-	return nil, errNotImplemented
-}
-
-func (srv *grpcServer) RejectFilesInvitation(ctx context.Context, request *pb.RejectFilesInvitationRequest) (*pb.RejectFilesInvitationResponse, error) {
+func (srv *grpcServer) HandleFilesInvitation(ctx context.Context, request *pb.HandleFilesInvitationRequest) (*pb.HandleFilesInvitationResponse, error) {
 	return nil, errNotImplemented
 }
 

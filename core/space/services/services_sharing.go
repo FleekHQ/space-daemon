@@ -251,8 +251,6 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, bucketName string, p
 			return err
 		}
 
-		// TEMP: sending message for testing but to be removed
-		// once integrated to textile share
 		_, err = s.tc.SendMessage(ctx, pk, j)
 		if err != nil {
 			return err

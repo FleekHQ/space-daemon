@@ -33,3 +33,10 @@ func (srv *grpcServer) RecoverKeysByLocalBackup(ctx context.Context, request *pb
 
 	return resp, err
 }
+
+func (srv *grpcServer) TestKeysPassphrase(ctx context.Context, request *pb.TestKeysPassphraseRequest) (*pb.TestKeysPassphraseResponse, error) {
+	resp := &pb.TestKeysPassphraseResponse{}
+	err := srv.sv.TestPassphrase(ctx, request.Uuid, request.Passphrase)
+
+	return resp, err
+}

@@ -48,7 +48,7 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 	} else {
 		configStr[Ipfsaddr] = flags.Ipfsaddr
 		configStr[Ipfsnodeaddr] = flags.Ipfsnodeaddr
-		configStr[Ipfsnodeaddr] = flags.Ipfsnodepath
+		configStr[Ipfsnodepath] = flags.Ipfsnodepath
 		configStr[Mongousr] = flags.Mongousr
 		configStr[Mongopw] = flags.Mongopw
 		configStr[Mongohost] = flags.Mongohost
