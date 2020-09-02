@@ -28,11 +28,19 @@ func NotFound(slug string) error {
 }
 
 func (tc *textileClient) GetBucket(ctx context.Context, slug string) (Bucket, error) {
+	if err := tc.requiresRunning(); err != nil {
+		return nil, err
+	}
+
+	return tc.getBucket(ctx, slug)
+}
+
+func (tc *textileClient) getBucket(ctx context.Context, slug string) (Bucket, error) {
 	ctx, root, err := tc.getBucketRootFromSlug(ctx, slug)
 	if err != nil {
 		return nil, err
 	}
-	b := bucket.New(root, tc.GetBucketContext, tc.bucketsClient)
+	b := bucket.New(root, tc.getBucketContext, tc.bucketsClient)
 
 	return b, nil
 }
@@ -46,10 +54,10 @@ func getThreadName(userPubKey []byte, bucketSlug string) string {
 }
 
 // Returns a context that works for accessing a bucket
-func (tc *textileClient) GetBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error) {
-	log.Debug("GetBucketContext: Getting bucket context")
+func (tc *textileClient) getBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error) {
+	log.Debug("getBucketContext: Getting bucket context")
 
-	log.Debug("GetBucketContext: Fetching thread id from meta store")
+	log.Debug("getBucketContext: Fetching thread id from meta store")
 	bucketSchema, notFoundErr := tc.findBucketInCollection(ctx, bucketSlug)
 
 	if notFoundErr == nil { // This means the bucket was already present in the schema
@@ -58,7 +66,7 @@ func (tc *textileClient) GetBucketContext(ctx context.Context, bucketSlug string
 			log.Error("Error casting thread id", err)
 			return nil, nil, err
 		}
-		log.Debug("GetBucketContext: Got dbID from collection: " + dbID.String())
+		log.Debug("getBucketContext: Got dbID from collection: " + dbID.String())
 		ctx, err = tc.getThreadContext(ctx, bucketSlug, *dbID, false)
 
 		if err != nil {
@@ -68,25 +76,33 @@ func (tc *textileClient) GetBucketContext(ctx context.Context, bucketSlug string
 	}
 
 	// We need to create the thread and store it in the collection
-	log.Debug("GetBucketContext: Thread ID not found in meta store. Generating a new one...")
+	log.Debug("getBucketContext: Thread ID not found in meta store. Generating a new one...")
 	dbID := thread.NewIDV1(thread.Raw, 32)
 
-	log.Debug("GetBucketContext: Creating Thread DB for bucket " + bucketSlug + " at db " + dbID.String())
+	log.Debug("getBucketContext: Creating Thread DB for bucket " + bucketSlug + " at db " + dbID.String())
 	if err := tc.threads.NewDB(ctx, dbID); err != nil {
 		return nil, nil, err
 	}
-	log.Debug("GetBucketContext: Thread DB Created")
+	log.Debug("getBucketContext: Thread DB Created")
 	_, err := tc.storeBucketInCollection(ctx, bucketSlug, utils.CastDbIDToString(dbID))
 	if err != nil {
 		return nil, nil, err
 	}
 
 	bucketCtx, err := tc.getThreadContext(ctx, bucketSlug, dbID, false)
-	log.Debug("GetBucketContext: Returning bucket context")
+	log.Debug("getBucketContext: Returning bucket context")
 	return bucketCtx, &dbID, err
 }
 
 func (tc *textileClient) ListBuckets(ctx context.Context) ([]Bucket, error) {
+	if err := tc.requiresRunning(); err != nil {
+		return nil, err
+	}
+
+	return tc.listBuckets(ctx)
+}
+
+func (tc *textileClient) listBuckets(ctx context.Context) ([]Bucket, error) {
 	bucketList, err := tc.getBucketsFromCollection(ctx)
 	if err != nil {
 		return nil, err
@@ -94,7 +110,7 @@ func (tc *textileClient) ListBuckets(ctx context.Context) ([]Bucket, error) {
 
 	result := make([]Bucket, 0)
 	for _, b := range bucketList {
-		bucketObj, err := tc.GetBucket(ctx, b.Slug)
+		bucketObj, err := tc.getBucket(ctx, b.Slug)
 		if err != nil {
 			return nil, err
 		}
@@ -105,7 +121,7 @@ func (tc *textileClient) ListBuckets(ctx context.Context) ([]Bucket, error) {
 }
 
 func (tc *textileClient) getBucketRootFromSlug(ctx context.Context, slug string) (context.Context, *buckets_pb.Root, error) {
-	ctx, _, err := tc.GetBucketContext(ctx, slug)
+	ctx, _, err := tc.getBucketContext(ctx, slug)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -126,10 +142,18 @@ func (tc *textileClient) getBucketRootFromSlug(ctx context.Context, slug string)
 
 // Creates a bucket.
 func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (Bucket, error) {
+	if err := tc.requiresRunning(); err != nil {
+		return nil, err
+	}
+
+	return tc.createBucket(ctx, bucketSlug)
+}
+
+func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (Bucket, error) {
 	log.Debug("Creating a new bucket with slug " + bucketSlug)
 	var err error
 
-	if b, _ := tc.GetBucket(ctx, bucketSlug); b != nil {
+	if b, _ := tc.getBucket(ctx, bucketSlug); b != nil {
 		return b, nil
 	}
 	if err != nil {

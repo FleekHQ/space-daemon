@@ -15,6 +15,7 @@ import (
 	"github.com/FleekHQ/space-daemon/app"
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/env"
+	"github.com/FleekHQ/space-daemon/core/util/rlimit"
 )
 
 var (
@@ -93,6 +94,8 @@ func main() {
 
 	// setup context
 	ctx := context.Background()
+
+	rlimit.SetRLimit()
 
 	spaceApp := app.New(cfg, env)
 	// this blocks and returns on exist

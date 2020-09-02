@@ -1,5 +1,9 @@
 package domain
 
+import (
+	"time"
+)
+
 type AppConfig struct {
 	Port                 int
 	AppPath              string
@@ -70,6 +74,37 @@ type FileSharingInfo struct {
 	SharedFileCid     string
 	SharedFileKey     string
 	SpaceDownloadLink string
+}
+
+type InvitationStatus int
+
+const (
+	Pending InvitationStatus = 0
+	Accepted
+	Rejected
+)
+
+type MessageType int
+
+const (
+	InvitationMessage MessageType = 0
+	UsageAlertMessage
+)
+
+type MessageBody struct {
+	Type MessageType `json:"type"`
+	Body interface{} `json:"body`
+}
+
+type Invitation struct {
+	CustomMessage    string           `json:"customMessage"`
+	InvitationID     string           `json:"invitationID"`
+	InviteePublicKey string           `json:"inviteePublicKey"`
+	InviterPublicKey string           `json:"inviterPublicKey"`
+	Status           InvitationStatus `json:"status"`
+	Paths            []string         `json:"Paths"`
+	ReadAt           time.Time        `json:"readAt"`
+	CreatedAt        time.Time        `json:"createdAt"`
 }
 
 type APISessionTokens struct {
