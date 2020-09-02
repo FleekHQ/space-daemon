@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"encoding/hex"
 
 	"github.com/FleekHQ/space-daemon/grpc/pb"
 	crypto "github.com/libp2p/go-libp2p-crypto"
@@ -12,7 +13,11 @@ func (srv *grpcServer) ShareFilesViaPublicKey(ctx context.Context, request *pb.S
 	var pks []crypto.PubKey
 
 	for _, pk := range request.PublicKeys {
-		p, err := crypto.UnmarshalEd25519PublicKey([]byte(pk))
+		b, err := hex.DecodeString(pk)
+		if err != nil {
+			return nil, err
+		}
+		p, err := crypto.UnmarshalEd25519PublicKey([]byte(b))
 		if err != nil {
 			return nil, err
 		}

@@ -23,6 +23,7 @@ var (
 	mockKc      *mocks.Keychain
 	mockPubKey  crypto.PubKey
 	mockPrivKey crypto.PrivKey
+	mockHubAuth *mocks.HubAuth
 )
 
 type TearDown func()
@@ -30,7 +31,8 @@ type TearDown func()
 func initTestMailbox(t *testing.T) (tc.Client, TearDown) {
 	st = new(mocks.Store)
 	mockKc = new(mocks.Keychain)
-	client := tc.NewClient(st, mockKc)
+	mockHubAuth = new(mocks.HubAuth)
+	client := tc.NewClient(st, mockKc, mockHubAuth)
 	mockUc = new(mocks.UsersClient)
 	client.SetUc(mockUc)
 
@@ -68,6 +70,7 @@ func TestSendMessage(t *testing.T) {
 		ID: "testid",
 	}
 
+	mockHubAuth.On("GetHubContext", mock.Anything).Return(context.Background(), nil)
 	mockUc.On("SendMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(msg, nil)
 	body := "mockbody"
 	rmsg, err := tc.SendMessage(context.Background(), rp, []byte(body))
@@ -96,6 +99,7 @@ func TestSendMessageFailGettingSenderKey(t *testing.T) {
 		ID: "testid",
 	}
 
+	mockHubAuth.On("GetHubContext", mock.Anything).Return(context.Background(), nil)
 	mockUc.On("SendMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(msg, nil)
 	body := "mockbody"
 	rmsg, err := tc.SendMessage(context.Background(), rp, []byte(body))
@@ -122,6 +126,7 @@ func TestSendMessageFailureOnHub(t *testing.T) {
 
 	msg := uc.Message{}
 
+	mockHubAuth.On("GetHubContext", mock.Anything).Return(context.Background(), nil)
 	mockUc.On("SendMessage", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(msg, errToRet)
 	body := "mockbody"
 	rmsg, err := tc.SendMessage(context.Background(), rp, []byte(body))
