@@ -235,45 +235,6 @@
         ]
       }
     },
-    "/v1/buckets/{bucket}/shareFilesViaPublicKey": {
-      "post": {
-        "summary": "Share bucket via public key using Textile Hub inboxing",
-        "operationId": "SpaceApi_ShareFilesViaPublicKey",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/spaceShareFilesViaPublicKeyResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response",
-            "schema": {
-              "$ref": "#/definitions/runtimeError"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "bucket",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/spaceShareFilesViaPublicKeyRequest"
-            }
-          }
-        ],
-        "tags": [
-          "SpaceApi"
-        ]
-      }
-    },
     "/v1/deleteAccount": {
       "post": {
         "operationId": "SpaceApi_DeleteAccount",
@@ -1109,6 +1070,39 @@
         ]
       }
     },
+    "/v1/shareFilesViaPublicKey": {
+      "post": {
+        "summary": "Share bucket via public key using Textile Hub inboxing",
+        "operationId": "SpaceApi_ShareFilesViaPublicKey",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceShareFilesViaPublicKeyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceShareFilesViaPublicKeyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/sharedWithList": {
       "get": {
         "summary": "Returns a list of addresses / public keys of clients to which files where shared or received, ordered by date",
@@ -1564,6 +1558,20 @@
         }
       }
     },
+    "spaceFullPath": {
+      "type": "object",
+      "properties": {
+        "dbId": {
+          "type": "string"
+        },
+        "bucket": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      }
+    },
     "spaceFuseDriveResponse": {
       "type": "object",
       "properties": {
@@ -2014,13 +2022,10 @@
             "type": "string"
           }
         },
-        "bucket": {
-          "type": "string"
-        },
         "paths": {
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/spaceFullPath"
           }
         }
       }

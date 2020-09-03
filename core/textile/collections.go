@@ -28,7 +28,7 @@ var errBucketNotFound = errors.New("Bucket not found")
 
 func (tc *textileClient) storeBucketInCollection(ctx context.Context, bucketSlug, dbID string) (*BucketSchema, error) {
 	log.Debug("storeBucketInCollection: Storing bucket " + bucketSlug)
-	if existingBucket, err := tc.findBucketInCollection(ctx, bucketSlug); err == nil {
+	if existingBucket, err := tc.FindBucketInCollection(ctx, bucketSlug); err == nil {
 		log.Debug("storeBucketInCollection: Bucket already in collection")
 		return existingBucket, nil
 	}
@@ -70,7 +70,7 @@ func (tc *textileClient) upsertBucketInCollection(ctx context.Context, bucketSlu
 		return nil, err
 	}
 
-	if existingBucket, err := tc.findBucketInCollection(ctx, bucketSlug); err == nil {
+	if existingBucket, err := tc.FindBucketInCollection(ctx, bucketSlug); err == nil {
 		tc.threads.Delete(metaCtx, *metaDbID, bucketCollectionName, []string{existingBucket.ID.String()})
 	}
 
@@ -83,7 +83,7 @@ func (tc *textileClient) toggleBucketBackupInCollection(ctx context.Context, buc
 		return nil, err
 	}
 
-	bucket, err := tc.findBucketInCollection(ctx, bucketSlug)
+	bucket, err := tc.FindBucketInCollection(ctx, bucketSlug)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (tc *textileClient) toggleBucketBackupInCollection(ctx context.Context, buc
 	return bucket, nil
 }
 
-func (tc *textileClient) findBucketInCollection(ctx context.Context, bucketSlug string) (*BucketSchema, error) {
+func (tc *textileClient) FindBucketInCollection(ctx context.Context, bucketSlug string) (*BucketSchema, error) {
 	metaCtx, dbID, err := tc.initBucketCollection(ctx)
 	if err != nil || dbID == nil {
 		return nil, err

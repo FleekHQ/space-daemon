@@ -33,6 +33,7 @@ type textileClient struct {
 	threads          *threadsClient.Client
 	ht               *threadsClient.Client
 	bucketsClient    *bucketsClient.Client
+	hb               *bucketsClient.Client
 	isRunning        bool
 	isInitialized    bool
 	Ready            chan bool
@@ -55,6 +56,7 @@ func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth) *texti
 		netc:             nil,
 		uc:               nil,
 		ht:               nil,
+		hb:               nil,
 		isRunning:        false,
 		isInitialized:    false,
 		Ready:            make(chan bool),
@@ -126,6 +128,7 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.netc = netc
 	tc.uc = getUserClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 	tc.ht = getHubThreadsClient(tc.cfg.GetString(config.TextileHubTarget, ""))
+	tc.hb = getHubBucketClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 
 	tc.isRunning = true
 
@@ -241,6 +244,27 @@ func getHubThreadsClient(host string) *threadsClient.Client {
 	opts = append(opts, grpc.WithPerRPCCredentials(auth))
 
 	tc, err := threadsClient.NewClient(hubTarget, opts...)
+	if err != nil {
+		cmd.Fatal(err)
+	}
+	return tc
+}
+
+func getHubBucketClient(host string) *bucketsClient.Client {
+	hubTarget := host
+	auth := common.Credentials{}
+	var opts []grpc.DialOption
+
+	if strings.Contains(hubTarget, "443") {
+		creds := credentials.NewTLS(&tls.Config{})
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+		auth.Secure = true
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+	}
+	opts = append(opts, grpc.WithPerRPCCredentials(auth))
+
+	tc, err := bucketsClient.NewClient(hubTarget, opts...)
 	if err != nil {
 		cmd.Fatal(err)
 	}

@@ -76,6 +76,12 @@ type FileSharingInfo struct {
 	SpaceDownloadLink string
 }
 
+type FullPath struct {
+	DbId   string `json:"dbId"`
+	Bucket string `json:"bucket"`
+	Path   string `json:"path"`
+}
+
 type InvitationStatus int
 
 const (
@@ -102,11 +108,10 @@ type Invitation struct {
 	InviteePublicKey string           `json:"inviteePublicKey"`
 	InviterPublicKey string           `json:"inviterPublicKey"`
 	Status           InvitationStatus `json:"status"`
-	Paths            []string         `json:"Paths"`
+	Paths            []FullPath       `json:"Paths"`
 	ReadAt           time.Time        `json:"readAt"`
 	CreatedAt        time.Time        `json:"createdAt"`
 }
-
 type APISessionTokens struct {
 	HubToken      string
 	ServicesToken string
