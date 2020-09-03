@@ -222,7 +222,7 @@ service SpaceApi {
   // Share bucket via public key using Textile Hub inboxing
   rpc ShareFilesViaPublicKey(ShareFilesViaPublicKeyRequest) returns (ShareFilesViaPublicKeyResponse) {
     option (google.api.http) = {
-      post: "/v1/buckets/{bucket}/shareFilesViaPublicKey"
+      post: "/v1/shareFilesViaPublicKey"
       body: "*"
     };
   }
@@ -539,8 +539,12 @@ message JoinBucketResponse {
 
 message ShareFilesViaPublicKeyRequest {
   repeated string publicKeys = 1;
+  repeated FullPath paths = 2;
+}
+message FullPath {
+  string dbId = 1; // optional field to specify shared with me file
   string bucket = 2;
-  repeated string paths = 3;
+  string path = 3;
 }
 
 message ShareFilesViaPublicKeyResponse {}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/grpc/pb"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 )
@@ -24,7 +25,18 @@ func (srv *grpcServer) ShareFilesViaPublicKey(ctx context.Context, request *pb.S
 		pks = append(pks, p)
 	}
 
-	err := srv.sv.ShareFilesViaPublicKey(ctx, request.Bucket, request.Paths, pks)
+	var cleanedPaths []domain.FullPath
+	for _, path := range request.Paths {
+		cleanedPath := &domain.FullPath{
+			Bucket: path.Bucket,
+			Path:   path.Path,
+			DbId:   path.DbId,
+		}
+
+		cleanedPaths = append(cleanedPaths, *cleanedPath)
+	}
+
+	err := srv.sv.ShareFilesViaPublicKey(ctx, cleanedPaths, pks)
 	if err != nil {
 		return nil, err
 	}
