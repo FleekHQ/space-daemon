@@ -9,15 +9,14 @@ import (
 	"time"
 
 	"github.com/FleekHQ/space-daemon/config"
-	crypto "github.com/libp2p/go-libp2p-crypto"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	db "github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
+	"github.com/FleekHQ/space-daemon/core/textile/model"
 	"github.com/FleekHQ/space-daemon/core/util/address"
 	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
-	"github.com/textileio/go-threads/core/thread"
 	nc "github.com/textileio/go-threads/net/api/client"
 	bucketsClient "github.com/textileio/textile/api/buckets/client"
 	"github.com/textileio/textile/api/common"
@@ -342,35 +341,6 @@ func (tc *textileClient) IsRunning() bool {
 	return tc.isRunning
 }
 
-func (tc *textileClient) getThreadContext(parentCtx context.Context, threadName string, dbID thread.ID, hub bool) (context.Context, error) {
-	var err error
-	ctx := parentCtx
-
-	// Some threads will be on the hub and some will be local, this flag lets you specify
-	// where it is
-	if hub {
-		ctx, err = tc.getHubCtx(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var publicKey crypto.PubKey
-	if publicKey, err = tc.kc.GetStoredPublicKey(); err != nil {
-		return nil, err
-	}
-
-	var pubKeyInBytes []byte
-	if pubKeyInBytes, err = publicKey.Bytes(); err != nil {
-		return nil, err
-	}
-
-	ctx = common.NewThreadNameContext(ctx, getThreadName(pubKeyInBytes, threadName))
-	ctx = common.NewThreadIDContext(ctx, dbID)
-
-	return ctx, nil
-}
-
 // Checks for connection and initialization needs.
 func (tc *textileClient) healthcheck(ctx context.Context) {
 	log.Debug("Textile Client healthcheck... Start.")
@@ -401,4 +371,8 @@ func (tc *textileClient) RemoveKeys() error {
 	tc.keypairDeleted <- true
 
 	return nil
+}
+
+func (tc *textileClient) getModel() model.Model {
+	return model.New(tc.store, tc.kc, tc.threads, tc.hubAuth)
 }

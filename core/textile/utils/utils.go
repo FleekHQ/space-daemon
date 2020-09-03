@@ -1,12 +1,17 @@
 package utils
 
 import (
+	"context"
 	"crypto/sha512"
 	"encoding/base32"
 	"encoding/binary"
+	"encoding/hex"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
+	"github.com/FleekHQ/space-daemon/core/textile/hub"
+	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/textileio/go-threads/core/thread"
+	"github.com/textileio/textile/api/common"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -67,4 +72,38 @@ func NewDeterministicThreadID(kc keychain.Keychain, threadVariant DeterministicT
 	}
 
 	return thread.ID(buf[:n+numlen]), nil
+}
+
+func getThreadName(userPubKey []byte, bucketSlug string) string {
+	return hex.EncodeToString(userPubKey) + "-" + bucketSlug
+}
+
+// Readies a context to access a thread given its name and dbid
+func GetThreadContext(parentCtx context.Context, threadName string, dbID thread.ID, hub bool, kc keychain.Keychain, hubAuth hub.HubAuth) (context.Context, error) {
+	var err error
+	ctx := parentCtx
+
+	// Some threads will be on the hub and some will be local, this flag lets you specify
+	// where it is
+	if hub {
+		ctx, err = hubAuth.GetHubContext(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var publicKey crypto.PubKey
+	if publicKey, err = kc.GetStoredPublicKey(); err != nil {
+		return nil, err
+	}
+
+	var pubKeyInBytes []byte
+	if pubKeyInBytes, err = publicKey.Bytes(); err != nil {
+		return nil, err
+	}
+
+	ctx = common.NewThreadNameContext(ctx, getThreadName(pubKeyInBytes, threadName))
+	ctx = common.NewThreadIDContext(ctx, dbID)
+
+	return ctx, nil
 }
