@@ -40,7 +40,7 @@ func (tc *textileClient) getBucket(ctx context.Context, slug string) (Bucket, er
 	if err != nil {
 		return nil, err
 	}
-	b := bucket.New(root, tc.getBucketContext, tc.bucketsClient)
+	b := bucket.New(root, tc.getOrCreateBucketContext, tc.bucketsClient)
 
 	return b, nil
 }
@@ -53,38 +53,33 @@ func getThreadName(userPubKey []byte, bucketSlug string) string {
 	return hex.EncodeToString(userPubKey) + "-" + bucketSlug
 }
 
-func (tc *textileClient) getRemoteBucketContext(ctx context.Context, sDbID string, bucketSlug string) (context.Context, error) {
-	log.Debug("getRemoteBucketContext: Getting remote bucket context")
+func (tc *textileClient) getBucketContext(ctx context.Context, sDbID string, bucketSlug string, ishub bool) (context.Context, *thread.ID, error) {
+	log.Debug("getBucketContext: Getting bucket context with dbid:" + sDbID)
 
 	dbID, err := utils.ParseDbIDFromString(sDbID)
 	if err != nil {
 		log.Error("Error casting thread id", err)
-		return nil, err
+		return nil, nil, err
 	}
-	ctx, err = tc.getThreadContext(ctx, bucketSlug, *dbID, true)
+	ctx, err = tc.getThreadContext(ctx, bucketSlug, *dbID, ishub)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return ctx, err
+	return ctx, dbID, err
 }
 
 // Returns a context that works for accessing a bucket
-func (tc *textileClient) getBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error) {
-	log.Debug("getBucketContext: Getting bucket context")
+func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error) {
+	log.Debug("getOrCreateBucketContext: Getting bucket context")
 
-	log.Debug("getBucketContext: Fetching thread id from meta store")
+	log.Debug("getOrCreateBucketContext: Fetching thread id from meta store")
 	bucketSchema, notFoundErr := tc.FindBucketInCollection(ctx, bucketSlug)
 
 	if notFoundErr == nil { // This means the bucket was already present in the schema
-		dbID, err := utils.ParseDbIDFromString(bucketSchema.DbID)
-		if err != nil {
-			log.Error("Error casting thread id", err)
-			return nil, nil, err
-		}
-		log.Debug("getBucketContext: Got dbID from collection: " + dbID.String())
-		ctx, err = tc.getThreadContext(ctx, bucketSlug, *dbID, false)
-
+		var err error
+		var dbID *thread.ID
+		ctx, dbID, err = tc.getBucketContext(ctx, bucketSchema.DbID, bucketSlug, false)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -92,21 +87,24 @@ func (tc *textileClient) getBucketContext(ctx context.Context, bucketSlug string
 	}
 
 	// We need to create the thread and store it in the collection
-	log.Debug("getBucketContext: Thread ID not found in meta store. Generating a new one...")
+	log.Debug("getOrCreateBucketContext: Thread ID not found in meta store. Generating a new one...")
 	dbID := thread.NewIDV1(thread.Raw, 32)
 
-	log.Debug("getBucketContext: Creating Thread DB for bucket " + bucketSlug + " at db " + dbID.String())
+	log.Debug("getOrCreateBucketContext: Creating Thread DB for bucket " + bucketSlug + " at db " + dbID.String())
 	if err := tc.threads.NewDB(ctx, dbID); err != nil {
 		return nil, nil, err
 	}
-	log.Debug("getBucketContext: Thread DB Created")
+	log.Debug("getOrCreateBucketContext: Thread DB Created")
 	_, err := tc.storeBucketInCollection(ctx, bucketSlug, utils.CastDbIDToString(dbID))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	bucketCtx, err := tc.getThreadContext(ctx, bucketSlug, dbID, false)
-	log.Debug("getBucketContext: Returning bucket context")
+	bucketCtx, _, err := tc.getBucketContext(ctx, utils.CastDbIDToString(dbID), bucketSlug, false)
+	if err != nil {
+		return nil, nil, err
+	}
+	log.Debug("getOrCreateBucketContext: Returning bucket context")
 	return bucketCtx, &dbID, err
 }
 
@@ -137,7 +135,7 @@ func (tc *textileClient) listBuckets(ctx context.Context) ([]Bucket, error) {
 }
 
 func (tc *textileClient) getBucketRootFromSlug(ctx context.Context, slug string) (context.Context, *buckets_pb.Root, error) {
-	ctx, _, err := tc.getBucketContext(ctx, slug)
+	ctx, _, err := tc.getOrCreateBucketContext(ctx, slug)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -177,7 +175,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 		return nil, err
 	}
 
-	ctx, dbID, err := tc.getBucketContext(ctx, bucketSlug)
+	ctx, dbID, err := tc.getOrCreateBucketContext(ctx, bucketSlug)
 
 	if err != nil {
 		return nil, err
@@ -197,7 +195,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 		return nil, err
 	}
 
-	newB := bucket.New(b.Root, tc.getBucketContext, tc.bucketsClient)
+	newB := bucket.New(b.Root, tc.getOrCreateBucketContext, tc.bucketsClient)
 
 	return newB, nil
 }

@@ -16,7 +16,7 @@ func (tc *textileClient) ShareFilesViaPublicKey(ctx context.Context, paths []dom
 	}
 
 	for _, pth := range paths {
-		ctx, err = tc.getRemoteBucketContext(ctx, pth.DbId, pth.Bucket)
+		ctx, _, err = tc.getBucketContext(ctx, pth.DbId, pth.Bucket, true)
 		if err != nil {
 			return err
 		}
