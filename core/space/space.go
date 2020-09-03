@@ -54,6 +54,7 @@ type Service interface {
 	GetAPISessionTokens(ctx context.Context) (*domain.APISessionTokens, error)
 	AddRecentlySharedPublicKeys(ctx context.Context, pubkeys []crypto.PubKey) error
 	RecentlySharedPublicKeys(ctx context.Context) ([]crypto.PubKey, error)
+	TruncateData(ctx context.Context) error
 }
 
 type serviceOptions struct {
