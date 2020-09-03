@@ -246,6 +246,18 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 			}
 			path.DbId = bs.DbID
 		}
+
+		if path.Bucket == "" {
+			b, err := s.tc.GetDefaultBucket(ctx)
+			if err != nil {
+				return err
+			}
+
+			if err != nil {
+				return err
+			}
+			path.Bucket = b.Slug()
+		}
 	}
 
 	for _, pk := range pubkeys {
