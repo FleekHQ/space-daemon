@@ -16,10 +16,11 @@ func (tc *textileClient) ShareFilesViaPublicKey(ctx context.Context, paths []dom
 	}
 
 	for _, pth := range paths {
-		ctx, _, err = tc.getBucketContext(ctx, pth.DbId, pth.Bucket, true)
-		if err != nil {
-			return err
-		}
+		// TODO: uncomment once mirror bucket setup is done
+		// ctx, _, err = tc.getBucketContext(ctx, mirror.DbId, mirror.Bucket, true)
+		// if err != nil {
+		// 	return err
+		// }
 
 		log.Info("Adding roles for pth: " + pth.Path)
 		// TOOD: uncomment once release and upgraded txl pkg
