@@ -3,6 +3,7 @@ package textile
 import (
 	"context"
 	"io"
+	"os"
 
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/ipfs/interface-go-ipfs-core/path"
@@ -51,15 +52,15 @@ func (tc *textileClient) UploadFileToHub(ctx context.Context, b Bucket, path str
 
 	bucket, err := tc.FindBucketInCollection(ctx, b.Slug())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	hubCtx, dbID, err := tc.getBucketContext(ctx, b.Slug(), bucket.RemoteDbID, true)
+	hubCtx, _, err := tc.getBucketContext(ctx, b.Slug(), bucket.RemoteDbID, true)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return tc.hubb.PushPath(ctx, b.Key(), path, reader)
+	return tc.hb.PushPath(hubCtx, b.Key(), path, reader)
 }
 
 // Creates a mirror bucket.
@@ -73,17 +74,13 @@ func (tc *textileClient) createMirrorBucket(ctx context.Context, schema BucketSc
 	}
 
 	// create mirror bucket
-	_, err = tc.hubb.Init(hubCtx, bc.WithName(bucketSlug), bc.WithPrivate(true))
+	_, err = tc.hb.Init(hubCtx, bc.WithName(bucketSlug), bc.WithPrivate(true))
 	if err != nil {
 		return nil, err
 	}
 
-	// We store the bucket in a meta thread so that we can later fetch a list of all buckets
-	log.Debug("Mirror Bucket " + bucketSlug + " created. Storing metadata.")
-	mirrorSchema, err := tc.storeBucketMirrorSchema(hubCtx, schema)
-	if err != nil {
-		return nil, err
-	}
-
-	return mirrorSchema, nil
+	return &BucketMirrorSchema{
+		RemoteDbID: dbID.String(),
+		HubAddr:    os.Getenv("TXL_HUB_TARGET"),
+	}, nil
 }

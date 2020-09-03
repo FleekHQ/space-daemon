@@ -68,6 +68,7 @@ type Client interface {
 	ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) (bool, error)
 	IsBucketBackup(ctx context.Context, bucketSlug string) bool
 	IsMirrorFile(ctx context.Context, path, bucketSlug string) bool
+	UploadFileToHub(ctx context.Context, b Bucket, path string, reader io.Reader) (result path.Resolved, root path.Path, err error)
 	MarkMirrorFileBackup(ctx context.Context, path, bucketSlug string) (*MirrorFile, error)
 	SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error)
 	Shutdown() error
