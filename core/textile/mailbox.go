@@ -123,7 +123,7 @@ func (tc *textileClient) ListenForMessages(ctx context.Context, srv GrpcMailboxN
 	var err error
 	ctx, err = tc.getHubCtx(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Handle mailbox events as they arrive
@@ -157,7 +157,7 @@ func (tc *textileClient) ListenForMessages(ctx context.Context, srv GrpcMailboxN
 	}()
 
 	// Start watching (the third param indicates we want to keep watching when offline)
-	_, err := tc.mb.WatchInbox(ctx, tc.mailEvents, true)
+	_, err = tc.mb.WatchInbox(ctx, tc.mailEvents, true)
 	if err != nil {
 		return err
 	}

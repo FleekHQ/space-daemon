@@ -4,12 +4,9 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-<<<<<<< HEAD
+	"fmt"
 	"os/user"
 	"path/filepath"
-=======
-	"fmt"
->>>>>>> master
 	"strings"
 	"time"
 
@@ -39,11 +36,8 @@ type textileClient struct {
 	threads          *threadsClient.Client
 	ht               *threadsClient.Client
 	bucketsClient    *bucketsClient.Client
-<<<<<<< HEAD
 	mb               Mailbox
-=======
 	hb               *bucketsClient.Client
->>>>>>> master
 	isRunning        bool
 	isInitialized    bool
 	Ready            chan bool

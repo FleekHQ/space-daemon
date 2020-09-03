@@ -16,11 +16,22 @@ func mapToPbNotification(n domain.Notification) (*pb.Notification, error) {
 	switch n.NotificationType {
 	case domain.INVITATION:
 		inv := n.InvitationValue
+		pbpths := make([]*pb.FullPath, len(inv.ItemPaths))
+
+		for _, pth := range n.InvitationValue.ItemPaths {
+			pbpth := &pb.FullPath{
+				Bucket: pth.Bucket,
+				DbId:   pth.DbId,
+				Path:   pth.Path,
+			}
+			pbpths = append(pbpths, pbpth)
+		}
+
 		pbinv := &pb.Invitation{
 			InvitationID:     n.ID,
 			InviterPublicKey: inv.InviterPublicKey,
 			// TODO: Status: come form shared with me thread,
-			ItemPaths: inv.ItemPaths,
+			ItemPaths: pbpths,
 		}
 		ro := &pb.Notification_InvitationValue{
 			InvitationValue: pbinv,

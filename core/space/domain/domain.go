@@ -98,7 +98,7 @@ type Invitation struct {
 	InviteePublicKey string           `json:"inviteePublicKey"`
 	InvitationID     string           `json:"invitationID"`
 	Status           InvitationStatus `json:"status"`
-	ItemPaths        []string         `json:"itemPaths"`
+	ItemPaths        []FullPath       `json:"itemPaths"`
 }
 
 type UsageAlert struct {
