@@ -22,13 +22,6 @@ type BucketSchema struct {
 	*BucketMirrorSchema
 }
 
-type MirrorFile struct {
-	Path       string
-	BucketSlug string
-	Backup     bool
-	Shared     bool
-}
-
 type MirrorFileSchema struct {
 	ID         core.InstanceID `json:"_id"`
 	Path       string          `json:"path"`

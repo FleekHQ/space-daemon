@@ -15,6 +15,13 @@ type BucketMirrorSchema struct {
 	HubAddr    string `json:"HubAddr"`
 }
 
+type MirrorFile struct {
+	Path       string
+	BucketSlug string
+	Backup     bool
+	Shared     bool
+}
+
 func (tc *textileClient) IsMirrorFile(ctx context.Context, path, bucketSlug string) bool {
 	mirrorFile, _ := tc.findMirrorFileByPathAndBucketSlug(ctx, path, bucketSlug)
 	if mirrorFile != nil {
@@ -22,6 +29,21 @@ func (tc *textileClient) IsMirrorFile(ctx context.Context, path, bucketSlug stri
 	}
 
 	return false
+}
+
+func (tc *textileClient) BackupFile(ctx context.Context, path, bucketSlug string) (*MirrorFile, error) {
+	mf := &MirrorFile{
+		Path:       path,
+		BucketSlug: bucketSlug,
+		Backup:     true,
+		Shared:     false,
+	}
+	_, err := tc.createMirrorFile(ctx, mf)
+	if err != nil {
+		return nil, err
+	}
+
+	return mf, nil
 }
 
 // Creates a mirror bucket.

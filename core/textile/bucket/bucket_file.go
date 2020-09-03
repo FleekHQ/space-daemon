@@ -55,8 +55,17 @@ func (b *Bucket) UploadFile(ctx context.Context, path string, reader io.Reader) 
 	return b.bucketsClient.PushPath(ctx, b.Key(), path, reader)
 }
 
-func (b *Bucket) MirrorFile(ctx context.Context, path string, reader io.Reader) (result path.Resolved, root path.Path, err error) {
+func (b *Bucket) UploadFileToHub(ctx context.Context, path string, reader io.Reader) (result path.Resolved, root path.Path, err error) {
 	// XXX: locking?
+
+	// TODO: incorrect
+	// mirrorBucket, err := s.tc.GetBucket(ctx, b.Slug())
+	// if err != nil {
+	// 	log.Error(fmt.Sprintf("error getting bucket %s", b.Slug()), err)
+	// 	return domain.AddItemResult{}, err
+	// }
+
+	// f.Seek(0, io.SeekStart)
 
 	ctx, _, err = b.getContext(ctx)
 	if err != nil {
