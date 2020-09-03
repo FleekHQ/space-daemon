@@ -53,6 +53,22 @@ func getThreadName(userPubKey []byte, bucketSlug string) string {
 	return hex.EncodeToString(userPubKey) + "-" + bucketSlug
 }
 
+func (tc *textileClient) getRemoteBucketContext(ctx context.Context, sDbID string, bucketSlug string) (context.Context, error) {
+	log.Debug("getRemoteBucketContext: Getting remote bucket context")
+
+	dbID, err := utils.ParseDbIDFromString(sDbID)
+	if err != nil {
+		log.Error("Error casting thread id", err)
+		return nil, err
+	}
+	ctx, err = tc.getThreadContext(ctx, bucketSlug, *dbID, true)
+
+	if err != nil {
+		return nil, err
+	}
+	return ctx, err
+}
+
 // Returns a context that works for accessing a bucket
 func (tc *textileClient) getBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error) {
 	log.Debug("getBucketContext: Getting bucket context")
