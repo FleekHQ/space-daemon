@@ -204,7 +204,7 @@ func (tc *textileClient) getMetaThreadContext(ctx context.Context, useHub bool) 
 		return nil, nil, err
 	}
 
-	metathreadCtx, err := tc.getThreadContext(ctx, metaThreadName, *dbID, false)
+	metathreadCtx, err := tc.getThreadContext(ctx, metaThreadName, *dbID, tc.isConnectedToHub)
 	if err != nil {
 		return nil, nil, err
 	}
