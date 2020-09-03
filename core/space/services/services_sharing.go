@@ -252,10 +252,6 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 			if err != nil {
 				return err
 			}
-
-			if err != nil {
-				return err
-			}
 			path.Bucket = b.Slug()
 		}
 	}
