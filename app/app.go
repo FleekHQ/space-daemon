@@ -117,8 +117,10 @@ func (a *App) Start(ctx context.Context) error {
 		return err
 	}
 
+	hubAuth := hub.New(appStore, kc, a.cfg)
+
 	// setup textile client
-	textileClient := textile.NewClient(appStore, kc)
+	textileClient := textile.NewClient(appStore, kc, hubAuth)
 	err = a.RunAsync("TextileClient", textileClient, func() error {
 		return textileClient.Start(ctx, a.cfg)
 	})

@@ -76,6 +76,11 @@ func parseMessage(msg client.Message) (*domain.Notification, error) {
 }
 
 func (tc *textileClient) SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error) {
+	var err error
+	ctx, err = tc.getHubCtx(ctx)
+	if err != nil {
+		return nil, err
+	}
 	msg, err := tc.mb.SendMessage(ctx, thread.NewLibp2pPubKey(recipient), body)
 	if err != nil {
 		return nil, err
@@ -85,9 +90,10 @@ func (tc *textileClient) SendMessage(ctx context.Context, recipient crypto.PubKe
 }
 
 func (tc *textileClient) GetMailAsNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error) {
+	var err error
 	ns := []*domain.Notification{}
 
-	ctx, err := tc.getHubCtx(ctx)
+	ctx, err = tc.getHubCtx(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -113,6 +119,12 @@ type handleMessage func(context.Context, interface{}) error
 
 func (tc *textileClient) ListenForMessages(ctx context.Context, srv GrpcMailboxNotifier) error {
 	log.Info("Starting to listen for mailbox messages")
+
+	var err error
+	ctx, err = tc.getHubCtx(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	// Handle mailbox events as they arrive
 	go func() {
@@ -145,7 +157,7 @@ func (tc *textileClient) ListenForMessages(ctx context.Context, srv GrpcMailboxN
 	}()
 
 	// Start watching (the third param indicates we want to keep watching when offline)
-	_, err := tc.mb.WatchInbox(context.Background(), tc.mailEvents, true)
+	_, err := tc.mb.WatchInbox(ctx, tc.mailEvents, true)
 	if err != nil {
 		return err
 	}

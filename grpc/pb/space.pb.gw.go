@@ -986,24 +986,6 @@ func request_SpaceApi_ShareFilesViaPublicKey_0(ctx context.Context, marshaler ru
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["bucket"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "bucket")
-	}
-
-	protoReq.Bucket, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "bucket", err)
-	}
-
 	msg, err := client.ShareFilesViaPublicKey(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
@@ -1019,24 +1001,6 @@ func local_request_SpaceApi_ShareFilesViaPublicKey_0(ctx context.Context, marsha
 	}
 	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["bucket"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "bucket")
-	}
-
-	protoReq.Bucket, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "bucket", err)
 	}
 
 	msg, err := server.ShareFilesViaPublicKey(ctx, &protoReq)
@@ -3011,7 +2975,7 @@ var (
 
 	pattern_SpaceApi_JoinBucket_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "buckets", "bucket", "join"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_SpaceApi_ShareFilesViaPublicKey_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "buckets", "bucket", "shareFilesViaPublicKey"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_SpaceApi_ShareFilesViaPublicKey_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "shareFilesViaPublicKey"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_SpaceApi_HandleFilesInvitation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "filesinvitation", "invitationID"}, "", runtime.AssumeColonVerbOpt(true)))
 

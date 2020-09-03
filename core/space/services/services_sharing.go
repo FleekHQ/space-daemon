@@ -225,12 +225,39 @@ func (s *Space) OpenSharedFile(ctx context.Context, hash, password, filename str
 	}, nil
 }
 
-func (s *Space) ShareFilesViaPublicKey(ctx context.Context, bucketName string, paths []string, pubkeys []crypto.PubKey) error {
-	err := s.tc.ShareFilesViaPublicKey(ctx, bucketName, paths, pubkeys)
+func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error {
+	err := s.tc.ShareFilesViaPublicKey(ctx, paths, pubkeys)
 	if err != nil {
 		return err
 	}
+
+	for _, path := range paths {
+		// this handles personal bucket since for shared-with-me files
+		// the dbid will be preset
+		if path.DbId == "" {
+			b, err := s.tc.GetDefaultBucket(ctx)
+			if err != nil {
+				return err
+			}
+
+			bs, err := s.tc.FindBucketInCollection(ctx, b.Slug())
+			if err != nil {
+				return err
+			}
+			path.DbId = bs.DbID
+		}
+
+		if path.Bucket == "" {
+			b, err := s.tc.GetDefaultBucket(ctx)
+			if err != nil {
+				return err
+			}
+			path.Bucket = b.Slug()
+		}
+	}
+
 	for _, pk := range pubkeys {
+
 		d := &domain.Invitation{
 			ItemPaths: paths,
 			// Key: TODO - get from keys thread for each file

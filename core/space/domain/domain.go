@@ -79,6 +79,12 @@ const (
 	USAGEALERT NotificationTypes = 1
 )
 
+type FullPath struct {
+	DbId   string `json:"dbId"`
+	Bucket string `json:"bucket"`
+	Path   string `json:"path"`
+}
+
 type InvitationStatus int
 
 const (
