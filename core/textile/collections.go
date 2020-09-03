@@ -182,11 +182,16 @@ func (tc *textileClient) findOrCreateMetaThreadID(ctx context.Context) (*thread.
 
 	dbIDInBytes := dbID.Bytes()
 
-	log.Debug("Created meta thread in db " + dbID.String())
-
-	if err := tc.threads.NewDB(ctx, dbID); err != nil {
+	metaCtx, err := tc.getThreadContext(ctx, metaThreadName, dbID, tc.isConnectedToHub)
+	if err != nil {
 		return nil, err
 	}
+
+	if err := tc.threads.NewDB(metaCtx, dbID); err != nil {
+		return nil, err
+	}
+
+	log.Debug("Created meta thread in db " + dbID.String())
 
 	if err := tc.store.Set(storeKey, dbIDInBytes); err != nil {
 		newErr := errors.New("error while storing thread id: check your local space db accessibility")
