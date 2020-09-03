@@ -37,11 +37,6 @@ type Bucket interface {
 		path string,
 		reader io.Reader,
 	) (result path.Resolved, root path.Path, err error)
-	UploadFileToHub(
-		ctx context.Context,
-		path string,
-		reader io.Reader,
-	) (result path.Resolved, root path.Path, err error)
 	GetFile(
 		ctx context.Context,
 		path string,
@@ -78,8 +73,9 @@ type Client interface {
 	Shutdown() error
 	WaitForReady() chan bool
 	Start(ctx context.Context, cfg config.Config) error
-	ShareFilesViaPublicKey(ctx context.Context, bucketName string, paths []string, pubkeys []crypto.PubKey) error
-	RemoveKeys()
+	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error
+	RemoveKeys() error
+	FindBucketInCollection(ctx context.Context, bucketSlug string) (*BucketSchema, error)
 }
 
 type Buckd interface {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	db "github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
+	"github.com/FleekHQ/space-daemon/core/util/address"
 	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
@@ -31,6 +33,7 @@ type textileClient struct {
 	threads          *threadsClient.Client
 	ht               *threadsClient.Client
 	bucketsClient    *bucketsClient.Client
+	hb               *bucketsClient.Client
 	isRunning        bool
 	isInitialized    bool
 	Ready            chan bool
@@ -44,7 +47,7 @@ type textileClient struct {
 }
 
 // Creates a new Textile Client
-func NewClient(store db.Store, kc keychain.Keychain) *textileClient {
+func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth) *textileClient {
 	return &textileClient{
 		store:            store,
 		kc:               kc,
@@ -53,13 +56,14 @@ func NewClient(store db.Store, kc keychain.Keychain) *textileClient {
 		netc:             nil,
 		uc:               nil,
 		ht:               nil,
+		hb:               nil,
 		isRunning:        false,
 		isInitialized:    false,
 		Ready:            make(chan bool),
 		keypairDeleted:   make(chan bool),
 		shuttingDown:     make(chan bool),
 		isConnectedToHub: false,
-		hubAuth:          nil,
+		hubAuth:          hubAuth,
 	}
 }
 
@@ -86,7 +90,6 @@ func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error)
 // Starts the Textile Client
 func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.cfg = cfg
-	tc.hubAuth = hub.New(tc.store, tc.kc, cfg)
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
 
@@ -125,6 +128,7 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.netc = netc
 	tc.uc = getUserClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 	tc.ht = getHubThreadsClient(tc.cfg.GetString(config.TextileHubTarget, ""))
+	tc.hb = getHubBucketClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 
 	tc.isRunning = true
 
@@ -246,10 +250,37 @@ func getHubThreadsClient(host string) *threadsClient.Client {
 	return tc
 }
 
+func getHubBucketClient(host string) *bucketsClient.Client {
+	hubTarget := host
+	auth := common.Credentials{}
+	var opts []grpc.DialOption
+
+	if strings.Contains(hubTarget, "443") {
+		creds := credentials.NewTLS(&tls.Config{})
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+		auth.Secure = true
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+	}
+	opts = append(opts, grpc.WithPerRPCCredentials(auth))
+
+	tc, err := bucketsClient.NewClient(hubTarget, opts...)
+	if err != nil {
+		cmd.Fatal(err)
+	}
+	return tc
+}
+
 func (tc *textileClient) initialize(ctx context.Context) error {
 	buckets, err := tc.listBuckets(ctx)
 	if err != nil {
 		return err
+	}
+
+	pub, _ := tc.kc.GetStoredPublicKey()
+	if pub != nil {
+		address := address.DeriveAddress(pub)
+		log.Debug("Initializing Textile client", fmt.Sprintf("address:%s", address))
 	}
 
 	// Create default bucket if it doesnt exist
@@ -360,8 +391,14 @@ func (tc *textileClient) healthcheck(ctx context.Context) {
 	}
 }
 
-func (tc *textileClient) RemoveKeys() {
+func (tc *textileClient) RemoveKeys() error {
+	if err := tc.hubAuth.ClearCache(); err != nil {
+		return err
+	}
+
 	tc.isInitialized = false
 	tc.isConnectedToHub = false
 	tc.keypairDeleted <- true
+
+	return nil
 }
