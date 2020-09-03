@@ -22,10 +22,55 @@ type BucketSchema struct {
 	*BucketMirrorSchema
 }
 
+type MirrorFile struct {
+	Path       string
+	BucketSlug string
+	Backup     bool
+	Shared     bool
+}
+
+type MirrorFileSchema struct {
+	ID         core.InstanceID `json:"_id"`
+	Path       string          `json:"path"`
+	BucketSlug string          `json:"bucket_slug"`
+	Backup     bool            `json:"backup"`
+	Shared     bool            `json:"shared"`
+
+	DbID string
+}
+
 const metaThreadName = "metathreadV1"
+
 const bucketCollectionName = "BucketMetadata"
 
 var errBucketNotFound = errors.New("Bucket not found")
+
+const mirrorFileCollectionName = "MirrorFileMetadata"
+
+var errMirrorFileNotFound = errors.New("Mirror file not found")
+
+func (tc *textileClient) initBucketCollection(ctx context.Context) (context.Context, *thread.ID, error) {
+	metaCtx, dbID, err := tc.getMetaThreadContext(ctx, tc.isConnectedToHub)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err = tc.threads.NewDB(metaCtx, *dbID); err != nil {
+		log.Debug("initBucketCollection: db already exists")
+	}
+	if err := tc.threads.NewCollection(metaCtx, *dbID, db.CollectionConfig{
+		Name:   bucketCollectionName,
+		Schema: util.SchemaFromInstance(&BucketSchema{}, false),
+		Indexes: []db.Index{{
+			Path:   "slug",
+			Unique: true,
+		}},
+	}); err != nil {
+		log.Debug("initBucketCollection: collection already exists")
+	}
+
+	return metaCtx, dbID, nil
+}
 
 func (tc *textileClient) storeBucketInCollection(ctx context.Context, bucketSlug, dbID string) (*BucketSchema, error) {
 	log.Debug("storeBucketInCollection: Storing bucket " + bucketSlug)
@@ -234,28 +279,89 @@ func (tc *textileClient) getMetaThreadContext(ctx context.Context, useHub bool) 
 		return nil, nil, err
 	}
 
-  return metathreadCtx, dbID, nil
+	return metathreadCtx, dbID, nil
 }
 
-func (tc *textileClient) initBucketCollection(ctx context.Context) (context.Context, *thread.ID, error) {
+func (tc *textileClient) initMirrorFileCollection(ctx context.Context) (context.Context, *thread.ID, error) {
 	metaCtx, dbID, err := tc.getMetaThreadContext(ctx, tc.isConnectedToHub)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	if err = tc.threads.NewDB(metaCtx, *dbID); err != nil {
-		log.Debug("initBucketCollection: db already exists")
+		log.Debug("initMirrorFileCollection: db already exists")
 	}
 	if err := tc.threads.NewCollection(metaCtx, *dbID, db.CollectionConfig{
-		Name:   bucketCollectionName,
-		Schema: util.SchemaFromInstance(&BucketSchema{}, false),
+		Name:   mirrorFileCollectionName,
+		Schema: util.SchemaFromInstance(&MirrorFileSchema{}, false),
 		Indexes: []db.Index{{
-			Path:   "slug",
-			Unique: true,
+			Path:   "path",
+			Unique: true, // TODO: multicolumn index
 		}},
 	}); err != nil {
-		log.Debug("initBucketCollection: collection already exists")
+		log.Debug("initMirrorFileCollection: collection already exists")
 	}
 
 	return metaCtx, dbID, nil
+}
+
+func (tc *textileClient) findMirrorFileByPathAndBucketSlug(ctx context.Context, path, bucketSlug string) (*MirrorFileSchema, error) {
+	metaCtx, dbID, err := tc.initMirrorFileCollection(ctx)
+	if err != nil || dbID == nil {
+		return nil, err
+	}
+
+	rawMirrorFiles, err := tc.threads.Find(metaCtx, *dbID, mirrorFileCollectionName, db.Where("path").Eq(path), &MirrorFileSchema{})
+	if err != nil {
+		return nil, err
+	}
+
+	if rawMirrorFiles == nil {
+		return nil, errMirrorFileNotFound
+	}
+
+	mirror_files := rawMirrorFiles.([]*MirrorFileSchema)
+	if len(mirror_files) == 0 {
+		return nil, errMirrorFileNotFound
+	}
+
+	log.Debug("returning mirror file with dbid " + mirror_files[0].DbID)
+	return mirror_files[0], nil
+}
+
+func (tc *textileClient) createMirrorFile(ctx context.Context, mirrorFile *MirrorFile) (*MirrorFileSchema, error) {
+	metaCtx, metaDbID, err := tc.initMirrorFileCollection(ctx)
+	if err != nil && metaDbID == nil {
+		return nil, err
+	}
+
+	_, err = tc.findMirrorFileByPathAndBucketSlug(ctx, mirrorFile.Path, mirrorFile.BucketSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	newInstance := &MirrorFileSchema{
+		Path:       mirrorFile.Path,
+		BucketSlug: mirrorFile.BucketSlug,
+		Backup:     mirrorFile.Backup,
+		Shared:     mirrorFile.Shared,
+	}
+
+	instances := client.Instances{newInstance}
+
+	res, err := tc.threads.Create(metaCtx, *metaDbID, mirrorFileCollectionName, instances)
+	if err != nil {
+		return nil, err
+	}
+	log.Debug("stored mirror file with dbid " + newInstance.DbID)
+
+	id := res[0]
+	return &MirrorFileSchema{
+		Path:       newInstance.Path,
+		BucketSlug: newInstance.BucketSlug,
+		Backup:     newInstance.Backup,
+		Shared:     newInstance.Shared,
+		ID:         core.InstanceID(id),
+		DbID:       newInstance.DbID,
+	}, nil
 }

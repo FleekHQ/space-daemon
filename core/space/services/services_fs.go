@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -68,7 +69,7 @@ func (s *Space) JoinBucket(ctx context.Context, slug string, threadinfo *domain.
 	return r, nil
 }
 
-func (s *Space) ToggleBucketBackup(ctx context.Context, bucketName string, bucketBackup bool) (error) {
+func (s *Space) ToggleBucketBackup(ctx context.Context, bucketName string, bucketBackup bool) error {
 	_, err := s.tc.ToggleBucketBackup(ctx, bucketName, bucketBackup)
 	if err != nil {
 		return err
@@ -490,6 +491,45 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 	if err != nil {
 		log.Error(fmt.Sprintf("error creating targetPath %s in bucket %s", targetPathBucket, b.Key()), err)
 		return domain.AddItemResult{}, err
+	}
+
+	if true { // TODO: if file is in the mirror bucket collection
+		hubCtx := s.tc.hubAuth.GetHubContext(ctx)
+		if err != nil {
+			log.Error(fmt.Sprintf("error getting hub context"), err)
+			return domain.AddItemResult{}, err
+		}
+
+		mirrorFile, err := s.tc.findMirrorFileByPathAndBucketSlug(hubCtx, targetPathBucket, b.Slug())
+		if mirrorFile == nil {
+			// there is no fileMirror so it was not uploaded
+
+			mirrorBucket, err := s.tc.GetBucket(hubCtx, b.Slug())
+			if err != nil {
+				log.Error(fmt.Sprintf("error getting bucket %s", b.Slug()), err)
+				return domain.AddItemResult{}, err
+			}
+
+			f.Seek(0, io.SeekStart)
+
+			_, root, err := mirrorBucket.MirrorFile(ctx, targetPathBucket, f)
+			if err != nil {
+				log.Error(fmt.Sprintf("error mirroring targetPath %s in bucket %s", targetPathBucket, b.Key()), err)
+				return domain.AddItemResult{}, err
+			}
+
+			mf := &textile.MirrorFile{
+				Path:       targetPathBucket,
+				BucketSlug: b.Slug(),
+				Backup:     true,
+				Shared:     false,
+			}
+			schema, err := s.tc.createMirrorFile(hubCtx, mf)
+			if err != nil {
+				log.Error(fmt.Sprintf("error creating mirror file Path=%s BucketSlug=%s", targetPathBucket, b.Key()), err)
+				return domain.AddItemResult{}, err
+			}
+		}
 	}
 
 	fi, err := f.Stat()

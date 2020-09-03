@@ -37,6 +37,11 @@ type Bucket interface {
 		path string,
 		reader io.Reader,
 	) (result path.Resolved, root path.Path, err error)
+	MirrorFile(
+		ctx context.Context,
+		path string,
+		reader io.Reader,
+	) (result path.Resolved, root path.Path, err error)
 	GetFile(
 		ctx context.Context,
 		path string,

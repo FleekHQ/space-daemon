@@ -179,17 +179,15 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 		return nil, err
 	}
 
-	if schema.Backup {
-		mirrorSchema, err := tc.createMirrorBucket(ctx, *schema)
+	mirrorSchema, err := tc.createMirrorBucket(ctx, *schema)
+	if err != nil {
+		return nil, err
+	}
+
+	if mirrorSchema != nil {
+		_, err = tc.storeBucketMirrorSchema(ctx, bucketSlug, mirrorSchema)
 		if err != nil {
 			return nil, err
-		}
-
-		if mirrorSchema != nil {
-			_, err = tc.storeBucketMirrorSchema(ctx, bucketSlug, mirrorSchema)
-			if err != nil {
-				return nil, err
-			}
 		}
 	}
 

@@ -55,6 +55,17 @@ func (b *Bucket) UploadFile(ctx context.Context, path string, reader io.Reader) 
 	return b.bucketsClient.PushPath(ctx, b.Key(), path, reader)
 }
 
+func (b *Bucket) MirrorFile(ctx context.Context, path string, reader io.Reader) (result path.Resolved, root path.Path, err error) {
+	// XXX: locking?
+
+	ctx, _, err = b.getContext(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return b.bucketsClient.PushPath(ctx, b.Key(), path, reader)
+}
+
 // GetFile pulls path from bucket writing it to writer if it's a file.
 func (b *Bucket) GetFile(ctx context.Context, path string, w io.Writer) error {
 	b.lock.RLock()
