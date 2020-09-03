@@ -492,7 +492,7 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 		return domain.AddItemResult{}, err
 	}
 
-	if s.tc.IsBucketBackup(ctx, b.Slug()) && s.tc.IsMirrorFile(ctx, targetPath, b.Slug()) {
+	if s.tc.IsBucketBackup(ctx, b.Slug()) && !s.tc.IsMirrorFile(ctx, targetPath, b.Slug()) {
 		_, _, err = b.UploadFileToHub(ctx, targetPathBucket, f)
 		if err != nil {
 			log.Error(fmt.Sprintf("error mirroring targetPath %s in bucket %s", targetPathBucket, b.Key()), err)
