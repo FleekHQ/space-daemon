@@ -31,13 +31,14 @@ func (tc *textileClient) IsMirrorFile(ctx context.Context, path, bucketSlug stri
 	return false
 }
 
-func (tc *textileClient) BackupFile(ctx context.Context, path, bucketSlug string) (*MirrorFile, error) {
+func (tc *textileClient) MarkMirrorFileBackup(ctx context.Context, path, bucketSlug string) (*MirrorFile, error) {
 	mf := &MirrorFile{
 		Path:       path,
 		BucketSlug: bucketSlug,
 		Backup:     true,
 		Shared:     false,
 	}
+	// TODO: upsert
 	_, err := tc.createMirrorFile(ctx, mf)
 	if err != nil {
 		return nil, err

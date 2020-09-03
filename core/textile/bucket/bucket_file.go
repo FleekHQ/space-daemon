@@ -65,8 +65,6 @@ func (b *Bucket) UploadFileToHub(ctx context.Context, path string, reader io.Rea
 	// 	return domain.AddItemResult{}, err
 	// }
 
-	// f.Seek(0, io.SeekStart)
-
 	ctx, _, err = b.getContext(ctx)
 	if err != nil {
 		return nil, nil, err

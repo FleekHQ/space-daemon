@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -493,13 +494,15 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 	}
 
 	if s.tc.IsBucketBackup(ctx, b.Slug()) && !s.tc.IsMirrorFile(ctx, targetPath, b.Slug()) {
+		f.Seek(0, io.SeekStart)
+
 		_, _, err = b.UploadFileToHub(ctx, targetPathBucket, f)
 		if err != nil {
 			log.Error(fmt.Sprintf("error mirroring targetPath %s in bucket %s", targetPathBucket, b.Key()), err)
 			return domain.AddItemResult{}, err
 		}
 
-		_, err = s.tc.BackupFile(ctx, targetPath, b.Slug())
+		_, err = s.tc.MarkMirrorFileBackup(ctx, targetPath, b.Slug())
 		if err != nil {
 			log.Error(fmt.Sprintf("error creating mirror file Path=%s BucketSlug=%s", targetPathBucket, b.Key()), err)
 			return domain.AddItemResult{}, err
