@@ -232,18 +232,19 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 	}
 
 	for _, path := range paths {
+		// this handles personal bucket since for shared-with-me files
+		// the dbid will be preset
 		if path.DbId == "" {
-			// TODO: fetch dbid of mirror bucket and set
-			// b, err := s.tc.GetDefaultBucket(ctx)
-			// if err != nil {
-			// 	return err
-			// }
+			b, err := s.tc.GetDefaultBucket(ctx)
+			if err != nil {
+				return err
+			}
 
-			// bs, err := s.tc.GetBucketSchema(ctx, b.Slug())
-			// if err != nil {
-			// 	return err
-			// }
-			// path.DbId == bs.dbId
+			bs, err := s.tc.FindBucketInCollection(ctx, b.Slug())
+			if err != nil {
+				return err
+			}
+			path.DbId = bs.DbID
 		}
 	}
 

@@ -47,6 +47,29 @@ func (_m *Client) CreateBucket(ctx context.Context, bucketSlug string) (textile.
 	return r0, r1
 }
 
+// FindBucketInCollection provides a mock function with given fields: ctx, bucketSlug
+func (_m *Client) FindBucketInCollection(ctx context.Context, bucketSlug string) (*textile.BucketSchema, error) {
+	ret := _m.Called(ctx, bucketSlug)
+
+	var r0 *textile.BucketSchema
+	if rf, ok := ret.Get(0).(func(context.Context, string) *textile.BucketSchema); ok {
+		r0 = rf(ctx, bucketSlug)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*textile.BucketSchema)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, bucketSlug)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetBucket provides a mock function with given fields: ctx, slug
 func (_m *Client) GetBucket(ctx context.Context, slug string) (textile.Bucket, error) {
 	ret := _m.Called(ctx, slug)

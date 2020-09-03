@@ -58,7 +58,7 @@ func (tc *textileClient) getBucketContext(ctx context.Context, bucketSlug string
 	log.Debug("getBucketContext: Getting bucket context")
 
 	log.Debug("getBucketContext: Fetching thread id from meta store")
-	bucketSchema, notFoundErr := tc.findBucketInCollection(ctx, bucketSlug)
+	bucketSchema, notFoundErr := tc.FindBucketInCollection(ctx, bucketSlug)
 
 	if notFoundErr == nil { // This means the bucket was already present in the schema
 		dbID, err := utils.ParseDbIDFromString(bucketSchema.DbID)
@@ -187,7 +187,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 }
 
 func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*textileApiClient.DBInfo, error) {
-	bs, err := tc.findBucketInCollection(ctx, bucketSlug)
+	bs, err := tc.FindBucketInCollection(ctx, bucketSlug)
 
 	if err != nil {
 		return nil, err

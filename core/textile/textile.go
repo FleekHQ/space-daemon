@@ -72,6 +72,7 @@ type Client interface {
 	Start(ctx context.Context, cfg config.Config) error
 	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error
 	RemoveKeys() error
+	FindBucketInCollection(ctx context.Context, bucketSlug string) (*BucketSchema, error)
 }
 
 type Buckd interface {
