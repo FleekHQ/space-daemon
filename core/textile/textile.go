@@ -71,6 +71,8 @@ type Client interface {
 	JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error)
 	CreateBucket(ctx context.Context, bucketSlug string) (Bucket, error)
 	ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) (bool, error)
+	IsBucketBackup(ctx context.Context, bucketSlug string) bool
+	IsMirrorFile(ctx context.Context, path, bucketSlug string) bool
 	SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error)
 	Shutdown() error
 	WaitForReady() chan bool

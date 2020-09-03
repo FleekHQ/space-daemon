@@ -15,6 +15,15 @@ type BucketMirrorSchema struct {
 	HubAddr    string `json:"HubAddr"`
 }
 
+func (tc *textileClient) IsMirrorFile(ctx context.Context, path, bucketSlug string) bool {
+	mirrorFile, _ := tc.findMirrorFileByPathAndBucketSlug(ctx, path, bucketSlug)
+	if mirrorFile != nil {
+		return true
+	}
+
+	return false
+}
+
 // Creates a mirror bucket.
 func (tc *textileClient) createMirrorBucket(ctx context.Context, schema BucketSchema) (*BucketMirrorSchema, error) {
 	bucketSlug := schema.Slug

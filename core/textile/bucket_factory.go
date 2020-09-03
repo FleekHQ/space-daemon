@@ -291,3 +291,12 @@ func (tc *textileClient) ToggleBucketBackup(ctx context.Context, bucketSlug stri
 
 	return bucketSchema.Backup, nil
 }
+
+func (tc *textileClient) IsBucketBackup(ctx context.Context, bucketSlug string) bool {
+	bucketSchema, err := tc.findBucketInCollection(ctx, bucketSlug)
+	if err != nil {
+		return false
+	}
+
+	return bucketSchema.Backup
+}

@@ -493,43 +493,32 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 		return domain.AddItemResult{}, err
 	}
 
-	if true { // TODO: if file is in the mirror bucket collection
-		hubCtx := s.tc.hubAuth.GetHubContext(ctx)
+	if s.tc.IsBucketBackup(ctx, b.Slug()) && s.tc.IsMirrorFile(ctx, targetPath, b.Slug()) {
+		mirrorBucket, err := s.tc.GetBucket(ctx, b.Slug())
 		if err != nil {
-			log.Error(fmt.Sprintf("error getting hub context"), err)
+			log.Error(fmt.Sprintf("error getting bucket %s", b.Slug()), err)
 			return domain.AddItemResult{}, err
 		}
 
-		mirrorFile, err := s.tc.findMirrorFileByPathAndBucketSlug(hubCtx, targetPathBucket, b.Slug())
-		if mirrorFile == nil {
-			// there is no fileMirror so it was not uploaded
+		f.Seek(0, io.SeekStart)
 
-			mirrorBucket, err := s.tc.GetBucket(hubCtx, b.Slug())
-			if err != nil {
-				log.Error(fmt.Sprintf("error getting bucket %s", b.Slug()), err)
-				return domain.AddItemResult{}, err
-			}
-
-			f.Seek(0, io.SeekStart)
-
-			_, root, err := mirrorBucket.MirrorFile(ctx, targetPathBucket, f)
-			if err != nil {
-				log.Error(fmt.Sprintf("error mirroring targetPath %s in bucket %s", targetPathBucket, b.Key()), err)
-				return domain.AddItemResult{}, err
-			}
-
-			mf := &textile.MirrorFile{
-				Path:       targetPathBucket,
-				BucketSlug: b.Slug(),
-				Backup:     true,
-				Shared:     false,
-			}
-			schema, err := s.tc.createMirrorFile(hubCtx, mf)
-			if err != nil {
-				log.Error(fmt.Sprintf("error creating mirror file Path=%s BucketSlug=%s", targetPathBucket, b.Key()), err)
-				return domain.AddItemResult{}, err
-			}
+		_, _, err = mirrorBucket.MirrorFile(ctx, targetPathBucket, f)
+		if err != nil {
+			log.Error(fmt.Sprintf("error mirroring targetPath %s in bucket %s", targetPathBucket, b.Key()), err)
+			return domain.AddItemResult{}, err
 		}
+
+		// mf := &textile.MirrorFile{
+		// 	Path:       targetPathBucket,
+		// 	BucketSlug: b.Slug(),
+		// 	Backup:     true,
+		// 	Shared:     false,
+		// }
+		// schema, err := s.tc.createMirrorFile(ctx, mf)
+		// if err != nil {
+		// 	log.Error(fmt.Sprintf("error creating mirror file Path=%s BucketSlug=%s", targetPathBucket, b.Key()), err)
+		// 	return domain.AddItemResult{}, err
+		// }
 	}
 
 	fi, err := f.Stat()
