@@ -37,6 +37,8 @@ type Model interface {
 		accepted bool,
 	) (*ReceivedFileSchema, error)
 	FindReceivedFile(ctx context.Context, file domain.FullPath) (*ReceivedFileSchema, error)
+	CreateSharedPublicKey(ctx context.Context, pubKey string) (*SharedPublicKeySchema, error)
+	ListSharedPublicKeys(ctx context.Context) ([]*SharedPublicKeySchema, error)
 	CreateMirrorBucket(ctx context.Context, bucketSlug string, mirrorBucket *MirrorBucketSchema) (*BucketSchema, error)
 	FindMirrorFileByPathAndBucketSlug(ctx context.Context, path, bucketSlug string) (*MirrorFileSchema, error)
 	CreateMirrorFile(ctx context.Context, mirrorFile *domain.MirrorFile) (*MirrorFileSchema, error)

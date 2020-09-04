@@ -52,6 +52,8 @@ type Service interface {
 	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error
 	HandleSharedFilesInvitation(ctx context.Context, invitationId string, accept bool) error
 	GetAPISessionTokens(ctx context.Context) (*domain.APISessionTokens, error)
+	AddRecentlySharedPublicKeys(ctx context.Context, pubkeys []crypto.PubKey) error
+	RecentlySharedPublicKeys(ctx context.Context) ([]crypto.PubKey, error)
 }
 
 type serviceOptions struct {
