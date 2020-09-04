@@ -5,9 +5,12 @@ import (
 	"encoding/hex"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
+	"github.com/FleekHQ/space-daemon/core/util/address"
 	"github.com/FleekHQ/space-daemon/grpc/pb"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 )
+
+var recentlyShared map[string]struct{}
 
 func (srv *grpcServer) ShareFilesViaPublicKey(ctx context.Context, request *pb.ShareFilesViaPublicKeyRequest) (*pb.ShareFilesViaPublicKeyResponse, error) {
 
@@ -23,6 +26,8 @@ func (srv *grpcServer) ShareFilesViaPublicKey(ctx context.Context, request *pb.S
 			return nil, err
 		}
 		pks = append(pks, p)
+
+		recentlyShared[pk] = struct{}{}
 	}
 
 	var cleanedPaths []domain.FullPath
@@ -72,5 +77,33 @@ func (srv *grpcServer) OpenPublicFile(ctx context.Context, request *pb.OpenPubli
 }
 
 func (srv *grpcServer) GetRecentlySharedWith(ctx context.Context, request *pb.GetRecentlySharedWithRequest) (*pb.GetRecentlySharedWithResponse, error) {
-	return nil, errNotImplemented
+	var addr string
+
+	fileMembers := make([]*pb.FileMember, 0)
+
+	for pub := range recentlyShared {
+		b, err := hex.DecodeString(pub)
+		if err != nil {
+			return nil, err
+		}
+		p, err := crypto.UnmarshalEd25519PublicKey([]byte(b))
+		if err != nil {
+			return nil, err
+		}
+
+		addr = address.DeriveAddress(p)
+
+		fileMember := &pb.FileMember{
+			PublicKey: pub,
+			Address:   addr,
+		}
+
+		fileMembers = append(fileMembers, fileMember)
+	}
+
+	res := &pb.GetRecentlySharedWithResponse{
+		Members: fileMembers,
+	}
+
+	return res, nil
 }
