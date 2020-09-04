@@ -110,13 +110,20 @@ func (m *model) initSharedPublicKey(ctx context.Context) (context.Context, *thre
 	return metaCtx, dbID, nil
 }
 
+const listSharedPublicKeysLimit = 128
+
 func (m *model) ListSharedPublicKeys(ctx context.Context) ([]*SharedPublicKeySchema, error) {
 	metaCtx, dbID, err := m.initSharedPublicKey(ctx)
 	if err != nil && dbID == nil {
 		return nil, err
 	}
 
-	rawKeys, err := m.threads.Find(metaCtx, *dbID, sharedPublicKeyModel, &db.Query{}, &SharedPublicKeySchema{})
+	query := &db.Query{}
+	query.Limit = listSharedPublicKeysLimit
+	query.Sort.FieldPath = "CreatedAt"
+	query.Sort.Desc = false
+
+	rawKeys, err := m.threads.Find(metaCtx, *dbID, sharedPublicKeyModel, query, &SharedPublicKeySchema{})
 	if rawKeys == nil {
 		return []*SharedPublicKeySchema{}, nil
 	}
