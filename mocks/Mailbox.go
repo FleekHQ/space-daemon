@@ -20,6 +20,22 @@ type Mailbox struct {
 	mock.Mock
 }
 
+// Identity provides a mock function with given fields:
+func (_m *Mailbox) Identity() thread.Identity {
+	ret := _m.Called()
+
+	var r0 thread.Identity
+	if rf, ok := ret.Get(0).(func() thread.Identity); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(thread.Identity)
+		}
+	}
+
+	return r0
+}
+
 // ListInboxMessages provides a mock function with given fields: ctx, opts
 func (_m *Mailbox) ListInboxMessages(ctx context.Context, opts ...client.ListOption) ([]client.Message, error) {
 	_va := make([]interface{}, len(opts))
