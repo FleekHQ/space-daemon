@@ -23,6 +23,7 @@ import (
 	"github.com/textileio/textile/api/common"
 	uc "github.com/textileio/textile/api/users/client"
 	"github.com/textileio/textile/cmd"
+	mail "github.com/textileio/textile/mail/local"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -33,6 +34,7 @@ type textileClient struct {
 	threads          *threadsClient.Client
 	ht               *threadsClient.Client
 	bucketsClient    *bucketsClient.Client
+	mb               Mailbox
 	hb               *bucketsClient.Client
 	isRunning        bool
 	isInitialized    bool
@@ -43,18 +45,20 @@ type textileClient struct {
 	isConnectedToHub bool
 	netc             *nc.Client
 	uc               UsersClient
+	mailEvents       chan mail.MailboxEvent
 	hubAuth          hub.HubAuth
 }
 
 // Creates a new Textile Client
-func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth) *textileClient {
+func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth, uc UsersClient, mb Mailbox) *textileClient {
 	return &textileClient{
 		store:            store,
 		kc:               kc,
 		threads:          nil,
 		bucketsClient:    nil,
+		mb:               mb,
 		netc:             nil,
-		uc:               nil,
+		uc:               uc,
 		ht:               nil,
 		hb:               nil,
 		isRunning:        false,
@@ -126,7 +130,6 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.bucketsClient = buckets
 	tc.threads = threads
 	tc.netc = netc
-	tc.uc = getUserClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 	tc.ht = getHubThreadsClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 	tc.hb = getHubBucketClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 
@@ -166,12 +169,6 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	}
 }
 
-// adding for testability but if there is a better
-// way to do this plz advise
-func (tc *textileClient) SetUc(uc UsersClient) {
-	tc.uc = uc
-}
-
 // notreturning error rn and this helper does
 // the logging if connection to hub fails, and
 // we continue with startup
@@ -194,13 +191,13 @@ func (tc *textileClient) checkHubConnection(ctx context.Context) error {
 
 	if tc.isConnectedToHub == false {
 		// setup mailbox
-		mid, err := tc.uc.SetupMailbox(hubctx)
+		mailbox, err := tc.setupOrCreateMailBox(hubctx)
 		if err != nil {
 			log.Error("Unable to setup mailbox", err)
 			tc.isConnectedToHub = false
 			return err
 		}
-		log.Debug("Mailbox id: " + mid.String())
+		tc.mb = mailbox
 	}
 
 	tc.isConnectedToHub = true
@@ -208,7 +205,7 @@ func (tc *textileClient) checkHubConnection(ctx context.Context) error {
 	return nil
 }
 
-func getUserClient(host string) UsersClient {
+func CreateUserClient(host string) UsersClient {
 	hubTarget := host
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
@@ -315,6 +312,7 @@ func (tc *textileClient) Shutdown() error {
 	tc.shuttingDown <- true
 	tc.isRunning = false
 	close(tc.Ready)
+	close(tc.mailEvents)
 	if err := tc.bucketsClient.Close(); err != nil {
 		return err
 	}

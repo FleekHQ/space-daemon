@@ -592,7 +592,7 @@ message Invitation {
   string inviterPublicKey = 1;
   string invitationID = 2;
   InvitationStatus status = 4;
-  repeated string itemPaths = 5;
+  repeated FullPath itemPaths = 5;
 }
 
 message UsageAlert {

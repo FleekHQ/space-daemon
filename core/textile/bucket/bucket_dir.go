@@ -45,6 +45,7 @@ func (b *Bucket) CreateDirectory(ctx context.Context, path string) (result path.
 	if err != nil {
 		return nil, nil, err
 	}
+
 	// append .keep file to the end of the directory
 	emptyDirPath := strings.TrimRight(path, "/") + "/" + keepFileName
 	return b.bucketsClient.PushPath(ctx, b.Key(), emptyDirPath, &bytes.Buffer{})
@@ -60,6 +61,10 @@ func (b *Bucket) ListDirectory(ctx context.Context, path string) (*DirEntries, e
 	}
 
 	result, err := b.bucketsClient.ListPath(ctx, b.Key(), path)
+	if err != nil {
+		return nil, err
+	}
+
 	return (*DirEntries)(result), err
 }
 

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"crypto/rand"
 	"crypto/sha512"
 	"encoding/base32"
 	"encoding/binary"
@@ -67,4 +68,11 @@ func NewDeterministicThreadID(kc keychain.Keychain, threadVariant DeterministicT
 	}
 
 	return thread.ID(buf[:n+numlen]), nil
+}
+
+// randBytes returns random bytes in a byte slice of size.
+func RandBytes(size int) ([]byte, error) {
+	b := make([]byte, size)
+	_, err := rand.Read(b)
+	return b, err
 }

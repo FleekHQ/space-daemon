@@ -1753,7 +1753,7 @@
         "itemPaths": {
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/spaceFullPath"
           }
         }
       }
