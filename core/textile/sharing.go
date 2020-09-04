@@ -95,7 +95,7 @@ func (tc *textileClient) createReceivedFiles(
 
 	var allErr error
 	for _, path := range paths {
-		_, err := tc.getModel().CreateReceivedFile(ctx, path, invitationId, accepted)
+		_, err := tc.GetModel().CreateReceivedFile(ctx, path, invitationId, accepted)
 
 		// compose each create error
 		if err != nil {

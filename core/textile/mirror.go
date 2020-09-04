@@ -15,7 +15,7 @@ import (
 )
 
 func (tc *textileClient) IsMirrorFile(ctx context.Context, path, bucketSlug string) bool {
-	mirrorFile, _ := tc.getModel().FindMirrorFileByPathAndBucketSlug(ctx, path, bucketSlug)
+	mirrorFile, _ := tc.GetModel().FindMirrorFileByPathAndBucketSlug(ctx, path, bucketSlug)
 	if mirrorFile != nil {
 		return true
 	}
@@ -31,7 +31,7 @@ func (tc *textileClient) MarkMirrorFileBackup(ctx context.Context, path, bucketS
 		Shared:     false,
 	}
 	// TODO: upsert
-	_, err := tc.getModel().CreateMirrorFile(ctx, mf)
+	_, err := tc.GetModel().CreateMirrorFile(ctx, mf)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (tc *textileClient) MarkMirrorFileBackup(ctx context.Context, path, bucketS
 func (tc *textileClient) UploadFileToHub(ctx context.Context, b Bucket, path string, reader io.Reader) (result path.Resolved, root path.Path, err error) {
 	// XXX: locking?
 
-	bucket, err := tc.getModel().FindBucket(ctx, b.Slug())
+	bucket, err := tc.GetModel().FindBucket(ctx, b.Slug())
 	if err != nil {
 		return nil, nil, err
 	}
