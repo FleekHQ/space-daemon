@@ -24,6 +24,11 @@ type Client struct {
 	mock.Mock
 }
 
+// AttachMailboxNotifier provides a mock function with given fields: notif
+func (_m *Client) AttachMailboxNotifier(notif textile.GrpcMailboxNotifier) {
+	_m.Called(notif)
+}
+
 // CreateBucket provides a mock function with given fields: ctx, bucketSlug
 func (_m *Client) CreateBucket(ctx context.Context, bucketSlug string) (textile.Bucket, error) {
 	ret := _m.Called(ctx, bucketSlug)
