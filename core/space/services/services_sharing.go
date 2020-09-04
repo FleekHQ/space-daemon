@@ -295,8 +295,6 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 
 var recentlyShared map[string]struct{}
 
-const recentlySharedLimit = 32
-
 func (s *Space) AddRecentlySharedPublicKeys(ctx context.Context, pubkeys []crypto.PubKey) error {
 	var ps string
 
@@ -308,7 +306,11 @@ func (s *Space) AddRecentlySharedPublicKeys(ctx context.Context, pubkeys []crypt
 
 		ps = hex.EncodeToString(b)
 
-		recentlyShared[ps] = struct{}{}
+		// TODO: transaction
+		_, err = s.tc.GetModel().CreateSharedPublicKey(ctx, ps)
+		if err != nil {
+			return nil
+		}
 	}
 
 	return nil
@@ -317,8 +319,13 @@ func (s *Space) AddRecentlySharedPublicKeys(ctx context.Context, pubkeys []crypt
 func (s *Space) RecentlySharedPublicKeys(ctx context.Context) ([]crypto.PubKey, error) {
 	ret := []crypto.PubKey{}
 
-	for ps := range recentlyShared {
-		b, err := hex.DecodeString(ps)
+	keys, err := s.tc.GetModel().ListSharedPublicKeys(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, schema := range keys {
+		b, err := hex.DecodeString(schema.PublicKey)
 		if err != nil {
 			return nil, err
 		}

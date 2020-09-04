@@ -29,6 +29,8 @@ type Model interface {
 	BucketBackupToggle(ctx context.Context, bucketSlug string, backup bool) (*BucketSchema, error)
 	FindBucket(ctx context.Context, bucketSlug string) (*BucketSchema, error)
 	ListBuckets(ctx context.Context) ([]*BucketSchema, error)
+	CreateSharedPublicKey(ctx context.Context, pubKey string) (*SharedPublicKeySchema, error)
+	ListSharedPublicKeys(ctx context.Context) ([]*SharedPublicKeySchema, error)
 }
 
 func New(st store.Store, kc keychain.Keychain, threads *threadsClient.Client, hubAuth hub.HubAuth) *model {
