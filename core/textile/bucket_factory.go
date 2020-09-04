@@ -14,7 +14,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/alecthomas/jsonschema"
-	textileApiClient "github.com/textileio/go-threads/api/client"
+	"github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
 	bc "github.com/textileio/textile/api/buckets/client"
@@ -183,7 +183,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 
 	log.Debug("Creating Bucket in db " + dbID.String())
 	// create bucket
-	b, err := tc.bucketsClient.Init(ctx, bc.WithName(bucketSlug), bc.WithPrivate(true))
+	b, err := tc.bucketsClient.Create(ctx, bc.WithName(bucketSlug), bc.WithPrivate(true))
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +200,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 	return newB, nil
 }
 
-func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*textileApiClient.DBInfo, error) {
+func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*client.DBInfo, error) {
 	bs, err := tc.FindBucketInCollection(ctx, bucketSlug)
 
 	if err != nil {
