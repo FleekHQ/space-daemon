@@ -121,6 +121,9 @@ func (tc *textileClient) GetMailAsNotifications(ctx context.Context, seek string
 type handleMessage func(context.Context, interface{}) error
 
 func (tc *textileClient) ListenForMessages(ctx context.Context, srv GrpcMailboxNotifier) error {
+	if err := tc.requiresRunning(); err != nil {
+		return err
+	}
 	log.Info("Starting to listen for mailbox messages")
 
 	var err error

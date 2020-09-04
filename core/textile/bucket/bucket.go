@@ -37,7 +37,6 @@ type Bucket struct {
 	lock             sync.RWMutex
 	root             *bucketsproto.Root
 	bucketsClient    BucketsClient
-	threadID         *thread.ID
 	getBucketContext getBucketContextFn
 }
 
@@ -76,4 +75,13 @@ func (b *Bucket) GetData() BucketData {
 
 func (b *Bucket) getContext(ctx context.Context) (context.Context, *thread.ID, error) {
 	return b.getBucketContext(ctx, b.root.Name)
+}
+
+func (b *Bucket) GetThreadID(ctx context.Context) (*thread.ID, error) {
+	_, threadID, err := b.getContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return threadID, nil
 }

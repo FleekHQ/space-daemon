@@ -18,6 +18,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
+	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/ipfs/go-cid"
 )
 
@@ -240,11 +241,16 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 				return err
 			}
 
-			bs, err := s.tc.FindBucketInCollection(ctx, b.Slug())
+			bs, err := s.tc.GetBucket(ctx, b.Slug())
 			if err != nil {
 				return err
 			}
-			path.DbId = bs.DbID
+			threadID, err := bs.GetThreadID(ctx)
+			if err != nil {
+				return err
+			}
+
+			path.DbId = utils.CastDbIDToString(*threadID)
 		}
 
 		if path.Bucket == "" {
