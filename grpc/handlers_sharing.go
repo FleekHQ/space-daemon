@@ -10,8 +10,6 @@ import (
 	crypto "github.com/libp2p/go-libp2p-crypto"
 )
 
-var recentlyShared map[string]struct{}
-
 func (srv *grpcServer) ShareFilesViaPublicKey(ctx context.Context, request *pb.ShareFilesViaPublicKeyRequest) (*pb.ShareFilesViaPublicKeyResponse, error) {
 
 	var pks []crypto.PubKey
@@ -26,8 +24,6 @@ func (srv *grpcServer) ShareFilesViaPublicKey(ctx context.Context, request *pb.S
 			return nil, err
 		}
 		pks = append(pks, p)
-
-		recentlyShared[pk] = struct{}{}
 	}
 
 	var cleanedPaths []domain.FullPath
@@ -41,7 +37,13 @@ func (srv *grpcServer) ShareFilesViaPublicKey(ctx context.Context, request *pb.S
 		cleanedPaths = append(cleanedPaths, *cleanedPath)
 	}
 
-	err := srv.sv.ShareFilesViaPublicKey(ctx, cleanedPaths, pks)
+	// fail before since actual sharing is irreversible
+	err := srv.sv.AddRecentlySharedPublicKeys(ctx, pks)
+	if err != nil {
+		return nil, err
+	}
+
+	err = srv.sv.ShareFilesViaPublicKey(ctx, cleanedPaths, pks)
 	if err != nil {
 		return nil, err
 	}
@@ -77,25 +79,22 @@ func (srv *grpcServer) OpenPublicFile(ctx context.Context, request *pb.OpenPubli
 }
 
 func (srv *grpcServer) GetRecentlySharedWith(ctx context.Context, request *pb.GetRecentlySharedWithRequest) (*pb.GetRecentlySharedWithResponse, error) {
-	var addr string
-
 	fileMembers := make([]*pb.FileMember, 0)
 
-	for pub := range recentlyShared {
-		b, err := hex.DecodeString(pub)
-		if err != nil {
-			return nil, err
-		}
-		p, err := crypto.UnmarshalEd25519PublicKey([]byte(b))
-		if err != nil {
-			return nil, err
-		}
+	pks, err := srv.sv.RecentlySharedPublicKeys(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-		addr = address.DeriveAddress(p)
+	for _, pk := range pks {
+		pubBytes, err := pk.Raw()
+		if err != nil {
+			return nil, err
+		}
 
 		fileMember := &pb.FileMember{
-			PublicKey: pub,
-			Address:   addr,
+			PublicKey: hex.EncodeToString(pubBytes),
+			Address:   address.DeriveAddress(pk),
 		}
 
 		fileMembers = append(fileMembers, fileMember)

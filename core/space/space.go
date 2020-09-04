@@ -51,6 +51,8 @@ type Service interface {
 	ToggleBucketBackup(ctx context.Context, bucketName string, bucketBackup bool) error
 	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error
 	GetAPISessionTokens(ctx context.Context) (*domain.APISessionTokens, error)
+	AddRecentlySharedPublicKeys(ctx context.Context, pubkeys []crypto.PubKey) error
+	RecentlySharedPublicKeys(ctx context.Context) ([]crypto.PubKey, error)
 }
 
 type serviceOptions struct {
