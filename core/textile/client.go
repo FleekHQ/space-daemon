@@ -386,3 +386,14 @@ func (tc *textileClient) getModel() model.Model {
 func (tc *textileClient) GetModel() model.Model {
 	return model.New(tc.store, tc.kc, tc.threads, tc.hubAuth)
 }
+
+func (tc *textileClient) requiresHubConnection() error {
+	if err := tc.requiresRunning(); err != nil {
+		return err
+	}
+
+	if tc.isConnectedToHub == false || tc.mb == nil {
+		return errors.New("ran an operation that requires connection to hub")
+	}
+	return nil
+}
