@@ -19,6 +19,7 @@ type BucketSchema struct {
 	Backup        bool            `json:"backup"`
 	EncryptionKey []byte          `json:"hub_key"`
 	DbID          string
+	*MirrorBucketSchema
 }
 
 const bucketModelName = "BucketMetadata"

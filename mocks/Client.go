@@ -12,9 +12,13 @@ import (
 
 	domain "github.com/FleekHQ/space-daemon/core/space/domain"
 
+	io "io"
+
 	mock "github.com/stretchr/testify/mock"
 
 	model "github.com/FleekHQ/space-daemon/core/textile/model"
+
+	path "github.com/ipfs/interface-go-ipfs-core/path"
 
 	textile "github.com/FleekHQ/space-daemon/core/textile"
 
@@ -162,6 +166,34 @@ func (_m *Client) GetThreadsConnection() (*client.Client, error) {
 	return r0, r1
 }
 
+// IsBucketBackup provides a mock function with given fields: ctx, bucketSlug
+func (_m *Client) IsBucketBackup(ctx context.Context, bucketSlug string) bool {
+	ret := _m.Called(ctx, bucketSlug)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
+		r0 = rf(ctx, bucketSlug)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// IsMirrorFile provides a mock function with given fields: ctx, _a1, bucketSlug
+func (_m *Client) IsMirrorFile(ctx context.Context, _a1 string, bucketSlug string) bool {
+	ret := _m.Called(ctx, _a1, bucketSlug)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
+		r0 = rf(ctx, _a1, bucketSlug)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
 // IsRunning provides a mock function with given fields:
 func (_m *Client) IsRunning() bool {
 	ret := _m.Called()
@@ -213,6 +245,29 @@ func (_m *Client) ListBuckets(ctx context.Context) ([]textile.Bucket, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
 		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MarkMirrorFileBackup provides a mock function with given fields: ctx, _a1, bucketSlug
+func (_m *Client) MarkMirrorFileBackup(ctx context.Context, _a1 string, bucketSlug string) (*domain.MirrorFile, error) {
+	ret := _m.Called(ctx, _a1, bucketSlug)
+
+	var r0 *domain.MirrorFile
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *domain.MirrorFile); ok {
+		r0 = rf(ctx, _a1, bucketSlug)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.MirrorFile)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, _a1, bucketSlug)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -341,6 +396,38 @@ func (_m *Client) ToggleBucketBackup(ctx context.Context, bucketSlug string, buc
 	}
 
 	return r0, r1
+}
+
+// UploadFileToHub provides a mock function with given fields: ctx, b, _a2, reader
+func (_m *Client) UploadFileToHub(ctx context.Context, b textile.Bucket, _a2 string, reader io.Reader) (path.Resolved, path.Path, error) {
+	ret := _m.Called(ctx, b, _a2, reader)
+
+	var r0 path.Resolved
+	if rf, ok := ret.Get(0).(func(context.Context, textile.Bucket, string, io.Reader) path.Resolved); ok {
+		r0 = rf(ctx, b, _a2, reader)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(path.Resolved)
+		}
+	}
+
+	var r1 path.Path
+	if rf, ok := ret.Get(1).(func(context.Context, textile.Bucket, string, io.Reader) path.Path); ok {
+		r1 = rf(ctx, b, _a2, reader)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(path.Path)
+		}
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(context.Context, textile.Bucket, string, io.Reader) error); ok {
+		r2 = rf(ctx, b, _a2, reader)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // WaitForReady provides a mock function with given fields:

@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
@@ -31,6 +32,9 @@ type Model interface {
 	ListBuckets(ctx context.Context) ([]*BucketSchema, error)
 	CreateSharedPublicKey(ctx context.Context, pubKey string) (*SharedPublicKeySchema, error)
 	ListSharedPublicKeys(ctx context.Context) ([]*SharedPublicKeySchema, error)
+	CreateMirrorBucket(ctx context.Context, bucketSlug string, mirrorBucket *MirrorBucketSchema) (*BucketSchema, error)
+	FindMirrorFileByPathAndBucketSlug(ctx context.Context, path, bucketSlug string) (*MirrorFileSchema, error)
+	CreateMirrorFile(ctx context.Context, mirrorFile *domain.MirrorFile) (*MirrorFileSchema, error)
 }
 
 func New(st store.Store, kc keychain.Keychain, threads *threadsClient.Client, hubAuth hub.HubAuth) *model {
