@@ -75,6 +75,10 @@ type Client interface {
 	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error
 	RemoveKeys() error
 	AttachMailboxNotifier(notif GrpcMailboxNotifier)
+	IsBucketBackup(ctx context.Context, bucketSlug string) bool
+	IsMirrorFile(ctx context.Context, path, bucketSlug string) bool
+	UploadFileToHub(ctx context.Context, b Bucket, path string, reader io.Reader) (result path.Resolved, root path.Path, err error)
+	MarkMirrorFileBackup(ctx context.Context, path, bucketSlug string) (*domain.MirrorFile, error)
 }
 
 type Buckd interface {

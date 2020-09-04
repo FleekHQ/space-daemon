@@ -176,6 +176,7 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (Bucket, error) {
 	log.Debug("Creating a new bucket with slug " + bucketSlug)
 	var err error
+	m := tc.getModel()
 
 	if b, _ := tc.getBucket(ctx, bucketSlug); b != nil {
 		return b, nil
@@ -200,9 +201,21 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 
 	// We store the bucket in a meta thread so that we can later fetch a list of all buckets
 	log.Debug("Bucket " + bucketSlug + " created. Storing metadata.")
-	_, err = tc.getModel().CreateBucket(ctx, bucketSlug, dbID.String())
+	schema, err := m.CreateBucket(ctx, bucketSlug, dbID.String())
 	if err != nil {
 		return nil, err
+	}
+
+	mirrorSchema, err := tc.createMirrorBucket(ctx, *schema)
+	if err != nil {
+		return nil, err
+	}
+
+	if mirrorSchema != nil {
+		_, err = m.CreateMirrorBucket(ctx, bucketSlug, mirrorSchema)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	newB := bucket.New(
@@ -311,4 +324,13 @@ func (tc *textileClient) ToggleBucketBackup(ctx context.Context, bucketSlug stri
 	}
 
 	return bucketSchema.Backup, nil
+}
+
+func (tc *textileClient) IsBucketBackup(ctx context.Context, bucketSlug string) bool {
+	bucketSchema, err := tc.getModel().FindBucket(ctx, bucketSlug)
+	if err != nil {
+		return false
+	}
+
+	return bucketSchema.Backup
 }

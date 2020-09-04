@@ -129,3 +129,10 @@ type APISessionTokens struct {
 	HubToken      string
 	ServicesToken string
 }
+
+type MirrorFile struct {
+	Path       string
+	BucketSlug string
+	Backup     bool
+	Shared     bool
+}
