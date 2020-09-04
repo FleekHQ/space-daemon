@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os/user"
+	"path/filepath"
 
+	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
@@ -165,5 +168,55 @@ func (tc *textileClient) ListenForMessages(ctx context.Context, srv GrpcMailboxN
 	// for s := range state {
 	// 	// handle connectivity state
 	// }
+	return nil
+}
+
+func (tc *textileClient) createMailBox(ctx context.Context, maillib *mail.Mail, mbpath string) (*mail.Mailbox, error) {
+	// create
+	priv, _, err := tc.kc.GetStoredKeyPairInLibP2PFormat()
+	if err != nil {
+		return nil, err
+	}
+
+	id := thread.NewLibp2pIdentity(priv)
+
+	mailbox, err := maillib.NewMailbox(ctx, mail.Config{
+		Path:      mbpath,
+		Identity:  id,
+		APIKey:    tc.cfg.GetString(config.TextileUserKey, ""),
+		APISecret: tc.cfg.GetString(config.TextileUserSecret, ""),
+	})
+	if err != nil {
+		return nil, err
+	}
+	tc.store.Set([]byte(mailboxSetupFlagStoreKey), []byte("true"))
+	return mailbox, nil
+}
+
+func (tc *textileClient) setupOrCreateMailBox(ctx context.Context) error {
+	maillib := mail.NewMail(cmd.NewClients("api.textile.io:443", true), mail.DefaultConfConfig())
+
+	usr, _ := user.Current()
+	mbpath := filepath.Join(usr.HomeDir, ".fleek-space/textile/mail")
+
+	var mailbox *mail.Mailbox
+	dbid, err := tc.store.Get([]byte(mailboxSetupFlagStoreKey))
+	if err == nil && len(dbid) > 0 {
+		// restore
+		mailbox, err = maillib.GetLocalMailbox(ctx, mbpath)
+		if err != nil {
+			return err
+		}
+	} else {
+		mailbox, err = tc.createMailBox(ctx, maillib, mbpath)
+		if err != nil {
+			return err
+		}
+	}
+
+	mid := mailbox.Identity()
+	log.Info("Mailbox identity: " + mid.GetPublic().String())
+	tc.mb = mailbox
+	tc.mailEvents = make(chan mail.MailboxEvent)
 	return nil
 }
