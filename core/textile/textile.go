@@ -77,6 +77,10 @@ type Client interface {
 	RejectSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
 	RemoveKeys() error
 	AttachMailboxNotifier(notif GrpcMailboxNotifier)
+	IsBucketBackup(ctx context.Context, bucketSlug string) bool
+	IsMirrorFile(ctx context.Context, path, bucketSlug string) bool
+	UploadFileToHub(ctx context.Context, b Bucket, path string, reader io.Reader) (result path.Resolved, root path.Path, err error)
+	MarkMirrorFileBackup(ctx context.Context, path, bucketSlug string) (*domain.MirrorFile, error)
 }
 
 type Buckd interface {
