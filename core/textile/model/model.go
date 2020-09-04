@@ -30,6 +30,13 @@ type Model interface {
 	BucketBackupToggle(ctx context.Context, bucketSlug string, backup bool) (*BucketSchema, error)
 	FindBucket(ctx context.Context, bucketSlug string) (*BucketSchema, error)
 	ListBuckets(ctx context.Context) ([]*BucketSchema, error)
+	CreateReceivedFile(
+		ctx context.Context,
+		file domain.FullPath,
+		invitationId string,
+		accepted bool,
+	) (*ReceivedFileSchema, error)
+	FindReceivedFile(ctx context.Context, file domain.FullPath) (*ReceivedFileSchema, error)
 	CreateSharedPublicKey(ctx context.Context, pubKey string) (*SharedPublicKeySchema, error)
 	ListSharedPublicKeys(ctx context.Context) ([]*SharedPublicKeySchema, error)
 	CreateMirrorBucket(ctx context.Context, bucketSlug string, mirrorBucket *MirrorBucketSchema) (*BucketSchema, error)

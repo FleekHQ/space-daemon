@@ -30,6 +30,27 @@ type Client struct {
 	mock.Mock
 }
 
+// AcceptSharedFilesInvitation provides a mock function with given fields: ctx, invitation
+func (_m *Client) AcceptSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error) {
+	ret := _m.Called(ctx, invitation)
+
+	var r0 domain.Invitation
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Invitation) domain.Invitation); ok {
+		r0 = rf(ctx, invitation)
+	} else {
+		r0 = ret.Get(0).(domain.Invitation)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, domain.Invitation) error); ok {
+		r1 = rf(ctx, invitation)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // AttachMailboxNotifier provides a mock function with given fields: notif
 func (_m *Client) AttachMailboxNotifier(notif textile.GrpcMailboxNotifier) {
 	_m.Called(notif)
@@ -268,6 +289,27 @@ func (_m *Client) MarkMirrorFileBackup(ctx context.Context, _a1 string, bucketSl
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
 		r1 = rf(ctx, _a1, bucketSlug)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RejectSharedFilesInvitation provides a mock function with given fields: ctx, invitation
+func (_m *Client) RejectSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error) {
+	ret := _m.Called(ctx, invitation)
+
+	var r0 domain.Invitation
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Invitation) domain.Invitation); ok {
+		r0 = rf(ctx, invitation)
+	} else {
+		r0 = ret.Get(0).(domain.Invitation)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, domain.Invitation) error); ok {
+		r1 = rf(ctx, invitation)
 	} else {
 		r1 = ret.Error(1)
 	}
