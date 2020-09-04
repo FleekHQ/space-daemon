@@ -85,6 +85,10 @@ func (tc *textileClient) parseMessage(ctx context.Context, msg client.Message) (
 }
 
 func (tc *textileClient) SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error) {
+	if err := tc.requiresHubConnection(); err != nil {
+		return nil, err
+	}
+
 	var err error
 	ctx, err = tc.getHubCtx(ctx)
 	if err != nil {
@@ -99,7 +103,7 @@ func (tc *textileClient) SendMessage(ctx context.Context, recipient crypto.PubKe
 }
 
 func (tc *textileClient) GetMailAsNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error) {
-	if err := tc.requiresRunning(); err != nil {
+	if err := tc.requiresHubConnection(); err != nil {
 		return nil, err
 	}
 
