@@ -293,8 +293,6 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 	return nil
 }
 
-var recentlyShared map[string]struct{}
-
 func (s *Space) AddRecentlySharedPublicKeys(ctx context.Context, pubkeys []crypto.PubKey) error {
 	var ps string
 
