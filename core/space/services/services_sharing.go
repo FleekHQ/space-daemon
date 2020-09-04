@@ -18,6 +18,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
+	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/ipfs/go-cid"
 )
 
@@ -107,7 +108,7 @@ func (s *Space) uploadSharedFileToIpfs(
 		Bucket:            bucketName,
 		SharedFileCid:     encryptedFileHash,
 		SharedFileKey:     password,
-		SpaceDownloadLink: "https://space.storage/files/share?" + urlQuery.Encode(),
+		SpaceDownloadLink: "https://app.space.storage/files/share?" + urlQuery.Encode(),
 	}, nil
 }
 
@@ -240,11 +241,16 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 				return err
 			}
 
-			bs, err := s.tc.FindBucketInCollection(ctx, b.Slug())
+			bs, err := s.tc.GetBucket(ctx, b.Slug())
 			if err != nil {
 				return err
 			}
-			path.DbId = bs.DbID
+			threadID, err := bs.GetThreadID(ctx)
+			if err != nil {
+				return err
+			}
+
+			path.DbId = utils.CastDbIDToString(*threadID)
 		}
 
 		if path.Bucket == "" {
@@ -259,13 +265,18 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 	for _, pk := range pubkeys {
 
 		d := &domain.Invitation{
-			Paths: paths,
+			ItemPaths: paths,
 			// Key: TODO - get from keys thread for each file
 		}
 
+		i, err := json.Marshal(d)
+		if err != nil {
+			return err
+		}
+
 		b := &domain.MessageBody{
-			Type: domain.InvitationMessage,
-			Body: d,
+			Type: domain.INVITATION,
+			Body: i,
 		}
 
 		j, err := json.Marshal(b)

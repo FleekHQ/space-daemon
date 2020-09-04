@@ -9,20 +9,20 @@ import (
 	"time"
 
 	"github.com/FleekHQ/space-daemon/config"
-	crypto "github.com/libp2p/go-libp2p-crypto"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	db "github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
+	"github.com/FleekHQ/space-daemon/core/textile/model"
 	"github.com/FleekHQ/space-daemon/core/util/address"
 	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
-	"github.com/textileio/go-threads/core/thread"
 	nc "github.com/textileio/go-threads/net/api/client"
 	bucketsClient "github.com/textileio/textile/api/buckets/client"
 	"github.com/textileio/textile/api/common"
 	uc "github.com/textileio/textile/api/users/client"
 	"github.com/textileio/textile/cmd"
+	mail "github.com/textileio/textile/mail/local"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -33,6 +33,7 @@ type textileClient struct {
 	threads          *threadsClient.Client
 	ht               *threadsClient.Client
 	bucketsClient    *bucketsClient.Client
+	mb               Mailbox
 	hb               *bucketsClient.Client
 	isRunning        bool
 	isInitialized    bool
@@ -43,18 +44,21 @@ type textileClient struct {
 	isConnectedToHub bool
 	netc             *nc.Client
 	uc               UsersClient
+	mailEvents       chan mail.MailboxEvent
 	hubAuth          hub.HubAuth
+	mbNotifier       GrpcMailboxNotifier
 }
 
 // Creates a new Textile Client
-func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth) *textileClient {
+func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth, uc UsersClient, mb Mailbox) *textileClient {
 	return &textileClient{
 		store:            store,
 		kc:               kc,
 		threads:          nil,
 		bucketsClient:    nil,
+		mb:               mb,
 		netc:             nil,
-		uc:               nil,
+		uc:               uc,
 		ht:               nil,
 		hb:               nil,
 		isRunning:        false,
@@ -64,6 +68,7 @@ func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth) *texti
 		shuttingDown:     make(chan bool),
 		isConnectedToHub: false,
 		hubAuth:          hubAuth,
+		mbNotifier:       nil,
 	}
 }
 
@@ -126,7 +131,6 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.bucketsClient = buckets
 	tc.threads = threads
 	tc.netc = netc
-	tc.uc = getUserClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 	tc.ht = getHubThreadsClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 	tc.hb = getHubBucketClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 
@@ -166,12 +170,6 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	}
 }
 
-// adding for testability but if there is a better
-// way to do this plz advise
-func (tc *textileClient) SetUc(uc UsersClient) {
-	tc.uc = uc
-}
-
 // notreturning error rn and this helper does
 // the logging if connection to hub fails, and
 // we continue with startup
@@ -194,13 +192,19 @@ func (tc *textileClient) checkHubConnection(ctx context.Context) error {
 
 	if tc.isConnectedToHub == false {
 		// setup mailbox
-		mid, err := tc.uc.SetupMailbox(hubctx)
+		mailbox, err := tc.setupOrCreateMailBox(hubctx)
 		if err != nil {
 			log.Error("Unable to setup mailbox", err)
 			tc.isConnectedToHub = false
 			return err
 		}
-		log.Debug("Mailbox id: " + mid.String())
+		tc.mb = mailbox
+
+		if err := tc.listenForMessages(hubctx); err != nil {
+			tc.isConnectedToHub = false
+			log.Error("Could not listen for mailbox messages", err)
+			return err
+		}
 	}
 
 	tc.isConnectedToHub = true
@@ -208,7 +212,7 @@ func (tc *textileClient) checkHubConnection(ctx context.Context) error {
 	return nil
 }
 
-func getUserClient(host string) UsersClient {
+func CreateUserClient(host string) UsersClient {
 	hubTarget := host
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
@@ -315,6 +319,7 @@ func (tc *textileClient) Shutdown() error {
 	tc.shuttingDown <- true
 	tc.isRunning = false
 	close(tc.Ready)
+	close(tc.mailEvents)
 	if err := tc.bucketsClient.Close(); err != nil {
 		return err
 	}
@@ -340,35 +345,6 @@ func (tc *textileClient) GetThreadsConnection() (*threadsClient.Client, error) {
 
 func (tc *textileClient) IsRunning() bool {
 	return tc.isRunning
-}
-
-func (tc *textileClient) getThreadContext(parentCtx context.Context, threadName string, dbID thread.ID, hub bool) (context.Context, error) {
-	var err error
-	ctx := parentCtx
-
-	// Some threads will be on the hub and some will be local, this flag lets you specify
-	// where it is
-	if hub {
-		ctx, err = tc.getHubCtx(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var publicKey crypto.PubKey
-	if publicKey, err = tc.kc.GetStoredPublicKey(); err != nil {
-		return nil, err
-	}
-
-	var pubKeyInBytes []byte
-	if pubKeyInBytes, err = publicKey.Bytes(); err != nil {
-		return nil, err
-	}
-
-	ctx = common.NewThreadNameContext(ctx, getThreadName(pubKeyInBytes, threadName))
-	ctx = common.NewThreadIDContext(ctx, dbID)
-
-	return ctx, nil
 }
 
 // Checks for connection and initialization needs.
@@ -400,5 +376,20 @@ func (tc *textileClient) RemoveKeys() error {
 	tc.isConnectedToHub = false
 	tc.keypairDeleted <- true
 
+	return nil
+}
+
+func (tc *textileClient) getModel() model.Model {
+	return model.New(tc.store, tc.kc, tc.threads, tc.hubAuth)
+}
+
+func (tc *textileClient) requiresHubConnection() error {
+	if err := tc.requiresRunning(); err != nil {
+		return err
+	}
+
+	if tc.isConnectedToHub == false || tc.mb == nil {
+		return errors.New("ran an operation that requires connection to hub")
+	}
 	return nil
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	tc "github.com/textileio/go-threads/api/client"
+	"github.com/textileio/go-threads/core/thread"
 
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
 	"github.com/textileio/textile/api/users/client"
@@ -20,7 +21,6 @@ import (
 const (
 	hubTarget                 = "127.0.0.1:3006"
 	threadsTarget             = "127.0.0.1:3006"
-	threadIDStoreKey          = "thread_id"
 	defaultPersonalBucketSlug = "personal"
 )
 
@@ -30,6 +30,7 @@ type Bucket interface {
 	Slug() string
 	Key() string
 	GetData() bucket.BucketData
+	GetThreadID(ctx context.Context) (*thread.ID, error)
 	DirExists(ctx context.Context, path string) (bool, error)
 	FileExists(ctx context.Context, path string) (bool, error)
 	UploadFile(
@@ -70,9 +71,10 @@ type Client interface {
 	Shutdown() error
 	WaitForReady() chan bool
 	Start(ctx context.Context, cfg config.Config) error
+	GetMailAsNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error)
 	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error
 	RemoveKeys() error
-	FindBucketInCollection(ctx context.Context, bucketSlug string) (*BucketSchema, error)
+	AttachMailboxNotifier(notif GrpcMailboxNotifier)
 }
 
 type Buckd interface {
