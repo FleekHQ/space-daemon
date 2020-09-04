@@ -81,7 +81,7 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 	log.Debug("getOrCreateBucketContext: Getting bucket context")
 
 	log.Debug("getOrCreateBucketContext: Fetching thread id from meta store")
-	m := tc.getModel()
+	m := tc.GetModel()
 	bucketSchema, notFoundErr := m.FindBucket(ctx, bucketSlug)
 
 	if notFoundErr == nil { // This means the bucket was already present in the schema
@@ -127,7 +127,7 @@ func (tc *textileClient) ListBuckets(ctx context.Context) ([]Bucket, error) {
 }
 
 func (tc *textileClient) listBuckets(ctx context.Context) ([]Bucket, error) {
-	bucketList, err := tc.getModel().ListBuckets(ctx)
+	bucketList, err := tc.GetModel().ListBuckets(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (Bucket, error) {
 	log.Debug("Creating a new bucket with slug " + bucketSlug)
 	var err error
-	m := tc.getModel()
+	m := tc.GetModel()
 
 	if b, _ := tc.getBucket(ctx, bucketSlug); b != nil {
 		return b, nil
@@ -231,7 +231,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 }
 
 func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*textileApiClient.DBInfo, error) {
-	bs, err := tc.getModel().FindBucket(ctx, bucketSlug)
+	bs, err := tc.GetModel().FindBucket(ctx, bucketSlug)
 
 	if err != nil {
 		return nil, err
@@ -279,7 +279,7 @@ func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address strin
 
 	dbID, err := thread.FromAddr(multiaddress)
 
-	tc.getModel().UpsertBucket(ctx, bucketSlug, utils.CastDbIDToString(dbID))
+	tc.GetModel().UpsertBucket(ctx, bucketSlug, utils.CastDbIDToString(dbID))
 
 	return nil
 }
@@ -318,7 +318,7 @@ func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain
 }
 
 func (tc *textileClient) ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) (bool, error) {
-	bucketSchema, err := tc.getModel().BucketBackupToggle(ctx, bucketSlug, bucketBackup)
+	bucketSchema, err := tc.GetModel().BucketBackupToggle(ctx, bucketSlug, bucketBackup)
 	if err != nil {
 		return false, err
 	}
@@ -327,7 +327,7 @@ func (tc *textileClient) ToggleBucketBackup(ctx context.Context, bucketSlug stri
 }
 
 func (tc *textileClient) IsBucketBackup(ctx context.Context, bucketSlug string) bool {
-	bucketSchema, err := tc.getModel().FindBucket(ctx, bucketSlug)
+	bucketSchema, err := tc.GetModel().FindBucket(ctx, bucketSlug)
 	if err != nil {
 		return false
 	}
