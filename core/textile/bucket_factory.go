@@ -57,7 +57,7 @@ func (tc *textileClient) GetDefaultBucket(ctx context.Context) (Bucket, error) {
 	return tc.GetBucket(ctx, defaultPersonalBucketSlug)
 }
 
-func (tc *textileClient) getBucketContext(ctx context.Context, sDbID string, bucketSlug string, ishub bool) (context.Context, *thread.ID, error) {
+func (tc *textileClient) getBucketContext(ctx context.Context, sDbID string, bucketSlug string, ishub bool, enckey []byte) (context.Context, *thread.ID, error) {
 	log.Debug("getBucketContext: Getting bucket context with dbid:" + sDbID)
 
 	dbID, err := utils.ParseDbIDFromString(sDbID)
@@ -70,6 +70,9 @@ func (tc *textileClient) getBucketContext(ctx context.Context, sDbID string, buc
 	if err != nil {
 		return nil, nil, err
 	}
+
+	ctx = common.NewBucketEncryptionKeyContext(ctx, enckey)
+
 	return ctx, dbID, err
 }
 
@@ -84,12 +87,11 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 	if notFoundErr == nil { // This means the bucket was already present in the schema
 		var err error
 		var dbID *thread.ID
-		ctx, dbID, err = tc.getBucketContext(ctx, bucketSchema.DbID, bucketSlug, false)
+		ctx, dbID, err = tc.getBucketContext(ctx, bucketSchema.DbID, bucketSlug, false, bucketSchema.EncryptionKey)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		ctx = common.NewBucketEncryptionKeyContext(ctx, bucketSchema.EncryptionKey)
 		return ctx, dbID, err
 	}
 
@@ -107,13 +109,11 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 		return nil, nil, err
 	}
 
-	bucketCtx, _, err := tc.getBucketContext(ctx, utils.CastDbIDToString(dbID), bucketSlug, false)
+	bucketCtx, _, err := tc.getBucketContext(ctx, utils.CastDbIDToString(dbID), bucketSlug, false, bucketSchema.EncryptionKey)
 	if err != nil {
 		return nil, nil, err
 	}
 	log.Debug("getOrCreateBucketContext: Returning bucket context")
-
-	bucketCtx = common.NewBucketEncryptionKeyContext(bucketCtx, bucketSchema.EncryptionKey)
 
 	return bucketCtx, &dbID, err
 }
