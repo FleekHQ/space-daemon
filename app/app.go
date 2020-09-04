@@ -173,8 +173,7 @@ func (a *App) Start(ctx context.Context) error {
 		grpc.WithRestProxyPort(a.cfg.GetInt(config.SpaceRestProxyServerPort, 0)),
 	)
 
-	textileClient.ListenForMessages(ctx, srv)
-
+	textileClient.AttachMailboxNotifier(srv)
 	err = a.RunAsync("BucketSync", bucketSync, func() error {
 		bucketSync.RegisterNotifier(srv)
 		return bucketSync.Start(ctx)
