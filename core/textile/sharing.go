@@ -6,6 +6,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
 	crypto "github.com/libp2p/go-libp2p-crypto"
+	"github.com/textileio/textile/buckets"
 )
 
 func (tc *textileClient) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error {
@@ -23,15 +24,19 @@ func (tc *textileClient) ShareFilesViaPublicKey(ctx context.Context, paths []dom
 		// }
 
 		log.Info("Adding roles for pth: " + pth.Path)
-		// TOOD: uncomment once release and upgraded txl pkg
-		// var roles map[string]buckets.Role
-		// for _, pk := range pubkeys {
-		// 	roles[pk] = buckets.Role.Writer
-		// }
-		// err := tc.PushPathAccessRoles(ctx, key, pth, roles)
-		// if err != nil {
-		//   return err
-		// }
+		var roles map[string]buckets.Role
+		for _, pk := range pubkeys {
+			pkb, err := pk.Bytes()
+			if err != nil {
+				return err
+			}
+			roles[string(pkb)] = buckets.Writer
+		}
+		// TODO: replace key with actual key from remote bucket
+		err := tc.hb.PushPathAccessRoles(ctx, "key", pth.Path, roles)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
