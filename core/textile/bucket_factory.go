@@ -92,7 +92,6 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 			return nil, nil, err
 		}
 
-		ctx = common.NewBucketEncryptionKeyContext(ctx, bucketSchema.EncryptionKey)
 		return ctx, dbID, err
 	}
 
