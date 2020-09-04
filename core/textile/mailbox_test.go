@@ -32,11 +32,9 @@ func initTestMailbox(t *testing.T) (tc.Client, TearDown) {
 	st = new(mocks.Store)
 	mockKc = new(mocks.Keychain)
 	mockHubAuth = new(mocks.HubAuth)
-	client := tc.NewClient(st, mockKc, mockHubAuth)
 	mockUc = new(mocks.UsersClient)
 	mockMb = new(mocks.Mailbox)
-	client.SetUc(mockUc)
-	client.SetMb(mockMb)
+	client := tc.NewClient(st, mockKc, mockHubAuth, mockUc, mockMb)
 
 	mockPubKeyHex := "67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
 	mockPrivKeyHex := "dd55f8921f90fdf31c6ef9ad86bd90605602fd7d32dc8ea66ab72deb6a82821c67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"

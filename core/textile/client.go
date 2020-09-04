@@ -50,15 +50,15 @@ type textileClient struct {
 }
 
 // Creates a new Textile Client
-func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth) *textileClient {
+func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth, uc UsersClient, mb Mailbox) *textileClient {
 	return &textileClient{
 		store:            store,
 		kc:               kc,
 		threads:          nil,
 		bucketsClient:    nil,
-		mb:               nil,
+		mb:               mb,
 		netc:             nil,
-		uc:               nil,
+		uc:               uc,
 		ht:               nil,
 		hb:               nil,
 		isRunning:        false,
@@ -130,7 +130,6 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.bucketsClient = buckets
 	tc.threads = threads
 	tc.netc = netc
-	tc.uc = getUserClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 	tc.ht = getHubThreadsClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 	tc.hb = getHubBucketClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 
@@ -170,16 +169,6 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	}
 }
 
-// adding for testability but if there is a better
-// way to do this plz advise
-func (tc *textileClient) SetUc(uc UsersClient) {
-	tc.uc = uc
-}
-
-func (tc *textileClient) SetMb(mb Mailbox) {
-	tc.mb = mb
-}
-
 // notreturning error rn and this helper does
 // the logging if connection to hub fails, and
 // we continue with startup
@@ -202,12 +191,13 @@ func (tc *textileClient) checkHubConnection(ctx context.Context) error {
 
 	if tc.isConnectedToHub == false {
 		// setup mailbox
-		err := tc.setupOrCreateMailBox(hubctx)
+		mailbox, err := tc.setupOrCreateMailBox(hubctx)
 		if err != nil {
 			log.Error("Unable to setup mailbox", err)
 			tc.isConnectedToHub = false
 			return err
 		}
+		tc.mb = mailbox
 	}
 
 	tc.isConnectedToHub = true
@@ -215,7 +205,7 @@ func (tc *textileClient) checkHubConnection(ctx context.Context) error {
 	return nil
 }
 
-func getUserClient(host string) UsersClient {
+func CreateUserClient(host string) UsersClient {
 	hubTarget := host
 	auth := common.Credentials{}
 	var opts []grpc.DialOption

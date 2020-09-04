@@ -193,7 +193,7 @@ func (tc *textileClient) createMailBox(ctx context.Context, maillib *mail.Mail, 
 	return mailbox, nil
 }
 
-func (tc *textileClient) setupOrCreateMailBox(ctx context.Context) error {
+func (tc *textileClient) setupOrCreateMailBox(ctx context.Context) (*mail.Mailbox, error) {
 	maillib := mail.NewMail(cmd.NewClients("api.textile.io:443", true), mail.DefaultConfConfig())
 
 	usr, _ := user.Current()
@@ -205,18 +205,16 @@ func (tc *textileClient) setupOrCreateMailBox(ctx context.Context) error {
 		// restore
 		mailbox, err = maillib.GetLocalMailbox(ctx, mbpath)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	} else {
 		mailbox, err = tc.createMailBox(ctx, maillib, mbpath)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	mid := mailbox.Identity()
 	log.Info("Mailbox identity: " + mid.GetPublic().String())
-	tc.mb = mailbox
-	tc.mailEvents = make(chan mail.MailboxEvent)
-	return nil
+	return mailbox, nil
 }
