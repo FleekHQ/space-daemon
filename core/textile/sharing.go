@@ -3,6 +3,8 @@ package textile
 import (
 	"context"
 
+	"github.com/pkg/errors"
+
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
 	crypto "github.com/libp2p/go-libp2p-crypto"
@@ -35,4 +37,74 @@ func (tc *textileClient) ShareFilesViaPublicKey(ctx context.Context, paths []dom
 	}
 
 	return nil
+}
+
+var errInvitationNotPending = errors.New("invitation is no more pending")
+var errInvitationAlreadyAccepted = errors.New("invitation is already accepted")
+var errInvitationAlreadyRejected = errors.New("invitation is already rejected")
+
+func (tc *textileClient) AcceptSharedFilesInvitation(
+	ctx context.Context,
+	invitation domain.Invitation,
+) (domain.Invitation, error) {
+	if invitation.Status == domain.ACCEPTED {
+		return domain.Invitation{}, errInvitationAlreadyAccepted
+	}
+
+	if invitation.Status != domain.PENDING {
+		return domain.Invitation{}, errInvitationNotPending
+	}
+
+	err := tc.createReceivedFiles(ctx, invitation.InvitationID, true, invitation.ItemPaths)
+	if err != nil {
+		return domain.Invitation{}, err
+	}
+	invitation.Status = domain.ACCEPTED
+
+	return invitation, nil
+}
+
+func (tc *textileClient) RejectSharedFilesInvitation(
+	ctx context.Context,
+	invitation domain.Invitation,
+) (domain.Invitation, error) {
+	if invitation.Status == domain.REJECTED {
+		return domain.Invitation{}, errInvitationAlreadyRejected
+	}
+
+	if invitation.Status != domain.PENDING {
+		return domain.Invitation{}, errInvitationNotPending
+	}
+
+	err := tc.createReceivedFiles(ctx, invitation.InvitationID, false, invitation.ItemPaths)
+	if err != nil {
+		return domain.Invitation{}, err
+	}
+	invitation.Status = domain.REJECTED
+
+	return invitation, nil
+}
+
+func (tc *textileClient) createReceivedFiles(
+	ctx context.Context,
+	invitationId string,
+	accepted bool,
+	paths []domain.FullPath,
+) error {
+	// TODO: Make this is call a transaction on threads so any failure can be easily reverted
+
+	var allErr error
+	for _, path := range paths {
+		_, err := tc.getModel().CreateReceivedFile(ctx, path, invitationId, accepted)
+
+		// compose each create error
+		if err != nil {
+			if allErr == nil {
+				allErr = errors.New("Failed to accept some invitations")
+			}
+			allErr = errors.Wrap(allErr, "")
+		}
+	}
+
+	return allErr
 }

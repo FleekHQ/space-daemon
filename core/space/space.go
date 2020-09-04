@@ -50,6 +50,7 @@ type Service interface {
 	GetNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error)
 	ToggleBucketBackup(ctx context.Context, bucketName string, bucketBackup bool) error
 	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error
+	HandleSharedFilesInvitation(ctx context.Context, invitationId string, accept bool) error
 	GetAPISessionTokens(ctx context.Context) (*domain.APISessionTokens, error)
 }
 

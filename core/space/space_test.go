@@ -13,6 +13,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/FleekHQ/space-daemon/core/space/domain"
+
 	"github.com/FleekHQ/space-daemon/config"
 
 	"github.com/libp2p/go-libp2p-core/crypto"
@@ -711,4 +713,94 @@ func TestService_VaultRestore(t *testing.T) {
 	err := sv.RecoverKeysByPassphrase(ctx, uuid, pass)
 	assert.Nil(t, err)
 	mockKeychain.AssertCalled(t, "ImportExistingKeyPair", mockPrivKey, mnemonic)
+}
+
+func TestService_HandleSharedFilesInvitation_FailIfInvitationNotFound(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	ctx := context.Background()
+	defer tearDown()
+
+	textileClient.On("GetMailAsNotifications", mock.Anything, "", 1).
+		Return(nil, errors.New("failed fetching"))
+
+	err := sv.HandleSharedFilesInvitation(ctx, "", true)
+	assert.EqualError(t, err, "invitation not found")
+}
+
+func TestService_HandleSharedFilesInvitation_Accepts_Correctly(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	defer tearDown()
+
+	// setup
+	ctx := context.Background()
+	invitationId := "random-invitation-uuid"
+	acceptInvite := true
+	expectedInvitation := domain.Invitation{
+		InviterPublicKey: "b7a3c12dc0c8c748ab07525b701122b88bd78f600c76342d27f25e5f92444cde",
+		Status:           domain.PENDING,
+		ItemPaths: []domain.FullPath{
+			{
+				DbId:   "random-db-id",
+				Bucket: "personal",
+				Path:   "/",
+			},
+		},
+	}
+
+	textileClient.On("GetMailAsNotifications", mock.Anything, invitationId, 1).
+		Return([]*domain.Notification{
+			{
+				NotificationType: domain.INVITATION,
+				InvitationValue:  expectedInvitation,
+			},
+		}, nil)
+
+	textileClient.On("AcceptSharedFilesInvitation", mock.Anything, expectedInvitation).
+		Return(expectedInvitation, nil)
+
+	textileClient.On("SendMessage", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, nil)
+
+	// execute
+	err := sv.HandleSharedFilesInvitation(ctx, invitationId, acceptInvite)
+	assert.NoError(t, err, "HandleSharedFilesInvitation failed")
+}
+
+func TestService_HandleSharedFilesInvitation_Rejects_Correctly(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	defer tearDown()
+
+	// setup
+	ctx := context.Background()
+	invitationId := "random-invitation-uuid"
+	acceptInvite := false
+	expectedInvitation := domain.Invitation{
+		InviterPublicKey: "b7a3c12dc0c8c748ab07525b701122b88bd78f600c76342d27f25e5f92444cde",
+		Status:           domain.PENDING,
+		ItemPaths: []domain.FullPath{
+			{
+				DbId:   "random-db-id",
+				Bucket: "personal",
+				Path:   "/",
+			},
+		},
+	}
+
+	textileClient.On("GetMailAsNotifications", mock.Anything, invitationId, 1).
+		Return([]*domain.Notification{
+			{
+				NotificationType: domain.INVITATION,
+				InvitationValue:  expectedInvitation,
+			},
+		}, nil)
+
+	textileClient.On("RejectSharedFilesInvitation", mock.Anything, expectedInvitation).
+		Return(expectedInvitation, nil)
+
+	textileClient.On("SendMessage", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, nil)
+
+	// execute
+	err := sv.HandleSharedFilesInvitation(ctx, invitationId, acceptInvite)
+	assert.NoError(t, err, "HandleSharedFilesInvitation failed")
 }

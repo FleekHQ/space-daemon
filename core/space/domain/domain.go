@@ -75,8 +75,9 @@ type FileSharingInfo struct {
 type NotificationTypes int
 
 const (
-	INVITATION NotificationTypes = 0
-	USAGEALERT NotificationTypes = 1
+	INVITATION NotificationTypes = iota
+	USAGEALERT
+	INVITATION_REPLY
 )
 
 type FullPath struct {

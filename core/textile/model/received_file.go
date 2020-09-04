@@ -14,10 +14,12 @@ import (
 )
 
 type ReceivedFileSchema struct {
-	ID     core.InstanceID `json:"_id"`
-	DbID   string          `json:"dbId"`
-	Bucket string          `json:"bucket"`
-	Path   string          `json:"path"`
+	ID           core.InstanceID `json:"_id"`
+	DbID         string          `json:"dbId"`
+	Bucket       string          `json:"bucket"`
+	Path         string          `json:"path"`
+	InvitationId string          `json:"invitationId"`
+	Accepted     bool            `json:"accepted"`
 }
 
 const receivedFileModelName = "ReceivedFile"
@@ -25,7 +27,12 @@ const receivedFileModelName = "ReceivedFile"
 var errReceivedFileNotFound = errors.New("Received file not found")
 
 // Creates the metadata for a file that has been shared to the user
-func (m *model) CreateReceivedFile(ctx context.Context, file domain.FullPath) (*ReceivedFileSchema, error) {
+func (m *model) CreateReceivedFile(
+	ctx context.Context,
+	file domain.FullPath,
+	invitationId string,
+	accepted bool,
+) (*ReceivedFileSchema, error) {
 	log.Debug("Model.CreateReceivedFile: Storing received file " + file.Path)
 	if existingFile, err := m.FindReceivedFile(ctx, file); err == nil {
 		log.Debug("Model.CreateReceivedFile: Bucket already in collection")
@@ -56,10 +63,12 @@ func (m *model) CreateReceivedFile(ctx context.Context, file domain.FullPath) (*
 
 	id := res[0]
 	return &ReceivedFileSchema{
-		ID:     core.InstanceID(id),
-		DbID:   newInstance.DbID,
-		Bucket: newInstance.Bucket,
-		Path:   newInstance.Path,
+		ID:           core.InstanceID(id),
+		DbID:         newInstance.DbID,
+		Bucket:       newInstance.Bucket,
+		Path:         newInstance.Path,
+		InvitationId: invitationId,
+		Accepted:     accepted,
 	}, nil
 }
 

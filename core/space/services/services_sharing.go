@@ -291,3 +291,61 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 	}
 	return nil
 }
+
+var errInvitationNotFound = errors.New("invitation not found")
+var errFailedToNotifyInviter = errors.New("failed to notify inviter of invitation status")
+
+// HandleSharedFilesInvitation accepts or rejects an invitation based on the invitation id
+func (s *Space) HandleSharedFilesInvitation(ctx context.Context, invitationId string, accept bool) error {
+	n, err := s.tc.GetMailAsNotifications(ctx, invitationId, 1)
+	if err != nil {
+		log.Error("failed to get invitation", err)
+		return errInvitationNotFound
+	}
+
+	if len(n) == 0 {
+		log.Debug("shared file invitation not found", "invitationId:"+invitationId)
+		return errInvitationNotFound
+	}
+
+	invitation, err := extractInvitation(n[0])
+	if err != nil {
+		return err
+	}
+
+	if accept {
+		invitation, err = s.tc.AcceptSharedFilesInvitation(ctx, invitation)
+	} else {
+		invitation, err = s.tc.RejectSharedFilesInvitation(ctx, invitation)
+	}
+	if err != nil {
+		return err
+	}
+
+	// notify inviter,  it was accepted
+	invitersPk, err := decodePublicKey(err, invitation.InviterPublicKey)
+	if err != nil {
+		log.Error("should not happen, but inviters public key is invalid", err)
+		return errFailedToNotifyInviter
+	}
+
+	messageBody, err := json.Marshal(&invitation)
+	if err != nil {
+		log.Error("error encoding invitation response body", err)
+		return errFailedToNotifyInviter
+	}
+
+	message, err := json.Marshal(&domain.MessageBody{
+		Type: domain.INVITATION_REPLY,
+		Body: messageBody,
+	})
+
+	if err != nil {
+		log.Error("error encoding invitation response", err)
+		return errFailedToNotifyInviter
+	}
+
+	_, err = s.tc.SendMessage(ctx, invitersPk, message)
+
+	return err
+}
