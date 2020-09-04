@@ -7,8 +7,10 @@ import (
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/textile/model"
+	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/ipfs/interface-go-ipfs-core/path"
+	"github.com/textileio/go-threads/core/thread"
 	bc "github.com/textileio/textile/api/buckets/client"
 )
 
@@ -45,12 +47,12 @@ func (tc *textileClient) UploadFileToHub(ctx context.Context, b Bucket, path str
 		return nil, nil, err
 	}
 
-	hubCtx, _, err := tc.getBucketContext(ctx, b.Slug(), bucket.RemoteDbID, true)
+	hubCtx, _, err := tc.getBucketContext(ctx, b.Slug(), bucket.RemoteDbID, true, bucket.EncryptionKey)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return tc.hb.PushPath(hubCtx, b.Key(), path, reader)
+	return tc.hb.PushPath(hubCtx, bucket.RemoteBucketKey, path, reader)
 }
 
 // Creates a mirror bucket.
@@ -58,19 +60,37 @@ func (tc *textileClient) createMirrorBucket(ctx context.Context, schema model.Bu
 	bucketSlug := schema.Slug
 
 	log.Debug("Creating a new mirror bucket with slug " + bucketSlug)
-	hubCtx, dbID, err := tc.getBucketContext(ctx, bucketSlug, schema.DbID, true)
+	dbID, err := tc.createMirrorThread(ctx)
+	if err != nil {
+		return nil, err
+	}
+	hubCtx, _, err := tc.getBucketContext(ctx, utils.CastDbIDToString(*dbID), schema.Slug, true, schema.EncryptionKey)
 	if err != nil {
 		return nil, err
 	}
 
 	// create mirror bucket
-	_, err = tc.hb.Init(hubCtx, bc.WithName(bucketSlug), bc.WithPrivate(true))
+	b, err := tc.hb.Init(hubCtx, bc.WithName(bucketSlug), bc.WithPrivate(true))
 	if err != nil {
 		return nil, err
 	}
 
 	return &model.MirrorBucketSchema{
-		RemoteDbID: dbID.String(),
-		HubAddr:    os.Getenv("TXL_HUB_TARGET"),
+		RemoteDbID:      dbID.String(),
+		RemoteBucketKey: b.Root.Key,
+		HubAddr:         os.Getenv("TXL_HUB_TARGET"),
 	}, nil
+}
+
+// Creates a remote hub thread for the mirror bucket
+func (tc *textileClient) createMirrorThread(ctx context.Context) (*thread.ID, error) {
+	log.Debug("createMirrorThread: Generating a new threadID ...")
+	dbID := thread.NewIDV1(thread.Raw, 32)
+
+	log.Debug("createMirrorThread: Creating Thread DB for bucket at db " + dbID.String())
+	if err := tc.ht.NewDB(ctx, dbID); err != nil {
+		return nil, err
+	}
+	log.Debug("createMirrorThread: Thread DB Created")
+	return &dbID, nil
 }

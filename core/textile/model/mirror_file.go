@@ -24,8 +24,9 @@ type MirrorFileSchema struct {
 }
 
 type MirrorBucketSchema struct {
-	RemoteDbID string `json:"remoteDbId"`
-	HubAddr    string `json:"HubAddr"`
+	RemoteDbID      string `json:"remoteDbId"`
+	RemoteBucketKey string `json:"remoteBucketKey"`
+	HubAddr         string `json:"HubAddr"`
 }
 
 const mirrorFileModelName = "MirrorFile"
