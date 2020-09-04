@@ -15,7 +15,6 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/alecthomas/jsonschema"
-	"github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
 	bc "github.com/textileio/textile/api/buckets/client"
@@ -217,7 +216,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 	return newB, nil
 }
 
-func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*client.DBInfo, error) {
+func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*db.Info, error) {
 	bs, err := tc.getModel().FindBucket(ctx, bucketSlug)
 
 	if err != nil {
@@ -235,7 +234,7 @@ func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*c
 		// addresses could be used to join thread
 	}
 
-	return b, err
+	return &b, err
 }
 
 func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address string, key thread.Key, bucketSlug string) error {

@@ -9,8 +9,8 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/libp2p/go-libp2p-core/crypto"
-	tc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
+	"github.com/textileio/go-threads/db"
 
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
 	"github.com/textileio/textile/api/users/client"
@@ -63,7 +63,7 @@ type Client interface {
 	GetBucket(ctx context.Context, slug string) (Bucket, error)
 	GetThreadsConnection() (*threadsClient.Client, error)
 	ListBuckets(ctx context.Context) ([]Bucket, error)
-	ShareBucket(ctx context.Context, bucketSlug string) (*tc.DBInfo, error)
+	ShareBucket(ctx context.Context, bucketSlug string) (*db.Info, error)
 	JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error)
 	CreateBucket(ctx context.Context, bucketSlug string) (Bucket, error)
 	ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) (bool, error)
