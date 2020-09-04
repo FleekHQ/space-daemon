@@ -46,6 +46,7 @@ type textileClient struct {
 	uc               UsersClient
 	mailEvents       chan mail.MailboxEvent
 	hubAuth          hub.HubAuth
+	mbNotifier       GrpcMailboxNotifier
 }
 
 // Creates a new Textile Client
@@ -67,6 +68,7 @@ func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth, uc Use
 		shuttingDown:     make(chan bool),
 		isConnectedToHub: false,
 		hubAuth:          hubAuth,
+		mbNotifier:       nil,
 	}
 }
 
@@ -197,6 +199,12 @@ func (tc *textileClient) checkHubConnection(ctx context.Context) error {
 			return err
 		}
 		tc.mb = mailbox
+
+		if err := tc.listenForMessages(hubctx); err != nil {
+			tc.isConnectedToHub = false
+			log.Error("Could not listen for mailbox messages", err)
+			return err
+		}
 	}
 
 	tc.isConnectedToHub = true

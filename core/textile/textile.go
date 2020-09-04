@@ -74,6 +74,7 @@ type Client interface {
 	GetMailAsNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error)
 	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error
 	RemoveKeys() error
+	AttachMailboxNotifier(notif GrpcMailboxNotifier)
 }
 
 type Buckd interface {

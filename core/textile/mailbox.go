@@ -93,6 +93,10 @@ func (tc *textileClient) SendMessage(ctx context.Context, recipient crypto.PubKe
 }
 
 func (tc *textileClient) GetMailAsNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error) {
+	if err := tc.requiresRunning(); err != nil {
+		return nil, err
+	}
+
 	var err error
 	ns := []*domain.Notification{}
 
@@ -120,9 +124,9 @@ func (tc *textileClient) GetMailAsNotifications(ctx context.Context, seek string
 
 type handleMessage func(context.Context, interface{}) error
 
-func (tc *textileClient) ListenForMessages(ctx context.Context, srv GrpcMailboxNotifier) error {
-	if err := tc.requiresRunning(); err != nil {
-		return err
+func (tc *textileClient) listenForMessages(ctx context.Context) error {
+	if tc.mbNotifier == nil {
+		return errors.New("no mailbox notifier, run AttachMailboxNotifier first")
 	}
 	log.Info("Starting to listen for mailbox messages")
 
@@ -153,7 +157,7 @@ func (tc *textileClient) ListenForMessages(ctx context.Context, srv GrpcMailboxN
 					ReadAt:        e.Message.ReadAt.Unix(),
 				}
 
-				srv.SendNotificationEvent(i)
+				tc.mbNotifier.SendNotificationEvent(i)
 			case mail.MessageRead:
 				// handle message read (inbox only)
 			case mail.MessageDeleted:
@@ -172,6 +176,11 @@ func (tc *textileClient) ListenForMessages(ctx context.Context, srv GrpcMailboxN
 	// 	// handle connectivity state
 	// }
 	return nil
+}
+
+// Attachs a handler for mailbox notification events
+func (tc *textileClient) AttachMailboxNotifier(notif GrpcMailboxNotifier) {
+	tc.mbNotifier = notif
 }
 
 func (tc *textileClient) createMailBox(ctx context.Context, maillib *mail.Mail, mbpath string) (*mail.Mailbox, error) {
