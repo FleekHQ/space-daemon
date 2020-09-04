@@ -107,7 +107,7 @@ func (s *Space) uploadSharedFileToIpfs(
 		Bucket:            bucketName,
 		SharedFileCid:     encryptedFileHash,
 		SharedFileKey:     password,
-		SpaceDownloadLink: "https://space.storage/files/share?" + urlQuery.Encode(),
+		SpaceDownloadLink: "https://app.space.storage/files/share?" + urlQuery.Encode(),
 	}, nil
 }
 
