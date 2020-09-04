@@ -1,9 +1,5 @@
 package domain
 
-import (
-	"time"
-)
-
 type AppConfig struct {
 	Port                 int
 	AppPath              string
@@ -76,6 +72,13 @@ type FileSharingInfo struct {
 	SpaceDownloadLink string
 }
 
+type NotificationTypes int
+
+const (
+	INVITATION NotificationTypes = 0
+	USAGEALERT NotificationTypes = 1
+)
+
 type FullPath struct {
 	DbId   string `json:"dbId"`
 	Bucket string `json:"bucket"`
@@ -85,33 +88,43 @@ type FullPath struct {
 type InvitationStatus int
 
 const (
-	Pending InvitationStatus = 0
-	Accepted
-	Rejected
+	PENDING  InvitationStatus = 0
+	ACCEPTED InvitationStatus = 1
+	REJECTED InvitationStatus = 2
 )
-
-type MessageType int
-
-const (
-	InvitationMessage MessageType = 0
-	UsageAlertMessage
-)
-
-type MessageBody struct {
-	Type MessageType `json:"type"`
-	Body interface{} `json:"body`
-}
 
 type Invitation struct {
-	CustomMessage    string           `json:"customMessage"`
-	InvitationID     string           `json:"invitationID"`
-	InviteePublicKey string           `json:"inviteePublicKey"`
 	InviterPublicKey string           `json:"inviterPublicKey"`
+	InviteePublicKey string           `json:"inviteePublicKey"`
+	InvitationID     string           `json:"invitationID"`
 	Status           InvitationStatus `json:"status"`
-	Paths            []FullPath       `json:"Paths"`
-	ReadAt           time.Time        `json:"readAt"`
-	CreatedAt        time.Time        `json:"createdAt"`
+	ItemPaths        []FullPath       `json:"itemPaths"`
 }
+
+type UsageAlert struct {
+	Used    int64  `json:"used"`
+	Limit   int64  `json:"limit"`
+	Message string `json:message`
+}
+
+type MessageBody struct {
+	Type NotificationTypes `json:"type"`
+	Body []byte            `json:"body`
+}
+
+type Notification struct {
+	ID               string            `json:"id"`
+	Subject          string            `json:"subject"`
+	Body             string            `json:"body"`
+	NotificationType NotificationTypes `json:"notificationType"`
+	CreatedAt        int64             `json:"createdAt"`
+	ReadAt           int64             `json:"readAt"`
+	// QUESTION: is there a way to enforce that only one of the below is present
+	InvitationValue Invitation  `json:"invitationValue"`
+	UsageAlertValue UsageAlert  `json:"usageAlertValue"`
+	RelatedObject   interface{} `json:"relatedObject`
+}
+
 type APISessionTokens struct {
 	HubToken      string
 	ServicesToken string

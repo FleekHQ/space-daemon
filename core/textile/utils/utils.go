@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/sha512"
 	"encoding/base32"
 	"encoding/binary"
@@ -106,4 +107,11 @@ func GetThreadContext(parentCtx context.Context, threadName string, dbID thread.
 	ctx = common.NewThreadIDContext(ctx, dbID)
 
 	return ctx, nil
+}
+
+// randBytes returns random bytes in a byte slice of size.
+func RandBytes(size int) ([]byte, error) {
+	b := make([]byte, size)
+	_, err := rand.Read(b)
+	return b, err
 }

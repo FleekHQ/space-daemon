@@ -108,7 +108,7 @@ func (s *Space) uploadSharedFileToIpfs(
 		Bucket:            bucketName,
 		SharedFileCid:     encryptedFileHash,
 		SharedFileKey:     password,
-		SpaceDownloadLink: "https://space.storage/files/share?" + urlQuery.Encode(),
+		SpaceDownloadLink: "https://app.space.storage/files/share?" + urlQuery.Encode(),
 	}, nil
 }
 
@@ -252,18 +252,31 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 
 			path.DbId = utils.CastDbIDToString(*threadID)
 		}
+
+		if path.Bucket == "" {
+			b, err := s.tc.GetDefaultBucket(ctx)
+			if err != nil {
+				return err
+			}
+			path.Bucket = b.Slug()
+		}
 	}
 
 	for _, pk := range pubkeys {
 
 		d := &domain.Invitation{
-			Paths: paths,
+			ItemPaths: paths,
 			// Key: TODO - get from keys thread for each file
 		}
 
+		i, err := json.Marshal(d)
+		if err != nil {
+			return err
+		}
+
 		b := &domain.MessageBody{
-			Type: domain.InvitationMessage,
-			Body: d,
+			Type: domain.INVITATION,
+			Body: i,
 		}
 
 		j, err := json.Marshal(b)

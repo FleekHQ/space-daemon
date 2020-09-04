@@ -93,6 +93,29 @@ func (_m *Client) GetDefaultBucket(ctx context.Context) (textile.Bucket, error) 
 	return r0, r1
 }
 
+// GetMailAsNotifications provides a mock function with given fields: ctx, seek, limit
+func (_m *Client) GetMailAsNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error) {
+	ret := _m.Called(ctx, seek, limit)
+
+	var r0 []*domain.Notification
+	if rf, ok := ret.Get(0).(func(context.Context, string, int) []*domain.Notification); ok {
+		r0 = rf(ctx, seek, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*domain.Notification)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string, int) error); ok {
+		r1 = rf(ctx, seek, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetThreadsConnection provides a mock function with given fields:
 func (_m *Client) GetThreadsConnection() (*client.Client, error) {
 	ret := _m.Called()

@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/FleekHQ/space-daemon/core"
+	"github.com/FleekHQ/space-daemon/grpc"
 
 	"github.com/FleekHQ/space-daemon/core/space/fuse"
 	"github.com/FleekHQ/space-daemon/core/vault"
@@ -31,7 +32,6 @@ import (
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/store"
 	w "github.com/FleekHQ/space-daemon/core/watcher"
-	"github.com/FleekHQ/space-daemon/grpc"
 	"github.com/golang-collections/collections/stack"
 )
 
@@ -120,7 +120,8 @@ func (a *App) Start(ctx context.Context) error {
 	hubAuth := hub.New(appStore, kc, a.cfg)
 
 	// setup textile client
-	textileClient := textile.NewClient(appStore, kc, hubAuth)
+	uc := textile.CreateUserClient(a.cfg.GetString(config.TextileHubTarget, ""))
+	textileClient := textile.NewClient(appStore, kc, hubAuth, uc, nil)
 	err = a.RunAsync("TextileClient", textileClient, func() error {
 		return textileClient.Start(ctx, a.cfg)
 	})
@@ -171,6 +172,8 @@ func (a *App) Start(ctx context.Context) error {
 		grpc.WithProxyPort(a.cfg.GetInt(config.SpaceProxyServerPort, 0)),
 		grpc.WithRestProxyPort(a.cfg.GetInt(config.SpaceRestProxyServerPort, 0)),
 	)
+
+	textileClient.ListenForMessages(ctx, srv)
 
 	err = a.RunAsync("BucketSync", bucketSync, func() error {
 		bucketSync.RegisterNotifier(srv)

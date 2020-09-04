@@ -46,7 +46,11 @@ func (b *Bucket) Slug() string {
 
 type getBucketContextFn func(context.Context, string) (context.Context, *thread.ID, error)
 
-func New(root *bucketsproto.Root, getBucketContext getBucketContextFn, bucketsClient BucketsClient) *Bucket {
+func New(
+	root *bucketsproto.Root,
+	getBucketContext getBucketContextFn,
+	bucketsClient BucketsClient,
+) *Bucket {
 	return &Bucket{
 		root:             root,
 		bucketsClient:    bucketsClient,

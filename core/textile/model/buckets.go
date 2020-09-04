@@ -2,9 +2,10 @@ package model
 
 import (
 	"context"
-	"errors"
 
+	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
+	"github.com/pkg/errors"
 	"github.com/textileio/go-threads/api/client"
 	core "github.com/textileio/go-threads/core/db"
 	"github.com/textileio/go-threads/core/thread"
@@ -13,13 +14,17 @@ import (
 )
 
 type BucketSchema struct {
-	ID     core.InstanceID `json:"_id"`
-	Slug   string          `json:"slug"`
-	Backup bool            `json:"backup"`
-	DbID   string
+	ID            core.InstanceID `json:"_id"`
+	Slug          string          `json:"slug"`
+	Backup        bool            `json:"backup"`
+	EncryptionKey []byte          `json:"hub_key"`
+	DbID          string
 }
 
 const bucketModelName = "BucketMetadata"
+
+// 32 bytes aes key + 16 bytes salt/IV + 32 bytes HMAC key
+const BucketEncryptionKeyLength = 32 + 16 + 32
 
 var errBucketNotFound = errors.New("Bucket not found")
 
@@ -36,11 +41,17 @@ func (m *model) CreateBucket(ctx context.Context, bucketSlug, dbID string) (*Buc
 		return nil, err
 	}
 
+	bucketEncryptionKey, err := utils.RandBytes(BucketEncryptionKeyLength)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to generate bucket encryption key")
+	}
+
 	newInstance := &BucketSchema{
-		Slug:   bucketSlug,
-		ID:     "",
-		DbID:   dbID,
-		Backup: true,
+		Slug:          bucketSlug,
+		ID:            "",
+		DbID:          dbID,
+		Backup:        true,
+		EncryptionKey: bucketEncryptionKey,
 	}
 
 	instances := client.Instances{newInstance}
