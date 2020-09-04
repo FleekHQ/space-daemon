@@ -259,13 +259,18 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 	for _, pk := range pubkeys {
 
 		d := &domain.Invitation{
-			Paths: paths,
+			ItemPaths: paths,
 			// Key: TODO - get from keys thread for each file
 		}
 
+		i, err := json.Marshal(d)
+		if err != nil {
+			return err
+		}
+
 		b := &domain.MessageBody{
-			Type: domain.InvitationMessage,
-			Body: d,
+			Type: domain.INVITATION,
+			Body: i,
 		}
 
 		j, err := json.Marshal(b)
