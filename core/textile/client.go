@@ -383,6 +383,10 @@ func (tc *textileClient) getModel() model.Model {
 	return model.New(tc.store, tc.kc, tc.threads, tc.hubAuth)
 }
 
+func (tc *textileClient) GetModel() model.Model {
+	return model.New(tc.store, tc.kc, tc.threads, tc.hubAuth)
+}
+
 func (tc *textileClient) requiresHubConnection() error {
 	if err := tc.requiresRunning(); err != nil {
 		return err

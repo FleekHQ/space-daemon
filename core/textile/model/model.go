@@ -30,6 +30,8 @@ type Model interface {
 	BucketBackupToggle(ctx context.Context, bucketSlug string, backup bool) (*BucketSchema, error)
 	FindBucket(ctx context.Context, bucketSlug string) (*BucketSchema, error)
 	ListBuckets(ctx context.Context) ([]*BucketSchema, error)
+	CreateSharedPublicKey(ctx context.Context, pubKey string) (*SharedPublicKeySchema, error)
+	ListSharedPublicKeys(ctx context.Context) ([]*SharedPublicKeySchema, error)
 	CreateMirrorBucket(ctx context.Context, bucketSlug string, mirrorBucket *MirrorBucketSchema) (*BucketSchema, error)
 	FindMirrorFileByPathAndBucketSlug(ctx context.Context, path, bucketSlug string) (*MirrorFileSchema, error)
 	CreateMirrorFile(ctx context.Context, mirrorFile *domain.MirrorFile) (*MirrorFileSchema, error)

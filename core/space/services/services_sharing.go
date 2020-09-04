@@ -3,6 +3,7 @@ package services
 import (
 	"archive/zip"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -290,4 +291,49 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 		}
 	}
 	return nil
+}
+
+func (s *Space) AddRecentlySharedPublicKeys(ctx context.Context, pubkeys []crypto.PubKey) error {
+	var ps string
+
+	for _, pk := range pubkeys {
+		b, err := pk.Raw()
+		if err != nil {
+			return err
+		}
+
+		ps = hex.EncodeToString(b)
+
+		// TODO: transaction
+		_, err = s.tc.GetModel().CreateSharedPublicKey(ctx, ps)
+		if err != nil {
+			return nil
+		}
+	}
+
+	return nil
+}
+
+func (s *Space) RecentlySharedPublicKeys(ctx context.Context) ([]crypto.PubKey, error) {
+	ret := []crypto.PubKey{}
+
+	keys, err := s.tc.GetModel().ListSharedPublicKeys(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, schema := range keys {
+		b, err := hex.DecodeString(schema.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+		p, err := crypto.UnmarshalEd25519PublicKey([]byte(b))
+		if err != nil {
+			return nil, err
+		}
+
+		ret = append(ret, p)
+	}
+
+	return ret, nil
 }

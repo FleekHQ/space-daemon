@@ -7,6 +7,7 @@ import (
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
+	"github.com/FleekHQ/space-daemon/core/textile/model"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	tc "github.com/textileio/go-threads/api/client"
@@ -62,6 +63,7 @@ type Client interface {
 	GetDefaultBucket(ctx context.Context) (Bucket, error)
 	GetBucket(ctx context.Context, slug string) (Bucket, error)
 	GetThreadsConnection() (*threadsClient.Client, error)
+	GetModel() model.Model
 	ListBuckets(ctx context.Context) ([]Bucket, error)
 	ShareBucket(ctx context.Context, bucketSlug string) (*tc.DBInfo, error)
 	JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error)
