@@ -90,7 +90,10 @@ func (srv *grpcServer) GetNotifications(ctx context.Context, request *pb.GetNoti
 		parsedNotifs = append(parsedNotifs, parsedNotif)
 	}
 
-	no := parsedNotifs[len(parsedNotifs)].ID
+	var no string
+	if len(parsedNotifs) > 0 {
+		no = parsedNotifs[len(parsedNotifs)-1].ID
+	}
 
 	return &pb.GetNotificationsResponse{
 		Notifications: parsedNotifs,
