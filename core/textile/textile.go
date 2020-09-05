@@ -74,7 +74,7 @@ type Client interface {
 	WaitForReady() chan bool
 	Start(ctx context.Context, cfg config.Config) error
 	GetMailAsNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error)
-	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error
+	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey, keys [][]byte) error
 	AcceptSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
 	RejectSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
 	RemoveKeys() error
