@@ -21,12 +21,12 @@ type BucketData struct {
 	UpdatedAt int64 `json:"updated_at"`
 }
 
-type DirEntries bucketsproto.ListPathResponse
+type DirEntries bucketsproto.ListPathReply
 
 type BucketsClient interface {
 	PushPath(ctx context.Context, key, pth string, reader io.Reader, opts ...bucketsClient.Option) (result path.Resolved, root path.Resolved, err error)
 	PullPath(ctx context.Context, key, pth string, writer io.Writer, opts ...bucketsClient.Option) error
-	ListPath(ctx context.Context, key, pth string) (*bucketsproto.ListPathResponse, error)
+	ListPath(ctx context.Context, key, pth string) (*bucketsproto.ListPathReply, error)
 	RemovePath(ctx context.Context, key, pth string, opts ...bucketsClient.Option) (path.Resolved, error)
 }
 
