@@ -351,11 +351,17 @@ func (tc *textileClient) IsRunning() bool {
 func (tc *textileClient) healthcheck(ctx context.Context) {
 	log.Debug("Textile Client healthcheck... Start.")
 
-	if tc.isInitialized == false {
+	// NOTE: since we check for the hub connection before the initialization
+	// this means that a hub connection is required to init for now. Leaving
+	// it like this for release and then we can have a better online vs offline
+	// state management work started asap in parallel (i.e., what happens if
+	// they are offline during init? and then what happens if they come back
+	// online post init and vice versa).
+	err := tc.checkHubConnection(ctx)
+
+	if err == nil && tc.isInitialized == false {
 		tc.initialize(ctx)
 	}
-
-	tc.checkHubConnection(ctx)
 
 	switch {
 	case tc.isInitialized == false:
