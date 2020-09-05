@@ -118,6 +118,10 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 
 	items := []*domain.SharedDirEntry{}
 
+	if len(files) == 0 {
+		return items, "", nil
+	}
+
 	for _, file := range files {
 		// TODO: Get these fields from mirror bucket
 		ipfsHash := ""
