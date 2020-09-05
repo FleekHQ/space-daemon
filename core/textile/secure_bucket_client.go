@@ -97,7 +97,7 @@ func (s *SecureBucketClient) PullPath(ctx context.Context, key, path string, wri
 	return <-errs
 }
 
-func (s *SecureBucketClient) ListPath(ctx context.Context, key, path string) (*bucketspb.ListPathReply, error) {
+func (s *SecureBucketClient) ListPath(ctx context.Context, key, path string) (*bucketspb.ListPathResponse, error) {
 	path = cleanBucketPath(path)
 	encryptionKey, err := s.getBucketEncryptionKey(ctx)
 	if err != nil {

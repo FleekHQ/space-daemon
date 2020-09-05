@@ -8,32 +8,36 @@ import (
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
 	crypto "github.com/libp2p/go-libp2p-crypto"
+	"github.com/textileio/textile/buckets"
 )
 
-func (tc *textileClient) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error {
+func (tc *textileClient) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey, keys [][]byte) error {
 	var err error
 	ctx, err = tc.getHubCtx(ctx)
 	if err != nil {
 		return err
 	}
 
-	for _, pth := range paths {
-		// TODO: uncomment once mirror bucket setup is done
-		// ctx, _, err = tc.getBucketContext(ctx, mirror.DbId, mirror.Bucket, true)
-		// if err != nil {
-		// 	return err
-		// }
+	for i, pth := range paths {
+		ctx, _, err = tc.getBucketContext(ctx, pth.DbId, pth.Bucket, true, keys[i])
+		if err != nil {
+			return err
+		}
 
 		log.Info("Adding roles for pth: " + pth.Path)
-		// TOOD: uncomment once release and upgraded txl pkg
-		// var roles map[string]buckets.Role
-		// for _, pk := range pubkeys {
-		// 	roles[pk] = buckets.Role.Writer
-		// }
-		// err := tc.PushPathAccessRoles(ctx, key, pth, roles)
-		// if err != nil {
-		//   return err
-		// }
+		var roles map[string]buckets.Role
+		for _, pk := range pubkeys {
+			pkb, err := pk.Bytes()
+			if err != nil {
+				return err
+			}
+			roles[string(pkb)] = buckets.Writer
+		}
+
+		err := tc.hb.PushPathAccessRoles(ctx, pth.BucketKey, pth.Path, roles)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -55,7 +59,7 @@ func (tc *textileClient) AcceptSharedFilesInvitation(
 		return domain.Invitation{}, errInvitationNotPending
 	}
 
-	err := tc.createReceivedFiles(ctx, invitation.InvitationID, true, invitation.ItemPaths)
+	err := tc.createReceivedFiles(ctx, invitation.InvitationID, true, invitation.ItemPaths, invitation.Keys)
 	if err != nil {
 		return domain.Invitation{}, err
 	}
@@ -76,7 +80,7 @@ func (tc *textileClient) RejectSharedFilesInvitation(
 		return domain.Invitation{}, errInvitationNotPending
 	}
 
-	err := tc.createReceivedFiles(ctx, invitation.InvitationID, false, invitation.ItemPaths)
+	err := tc.createReceivedFiles(ctx, invitation.InvitationID, false, invitation.ItemPaths, [][]byte{})
 	if err != nil {
 		return domain.Invitation{}, err
 	}
@@ -90,12 +94,13 @@ func (tc *textileClient) createReceivedFiles(
 	invitationId string,
 	accepted bool,
 	paths []domain.FullPath,
+	keys [][]byte,
 ) error {
 	// TODO: Make this is call a transaction on threads so any failure can be easily reverted
 
 	var allErr error
-	for _, path := range paths {
-		_, err := tc.GetModel().CreateReceivedFile(ctx, path, invitationId, accepted)
+	for i, path := range paths {
+		_, err := tc.GetModel().CreateReceivedFile(ctx, path, invitationId, accepted, keys[i])
 
 		// compose each create error
 		if err != nil {

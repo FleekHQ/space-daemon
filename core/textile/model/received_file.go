@@ -14,12 +14,14 @@ import (
 )
 
 type ReceivedFileSchema struct {
-	ID           core.InstanceID `json:"_id"`
-	DbID         string          `json:"dbId"`
-	Bucket       string          `json:"bucket"`
-	Path         string          `json:"path"`
-	InvitationId string          `json:"invitationId"`
-	Accepted     bool            `json:"accepted"`
+	ID            core.InstanceID `json:"_id"`
+	DbID          string          `json:"dbId"`
+	Bucket        string          `json:"bucket"`
+	Path          string          `json:"path"`
+	InvitationId  string          `json:"invitationId"`
+	Accepted      bool            `json:"accepted"`
+	BucketKey     string          `json:"bucketKey`
+	EncryptionKey []byte          `json:"encryptionKey`
 }
 
 const receivedFileModelName = "ReceivedFile"
@@ -32,6 +34,7 @@ func (m *model) CreateReceivedFile(
 	file domain.FullPath,
 	invitationId string,
 	accepted bool,
+	key []byte,
 ) (*ReceivedFileSchema, error) {
 	log.Debug("Model.CreateReceivedFile: Storing received file " + file.Path)
 	if existingFile, err := m.FindReceivedFile(ctx, file); err == nil {
@@ -46,10 +49,14 @@ func (m *model) CreateReceivedFile(
 	}
 
 	newInstance := &ReceivedFileSchema{
-		ID:     "",
-		DbID:   file.DbId,
-		Bucket: file.Bucket,
-		Path:   file.Path,
+		ID:            "",
+		DbID:          file.DbId,
+		Bucket:        file.Bucket,
+		Path:          file.Path,
+		InvitationId:  invitationId,
+		Accepted:      accepted,
+		BucketKey:     file.BucketKey,
+		EncryptionKey: key,
 	}
 
 	instances := client.Instances{newInstance}
