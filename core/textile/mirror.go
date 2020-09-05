@@ -85,6 +85,12 @@ func (tc *textileClient) createMirrorBucket(ctx context.Context, schema model.Bu
 // Creates a remote hub thread for the mirror bucket
 func (tc *textileClient) createMirrorThread(ctx context.Context) (*thread.ID, error) {
 	log.Debug("createMirrorThread: Generating a new threadID ...")
+	var err error
+	ctx, err = tc.getHubCtx(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	dbID := thread.NewIDV1(thread.Raw, 32)
 
 	log.Debug("createMirrorThread: Creating Thread DB for bucket at db " + dbID.String())

@@ -351,11 +351,11 @@ func (tc *textileClient) IsRunning() bool {
 func (tc *textileClient) healthcheck(ctx context.Context) {
 	log.Debug("Textile Client healthcheck... Start.")
 
+	tc.checkHubConnection(ctx)
+
 	if tc.isInitialized == false {
 		tc.initialize(ctx)
 	}
-
-	tc.checkHubConnection(ctx)
 
 	switch {
 	case tc.isInitialized == false:
