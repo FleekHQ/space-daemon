@@ -2,6 +2,7 @@ package textile
 
 import (
 	"context"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -107,4 +108,45 @@ func (tc *textileClient) createReceivedFiles(
 	}
 
 	return allErr
+}
+
+func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*domain.SharedDirEntry, string, error) {
+	files, err := tc.GetModel().ListReceivedFiles(ctx, accepted, seek, limit)
+	if err != nil {
+		return nil, "", err
+	}
+
+	items := []*domain.SharedDirEntry{}
+
+	for _, file := range files {
+		// TODO: Get these fields from mirror bucket
+		ipfsHash := ""
+		name := ""
+		isDir := false
+		size := ""
+		ext := ""
+
+		res := &domain.SharedDirEntry{
+			Bucket: file.Bucket,
+			DbID:   file.DbID,
+			FileInfo: domain.FileInfo{
+				IpfsHash: ipfsHash,
+				DirEntry: domain.DirEntry{
+					Path:          file.Path,
+					IsDir:         isDir,
+					Name:          name,
+					SizeInBytes:   size,
+					FileExtension: ext,
+					Created:       time.Unix(file.CreatedAt, 0).String(),
+					Updated:       time.Unix(file.CreatedAt, 0).String(),
+				},
+			},
+		}
+
+		items = append(items, res)
+	}
+
+	offset := files[len(files)-1].ID.String()
+
+	return items, offset, nil
 }

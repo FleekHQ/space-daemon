@@ -137,3 +137,9 @@ type MirrorFile struct {
 	Backup     bool
 	Shared     bool
 }
+
+type SharedDirEntry struct {
+	DbID   string
+	Bucket string
+	FileInfo
+}

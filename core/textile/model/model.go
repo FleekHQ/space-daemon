@@ -42,6 +42,7 @@ type Model interface {
 	CreateMirrorBucket(ctx context.Context, bucketSlug string, mirrorBucket *MirrorBucketSchema) (*BucketSchema, error)
 	FindMirrorFileByPathAndBucketSlug(ctx context.Context, path, bucketSlug string) (*MirrorFileSchema, error)
 	CreateMirrorFile(ctx context.Context, mirrorFile *domain.MirrorFile) (*MirrorFileSchema, error)
+	ListReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*ReceivedFileSchema, error)
 }
 
 func New(st store.Store, kc keychain.Keychain, threads *threadsClient.Client, hubAuth hub.HubAuth) *model {
