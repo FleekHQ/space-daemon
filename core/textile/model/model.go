@@ -35,7 +35,6 @@ type Model interface {
 		file domain.FullPath,
 		invitationId string,
 		accepted bool,
-		key []byte,
 	) (*ReceivedFileSchema, error)
 	FindReceivedFile(ctx context.Context, file domain.FullPath) (*ReceivedFileSchema, error)
 	CreateSharedPublicKey(ctx context.Context, pubKey string) (*SharedPublicKeySchema, error)

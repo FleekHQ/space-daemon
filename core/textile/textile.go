@@ -10,8 +10,8 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/model"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/libp2p/go-libp2p-core/crypto"
+	tc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
-	"github.com/textileio/go-threads/db"
 
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
 	"github.com/textileio/textile/api/users/client"
@@ -65,7 +65,7 @@ type Client interface {
 	GetThreadsConnection() (*threadsClient.Client, error)
 	GetModel() model.Model
 	ListBuckets(ctx context.Context) ([]Bucket, error)
-	ShareBucket(ctx context.Context, bucketSlug string) (*db.Info, error)
+	ShareBucket(ctx context.Context, bucketSlug string) (*tc.DBInfo, error)
 	JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error)
 	CreateBucket(ctx context.Context, bucketSlug string) (Bucket, error)
 	ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) (bool, error)
@@ -74,7 +74,7 @@ type Client interface {
 	WaitForReady() chan bool
 	Start(ctx context.Context, cfg config.Config) error
 	GetMailAsNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error)
-	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey, keys [][]byte) error
+	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error
 	AcceptSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
 	RejectSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
 	RemoveKeys() error

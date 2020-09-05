@@ -81,10 +81,9 @@ const (
 )
 
 type FullPath struct {
-	DbId      string `json:"dbId"`
-	BucketKey string `json:"bucketKey"`
-	Bucket    string `json:"bucket"`
-	Path      string `json:"path"`
+	DbId   string `json:"dbId"`
+	Bucket string `json:"bucket"`
+	Path   string `json:"path"`
 }
 
 type InvitationStatus int
@@ -101,7 +100,6 @@ type Invitation struct {
 	InvitationID     string           `json:"invitationID"`
 	Status           InvitationStatus `json:"status"`
 	ItemPaths        []FullPath       `json:"itemPaths"`
-	Keys             [][]byte         `json:""keys`
 }
 
 type UsageAlert struct {
