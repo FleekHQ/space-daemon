@@ -229,7 +229,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 	return newB, nil
 }
 
-func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (**db.Info, error) {
+func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*db.Info, error) {
 	bs, err := tc.GetModel().FindBucket(ctx, bucketSlug)
 
 	if err != nil {

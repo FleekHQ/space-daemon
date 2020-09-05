@@ -70,7 +70,7 @@ func (tc *textileClient) createMirrorBucket(ctx context.Context, schema model.Bu
 	}
 
 	// create mirror bucket
-	b, err := tc.hb.Init(hubCtx, bc.WithName(bucketSlug), bc.WithPrivate(true))
+	b, err := tc.hb.Create(hubCtx, bc.WithName(bucketSlug), bc.WithPrivate(true))
 	if err != nil {
 		return nil, err
 	}
