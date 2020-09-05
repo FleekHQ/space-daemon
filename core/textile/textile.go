@@ -7,6 +7,7 @@ import (
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
+	"github.com/FleekHQ/space-daemon/core/textile/model"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/textileio/go-threads/core/thread"
@@ -62,6 +63,7 @@ type Client interface {
 	GetDefaultBucket(ctx context.Context) (Bucket, error)
 	GetBucket(ctx context.Context, slug string) (Bucket, error)
 	GetThreadsConnection() (*threadsClient.Client, error)
+	GetModel() model.Model
 	ListBuckets(ctx context.Context) ([]Bucket, error)
 	ShareBucket(ctx context.Context, bucketSlug string) (*db.Info, error)
 	JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error)
@@ -73,8 +75,14 @@ type Client interface {
 	Start(ctx context.Context, cfg config.Config) error
 	GetMailAsNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error)
 	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error
+	AcceptSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
+	RejectSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
 	RemoveKeys() error
 	AttachMailboxNotifier(notif GrpcMailboxNotifier)
+	IsBucketBackup(ctx context.Context, bucketSlug string) bool
+	IsMirrorFile(ctx context.Context, path, bucketSlug string) bool
+	UploadFileToHub(ctx context.Context, b Bucket, path string, reader io.Reader) (result path.Resolved, root path.Path, err error)
+	MarkMirrorFileBackup(ctx context.Context, path, bucketSlug string) (*domain.MirrorFile, error)
 }
 
 type Buckd interface {

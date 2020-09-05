@@ -379,7 +379,7 @@ func (tc *textileClient) RemoveKeys() error {
 	return nil
 }
 
-func (tc *textileClient) getModel() model.Model {
+func (tc *textileClient) GetModel() model.Model {
 	return model.New(tc.store, tc.kc, tc.threads, tc.hubAuth)
 }
 

@@ -56,7 +56,7 @@ func (tc *textileClient) GetDefaultBucket(ctx context.Context) (Bucket, error) {
 	return tc.GetBucket(ctx, defaultPersonalBucketSlug)
 }
 
-func (tc *textileClient) getBucketContext(ctx context.Context, sDbID string, bucketSlug string, ishub bool) (context.Context, *thread.ID, error) {
+func (tc *textileClient) getBucketContext(ctx context.Context, sDbID string, bucketSlug string, ishub bool, enckey []byte) (context.Context, *thread.ID, error) {
 	log.Debug("getBucketContext: Getting bucket context with dbid:" + sDbID)
 
 	dbID, err := utils.ParseDbIDFromString(sDbID)
@@ -69,6 +69,9 @@ func (tc *textileClient) getBucketContext(ctx context.Context, sDbID string, buc
 	if err != nil {
 		return nil, nil, err
 	}
+
+	ctx = common.NewBucketEncryptionKeyContext(ctx, enckey)
+
 	return ctx, dbID, err
 }
 
@@ -77,18 +80,17 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 	log.Debug("getOrCreateBucketContext: Getting bucket context")
 
 	log.Debug("getOrCreateBucketContext: Fetching thread id from meta store")
-	m := tc.getModel()
+	m := tc.GetModel()
 	bucketSchema, notFoundErr := m.FindBucket(ctx, bucketSlug)
 
 	if notFoundErr == nil { // This means the bucket was already present in the schema
 		var err error
 		var dbID *thread.ID
-		ctx, dbID, err = tc.getBucketContext(ctx, bucketSchema.DbID, bucketSlug, false)
+		ctx, dbID, err = tc.getBucketContext(ctx, bucketSchema.DbID, bucketSlug, false, bucketSchema.EncryptionKey)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		ctx = common.NewBucketEncryptionKeyContext(ctx, bucketSchema.EncryptionKey)
 		return ctx, dbID, err
 	}
 
@@ -106,13 +108,11 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 		return nil, nil, err
 	}
 
-	bucketCtx, _, err := tc.getBucketContext(ctx, utils.CastDbIDToString(dbID), bucketSlug, false)
+	bucketCtx, _, err := tc.getBucketContext(ctx, utils.CastDbIDToString(dbID), bucketSlug, false, bucketSchema.EncryptionKey)
 	if err != nil {
 		return nil, nil, err
 	}
 	log.Debug("getOrCreateBucketContext: Returning bucket context")
-
-	bucketCtx = common.NewBucketEncryptionKeyContext(bucketCtx, bucketSchema.EncryptionKey)
 
 	return bucketCtx, &dbID, err
 }
@@ -126,7 +126,7 @@ func (tc *textileClient) ListBuckets(ctx context.Context) ([]Bucket, error) {
 }
 
 func (tc *textileClient) listBuckets(ctx context.Context) ([]Bucket, error) {
-	bucketList, err := tc.getModel().ListBuckets(ctx)
+	bucketList, err := tc.GetModel().ListBuckets(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -175,6 +175,7 @@ func (tc *textileClient) CreateBucket(ctx context.Context, bucketSlug string) (B
 func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (Bucket, error) {
 	log.Debug("Creating a new bucket with slug " + bucketSlug)
 	var err error
+	m := tc.GetModel()
 
 	if b, _ := tc.getBucket(ctx, bucketSlug); b != nil {
 		return b, nil
@@ -199,9 +200,21 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 
 	// We store the bucket in a meta thread so that we can later fetch a list of all buckets
 	log.Debug("Bucket " + bucketSlug + " created. Storing metadata.")
-	_, err = tc.getModel().CreateBucket(ctx, bucketSlug, dbID.String())
+	schema, err := m.CreateBucket(ctx, bucketSlug, dbID.String())
 	if err != nil {
 		return nil, err
+	}
+
+	mirrorSchema, err := tc.createMirrorBucket(ctx, *schema)
+	if err != nil {
+		return nil, err
+	}
+
+	if mirrorSchema != nil {
+		_, err = m.CreateMirrorBucket(ctx, bucketSlug, mirrorSchema)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	newB := bucket.New(
@@ -216,8 +229,8 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 	return newB, nil
 }
 
-func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*db.Info, error) {
-	bs, err := tc.getModel().FindBucket(ctx, bucketSlug)
+func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (**db.Info, error) {
+	bs, err := tc.GetModel().FindBucket(ctx, bucketSlug)
 
 	if err != nil {
 		return nil, err
@@ -265,7 +278,7 @@ func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address strin
 
 	dbID, err := thread.FromAddr(multiaddress)
 
-	tc.getModel().UpsertBucket(ctx, bucketSlug, utils.CastDbIDToString(dbID))
+	tc.GetModel().UpsertBucket(ctx, bucketSlug, utils.CastDbIDToString(dbID))
 
 	return nil
 }
@@ -304,10 +317,19 @@ func (tc *textileClient) JoinBucket(ctx context.Context, slug string, ti *domain
 }
 
 func (tc *textileClient) ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) (bool, error) {
-	bucketSchema, err := tc.getModel().BucketBackupToggle(ctx, bucketSlug, bucketBackup)
+	bucketSchema, err := tc.GetModel().BucketBackupToggle(ctx, bucketSlug, bucketBackup)
 	if err != nil {
 		return false, err
 	}
 
 	return bucketSchema.Backup, nil
+}
+
+func (tc *textileClient) IsBucketBackup(ctx context.Context, bucketSlug string) bool {
+	bucketSchema, err := tc.GetModel().FindBucket(ctx, bucketSlug)
+	if err != nil {
+		return false
+	}
+
+	return bucketSchema.Backup
 }

@@ -75,8 +75,9 @@ type FileSharingInfo struct {
 type NotificationTypes int
 
 const (
-	INVITATION NotificationTypes = 0
-	USAGEALERT NotificationTypes = 1
+	INVITATION NotificationTypes = iota
+	USAGEALERT
+	INVITATION_REPLY
 )
 
 type FullPath struct {
@@ -128,4 +129,11 @@ type Notification struct {
 type APISessionTokens struct {
 	HubToken      string
 	ServicesToken string
+}
+
+type MirrorFile struct {
+	Path       string
+	BucketSlug string
+	Backup     bool
+	Shared     bool
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
+	"github.com/FleekHQ/space-daemon/core/util/address"
 	"github.com/FleekHQ/space-daemon/grpc/pb"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 )
@@ -36,7 +37,13 @@ func (srv *grpcServer) ShareFilesViaPublicKey(ctx context.Context, request *pb.S
 		cleanedPaths = append(cleanedPaths, *cleanedPath)
 	}
 
-	err := srv.sv.ShareFilesViaPublicKey(ctx, cleanedPaths, pks)
+	// fail before since actual sharing is irreversible
+	err := srv.sv.AddRecentlySharedPublicKeys(ctx, pks)
+	if err != nil {
+		return nil, err
+	}
+
+	err = srv.sv.ShareFilesViaPublicKey(ctx, cleanedPaths, pks)
 	if err != nil {
 		return nil, err
 	}
@@ -72,5 +79,30 @@ func (srv *grpcServer) OpenPublicFile(ctx context.Context, request *pb.OpenPubli
 }
 
 func (srv *grpcServer) GetRecentlySharedWith(ctx context.Context, request *pb.GetRecentlySharedWithRequest) (*pb.GetRecentlySharedWithResponse, error) {
-	return nil, errNotImplemented
+	fileMembers := make([]*pb.FileMember, 0)
+
+	pks, err := srv.sv.RecentlySharedPublicKeys(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, pk := range pks {
+		pubBytes, err := pk.Raw()
+		if err != nil {
+			return nil, err
+		}
+
+		fileMember := &pb.FileMember{
+			PublicKey: hex.EncodeToString(pubBytes),
+			Address:   address.DeriveAddress(pk),
+		}
+
+		fileMembers = append(fileMembers, fileMember)
+	}
+
+	res := &pb.GetRecentlySharedWithResponse{
+		Members: fileMembers,
+	}
+
+	return res, nil
 }

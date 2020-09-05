@@ -105,8 +105,16 @@ func (srv *grpcServer) ReadNotification(ctx context.Context, request *pb.ReadNot
 	return nil, errNotImplemented
 }
 
-func (srv *grpcServer) HandleFilesInvitation(ctx context.Context, request *pb.HandleFilesInvitationRequest) (*pb.HandleFilesInvitationResponse, error) {
-	return nil, errNotImplemented
+func (srv *grpcServer) HandleFilesInvitation(
+	ctx context.Context,
+	request *pb.HandleFilesInvitationRequest,
+) (*pb.HandleFilesInvitationResponse, error) {
+	err := srv.sv.HandleSharedFilesInvitation(ctx, request.InvitationID, request.Accept)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.HandleFilesInvitationResponse{}, nil
 }
 
 func (srv *grpcServer) NotificationSubscribe(empty *empty.Empty, stream pb.SpaceApi_NotificationSubscribeServer) error {
