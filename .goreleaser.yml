@@ -11,8 +11,7 @@ builds:
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -X main.ipfsaddr={{ .Env.IPFS_ADDR }}
-      - -X main.mongousr={{ .Env.MONGO_USR }}
+      - -s -w -X main.mongousr={{ .Env.MONGO_USR }}
       - -X main.mongopw={{ .Env.MONGO_PW }}
       - -X main.mongohost={{ .Env.MONGO_HOST }}
       - -X main.mongorepset={{ .Env.MONGO_REPLICA_SET }}
@@ -34,8 +33,7 @@ builds:
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -X main.ipfsaddr={{ .Env.IPFS_ADDR }}
-      - -X main.mongousr={{ .Env.MONGO_USR }}
+      - -s -w -X main.mongousr={{ .Env.MONGO_USR }}
       - -X main.mongopw={{ .Env.MONGO_PW }}
       - -X main.mongohost={{ .Env.MONGO_HOST }}
       - -X main.mongorepset={{ .Env.MONGO_REPLICA_SET }}
@@ -59,8 +57,7 @@ builds:
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -X main.ipfsaddr={{ .Env.IPFS_ADDR }}
-      - -X main.mongousr={{ .Env.MONGO_USR }}
+      - -s -w -X main.mongousr={{ .Env.MONGO_USR }}
       - -X main.mongopw={{ .Env.MONGO_PW }}
       - -X main.mongohost={{ .Env.MONGO_HOST }}
       - -X main.mongorepset={{ .Env.MONGO_REPLICA_SET }}
