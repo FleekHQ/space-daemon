@@ -7,7 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/user"
+	// "os/user"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/FleekHQ/space-daemon/config"
+	// "github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/textile"
 	"github.com/FleekHQ/space-daemon/log"
@@ -213,26 +213,7 @@ func (s *Space) OpenFile(ctx context.Context, path string, bucketName string) (d
 
 // TruncateData removes all data from local machine
 func (s *Space) TruncateData(ctx context.Context) error {
-	usr, err := user.Current()
-
-	if err != nil {
-		return err
-	}
-
-	s.store.Close()
-
-	// remove data dirs
-	buckdDir := filepath.Join(usr.HomeDir, ".buckd")
-	os.RemoveAll(buckdDir)
-
-	fleekDir := filepath.Join(usr.HomeDir, ".fleek-space")
-	os.RemoveAll(fleekDir)
-
-	if s.cfg.GetBool(config.Ipfsnode, false) {
-		ipfsDir := filepath.Join(usr.HomeDir, ".ipfs")
-		os.RemoveAll(ipfsDir)
-	}
-
+	// @todo: remove data from local/remote storage
 	return nil
 }
 
