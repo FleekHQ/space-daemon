@@ -46,6 +46,7 @@ func (m *model) CreateMirrorBucket(ctx context.Context, bucketSlug string, mirro
 
 	bucket.RemoteDbID = mirrorBucket.RemoteDbID
 	bucket.HubAddr = mirrorBucket.HubAddr
+	bucket.RemoteBucketKey = mirrorBucket.RemoteBucketKey
 
 	instances := client.Instances{bucket}
 
@@ -70,12 +71,12 @@ func (m *model) FindMirrorFileByPathAndBucketSlug(ctx context.Context, path, buc
 	}
 
 	if rawMirrorFiles == nil {
-		return nil, errMirrorFileNotFound
+		return &MirrorFileSchema{}, nil
 	}
 
 	mirror_files := rawMirrorFiles.([]*MirrorFileSchema)
 	if len(mirror_files) == 0 {
-		return nil, errMirrorFileNotFound
+		return &MirrorFileSchema{}, nil
 	}
 
 	log.Debug("Model.FindMirrorFileByPathAndBucketSlug: returning mirror file with dbid " + mirror_files[0].DbID)

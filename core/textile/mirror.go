@@ -3,8 +3,8 @@ package textile
 import (
 	"context"
 	"io"
-	"os"
 
+	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/textile/model"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
@@ -47,7 +47,7 @@ func (tc *textileClient) UploadFileToHub(ctx context.Context, b Bucket, path str
 		return nil, nil, err
 	}
 
-	hubCtx, _, err := tc.getBucketContext(ctx, b.Slug(), bucket.RemoteDbID, true, bucket.EncryptionKey)
+	hubCtx, _, err := tc.getBucketContext(ctx, bucket.RemoteDbID, b.Slug(), true, bucket.EncryptionKey)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -76,9 +76,9 @@ func (tc *textileClient) createMirrorBucket(ctx context.Context, schema model.Bu
 	}
 
 	return &model.MirrorBucketSchema{
-		RemoteDbID:      dbID.String(),
+		RemoteDbID:      utils.CastDbIDToString(*dbID),
 		RemoteBucketKey: b.Root.Key,
-		HubAddr:         os.Getenv("TXL_HUB_TARGET"),
+		HubAddr:         tc.cfg.GetString(config.TextileHubTarget, ""),
 	}, nil
 }
 
