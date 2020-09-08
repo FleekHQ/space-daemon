@@ -62,7 +62,7 @@ type Bucket interface {
 type Client interface {
 	IsRunning() bool
 	GetDefaultBucket(ctx context.Context) (Bucket, error)
-	GetBucket(ctx context.Context, slug string) (Bucket, error)
+	GetBucket(ctx context.Context, slug string, remoteFile *GetBucketForRemoteFileInput) (Bucket, error)
 	GetThreadsConnection() (*threadsClient.Client, error)
 	GetModel() model.Model
 	ListBuckets(ctx context.Context) ([]Bucket, error)

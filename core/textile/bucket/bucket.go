@@ -37,18 +37,18 @@ type Bucket struct {
 	lock             sync.RWMutex
 	root             *bucketsproto.Root
 	bucketsClient    BucketsClient
-	getBucketContext getBucketContextFn
+	getBucketContext GetBucketContextFn
 }
 
 func (b *Bucket) Slug() string {
 	return b.GetData().Name
 }
 
-type getBucketContextFn func(context.Context, string) (context.Context, *thread.ID, error)
+type GetBucketContextFn func(context.Context, string) (context.Context, *thread.ID, error)
 
 func New(
 	root *bucketsproto.Root,
-	getBucketContext getBucketContextFn,
+	getBucketContext GetBucketContextFn,
 	bucketsClient BucketsClient,
 ) *Bucket {
 	return &Bucket{

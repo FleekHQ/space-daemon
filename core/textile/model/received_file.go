@@ -39,7 +39,7 @@ func (m *model) CreateReceivedFile(
 	key []byte,
 ) (*ReceivedFileSchema, error) {
 	log.Debug("Model.CreateReceivedFile: Storing received file " + file.Path)
-	if existingFile, err := m.FindReceivedFile(ctx, file); err == nil {
+	if existingFile, err := m.FindReceivedFile(ctx, file.DbId, file.Bucket, file.Path); err == nil {
 		log.Debug("Model.CreateReceivedFile: Bucket already in collection")
 		return existingFile, nil
 	}
@@ -86,13 +86,13 @@ func (m *model) CreateReceivedFile(
 }
 
 // Finds the metadata of a file that has been shared to the user
-func (m *model) FindReceivedFile(ctx context.Context, file domain.FullPath) (*ReceivedFileSchema, error) {
+func (m *model) FindReceivedFile(ctx context.Context, remoteDbID, bucket, path string) (*ReceivedFileSchema, error) {
 	metaCtx, dbID, err := m.initReceivedFileModel(ctx)
 	if err != nil || dbID == nil {
 		return nil, err
 	}
 
-	rawFiles, err := m.threads.Find(metaCtx, *dbID, receivedFileModelName, db.Where("dbId").Eq(file.DbId).And("bucket").Eq(file.Bucket).And("path").Eq(file.Path), &ReceivedFileSchema{})
+	rawFiles, err := m.threads.Find(metaCtx, *dbID, receivedFileModelName, db.Where("dbId").Eq(remoteDbID).And("bucket").Eq(bucket).And("path").Eq(path), &ReceivedFileSchema{})
 	if err != nil {
 		return nil, err
 	}

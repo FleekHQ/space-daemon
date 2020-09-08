@@ -444,6 +444,7 @@ message TextileEventResponse {
 message OpenFileRequest {
   string path = 1;
   string bucket = 2;
+  string dbId = 3; // optional field to specify shared with me file
 }
 
 message OpenFileResponse {

@@ -268,7 +268,7 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 			ep.BucketKey = bs.RemoteBucketKey
 			enckeys = append(enckeys, bs.EncryptionKey)
 		} else {
-			r, err := m.FindReceivedFile(ctx, path)
+			r, err := m.FindReceivedFile(ctx, path.DbId, path.Bucket, path.Path)
 			if err != nil {
 				return err
 			}
