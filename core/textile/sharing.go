@@ -9,6 +9,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
 	crypto "github.com/libp2p/go-libp2p-crypto"
+	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/textile/buckets"
 )
 
@@ -26,13 +27,10 @@ func (tc *textileClient) ShareFilesViaPublicKey(ctx context.Context, paths []dom
 		}
 
 		log.Info("Adding roles for pth: " + pth.Path)
-		var roles map[string]buckets.Role
+		roles := make(map[string]buckets.Role)
 		for _, pk := range pubkeys {
-			pkb, err := pk.Bytes()
-			if err != nil {
-				return err
-			}
-			roles[string(pkb)] = buckets.Writer
+			tpk := thread.NewLibp2pPubKey(pk)
+			roles[tpk.String()] = buckets.Writer
 		}
 
 		err := tc.hb.PushPathAccessRoles(ctx, pth.BucketKey, pth.Path, roles)

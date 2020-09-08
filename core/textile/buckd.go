@@ -49,6 +49,7 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 	addrAPIProxy := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/3007")
 	addrThreadsHost := cmd.AddrFromStr("/ip4/0.0.0.0/tcp/4006")
 	// TODO: replace with local blockstore
+
 	addrIpfsAPI := cmd.AddrFromStr(IpfsAddr)
 
 	addrGatewayHost := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/8006")
