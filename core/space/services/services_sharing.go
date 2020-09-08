@@ -417,3 +417,10 @@ func (s *Space) RecentlySharedPublicKeys(ctx context.Context) ([]crypto.PubKey, 
 
 	return ret, nil
 }
+
+// Returns a list of shared files the user has received and accepted
+func (s *Space) GetSharedWithMeFiles(ctx context.Context, seek string, limit int) ([]*domain.SharedDirEntry, string, error) {
+	items, offset, err := s.tc.GetReceivedFiles(ctx, true, seek, limit)
+
+	return items, offset, err
+}

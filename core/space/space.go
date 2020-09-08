@@ -54,6 +54,7 @@ type Service interface {
 	GetAPISessionTokens(ctx context.Context) (*domain.APISessionTokens, error)
 	AddRecentlySharedPublicKeys(ctx context.Context, pubkeys []crypto.PubKey) error
 	RecentlySharedPublicKeys(ctx context.Context) ([]crypto.PubKey, error)
+	GetSharedWithMeFiles(ctx context.Context, seek string, limit int) ([]*domain.SharedDirEntry, string, error)
 }
 
 type serviceOptions struct {

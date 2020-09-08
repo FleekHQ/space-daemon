@@ -2,6 +2,8 @@ package textile
 
 import (
 	"context"
+	"path/filepath"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -110,4 +112,71 @@ func (tc *textileClient) createReceivedFiles(
 	}
 
 	return allErr
+}
+
+func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*domain.SharedDirEntry, string, error) {
+	files, err := tc.GetModel().ListReceivedFiles(ctx, accepted, seek, limit)
+	if err != nil {
+		return nil, "", err
+	}
+
+	items := []*domain.SharedDirEntry{}
+
+	if len(files) == 0 {
+		return items, "", nil
+	}
+
+	for _, file := range files {
+		ctx, _, err = tc.getBucketContext(ctx, file.DbID, file.Bucket, true, file.EncryptionKey)
+		if err != nil {
+			return nil, "", err
+		}
+
+		f, err := tc.hb.ListPath(ctx, file.BucketKey, file.Path)
+		if err != nil {
+			return nil, "", err
+		}
+
+		ipfsHash := f.Item.Cid
+		name := f.Item.Name
+		isDir := false
+		size := f.GetItem().Size
+		ext := filepath.Ext(name)
+
+		rs, err := tc.hb.PullPathAccessRoles(ctx, file.BucketKey, file.Path)
+		if err != nil {
+			return nil, "", err
+		}
+
+		members := make([]domain.Member, len(rs))
+		for pubk, _ := range rs {
+			members = append(members, domain.Member{
+				Address: pubk,
+			})
+		}
+
+		res := &domain.SharedDirEntry{
+			Bucket: file.Bucket,
+			DbID:   file.DbID,
+			FileInfo: domain.FileInfo{
+				IpfsHash: ipfsHash,
+				DirEntry: domain.DirEntry{
+					Path:          file.Path,
+					IsDir:         isDir,
+					Name:          name,
+					SizeInBytes:   string(size),
+					FileExtension: ext,
+					Created:       time.Unix(file.CreatedAt, 0).String(),
+					Updated:       time.Unix(file.CreatedAt, 0).String(),
+				},
+			},
+			Members: members,
+		}
+
+		items = append(items, res)
+	}
+
+	offset := files[len(files)-1].ID.String()
+
+	return items, offset, nil
 }

@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
@@ -22,6 +23,7 @@ type ReceivedFileSchema struct {
 	Accepted      bool            `json:"accepted"`
 	BucketKey     string          `json:"bucketKey`
 	EncryptionKey []byte          `json:"encryptionKey`
+	CreatedAt     int64           `json:"created_at"`
 }
 
 const receivedFileModelName = "ReceivedFile"
@@ -32,7 +34,7 @@ var errReceivedFileNotFound = errors.New("Received file not found")
 func (m *model) CreateReceivedFile(
 	ctx context.Context,
 	file domain.FullPath,
-	invitationId string,
+	invitationID string,
 	accepted bool,
 	key []byte,
 ) (*ReceivedFileSchema, error) {
@@ -48,15 +50,18 @@ func (m *model) CreateReceivedFile(
 		return nil, err
 	}
 
+	now := time.Now().UnixNano()
+
 	newInstance := &ReceivedFileSchema{
 		ID:            "",
 		DbID:          file.DbId,
 		Bucket:        file.Bucket,
 		Path:          file.Path,
-		InvitationId:  invitationId,
+		InvitationId:  invitationID,
 		Accepted:      accepted,
 		BucketKey:     file.BucketKey,
 		EncryptionKey: key,
+		CreatedAt:     now,
 	}
 
 	instances := client.Instances{newInstance}
@@ -74,8 +79,9 @@ func (m *model) CreateReceivedFile(
 		DbID:         newInstance.DbID,
 		Bucket:       newInstance.Bucket,
 		Path:         newInstance.Path,
-		InvitationId: invitationId,
-		Accepted:     accepted,
+		InvitationId: newInstance.InvitationId,
+		Accepted:     newInstance.Accepted,
+		CreatedAt:    newInstance.CreatedAt,
 	}, nil
 }
 
@@ -101,6 +107,34 @@ func (m *model) FindReceivedFile(ctx context.Context, file domain.FullPath) (*Re
 	}
 	log.Debug("Model.FindReceivedFile: returning file with path " + files[0].Path)
 	return files[0], nil
+}
+
+// Lists the metadata of files received by the user
+// use accepted bool to look up for either accepted or rejected files
+// If seek == "", will start looking from the beginning. If it's an existing ID it will start looking from that ID.
+func (m *model) ListReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*ReceivedFileSchema, error) {
+	metaCtx, dbID, err := m.initReceivedFileModel(ctx)
+	if err != nil || dbID == nil {
+		return nil, err
+	}
+
+	query := db.Where("accepted").Eq(accepted).LimitTo(limit)
+
+	if seek != "" {
+		query = query.SeekID(core.InstanceID(seek))
+	}
+
+	rawFiles, err := m.threads.Find(metaCtx, *dbID, receivedFileModelName, query, &ReceivedFileSchema{})
+	if err != nil {
+		return nil, err
+	}
+
+	if rawFiles == nil {
+		return []*ReceivedFileSchema{}, nil
+	}
+
+	files := rawFiles.([]*ReceivedFileSchema)
+	return files, nil
 }
 
 func (m *model) initReceivedFileModel(ctx context.Context) (context.Context, *thread.ID, error) {
