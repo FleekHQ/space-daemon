@@ -3,8 +3,8 @@ package textile
 import (
 	"context"
 	"io"
-	"os"
 
+	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/textile/model"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
@@ -47,7 +47,7 @@ func (tc *textileClient) UploadFileToHub(ctx context.Context, b Bucket, path str
 		return nil, nil, err
 	}
 
-	hubCtx, _, err := tc.getBucketContext(ctx, b.Slug(), bucket.RemoteDbID, true, bucket.EncryptionKey)
+	hubCtx, _, err := tc.getBucketContext(ctx, bucket.RemoteDbID, b.Slug(), true, bucket.EncryptionKey)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -70,21 +70,27 @@ func (tc *textileClient) createMirrorBucket(ctx context.Context, schema model.Bu
 	}
 
 	// create mirror bucket
-	b, err := tc.hb.Init(hubCtx, bc.WithName(bucketSlug), bc.WithPrivate(true))
+	b, err := tc.hb.Create(hubCtx, bc.WithName(bucketSlug), bc.WithPrivate(true))
 	if err != nil {
 		return nil, err
 	}
 
 	return &model.MirrorBucketSchema{
-		RemoteDbID:      dbID.String(),
+		RemoteDbID:      utils.CastDbIDToString(*dbID),
 		RemoteBucketKey: b.Root.Key,
-		HubAddr:         os.Getenv("TXL_HUB_TARGET"),
+		HubAddr:         tc.cfg.GetString(config.TextileHubTarget, ""),
 	}, nil
 }
 
 // Creates a remote hub thread for the mirror bucket
 func (tc *textileClient) createMirrorThread(ctx context.Context) (*thread.ID, error) {
 	log.Debug("createMirrorThread: Generating a new threadID ...")
+	var err error
+	ctx, err = tc.getHubCtx(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	dbID := thread.NewIDV1(thread.Raw, 32)
 
 	log.Debug("createMirrorThread: Creating Thread DB for bucket at db " + dbID.String())

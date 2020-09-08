@@ -216,7 +216,7 @@ func (tc *textileClient) createMailBox(ctx context.Context, maillib *mail.Mail, 
 }
 
 func (tc *textileClient) setupOrCreateMailBox(ctx context.Context) (*mail.Mailbox, error) {
-	maillib := mail.NewMail(cmd.NewClients("api.textile.io:443", true), mail.DefaultConfConfig())
+	maillib := mail.NewMail(cmd.NewClients(tc.cfg.GetString(config.TextileHubTarget, ""), true), mail.DefaultConfConfig())
 
 	usr, _ := user.Current()
 	mbpath := filepath.Join(usr.HomeDir, ".fleek-space/textile/mail")

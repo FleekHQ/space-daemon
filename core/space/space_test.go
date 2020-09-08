@@ -175,8 +175,8 @@ func TestService_ListDirs(t *testing.T) {
 	bucketPath := "/ipfs/bafybeian44ntmjjfjbqt4dlkq4fiuhfzcxfunzuuzhbb7xkrnsdjb2sjha"
 
 	mockDirItems := &bucket.DirEntries{
-		Item: &buckets_pb.ListPathItem{
-			Items: []*buckets_pb.ListPathItem{
+		Item: &buckets_pb.PathItem{
+			Items: []*buckets_pb.PathItem{
 				{
 					Path:  bucketPath + "/.textileseed",
 					Name:  ".textileseed",
@@ -203,8 +203,8 @@ func TestService_ListDirs(t *testing.T) {
 	}
 
 	mockDirItemsSubfolder := &bucket.DirEntries{
-		Item: &buckets_pb.ListPathItem{
-			Items: []*buckets_pb.ListPathItem{
+		Item: &buckets_pb.PathItem{
+			Items: []*buckets_pb.PathItem{
 				{
 					Path:  bucketPath + "/somedir/example.txt",
 					Name:  "example.txt",

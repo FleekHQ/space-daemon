@@ -15,7 +15,6 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/alecthomas/jsonschema"
-	textileApiClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
 	bc "github.com/textileio/textile/api/buckets/client"
@@ -194,7 +193,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 
 	log.Debug("Creating Bucket in db " + dbID.String())
 	// create bucket
-	b, err := tc.bucketsClient.Init(ctx, bc.WithName(bucketSlug), bc.WithPrivate(true))
+	b, err := tc.bucketsClient.Create(ctx, bc.WithName(bucketSlug), bc.WithPrivate(true))
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +229,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 	return newB, nil
 }
 
-func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*textileApiClient.DBInfo, error) {
+func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*db.Info, error) {
 	bs, err := tc.GetModel().FindBucket(ctx, bucketSlug)
 
 	if err != nil {
@@ -248,7 +247,7 @@ func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*t
 		// addresses could be used to join thread
 	}
 
-	return b, err
+	return &b, err
 }
 
 func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address string, key thread.Key, bucketSlug string) error {

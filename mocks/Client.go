@@ -10,6 +10,8 @@ import (
 
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 
+	db "github.com/textileio/go-threads/db"
+
 	domain "github.com/FleekHQ/space-daemon/core/space/domain"
 
 	io "io"
@@ -162,6 +164,36 @@ func (_m *Client) GetModel() model.Model {
 	}
 
 	return r0
+}
+
+// GetReceivedFiles provides a mock function with given fields: ctx, accepted, seek, limit
+func (_m *Client) GetReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*domain.SharedDirEntry, string, error) {
+	ret := _m.Called(ctx, accepted, seek, limit)
+
+	var r0 []*domain.SharedDirEntry
+	if rf, ok := ret.Get(0).(func(context.Context, bool, string, int) []*domain.SharedDirEntry); ok {
+		r0 = rf(ctx, accepted, seek, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*domain.SharedDirEntry)
+		}
+	}
+
+	var r1 string
+	if rf, ok := ret.Get(1).(func(context.Context, bool, string, int) string); ok {
+		r1 = rf(ctx, accepted, seek, limit)
+	} else {
+		r1 = ret.Get(1).(string)
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(context.Context, bool, string, int) error); ok {
+		r2 = rf(ctx, accepted, seek, limit)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // GetThreadsConnection provides a mock function with given fields:
@@ -355,15 +387,15 @@ func (_m *Client) SendMessage(ctx context.Context, recipient crypto.PubKey, body
 }
 
 // ShareBucket provides a mock function with given fields: ctx, bucketSlug
-func (_m *Client) ShareBucket(ctx context.Context, bucketSlug string) (*client.DBInfo, error) {
+func (_m *Client) ShareBucket(ctx context.Context, bucketSlug string) (*db.Info, error) {
 	ret := _m.Called(ctx, bucketSlug)
 
-	var r0 *client.DBInfo
-	if rf, ok := ret.Get(0).(func(context.Context, string) *client.DBInfo); ok {
+	var r0 *db.Info
+	if rf, ok := ret.Get(0).(func(context.Context, string) *db.Info); ok {
 		r0 = rf(ctx, bucketSlug)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*client.DBInfo)
+			r0 = ret.Get(0).(*db.Info)
 		}
 	}
 
@@ -377,13 +409,13 @@ func (_m *Client) ShareBucket(ctx context.Context, bucketSlug string) (*client.D
 	return r0, r1
 }
 
-// ShareFilesViaPublicKey provides a mock function with given fields: ctx, paths, pubkeys
-func (_m *Client) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error {
-	ret := _m.Called(ctx, paths, pubkeys)
+// ShareFilesViaPublicKey provides a mock function with given fields: ctx, paths, pubkeys, keys
+func (_m *Client) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey, keys [][]byte) error {
+	ret := _m.Called(ctx, paths, pubkeys, keys)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []domain.FullPath, []crypto.PubKey) error); ok {
-		r0 = rf(ctx, paths, pubkeys)
+	if rf, ok := ret.Get(0).(func(context.Context, []domain.FullPath, []crypto.PubKey, [][]byte) error); ok {
+		r0 = rf(ctx, paths, pubkeys, keys)
 	} else {
 		r0 = ret.Error(0)
 	}

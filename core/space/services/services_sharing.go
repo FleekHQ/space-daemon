@@ -19,7 +19,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
-	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/ipfs/go-cid"
 )
 
@@ -228,12 +227,10 @@ func (s *Space) OpenSharedFile(ctx context.Context, hash, password, filename str
 }
 
 func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error {
-	err := s.tc.ShareFilesViaPublicKey(ctx, paths, pubkeys)
-	if err != nil {
-		return err
-	}
+	m := s.tc.GetModel()
 
-	for _, path := range paths {
+	var enckeys [][]byte
+	for i, path := range paths {
 		// this handles personal bucket since for shared-with-me files
 		// the dbid will be preset
 		if path.DbId == "" {
@@ -242,16 +239,11 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 				return err
 			}
 
-			bs, err := s.tc.GetBucket(ctx, b.Slug())
+			bs, err := m.FindBucket(ctx, b.GetData().Name)
 			if err != nil {
 				return err
 			}
-			threadID, err := bs.GetThreadID(ctx)
-			if err != nil {
-				return err
-			}
-
-			path.DbId = utils.CastDbIDToString(*threadID)
+			path.DbId = bs.RemoteBucketKey
 		}
 
 		if path.Bucket == "" {
@@ -259,15 +251,33 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 			if err != nil {
 				return err
 			}
+			bs, err := m.FindBucket(ctx, b.GetData().Name)
+			if err != nil {
+				return err
+			}
 			path.Bucket = b.Slug()
+			path.BucketKey = bs.RemoteBucketKey
+
+			enckeys[i] = bs.EncryptionKey
+		} else {
+			r, err := m.FindReceivedFile(ctx, path)
+			if err != nil {
+				return err
+			}
+			enckeys[i] = r.EncryptionKey
 		}
+	}
+
+	err := s.tc.ShareFilesViaPublicKey(ctx, paths, pubkeys, enckeys)
+	if err != nil {
+		return err
 	}
 
 	for _, pk := range pubkeys {
 
 		d := &domain.Invitation{
 			ItemPaths: paths,
-			// Key: TODO - get from keys thread for each file
+			Keys:      enckeys,
 		}
 
 		i, err := json.Marshal(d)
