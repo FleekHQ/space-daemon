@@ -339,5 +339,5 @@ func GetDefaultBucketSlug() string {
 }
 
 func GetDefaultMirrorBucketSlug() string {
-	return defaultPersonalMirroBucketSlug
+	return defaultPersonalMirrorBucketSlug
 }
