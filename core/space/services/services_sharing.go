@@ -252,8 +252,6 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 				return err
 			}
 
-			log.Info("incoming dbid nil, updating")
-			log.Info("using new remote db id: " + bs.RemoteDbID)
 			ep.DbId = bs.RemoteDbID
 		}
 
