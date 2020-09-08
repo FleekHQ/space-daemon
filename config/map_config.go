@@ -65,6 +65,11 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configBool[Ipfsnode] = flags.Ipfsnode
 	}
 
+	// Temp fix until we move to viper
+	if configStr[Ipfsaddr] == "" {
+		configStr[Ipfsaddr] = "/ip4/127.0.0.1/tcp/5001"
+	}
+
 	c := mapConfig{
 		configStr:  configStr,
 		configInt:  configInt,

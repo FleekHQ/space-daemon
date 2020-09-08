@@ -493,7 +493,7 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 		return domain.AddItemResult{}, err
 	}
 
-	if s.tc.IsBucketBackup(ctx, b.Slug()) && !s.tc.IsMirrorFile(ctx, targetPath, b.Slug()) {
+	if s.tc.IsBucketBackup(ctx, b.Slug()) && !s.tc.IsMirrorFile(ctx, targetPathBucket, b.Slug()) {
 		f.Seek(0, io.SeekStart)
 
 		_, _, err = s.tc.UploadFileToHub(ctx, b, targetPathBucket, f)
@@ -502,7 +502,7 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 			return domain.AddItemResult{}, err
 		}
 
-		_, err = s.tc.MarkMirrorFileBackup(ctx, targetPath, b.Slug())
+		_, err = s.tc.MarkMirrorFileBackup(ctx, targetPathBucket, b.Slug())
 		if err != nil {
 			log.Error(fmt.Sprintf("error creating mirror file Path=%s BucketSlug=%s", targetPathBucket, b.Key()), err)
 			return domain.AddItemResult{}, err

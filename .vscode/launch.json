@@ -10,7 +10,7 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/cmd/space-daemon",
-      "env": {},
+      "envFile": "${workspaceFolder}/.env",
       "args": ["-dev=true"]
     }
   ]
