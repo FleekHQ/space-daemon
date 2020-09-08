@@ -226,15 +226,22 @@ func (s *Space) OpenSharedFile(ctx context.Context, hash, password, filename str
 	}, nil
 }
 
-func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths *[]domain.FullPath, pubkeys []crypto.PubKey) error {
+func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error {
 	m := s.tc.GetModel()
 
-	enckeys := make([][]byte, len(*paths))
-	for i, path := range *paths {
+	enhancedPaths := make([]domain.FullPath, len(paths))
+	enckeys := make([][]byte, len(paths))
+	for i, path := range paths {
+		ep := domain.FullPath{
+			DbId:      path.DbId,
+			Bucket:    path.Bucket,
+			Path:      path.Path,
+			BucketKey: path.BucketKey,
+		}
 
 		// this handles personal bucket since for shared-with-me files
 		// the dbid will be preset
-		if path.DbId == "" {
+		if ep.DbId == "" {
 			b, err := s.tc.GetDefaultBucket(ctx)
 			if err != nil {
 				return err
@@ -244,10 +251,13 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths *[]domain.Full
 			if err != nil {
 				return err
 			}
-			(*paths)[i].DbId = bs.RemoteDbID
+
+			log.Info("incoming dbid nil, updating")
+			log.Info("using new remote db id: " + bs.RemoteDbID)
+			ep.DbId = bs.RemoteDbID
 		}
 
-		if path.Bucket == "" || path.Bucket == t.GetDefaultBucketSlug() {
+		if ep.Bucket == "" || ep.Bucket == t.GetDefaultBucketSlug() {
 			b, err := s.tc.GetDefaultBucket(ctx)
 			if err != nil {
 				return err
@@ -256,21 +266,23 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths *[]domain.Full
 			if err != nil {
 				return err
 			}
-			(*paths)[i].Bucket = b.Slug()
-			(*paths)[i].BucketKey = bs.RemoteBucketKey
+			ep.Bucket = b.Slug()
+			ep.BucketKey = bs.RemoteBucketKey
 			enckeys = append(enckeys, bs.EncryptionKey)
 		} else {
 			r, err := m.FindReceivedFile(ctx, path)
 			if err != nil {
 				return err
 			}
-			(*paths)[i].Bucket = r.Bucket
-			(*paths)[i].BucketKey = r.BucketKey
+			ep.Bucket = r.Bucket
+			ep.BucketKey = r.BucketKey
 			enckeys = append(enckeys, r.EncryptionKey)
 		}
+
+		enhancedPaths[i] = ep
 	}
 
-	err := s.tc.ShareFilesViaPublicKey(ctx, *paths, pubkeys, enckeys)
+	err := s.tc.ShareFilesViaPublicKey(ctx, enhancedPaths, pubkeys, enckeys)
 	if err != nil {
 		return err
 	}
@@ -278,7 +290,7 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths *[]domain.Full
 	for _, pk := range pubkeys {
 
 		d := &domain.Invitation{
-			ItemPaths: *paths,
+			ItemPaths: enhancedPaths,
 			Keys:      enckeys,
 		}
 
