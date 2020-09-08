@@ -25,7 +25,7 @@ func (tc *textileClient) ShareFilesViaPublicKey(ctx context.Context, paths []dom
 		}
 
 		log.Info("Adding roles for pth: " + pth.Path)
-		var roles map[string]buckets.Role
+		roles := make(map[string]buckets.Role)
 		for _, pk := range pubkeys {
 			pkb, err := pk.Bytes()
 			if err != nil {

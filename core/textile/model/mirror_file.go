@@ -32,6 +32,7 @@ type MirrorBucketSchema struct {
 const mirrorFileModelName = "MirrorFile"
 
 var errMirrorFileNotFound = errors.New("Mirror file not found")
+var errMirrorFileAlreadyExists = errors.New("Mirror file already exists")
 
 func (m *model) CreateMirrorBucket(ctx context.Context, bucketSlug string, mirrorBucket *MirrorBucketSchema) (*BucketSchema, error) {
 	metaCtx, metaDbID, err := m.initBucketModel(ctx)
@@ -71,12 +72,12 @@ func (m *model) FindMirrorFileByPathAndBucketSlug(ctx context.Context, path, buc
 	}
 
 	if rawMirrorFiles == nil {
-		return &MirrorFileSchema{}, nil
+		return nil, nil
 	}
 
 	mirror_files := rawMirrorFiles.([]*MirrorFileSchema)
 	if len(mirror_files) == 0 {
-		return &MirrorFileSchema{}, nil
+		return nil, nil
 	}
 
 	log.Debug("Model.FindMirrorFileByPathAndBucketSlug: returning mirror file with dbid " + mirror_files[0].DbID)
@@ -89,9 +90,13 @@ func (m *model) CreateMirrorFile(ctx context.Context, mirrorFile *domain.MirrorF
 		return nil, err
 	}
 
-	_, err = m.FindMirrorFileByPathAndBucketSlug(ctx, mirrorFile.Path, mirrorFile.BucketSlug)
+	mf, err := m.FindMirrorFileByPathAndBucketSlug(ctx, mirrorFile.Path, mirrorFile.BucketSlug)
 	if err != nil {
 		return nil, err
+	}
+
+	if mf != nil {
+		return nil, errMirrorFileAlreadyExists
 	}
 
 	newInstance := &MirrorFileSchema{

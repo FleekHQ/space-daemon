@@ -200,7 +200,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 
 	// We store the bucket in a meta thread so that we can later fetch a list of all buckets
 	log.Debug("Bucket " + bucketSlug + " created. Storing metadata.")
-	schema, err := m.CreateBucket(ctx, bucketSlug, dbID.String())
+	schema, err := m.CreateBucket(ctx, bucketSlug, utils.CastDbIDToString(*dbID))
 	if err != nil {
 		return nil, err
 	}
@@ -332,4 +332,8 @@ func (tc *textileClient) IsBucketBackup(ctx context.Context, bucketSlug string) 
 	}
 
 	return bucketSchema.Backup
+}
+
+func GetDefaultBucketSlug() string {
+	return defaultPersonalBucketSlug
 }

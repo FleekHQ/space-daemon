@@ -43,7 +43,7 @@ func (srv *grpcServer) ShareFilesViaPublicKey(ctx context.Context, request *pb.S
 		return nil, err
 	}
 
-	err = srv.sv.ShareFilesViaPublicKey(ctx, cleanedPaths, pks)
+	err = srv.sv.ShareFilesViaPublicKey(ctx, &cleanedPaths, pks)
 	if err != nil {
 		return nil, err
 	}
