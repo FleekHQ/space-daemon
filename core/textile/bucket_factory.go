@@ -337,3 +337,7 @@ func (tc *textileClient) IsBucketBackup(ctx context.Context, bucketSlug string) 
 func GetDefaultBucketSlug() string {
 	return defaultPersonalBucketSlug
 }
+
+func GetDefaultMirrorBucketSlug() string {
+	return defaultPersonalMirroBucketSlug
+}

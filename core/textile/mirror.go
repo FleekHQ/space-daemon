@@ -57,20 +57,18 @@ func (tc *textileClient) UploadFileToHub(ctx context.Context, b Bucket, path str
 
 // Creates a mirror bucket.
 func (tc *textileClient) createMirrorBucket(ctx context.Context, schema model.BucketSchema) (*model.MirrorBucketSchema, error) {
-	bucketSlug := schema.Slug
-
-	log.Debug("Creating a new mirror bucket with slug " + bucketSlug)
+	log.Debug("Creating a new mirror bucket with slug " + defaultPersonalMirroBucketSlug)
 	dbID, err := tc.createMirrorThread(ctx)
 	if err != nil {
 		return nil, err
 	}
-	hubCtx, _, err := tc.getBucketContext(ctx, utils.CastDbIDToString(*dbID), schema.Slug, true, schema.EncryptionKey)
+	hubCtx, _, err := tc.getBucketContext(ctx, utils.CastDbIDToString(*dbID), defaultPersonalMirroBucketSlug, true, schema.EncryptionKey)
 	if err != nil {
 		return nil, err
 	}
 
 	// create mirror bucket
-	b, err := tc.hb.Create(hubCtx, bc.WithName(bucketSlug), bc.WithPrivate(true))
+	b, err := tc.hb.Create(hubCtx, bc.WithName(defaultPersonalMirroBucketSlug), bc.WithPrivate(true))
 	if err != nil {
 		return nil, err
 	}

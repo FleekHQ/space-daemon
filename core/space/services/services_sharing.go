@@ -264,7 +264,7 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 			if err != nil {
 				return err
 			}
-			ep.Bucket = b.Slug()
+			ep.Bucket = t.GetDefaultMirrorBucketSlug()
 			ep.BucketKey = bs.RemoteBucketKey
 			enckeys = append(enckeys, bs.EncryptionKey)
 		} else {

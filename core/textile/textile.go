@@ -20,9 +20,10 @@ import (
 )
 
 const (
-	hubTarget                 = "127.0.0.1:3006"
-	threadsTarget             = "127.0.0.1:3006"
-	defaultPersonalBucketSlug = "personal"
+	hubTarget                      = "127.0.0.1:3006"
+	threadsTarget                  = "127.0.0.1:3006"
+	defaultPersonalBucketSlug      = "personal"
+	defaultPersonalMirroBucketSlug = "personal_mirror"
 )
 
 type BucketRoot buckets_pb.Root
