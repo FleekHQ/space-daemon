@@ -49,6 +49,11 @@ type AddItemsResponse struct {
 	Error      error
 }
 
+type Member struct {
+	Address   string `json:"address"`
+	PublicKey string `json:"publicKey"`
+}
+
 type AddWatchFile struct {
 	LocalPath  string `json:"local_path"`
 	BucketPath string `json:"bucket_path"`
@@ -144,4 +149,5 @@ type SharedDirEntry struct {
 	DbID   string
 	Bucket string
 	FileInfo
+	Members []Member
 }

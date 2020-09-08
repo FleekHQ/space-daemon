@@ -2,6 +2,7 @@ package textile
 
 import (
 	"context"
+	"path/filepath"
 	"time"
 
 	"github.com/pkg/errors"
@@ -126,12 +127,33 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 	}
 
 	for _, file := range files {
-		// TODO: Get these fields from mirror bucket
-		ipfsHash := ""
-		name := ""
+		ctx, _, err = tc.getBucketContext(ctx, file.DbID, file.Bucket, true, file.EncryptionKey)
+		if err != nil {
+			return nil, "", err
+		}
+
+		f, err := tc.hb.ListPath(ctx, file.BucketKey, file.Path)
+		if err != nil {
+			return nil, "", err
+		}
+
+		ipfsHash := f.Item.Cid
+		name := f.Item.Name
 		isDir := false
-		size := ""
-		ext := ""
+		size := f.GetItem().Size
+		ext := filepath.Ext(name)
+
+		rs, err := tc.hb.PullPathAccessRoles(ctx, file.BucketKey, file.Path)
+		if err != nil {
+			return nil, "", err
+		}
+
+		members := make([]domain.Member, len(rs))
+		for pubk, _ := range rs {
+			members = append(members, domain.Member{
+				Address: pubk,
+			})
+		}
 
 		res := &domain.SharedDirEntry{
 			Bucket: file.Bucket,
@@ -142,12 +164,13 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 					Path:          file.Path,
 					IsDir:         isDir,
 					Name:          name,
-					SizeInBytes:   size,
+					SizeInBytes:   string(size),
 					FileExtension: ext,
 					Created:       time.Unix(file.CreatedAt, 0).String(),
 					Updated:       time.Unix(file.CreatedAt, 0).String(),
 				},
 			},
+			Members: members,
 		}
 
 		items = append(items, res)
