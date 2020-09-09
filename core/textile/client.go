@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/FleekHQ/space-daemon/config"
@@ -141,7 +142,9 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.Ready <- true
 
 	// Repeating healthcheck
+	healthcheckMutex := &sync.Mutex{}
 	for {
+		healthcheckMutex.Lock()
 		timeAfterNextCheck := 60 * time.Second
 		// Do more frequent checks if the client is not initialized/running
 		if tc.isConnectedToHub == false || tc.isInitialized == false {
@@ -163,10 +166,13 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 
 		// If it's trying to shutdown we return right away
 		case <-ctx.Done():
+			healthcheckMutex.Unlock()
 			return nil
 		case <-tc.shuttingDown:
+			healthcheckMutex.Unlock()
 			return nil
 		}
+		healthcheckMutex.Unlock()
 	}
 }
 
