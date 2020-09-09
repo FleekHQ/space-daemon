@@ -3,6 +3,7 @@ package textile
 import (
 	"context"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -31,7 +32,10 @@ func (tc *textileClient) ShareFilesViaPublicKey(ctx context.Context, paths []dom
 		roles := make(map[string]buckets.Role)
 		for _, pk := range pubkeys {
 			tpk := thread.NewLibp2pPubKey(pk)
-			roles[tpk.String()] = buckets.Writer
+			// NOTE: setting to admin because receiving user
+			// should be able to see members and reshare
+			// as well
+			roles[tpk.String()] = buckets.Admin
 		}
 
 		err := tc.hb.PushPathAccessRoles(ctx, pth.BucketKey, pth.Path, roles)
@@ -145,10 +149,13 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 
 		rs, err := tc.hb.PullPathAccessRoles(ctx, file.BucketKey, file.Path)
 		if err != nil {
-			return nil, "", err
+			// TEMP: returning empty members list until we
+			// fix it on textile side
+			//return nil, "", err
+			rs = make(map[string]buckets.Role)
 		}
 
-		members := make([]domain.Member, len(rs))
+		members := make([]domain.Member, 0)
 		for pubk, _ := range rs {
 			members = append(members, domain.Member{
 				Address: pubk,
@@ -164,10 +171,10 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 					Path:          file.Path,
 					IsDir:         isDir,
 					Name:          name,
-					SizeInBytes:   string(size),
+					SizeInBytes:   strconv.FormatInt(size, 10),
 					FileExtension: ext,
-					Created:       time.Unix(file.CreatedAt, 0).String(),
-					Updated:       time.Unix(file.CreatedAt, 0).String(),
+					Created:       strconv.FormatInt(time.Unix(0, file.CreatedAt).Unix(), 10),
+					Updated:       strconv.FormatInt(time.Unix(0, file.CreatedAt).Unix(), 10), // NOTE: there is no modified yet so using same as create
 				},
 			},
 			Members: members,

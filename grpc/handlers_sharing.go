@@ -60,7 +60,7 @@ func (srv *grpcServer) GetSharedWithMeFiles(ctx context.Context, request *pb.Get
 	dirEntries := make([]*pb.SharedListDirectoryEntry, 0)
 
 	for _, e := range entries {
-		members := make([]*pb.FileMember, len(e.Members))
+		members := make([]*pb.FileMember, 0)
 
 		for _, m := range e.Members {
 			members = append(members, &pb.FileMember{
