@@ -15,7 +15,7 @@ func mapToPbNotification(n domain.Notification) *pb.Notification {
 	switch n.NotificationType {
 	case domain.INVITATION:
 		inv := n.InvitationValue
-		pbpths := make([]*pb.FullPath, len(inv.ItemPaths))
+		pbpths := make([]*pb.FullPath, 0)
 
 		for _, pth := range n.InvitationValue.ItemPaths {
 			pbpth := &pb.FullPath{
