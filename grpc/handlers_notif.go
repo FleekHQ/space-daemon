@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-	"errors"
 
 	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
@@ -11,7 +10,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 )
 
-func mapToPbNotification(n domain.Notification) (*pb.Notification, error) {
+func mapToPbNotification(n domain.Notification) *pb.Notification {
 	// maybe there is a cooler way to do this (e.g., with reflection)
 	switch n.NotificationType {
 	case domain.INVITATION:
@@ -44,7 +43,7 @@ func mapToPbNotification(n domain.Notification) (*pb.Notification, error) {
 			RelatedObject: ro,
 			Type:          pb.NotificationType(n.NotificationType),
 		}
-		return parsedNotif, nil
+		return parsedNotif
 	case domain.USAGEALERT:
 		ua := n.UsageAlertValue
 		pbua := &pb.UsageAlert{
@@ -63,9 +62,33 @@ func mapToPbNotification(n domain.Notification) (*pb.Notification, error) {
 			RelatedObject: ro,
 			Type:          pb.NotificationType(n.NotificationType),
 		}
-		return parsedNotif, nil
+		return parsedNotif
+	case domain.INVITATION_REPLY:
+		ir := n.InvitationAcceptValue
+		pbir := &pb.InvitationAccept{
+			InvitationID: ir.InvitationID,
+		}
+		ro := &pb.Notification_InvitationAccept{
+			InvitationAccept: pbir,
+		}
+		parsedNotif := &pb.Notification{
+			ID:            n.ID,
+			Body:          n.Body,
+			ReadAt:        n.ReadAt,
+			CreatedAt:     n.CreatedAt,
+			RelatedObject: ro,
+			Type:          pb.NotificationType(n.NotificationType),
+		}
+		return parsedNotif
 	default:
-		return nil, errors.New("Unsupported message type")
+		parsedNotif := &pb.Notification{
+			ID:        n.ID,
+			Body:      n.Body,
+			ReadAt:    n.ReadAt,
+			CreatedAt: n.CreatedAt,
+			Type:      pb.NotificationType(n.NotificationType),
+		}
+		return parsedNotif
 	}
 }
 
@@ -83,10 +106,7 @@ func (srv *grpcServer) GetNotifications(ctx context.Context, request *pb.GetNoti
 	parsedNotifs := []*pb.Notification{}
 
 	for _, notif := range n {
-		parsedNotif, err := mapToPbNotification(*notif)
-		if err != nil {
-			return nil, err
-		}
+		parsedNotif := mapToPbNotification(*notif)
 		parsedNotifs = append(parsedNotifs, parsedNotif)
 	}
 
