@@ -78,7 +78,6 @@ func (tc *textileClient) parseMessage(ctx context.Context, msg client.Message) (
 		n.UsageAlertValue = *u
 		n.RelatedObject = u
 	default:
-		return nil, errors.New("Unsupported message type")
 	}
 
 	return n, nil
