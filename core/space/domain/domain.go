@@ -109,6 +109,10 @@ type Invitation struct {
 	Keys             [][]byte         `json:""keys`
 }
 
+type InvitationReply struct {
+	InvitationID string `json:"invitationID"`
+}
+
 type UsageAlert struct {
 	Used    int64  `json:"used"`
 	Limit   int64  `json:"limit"`
@@ -128,9 +132,10 @@ type Notification struct {
 	CreatedAt        int64             `json:"createdAt"`
 	ReadAt           int64             `json:"readAt"`
 	// QUESTION: is there a way to enforce that only one of the below is present
-	InvitationValue Invitation  `json:"invitationValue"`
-	UsageAlertValue UsageAlert  `json:"usageAlertValue"`
-	RelatedObject   interface{} `json:"relatedObject`
+	InvitationValue       Invitation      `json:"invitationValue"`
+	UsageAlertValue       UsageAlert      `json:"usageAlertValue"`
+	InvitationAcceptValue InvitationReply `json:"invitationAcceptValue"`
+	RelatedObject         interface{}     `json:"relatedObject`
 }
 
 type APISessionTokens struct {

@@ -1758,6 +1758,14 @@
         }
       }
     },
+    "spaceInvitationAccept": {
+      "type": "object",
+      "properties": {
+        "invitationID": {
+          "type": "string"
+        }
+      }
+    },
     "spaceInvitationStatus": {
       "type": "string",
       "enum": [
@@ -1881,6 +1889,9 @@
         },
         "usageAlert": {
           "$ref": "#/definitions/spaceUsageAlert"
+        },
+        "invitationAccept": {
+          "$ref": "#/definitions/spaceInvitationAccept"
         },
         "type": {
           "$ref": "#/definitions/spaceNotificationType"

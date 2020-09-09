@@ -15,11 +15,10 @@ import (
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/pkg/errors"
 
-	"github.com/textileio/dcrypto"
-
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	t "github.com/FleekHQ/space-daemon/core/textile"
 	"github.com/ipfs/go-cid"
+	"github.com/textileio/dcrypto"
 )
 
 func (s *Space) GenerateFileSharingLink(
@@ -266,7 +265,7 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 			}
 			ep.Bucket = t.GetDefaultMirrorBucketSlug()
 			ep.BucketKey = bs.RemoteBucketKey
-			enckeys = append(enckeys, bs.EncryptionKey)
+			enckeys[i] = bs.EncryptionKey
 		} else {
 			r, err := m.FindReceivedFile(ctx, path.DbId, path.Bucket, path.Path)
 			if err != nil {
@@ -274,7 +273,7 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 			}
 			ep.Bucket = r.Bucket
 			ep.BucketKey = r.BucketKey
-			enckeys = append(enckeys, r.EncryptionKey)
+			enckeys[i] = r.EncryptionKey
 		}
 
 		enhancedPaths[i] = ep
@@ -286,10 +285,26 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 	}
 
 	for _, pk := range pubkeys {
+		inviter, err := s.keychain.GetStoredPublicKey()
+		if err != nil {
+			return err
+		}
+
+		inviterRaw, err := inviter.Raw()
+		if err != nil {
+			return err
+		}
+
+		pkRaw, err := pk.Raw()
+		if err != nil {
+			return err
+		}
 
 		d := &domain.Invitation{
-			ItemPaths: enhancedPaths,
-			Keys:      enckeys,
+			InviterPublicKey: hex.EncodeToString(inviterRaw),
+			InviteePublicKey: hex.EncodeToString(pkRaw),
+			ItemPaths:        enhancedPaths,
+			Keys:             enckeys,
 		}
 
 		i, err := json.Marshal(d)
@@ -338,37 +353,37 @@ func (s *Space) HandleSharedFilesInvitation(ctx context.Context, invitationId st
 
 	if accept {
 		invitation, err = s.tc.AcceptSharedFilesInvitation(ctx, invitation)
+
+		// notify inviter,  it was accepted
+		invitersPk, err := decodePublicKey(err, invitation.InviterPublicKey)
+		if err != nil {
+			log.Error("should not happen, but inviters public key is invalid", err)
+			return errFailedToNotifyInviter
+		}
+
+		messageBody, err := json.Marshal(&invitation)
+		if err != nil {
+			log.Error("error encoding invitation response body", err)
+			return errFailedToNotifyInviter
+		}
+
+		message, err := json.Marshal(&domain.MessageBody{
+			Type: domain.INVITATION_REPLY,
+			Body: messageBody,
+		})
+
+		if err != nil {
+			log.Error("error encoding invitation response", err)
+			return errFailedToNotifyInviter
+		}
+
+		_, err = s.tc.SendMessage(ctx, invitersPk, message)
 	} else {
 		invitation, err = s.tc.RejectSharedFilesInvitation(ctx, invitation)
 	}
 	if err != nil {
 		return err
 	}
-
-	// notify inviter,  it was accepted
-	invitersPk, err := decodePublicKey(err, invitation.InviterPublicKey)
-	if err != nil {
-		log.Error("should not happen, but inviters public key is invalid", err)
-		return errFailedToNotifyInviter
-	}
-
-	messageBody, err := json.Marshal(&invitation)
-	if err != nil {
-		log.Error("error encoding invitation response body", err)
-		return errFailedToNotifyInviter
-	}
-
-	message, err := json.Marshal(&domain.MessageBody{
-		Type: domain.INVITATION_REPLY,
-		Body: messageBody,
-	})
-
-	if err != nil {
-		log.Error("error encoding invitation response", err)
-		return errFailedToNotifyInviter
-	}
-
-	_, err = s.tc.SendMessage(ctx, invitersPk, message)
 
 	return err
 }
