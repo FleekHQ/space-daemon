@@ -27,24 +27,45 @@ func NotFound(slug string) error {
 	return errors.New(fmt.Sprintf("bucket %s not found", slug))
 }
 
-func (tc *textileClient) GetBucket(ctx context.Context, slug string) (Bucket, error) {
+type GetBucketForRemoteFileInput struct {
+	Path   string
+	DbID   string
+	Bucket string
+}
+
+// Gets a wrapped bucket
+// remoteFile is optional. Include if looking for wrappers for remote buckets (mainly used for received files)
+func (tc *textileClient) GetBucket(ctx context.Context, slug string, remoteFile *GetBucketForRemoteFileInput) (Bucket, error) {
 	if err := tc.requiresRunning(); err != nil {
 		return nil, err
 	}
 
-	return tc.getBucket(ctx, slug)
+	return tc.getBucket(ctx, slug, remoteFile)
 }
 
-func (tc *textileClient) getBucket(ctx context.Context, slug string) (Bucket, error) {
-	ctx, root, err := tc.getBucketRootFromSlug(ctx, slug)
+// Gets a wrapped bucket
+// remoteFile is optional. Include if looking for wrappers for remote buckets (mainly used for received files)
+func (tc *textileClient) getBucket(ctx context.Context, slug string, remoteFile *GetBucketForRemoteFileInput) (Bucket, error) {
+	var root *buckets_pb.Root
+	getContextFn := tc.getOrCreateBucketContext
+	bucketsClient := tc.bucketsClient
+	var err error
+
+	if remoteFile == nil {
+		_, root, err = tc.getBucketRootFromSlug(ctx, slug)
+	} else {
+		root, getContextFn, err = tc.getBucketRootFromReceivedFile(ctx, remoteFile)
+		bucketsClient = tc.hb
+	}
 	if err != nil {
 		return nil, err
 	}
+
 	b := bucket.New(
 		root,
-		tc.getOrCreateBucketContext,
+		getContextFn,
 		NewSecureBucketsClient(
-			tc.bucketsClient,
+			bucketsClient,
 			slug,
 		),
 	)
@@ -53,7 +74,7 @@ func (tc *textileClient) getBucket(ctx context.Context, slug string) (Bucket, er
 }
 
 func (tc *textileClient) GetDefaultBucket(ctx context.Context) (Bucket, error) {
-	return tc.GetBucket(ctx, defaultPersonalBucketSlug)
+	return tc.GetBucket(ctx, defaultPersonalBucketSlug, nil)
 }
 
 func (tc *textileClient) getBucketContext(ctx context.Context, sDbID string, bucketSlug string, ishub bool, enckey []byte) (context.Context, *thread.ID, error) {
@@ -133,7 +154,7 @@ func (tc *textileClient) listBuckets(ctx context.Context) ([]Bucket, error) {
 
 	result := make([]Bucket, 0)
 	for _, b := range bucketList {
-		bucketObj, err := tc.getBucket(ctx, b.Slug)
+		bucketObj, err := tc.getBucket(ctx, b.Slug, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -141,6 +162,35 @@ func (tc *textileClient) listBuckets(ctx context.Context) ([]Bucket, error) {
 	}
 
 	return result, nil
+}
+
+func (tc *textileClient) getBucketRootFromReceivedFile(ctx context.Context, file *GetBucketForRemoteFileInput) (*buckets_pb.Root, bucket.GetBucketContextFn, error) {
+	receivedFile, err := tc.GetModel().FindReceivedFile(ctx, file.DbID, file.Bucket, file.Path)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	getCtxFn := func(ctx context.Context, slug string) (context.Context, *thread.ID, error) {
+		return tc.getBucketContext(ctx, receivedFile.DbID, receivedFile.Bucket, true, receivedFile.EncryptionKey)
+	}
+
+	remoteCtx, _, err := getCtxFn(ctx, receivedFile.Bucket)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	bucketListReply, err := tc.hb.List(remoteCtx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, root := range bucketListReply.Roots {
+		if root.Name == receivedFile.Bucket {
+			return root, getCtxFn, nil
+		}
+	}
+	return nil, nil, NotFound(receivedFile.Bucket)
+
 }
 
 func (tc *textileClient) getBucketRootFromSlug(ctx context.Context, slug string) (context.Context, *buckets_pb.Root, error) {
@@ -177,7 +227,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 	var err error
 	m := tc.GetModel()
 
-	if b, _ := tc.getBucket(ctx, bucketSlug); b != nil {
+	if b, _ := tc.getBucket(ctx, bucketSlug, nil); b != nil {
 		return b, nil
 	}
 

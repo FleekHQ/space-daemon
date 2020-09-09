@@ -17,6 +17,7 @@ import (
 	bc "github.com/textileio/textile/api/buckets/client"
 	bucketsClient "github.com/textileio/textile/api/buckets/client"
 	bucketspb "github.com/textileio/textile/api/buckets/pb"
+	"github.com/textileio/textile/buckets"
 )
 
 var textileRelPathRegex = regexp.MustCompile(`/ip[f|n]s/[^/]*(?P<relPath>/.*)`)
@@ -58,6 +59,34 @@ func (s *SecureBucketClient) PushPath(ctx context.Context, key, path string, rea
 	// but putting a TODO here in the meantime
 }
 
+func (s *SecureBucketClient) PushPathAccessRoles(ctx context.Context, key, path string, roles map[string]buckets.Role) error {
+	encryptionKey, err := s.getBucketEncryptionKey(ctx)
+	if err != nil {
+		return err
+	}
+
+	encryptedPath, _, err := s.encryptPathData(ctx, encryptionKey, path, nil)
+	if err != nil {
+		return err
+	}
+
+	return s.client.PushPathAccessRoles(ctx, key, encryptedPath, roles)
+}
+
+func (s *SecureBucketClient) PullPathAccessRoles(ctx context.Context, key, path string) (map[string]buckets.Role, error) {
+	encryptionKey, err := s.getBucketEncryptionKey(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	encryptedPath, _, err := s.encryptPathData(ctx, encryptionKey, path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.client.PullPathAccessRoles(ctx, key, encryptedPath)
+}
+
 func (s *SecureBucketClient) PullPath(ctx context.Context, key, path string, writer io.Writer, opts ...bc.Option) error {
 	encryptionKey, err := s.getBucketEncryptionKey(ctx)
 	if err != nil {
@@ -68,6 +97,9 @@ func (s *SecureBucketClient) PullPath(ctx context.Context, key, path string, wri
 	if err != nil {
 		return err
 	}
+
+	res, _ := s.client.ListPath(ctx, key, "/")
+	log.Debug("res: " + string(res.Item.Items[1].Path))
 
 	errs := make(chan error)
 	pipeReader, pipeWriter := io.Pipe()

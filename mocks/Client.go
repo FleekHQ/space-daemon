@@ -81,13 +81,13 @@ func (_m *Client) CreateBucket(ctx context.Context, bucketSlug string) (textile.
 	return r0, r1
 }
 
-// GetBucket provides a mock function with given fields: ctx, slug
-func (_m *Client) GetBucket(ctx context.Context, slug string) (textile.Bucket, error) {
-	ret := _m.Called(ctx, slug)
+// GetBucket provides a mock function with given fields: ctx, slug, remoteFile
+func (_m *Client) GetBucket(ctx context.Context, slug string, remoteFile *textile.GetBucketForRemoteFileInput) (textile.Bucket, error) {
+	ret := _m.Called(ctx, slug, remoteFile)
 
 	var r0 textile.Bucket
-	if rf, ok := ret.Get(0).(func(context.Context, string) textile.Bucket); ok {
-		r0 = rf(ctx, slug)
+	if rf, ok := ret.Get(0).(func(context.Context, string, *textile.GetBucketForRemoteFileInput) textile.Bucket); ok {
+		r0 = rf(ctx, slug, remoteFile)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(textile.Bucket)
@@ -95,8 +95,8 @@ func (_m *Client) GetBucket(ctx context.Context, slug string) (textile.Bucket, e
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, slug)
+	if rf, ok := ret.Get(1).(func(context.Context, string, *textile.GetBucketForRemoteFileInput) error); ok {
+		r1 = rf(ctx, slug, remoteFile)
 	} else {
 		r1 = ret.Error(1)
 	}

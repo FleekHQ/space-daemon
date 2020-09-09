@@ -153,7 +153,7 @@ func (srv *grpcServer) registerTxlStream(stream pb.SpaceApi_TxlSubscribeServer) 
 }
 
 func (srv *grpcServer) OpenFile(ctx context.Context, request *pb.OpenFileRequest) (*pb.OpenFileResponse, error) {
-	fi, err := srv.sv.OpenFile(ctx, request.Path, request.Bucket)
+	fi, err := srv.sv.OpenFile(ctx, request.Path, request.Bucket, request.DbId)
 	if err != nil {
 		return nil, err
 	}

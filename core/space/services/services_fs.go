@@ -20,6 +20,8 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 )
 
+var bucketNotFoundErr = errors.New("Could not find bucket")
+
 // Creates a bucket
 func (s *Space) CreateBucket(ctx context.Context, slug string) (textile.Bucket, error) {
 	b, err := s.tc.CreateBucket(ctx, slug)
@@ -78,6 +80,24 @@ func (s *Space) ToggleBucketBackup(ctx context.Context, bucketName string, bucke
 	return nil
 }
 
+func (s *Space) getBucketForRemoteFile(ctx context.Context, bucketName string, dbID string, path string) (textile.Bucket, error) {
+	input := &textile.GetBucketForRemoteFileInput{
+		Bucket: bucketName,
+		DbID:   dbID,
+		Path:   path,
+	}
+	b, err := s.tc.GetBucket(ctx, bucketName, input)
+	if err != nil {
+		return nil, err
+	}
+
+	if b == nil {
+		return nil, bucketNotFoundErr
+	}
+
+	return b, nil
+}
+
 // Returns the bucket given the name, and if the name is "" returns the default bucket
 func (s *Space) getBucketWithFallback(ctx context.Context, bucketName string) (textile.Bucket, error) {
 	var b textile.Bucket
@@ -86,7 +106,7 @@ func (s *Space) getBucketWithFallback(ctx context.Context, bucketName string) (t
 	if bucketName == "" {
 		b, err = s.tc.GetDefaultBucket(ctx)
 	} else {
-		b, err = s.tc.GetBucket(ctx, bucketName)
+		b, err = s.tc.GetBucket(ctx, bucketName, nil)
 	}
 
 	if err != nil {
@@ -94,7 +114,7 @@ func (s *Space) getBucketWithFallback(ctx context.Context, bucketName string) (t
 	}
 
 	if b == nil {
-		return nil, errors.New("Could not find bucket")
+		return nil, bucketNotFoundErr
 	}
 
 	return b, nil
@@ -180,11 +200,18 @@ func (s *Space) ListDirs(ctx context.Context, path string, bucketName string) ([
 	return s.listDirAtPath(ctx, b, path, true)
 }
 
-func (s *Space) OpenFile(ctx context.Context, path string, bucketName string) (domain.OpenFileInfo, error) {
+// Copies a file inside a bucket into a temp, unencrypted version of the file in the local file system
+// Include dbID if opening a shared file. Use dbID = "" otherwise.
+func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (domain.OpenFileInfo, error) {
 	var filePath string
 	var err error
+	var b textile.Bucket
 	// check if file exists in sync
-	b, err := s.getBucketWithFallback(ctx, bucketName)
+	if dbID != "" {
+		b, err = s.getBucketForRemoteFile(ctx, bucketName, dbID, path)
+	} else {
+		b, err = s.getBucketWithFallback(ctx, bucketName)
+	}
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}

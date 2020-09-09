@@ -52,7 +52,12 @@ func (tc *textileClient) UploadFileToHub(ctx context.Context, b Bucket, path str
 		return nil, nil, err
 	}
 
-	return tc.hb.PushPath(hubCtx, bucket.RemoteBucketKey, path, reader)
+	bucketsClient := NewSecureBucketsClient(
+		tc.hb,
+		b.Slug(),
+	)
+
+	return bucketsClient.PushPath(hubCtx, bucket.RemoteBucketKey, path, reader)
 }
 
 // Creates a mirror bucket.

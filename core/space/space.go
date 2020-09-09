@@ -21,7 +21,7 @@ import (
 // Service Layer should not depend on gRPC dependencies
 type Service interface {
 	RegisterSyncer(sync services.Syncer)
-	OpenFile(ctx context.Context, path string, bucketName string) (domain.OpenFileInfo, error)
+	OpenFile(ctx context.Context, path, bucketName, dbID string) (domain.OpenFileInfo, error)
 	GetConfig(ctx context.Context) domain.AppConfig
 	ListDirs(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error)
 	ListDir(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error)

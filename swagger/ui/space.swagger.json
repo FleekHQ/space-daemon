@@ -1930,6 +1930,9 @@
         },
         "bucket": {
           "type": "string"
+        },
+        "dbId": {
+          "type": "string"
         }
       }
     },
