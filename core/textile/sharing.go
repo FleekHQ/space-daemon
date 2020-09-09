@@ -38,7 +38,9 @@ func (tc *textileClient) ShareFilesViaPublicKey(ctx context.Context, paths []dom
 			roles[tpk.String()] = buckets.Admin
 		}
 
-		err := tc.hb.PushPathAccessRoles(ctx, pth.BucketKey, pth.Path, roles)
+		sbc := NewSecureBucketsClient(tc.hb, pth.Bucket)
+
+		err := sbc.PushPathAccessRoles(ctx, pth.BucketKey, pth.Path, roles)
 		if err != nil {
 			return err
 		}
@@ -136,7 +138,9 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 			return nil, "", err
 		}
 
-		f, err := tc.hb.ListPath(ctx, file.BucketKey, file.Path)
+		sbc := NewSecureBucketsClient(tc.hb, file.Bucket)
+
+		f, err := sbc.ListPath(ctx, file.BucketKey, file.Path)
 		if err != nil {
 			return nil, "", err
 		}
@@ -147,7 +151,7 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 		size := f.GetItem().Size
 		ext := filepath.Ext(name)
 
-		rs, err := tc.hb.PullPathAccessRoles(ctx, file.BucketKey, file.Path)
+		rs, err := sbc.PullPathAccessRoles(ctx, file.BucketKey, file.Path)
 		if err != nil {
 			// TEMP: returning empty members list until we
 			// fix it on textile side

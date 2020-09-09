@@ -170,27 +170,26 @@ func (tc *textileClient) getBucketRootFromReceivedFile(ctx context.Context, file
 		return nil, nil, err
 	}
 
-	ctx, _, err = tc.getBucketContext(ctx, receivedFile.DbID, receivedFile.Bucket, true, receivedFile.EncryptionKey)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	bucketListReply, err := tc.hb.List(ctx)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
 	getCtxFn := func(ctx context.Context, slug string) (context.Context, *thread.ID, error) {
 		return tc.getBucketContext(ctx, receivedFile.DbID, receivedFile.Bucket, true, receivedFile.EncryptionKey)
 	}
 
+	remoteCtx, _, err := getCtxFn(ctx, receivedFile.Bucket)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	bucketListReply, err := tc.hb.List(remoteCtx)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	for _, root := range bucketListReply.Roots {
-		if root.Name == file.Bucket {
+		if root.Name == receivedFile.Bucket {
 			return root, getCtxFn, nil
 		}
 	}
-	return nil, nil, NotFound(file.Bucket)
+	return nil, nil, NotFound(receivedFile.Bucket)
 
 }
 

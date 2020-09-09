@@ -140,7 +140,7 @@ func (a *App) Start(ctx context.Context) error {
 		a.cfg,
 		kc,
 		v,
-		hub.New(appStore, kc, a.cfg),
+		hubAuth,
 		space.WithEnv(a.env),
 	)
 	if svErr != nil {

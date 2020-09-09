@@ -304,7 +304,7 @@ func TestService_OpenFile(t *testing.T) {
 		"Slug",
 	).Return(testKey)
 
-	res, err := sv.OpenFile(context.Background(), testPath, "", nil)
+	res, err := sv.OpenFile(context.Background(), testPath, "", "")
 
 	assert.Nil(t, err)
 	assert.NotEmpty(t, res)
