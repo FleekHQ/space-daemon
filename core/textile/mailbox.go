@@ -67,7 +67,7 @@ func (tc *textileClient) parseMessage(ctx context.Context, msg client.Message) (
 		}
 
 		n.InvitationValue = *i
-		n.RelatedObject = i
+		n.RelatedObject = *i
 	case domain.USAGEALERT:
 		u := &domain.UsageAlert{}
 		err := json.Unmarshal((*b).Body, u)
@@ -76,7 +76,7 @@ func (tc *textileClient) parseMessage(ctx context.Context, msg client.Message) (
 			return nil, err
 		}
 		n.UsageAlertValue = *u
-		n.RelatedObject = u
+		n.RelatedObject = *u
 	default:
 	}
 

@@ -32,9 +32,7 @@ func mapToPbNotification(n domain.Notification) *pb.Notification {
 			// TODO: Status: come form shared with me thread,
 			ItemPaths: pbpths,
 		}
-		ro := &pb.Notification_InvitationValue{
-			InvitationValue: pbinv,
-		}
+		ro := &pb.Notification_InvitationValue{pbinv}
 		parsedNotif := &pb.Notification{
 			ID:            n.ID,
 			Body:          n.Body,
@@ -51,9 +49,7 @@ func mapToPbNotification(n domain.Notification) *pb.Notification {
 			Limit:   ua.Limit,
 			Message: ua.Message,
 		}
-		ro := &pb.Notification_UsageAlert{
-			UsageAlert: pbua,
-		}
+		ro := &pb.Notification_UsageAlert{pbua}
 		parsedNotif := &pb.Notification{
 			ID:            n.ID,
 			Body:          n.Body,
@@ -68,9 +64,7 @@ func mapToPbNotification(n domain.Notification) *pb.Notification {
 		pbir := &pb.InvitationAccept{
 			InvitationID: ir.InvitationID,
 		}
-		ro := &pb.Notification_InvitationAccept{
-			InvitationAccept: pbir,
-		}
+		ro := &pb.Notification_InvitationAccept{pbir}
 		parsedNotif := &pb.Notification{
 			ID:            n.ID,
 			Body:          n.Body,
@@ -93,7 +87,11 @@ func mapToPbNotification(n domain.Notification) *pb.Notification {
 }
 
 func (srv *grpcServer) SetNotificationsLastSeenAt(ctx context.Context, request *pb.SetNotificationsLastSeenAtRequest) (*pb.SetNotificationsLastSeenAtResponse, error) {
-	return nil, errNotImplemented
+	err := srv.sv.SetNotificationsLastSeenAt(request.Timestamp)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.SetNotificationsLastSeenAtResponse{}, nil
 }
 
 func (srv *grpcServer) GetNotifications(ctx context.Context, request *pb.GetNotificationsRequest) (*pb.GetNotificationsResponse, error) {
@@ -115,9 +113,17 @@ func (srv *grpcServer) GetNotifications(ctx context.Context, request *pb.GetNoti
 		no = parsedNotifs[len(parsedNotifs)-1].ID
 	}
 
+	ls, err := srv.sv.GetNotificationsLastSeenAt()
+	if err != nil {
+		// error getting last seen at but we dont want to fail the
+		// whole request for that
+		ls = 0
+	}
+
 	return &pb.GetNotificationsResponse{
 		Notifications: parsedNotifs,
 		NextOffset:    no,
+		LastSeenAt:    ls,
 	}, nil
 }
 
