@@ -93,7 +93,7 @@ func (s *Space) RecoverKeysByPassphrase(ctx context.Context, uuid string, pass s
 	}
 
 	// Wait for textile client to be ready before returning
-	<-s.tc.WaitForReady()
+	<-s.tc.WaitForHealthy()
 
 	return nil
 }
