@@ -26,11 +26,11 @@ jobs:
       - name: Set stage to ptd
         if: endsWith(github.ref, '/master')
         run: |
-          echo "::set-env name=STAGE::prd"
+          echo "::set-env name=STAGE::PRD"
       - name: Set stage to dev
         if: endsWith(github.ref, '/alpha-release-dev') || endsWith(github.ref, '/develop')
         run: |
-          echo "::set-env name=STAGE::dev"
+          echo "::set-env name=STAGE::DEV"
       - name: Set secret names
         id: secretnames
         run: |
