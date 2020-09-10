@@ -191,3 +191,25 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 
 	return items, offset, nil
 }
+
+func (tc *textileClient) GetPathAccessRoles(ctx context.Context, bucketSlug, path string) ([]string, error) {
+	var err error
+	ctx, err = tc.getHubCtx(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	sbc := NewSecureBucketsClient(tc.hb, bucketSlug)
+
+	rs, err := sbc.PullPathAccessRoles(ctx, "TODO: BucketKey", path)
+	if err != nil {
+		return nil, err
+	}
+
+	pubks := make([]string, 0)
+	for pubk, _ := range rs {
+		pubks = append(pubks, pubk)
+	}
+
+	return pubks, nil
+}

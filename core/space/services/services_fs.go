@@ -148,7 +148,7 @@ func (s *Space) listDirAtPath(
 			relPath = item.Path
 		}
 
-		pubks, err := b.GetPathAccessRoles(ctx, item.Path)
+		pubks, err := s.tc.GetPathAccessRoles(ctx, b.Slug(), item.Path)
 		if err != nil {
 			return nil, err
 		}

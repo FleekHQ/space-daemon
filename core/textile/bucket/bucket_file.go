@@ -72,27 +72,3 @@ func (b *Bucket) GetFile(ctx context.Context, path string, w io.Writer) error {
 
 	return nil
 }
-
-func (b *Bucket) GetPathAccessRoles(ctx context.Context, path string) ([]string, error) {
-	b.lock.RLock()
-	defer b.lock.RUnlock()
-
-	ctx, _, err := b.getContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// sbc := NewSecureBucketsClient(tc.hb, b)
-
-	// rs, err := sbc.PullPathAccessRoles(ctx, file.BucketKey, path)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	pubks := make([]string, 0)
-	// for _, pubk := range rs {
-	// 	pubks = append(pubks, pubk)
-	// }
-
-	return pubks, nil
-}
