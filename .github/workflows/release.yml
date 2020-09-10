@@ -23,12 +23,11 @@ jobs:
         run: |
           brew tap mitchellh/gon
           brew install mitchellh/gon/gon
-      - name: Set stage to ptd
-        if: endsWith(github.ref, '/master')
+      - name: Set stage to prd for all
         run: |
           echo "::set-env name=STAGE::PRD"
-      - name: Set stage to dev
-        if: endsWith(github.ref, '/alpha-release-dev') || endsWith(github.ref, '/develop')
+      - name: Set stage to dev if tagged develop
+        if: endsWith(github.ref, '-dev')
         run: |
           echo "::set-env name=STAGE::DEV"
       - name: Set secret names
