@@ -13,6 +13,7 @@ build:
 	-X 'main.textilehub=${TXL_HUB_TARGET}' \
 	-X 'main.textilehubma=${TXL_HUB_MA}' \
 	-X 'main.textilethreads=${TXL_THREADS_TARGET}' \
+	-X 'main.textilehubgatewayurl=${TXL_HUB_GATEWAY_URL}' \
   -X 'main.textileuserkey=${TXL_USER_KEY}' \
 	-X 'main.textileusersecret=${TXL_USER_SECRET}' \
 	-X 'main.mongohost=${MONGO_HOST}' \

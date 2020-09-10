@@ -39,6 +39,7 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[TextileHubTarget] = os.Getenv(env.TextileHubTarget)
 		configStr[TextileHubMa] = os.Getenv(env.TextileHubMa)
 		configStr[TextileThreadsTarget] = os.Getenv(env.TextileThreadsTarget)
+		configStr[TextileHubGatewayUrl] = os.Getenv(env.TextileHubGatewayUrl)
 		configStr[TextileUserKey] = os.Getenv(env.TextileUserKey)
 		configStr[TextileUserSecret] = os.Getenv(env.TextileUserSecret)
 
@@ -60,6 +61,7 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[TextileHubTarget] = flags.TextileHubTarget
 		configStr[TextileHubMa] = flags.TextileHubMa
 		configStr[TextileThreadsTarget] = flags.TextileThreadsTarget
+		configStr[TextileHubGatewayUrl] = flags.TextileHubGatewayUrl
 		configStr[TextileUserKey] = flags.TextileUserKey
 		configStr[TextileUserSecret] = flags.TextileUserSecret
 		configBool[Ipfsnode] = flags.Ipfsnode

@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 
-	"github.com/FleekHQ/space-daemon/core/ipfs"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/vault"
 
@@ -25,7 +24,6 @@ type Space struct {
 	keychain keychain.Keychain
 	vault    vault.Vault
 	hub      hub.HubAuth
-	ic       ipfs.Client
 }
 
 type Syncer interface {
@@ -58,7 +56,6 @@ func NewSpace(
 	kc keychain.Keychain,
 	v vault.Vault,
 	h hub.HubAuth,
-	ic ipfs.Client,
 ) *Space {
 	return &Space{
 		store:    st,
@@ -69,6 +66,5 @@ func NewSpace(
 		keychain: kc,
 		vault:    v,
 		hub:      h,
-		ic:       ic,
 	}
 }

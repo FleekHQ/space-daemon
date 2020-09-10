@@ -19,27 +19,28 @@ import (
 )
 
 var (
-	cpuprofile        = flag.String("cpuprofile", "", "write cpu profile to `file`")
-	memprofile        = flag.String("memprofile", "", "write memory profile to `file`")
-	debugMode         = flag.Bool("debug", true, "run daemon with debug mode for profiling")
-	devMode           = flag.Bool("dev", false, "run daemon in dev mode to use .env file")
-	ipfsaddr          = flag.String("ipfsaddr", "/ip4/127.0.0.1/tcp/5001", "IPFS multiaddress to connect to (defaults to local node)")
-	ipfsnode          = flag.Bool("ipfsnode", true, "run IPFS embedded into the daemon (defaults to true)")
-	ipfsnodeaddr      string
-	ipfsnodepath      string
-	mongousr          string
-	mongopw           string
-	mongohost         string
-	mongorepset       string
-	spaceapi          string
-	vaultapi          string
-	vaultsaltsecret   string
-	spacehubauth      string
-	textilehub        string
-	textilehubma      string
-	textilethreads    string
-	textileuserkey    string
-	textileusersecret string
+	cpuprofile           = flag.String("cpuprofile", "", "write cpu profile to `file`")
+	memprofile           = flag.String("memprofile", "", "write memory profile to `file`")
+	debugMode            = flag.Bool("debug", true, "run daemon with debug mode for profiling")
+	devMode              = flag.Bool("dev", false, "run daemon in dev mode to use .env file")
+	ipfsaddr             = flag.String("ipfsaddr", "/ip4/127.0.0.1/tcp/5001", "IPFS multiaddress to connect to (defaults to local node)")
+	ipfsnode             = flag.Bool("ipfsnode", true, "run IPFS embedded into the daemon (defaults to true)")
+	ipfsnodeaddr         string
+	ipfsnodepath         string
+	mongousr             string
+	mongopw              string
+	mongohost            string
+	mongorepset          string
+	spaceapi             string
+	vaultapi             string
+	vaultsaltsecret      string
+	spacehubauth         string
+	textilehub           string
+	textilehubma         string
+	textilethreads       string
+	textilehubgatewayurl string
+	textileuserkey       string
+	textileusersecret    string
 )
 
 func main() {
@@ -69,6 +70,7 @@ func main() {
 		TextileHubTarget:     textilehub,
 		TextileHubMa:         textilehubma,
 		TextileThreadsTarget: textilethreads,
+		TextileHubGatewayUrl: textilehubgatewayurl,
 		TextileUserKey:       textileuserkey,
 		TextileUserSecret:    textileusersecret,
 	}
