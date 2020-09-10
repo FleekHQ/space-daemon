@@ -154,7 +154,7 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 		timeAfterNextCheck := 60 * time.Second
 		// Do more frequent checks if the client is not initialized/running
 		if tc.isConnectedToHub == false || tc.isInitialized == false {
-			timeAfterNextCheck = 5 * time.Second
+			timeAfterNextCheck = 3 * time.Second
 		}
 
 		// If it's trying to shutdown we return right away
