@@ -43,17 +43,6 @@ jobs:
           echo "::set-output name=TXL_THREADS_TARGET::TXL_THREADS_TARGET_${STAGE}"
           echo "::set-output name=TXL_USER_KEY::TXL_USER_KEY_${STAGE}"
           echo "::set-output name=TXL_USER_SECRET::TXL_USER_SECRET_${STAGE}"
-      - name: debug list secret names only
-        run: |
-          echo ${{ steps.secretnames.outputs.SERVICES_API_URL }}
-          echo ${{ steps.secretnames.outputs.VAULT_API_URL }}
-          echo ${{ steps.secretnames.outputs.VAULT_SALT_SECRET }}
-          echo ${{ steps.secretnames.outputs.SERVICES_HUB_AUTH_URL }}
-          echo ${{ steps.secretnames.outputs.TXL_HUB_TARGET }}
-          echo ${{ steps.secretnames.outputs.TXL_HUB_MA }}
-          echo ${{ steps.secretnames.outputs.TXL_THREADS_TARGET }}
-          echo ${{ steps.secretnames.outputs.TXL_USER_KEY }}
-          echo ${{ steps.secretnames.outputs.TXL_USER_SECRET }}
       - name: Release via goreleaser
         uses: goreleaser/goreleaser-action@master
         with:
