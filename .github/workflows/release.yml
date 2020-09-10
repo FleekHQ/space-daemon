@@ -23,6 +23,26 @@ jobs:
         run: |
           brew tap mitchellh/gon
           brew install mitchellh/gon/gon
+      - name: Set stage to prd for all
+        run: |
+          echo "::set-env name=STAGE::PRD"
+      - name: Set stage to dev if tagged develop
+        if: endsWith(github.ref, '-dev')
+        run: |
+          echo "::set-env name=STAGE::DEV"
+      - name: Set secret names
+        id: secretnames
+        run: |
+          echo $STAGE
+          echo "::set-output name=SERVICES_API_URL::SERVICES_API_URL_${STAGE}"
+          echo "::set-output name=VAULT_API_URL::VAULT_API_URL_${STAGE}"
+          echo "::set-output name=VAULT_SALT_SECRET::VAULT_SALT_SECRET_${STAGE}"
+          echo "::set-output name=SERVICES_HUB_AUTH_URL::SERVICES_HUB_AUTH_URL_${STAGE}"
+          echo "::set-output name=TXL_HUB_TARGET::TXL_HUB_TARGET_${STAGE}"
+          echo "::set-output name=TXL_HUB_MA::TXL_HUB_MA_${STAGE}"
+          echo "::set-output name=TXL_THREADS_TARGET::TXL_THREADS_TARGET_${STAGE}"
+          echo "::set-output name=TXL_USER_KEY::TXL_USER_KEY_${STAGE}"
+          echo "::set-output name=TXL_USER_SECRET::TXL_USER_SECRET_${STAGE}"
       - name: Release via goreleaser
         uses: goreleaser/goreleaser-action@master
         with:
@@ -33,12 +53,12 @@ jobs:
           MONGO_PW: ${{ secrets.MONGO_PW }}
           MONGO_HOST: ${{ secrets.MONGO_HOST }}
           MONGO_REPLICA_SET: ${{ secrets.MONGO_REPLICA_SET }}
-          SERVICES_API_URL: ${{ secrets.SERVICES_API_URL }}
-          VAULT_API_URL: ${{ secrets.VAULT_API_URL }}
-          VAULT_SALT_SECRET: ${{ secrets.VAULT_SALT_SECRET }}
-          SERVICES_HUB_AUTH_URL: ${{ secrets.SERVICES_HUB_AUTH_URL }}
-          TXL_HUB_TARGET: ${{ secrets.TXL_HUB_TARGET }}
-          TXL_HUB_MA: ${{ secrets.TXL_HUB_MA }}
-          TXL_THREADS_TARGET: ${{ secrets.TXL_THREADS_TARGET }}
-          TXL_USER_KEY: ${{ secrets.TXL_USER_KEY }}
-          TXL_USER_SECRET: ${{ secrets.TXL_USER_SECRET }}
+          SERVICES_API_URL: ${{ secrets[steps.secretnames.outputs.SERVICES_API_URL] }}
+          VAULT_API_URL: ${{ secrets[steps.secretnames.outputs.VAULT_API_URL] }}
+          VAULT_SALT_SECRET: ${{ secrets[steps.secretnames.outputs.VAULT_SALT_SECRET] }}
+          SERVICES_HUB_AUTH_URL: ${{ secrets[steps.secretnames.outputs.SERVICES_HUB_AUTH_URL] }}
+          TXL_HUB_TARGET: ${{ secrets[steps.secretnames.outputs.TXL_HUB_TARGET] }}
+          TXL_HUB_MA: ${{ secrets[steps.secretnames.outputs.TXL_HUB_MA] }}
+          TXL_THREADS_TARGET: ${{ secrets[steps.secretnames.outputs.TXL_THREADS_TARGET] }}
+          TXL_USER_KEY: ${{ secrets[steps.secretnames.outputs.TXL_USER_KEY] }}
+          TXL_USER_SECRET: ${{ secrets[steps.secretnames.outputs.TXL_USER_SECRET] }}
