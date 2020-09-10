@@ -504,6 +504,22 @@ func (_m *Client) UploadFileToHub(ctx context.Context, b textile.Bucket, _a2 str
 	return r0, r1, r2
 }
 
+// WaitForHealthy provides a mock function with given fields:
+func (_m *Client) WaitForHealthy() chan bool {
+	ret := _m.Called()
+
+	var r0 chan bool
+	if rf, ok := ret.Get(0).(func() chan bool); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(chan bool)
+		}
+	}
+
+	return r0
+}
+
 // WaitForReady provides a mock function with given fields:
 func (_m *Client) WaitForReady() chan bool {
 	ret := _m.Called()

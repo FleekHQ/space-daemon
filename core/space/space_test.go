@@ -671,6 +671,9 @@ func TestService_BackupAndRestore(t *testing.T) {
 	assert.NotNil(t, backup)
 
 	mockKeychain.On("ImportExistingKeyPair", mock.Anything, mock.Anything).Return(nil)
+	mockChan := make(chan bool, 1)
+	mockChan <- true
+	textileClient.On("WaitForHealthy").Return(mockChan)
 
 	err = sv.RecoverKeysByLocalBackup(ctx, path)
 
@@ -727,6 +730,9 @@ func TestService_VaultRestore(t *testing.T) {
 	mockVault.On("Retrieve", uuid, pass).Return(mockItems, nil)
 
 	mockKeychain.On("ImportExistingKeyPair", mock.Anything, mock.Anything).Return(nil)
+	mockChan := make(chan bool, 1)
+	mockChan <- true
+	textileClient.On("WaitForHealthy").Return(mockChan)
 
 	err := sv.RecoverKeysByPassphrase(ctx, uuid, pass)
 	assert.Nil(t, err)
