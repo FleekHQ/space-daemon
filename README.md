@@ -186,3 +186,15 @@ server in localhost:6060. See docs how to interact with pprof server here: https
 
 To disable debug mode add this flag to binary arguments
 `-debug=false`
+
+### CI Secrets
+
+Secrets are set by adding them in Github and then specifying them in `release.yml`. Secrets can be constant across environment/stages or be stage specific.
+
+If specified, the release file will dynamically generate the secret name based on the stage by adding a `_DEV` or `_PRD` suffix to the secret name only for the specificed environment variable. It will always use `_PRD` unless the tag ends in `-dev`.  So for example tag `v0.0.15` will use PRD values, while `v0.0.15-dev` will use DEV values.
+
+Stage specific secret names will only be used for secrets `release.yml` that point to the step output instead of the secret name directly (i.e., `SERVICES_API_URL: ${{ secrets[steps.secretnames.outputs.SERVICES_API_URL] }}` instead of `MONGO_REPLICA_SET: ${{ secrets.MONGO_REPLICA_SET }}`.
+
+So to add a new secret:
+* If it's not stage specific then add the secret in GH with no suffix and in `release.yml`, refer to it based on the secret name.
+* If it is stage specific, then create the 2 secrets in GH (ending in `_PRD` and `_DEV`), add the entry in step `secretnames`, and make sure the secret name in the next step points to the step output
