@@ -49,6 +49,14 @@ func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDire
 	dirEntries := make([]*pb.ListDirectoryEntry, 0)
 
 	for _, e := range entries {
+		members := make([]*pb.FileMember, 0)
+
+		for _, m := range e.Members {
+			members = append(members, &pb.FileMember{
+				PublicKey: m.PublicKey,
+			})
+		}
+
 		dirEntry := &pb.ListDirectoryEntry{
 			Path:          e.Path,
 			IsDir:         e.IsDir,
@@ -58,6 +66,7 @@ func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDire
 			Updated:       e.Updated,
 			FileExtension: e.FileExtension,
 			IpfsHash:      e.IpfsHash,
+			Members:       members,
 		}
 		dirEntries = append(dirEntries, dirEntry)
 	}
@@ -81,6 +90,14 @@ func (srv *grpcServer) ListDirectory(
 	dirEntries := make([]*pb.ListDirectoryEntry, 0)
 
 	for _, e := range entries {
+		members := make([]*pb.FileMember, 0)
+
+		for _, m := range e.Members {
+			members = append(members, &pb.FileMember{
+				PublicKey: m.PublicKey,
+			})
+		}
+
 		dirEntry := &pb.ListDirectoryEntry{
 			Path:          e.Path,
 			IsDir:         e.IsDir,
@@ -90,6 +107,7 @@ func (srv *grpcServer) ListDirectory(
 			Updated:       e.Updated,
 			FileExtension: e.FileExtension,
 			IpfsHash:      e.IpfsHash,
+			Members:       members,
 		}
 		dirEntries = append(dirEntries, dirEntry)
 	}

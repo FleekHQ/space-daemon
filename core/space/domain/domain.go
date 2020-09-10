@@ -15,6 +15,7 @@ type DirEntry struct {
 	Created       string
 	Updated       string
 	FileExtension string
+	Members       []Member
 }
 
 type ThreadInfo struct {
@@ -154,5 +155,5 @@ type SharedDirEntry struct {
 	DbID   string
 	Bucket string
 	FileInfo
-	Members []Member
+	Members []Member // XXX: it is duplicated from FileInfo
 }

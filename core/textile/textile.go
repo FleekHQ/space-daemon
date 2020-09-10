@@ -57,6 +57,7 @@ type Bucket interface {
 		ctx context.Context,
 		path string,
 	) (path.Resolved, error)
+	GetPathAccessRoles(ctx context.Context, path string) ([]string, error)
 }
 
 type Client interface {
