@@ -33,15 +33,27 @@ jobs:
       - name: Set secret names
         id: secretnames
         run: |
-          echo "::set-output name=SERVICES_API_URL::SERVICES_API_URL_${{env.STAGE}}"
-          echo "::set-output name=VAULT_API_URL::VAULT_API_URL_${{env.STAGE}}"
-          echo "::set-output name=VAULT_SALT_SECRET::VAULT_SALT_SECRET_${{env.STAGE}}"
-          echo "::set-output name=SERVICES_HUB_AUTH_URL::SERVICES_HUB_AUTH_URL_${{env.STAGE}}"
-          echo "::set-output name=TXL_HUB_TARGET::TXL_HUB_TARGET_${{env.STAGE}}"
-          echo "::set-output name=TXL_HUB_MA::TXL_HUB_MA_${{env.STAGE}}"
-          echo "::set-output name=TXL_THREADS_TARGET::TXL_THREADS_TARGET_${{env.STAGE}}"
-          echo "::set-output name=TXL_USER_KEY::TXL_USER_KEY_${{env.STAGE}}"
-          echo "::set-output name=TXL_USER_SECRET::TXL_USER_SECRET_${{env.STAGE}}"
+          echo $STAGE
+          echo "::set-output name=SERVICES_API_URL::SERVICES_API_URL_${STAGE}"
+          echo "::set-output name=VAULT_API_URL::VAULT_API_URL_${STAGE}"
+          echo "::set-output name=VAULT_SALT_SECRET::VAULT_SALT_SECRET_${STAGE}"
+          echo "::set-output name=SERVICES_HUB_AUTH_URL::SERVICES_HUB_AUTH_URL_${STAGE}"
+          echo "::set-output name=TXL_HUB_TARGET::TXL_HUB_TARGET_${STAGE}"
+          echo "::set-output name=TXL_HUB_MA::TXL_HUB_MA_${STAGE}"
+          echo "::set-output name=TXL_THREADS_TARGET::TXL_THREADS_TARGET_${STAGE}"
+          echo "::set-output name=TXL_USER_KEY::TXL_USER_KEY_${STAGE}"
+          echo "::set-output name=TXL_USER_SECRET::TXL_USER_SECRET_${STAGE}"
+      - name: debug list secret names only
+        run: |
+          echo ${{ steps.secretnames.outputs.SERVICES_API_URL }}
+          echo ${{ steps.secretnames.outputs.VAULT_API_URL }}
+          echo ${{ steps.secretnames.outputs.VAULT_SALT_SECRET }}
+          echo ${{ steps.secretnames.outputs.SERVICES_HUB_AUTH_URL }}
+          echo ${{ steps.secretnames.outputs.TXL_HUB_TARGET }}
+          echo ${{ steps.secretnames.outputs.TXL_HUB_MA }}
+          echo ${{ steps.secretnames.outputs.TXL_THREADS_TARGET }}
+          echo ${{ steps.secretnames.outputs.TXL_USER_KEY }}
+          echo ${{ steps.secretnames.outputs.TXL_USER_SECRET }}
       - name: Release via goreleaser
         uses: goreleaser/goreleaser-action@master
         with:
@@ -52,12 +64,12 @@ jobs:
           MONGO_PW: ${{ secrets.MONGO_PW }}
           MONGO_HOST: ${{ secrets.MONGO_HOST }}
           MONGO_REPLICA_SET: ${{ secrets.MONGO_REPLICA_SET }}
-          SERVICES_API_URL: ${{ secrets[steps.vars.outputs.SERVICES_API_URL] }}
-          VAULT_API_URL: ${{ secrets[steps.vars.outputs.VAULT_API_URL] }}
-          VAULT_SALT_SECRET: ${{ secrets[steps.vars.outputs.VAULT_SALT_SECRET] }}
-          SERVICES_HUB_AUTH_URL: ${{ secrets[steps.vars.outputs.SERVICES_HUB_AUTH_URL] }}
-          TXL_HUB_TARGET: ${{ secrets[steps.vars.outputs.TXL_HUB_TARGET] }}
-          TXL_HUB_MA: ${{ secrets[steps.vars.outputs.TXL_HUB_MA] }}
-          TXL_THREADS_TARGET: ${{ secrets[steps.vars.outputs.TXL_THREADS_TARGET] }}
-          TXL_USER_KEY: ${{ secrets[steps.vars.outputs.TXL_USER_KEY] }}
-          TXL_USER_SECRET: ${{ secrets[steps.vars.outputs.TXL_USER_SECRET] }}
+          SERVICES_API_URL: ${{ secrets[steps.secretnames.outputs.SERVICES_API_URL] }}
+          VAULT_API_URL: ${{ secrets[steps.secretnames.outputs.VAULT_API_URL] }}
+          VAULT_SALT_SECRET: ${{ secrets[steps.secretnames.outputs.VAULT_SALT_SECRET] }}
+          SERVICES_HUB_AUTH_URL: ${{ secrets[steps.secretnames.outputs.SERVICES_HUB_AUTH_URL] }}
+          TXL_HUB_TARGET: ${{ secrets[steps.secretnames.outputs.TXL_HUB_TARGET] }}
+          TXL_HUB_MA: ${{ secrets[steps.secretnames.outputs.TXL_HUB_MA] }}
+          TXL_THREADS_TARGET: ${{ secrets[steps.secretnames.outputs.TXL_THREADS_TARGET] }}
+          TXL_USER_KEY: ${{ secrets[steps.secretnames.outputs.TXL_USER_KEY] }}
+          TXL_USER_SECRET: ${{ secrets[steps.secretnames.outputs.TXL_USER_SECRET] }}
