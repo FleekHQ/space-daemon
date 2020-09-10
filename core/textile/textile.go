@@ -86,7 +86,7 @@ type Client interface {
 	UploadFileToHub(ctx context.Context, b Bucket, path string, reader io.Reader) (result path.Resolved, root path.Path, err error)
 	MarkMirrorFileBackup(ctx context.Context, path, bucketSlug string) (*domain.MirrorFile, error)
 	GetReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*domain.SharedDirEntry, string, error)
-	GetPathAccessRoles(ctx context.Context, bucketSlug, path string) ([]string, error)
+	GetPathAccessRoles(ctx context.Context, b Bucket, bucketKey, path string) ([]string, error)
 }
 
 type Buckd interface {
