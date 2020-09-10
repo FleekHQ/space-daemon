@@ -41,6 +41,7 @@ type textileClient struct {
 	Ready            chan bool
 	keypairDeleted   chan bool
 	shuttingDown     chan bool
+	onHealthy        chan bool
 	cfg              config.Config
 	isConnectedToHub bool
 	netc             *nc.Client
@@ -67,6 +68,7 @@ func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth, uc Use
 		Ready:            make(chan bool),
 		keypairDeleted:   make(chan bool),
 		shuttingDown:     make(chan bool),
+		onHealthy:        make(chan bool),
 		isConnectedToHub: false,
 		hubAuth:          hubAuth,
 		mbNotifier:       nil,
@@ -75,6 +77,10 @@ func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth, uc Use
 
 func (tc *textileClient) WaitForReady() chan bool {
 	return tc.Ready
+}
+
+func (tc *textileClient) WaitForHealthy() chan bool {
+	return tc.onHealthy
 }
 
 func (tc *textileClient) requiresRunning() error {
@@ -324,8 +330,14 @@ func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
 func (tc *textileClient) Shutdown() error {
 	tc.shuttingDown <- true
 	tc.isRunning = false
-	close(tc.Ready)
+
+	// Close channels
 	close(tc.mailEvents)
+	close(tc.Ready)
+	close(tc.onHealthy)
+	close(tc.keypairDeleted)
+	close(tc.shuttingDown)
+
 	if err := tc.bucketsClient.Close(); err != nil {
 		return err
 	}
@@ -376,6 +388,13 @@ func (tc *textileClient) healthcheck(ctx context.Context) {
 		log.Debug("Textile Client healthcheck... Not connected to hub.")
 	default:
 		log.Debug("Textile Client healthcheck... OK.")
+		// Non-blocking channel send in case there are no listeners registered
+		select {
+		case tc.onHealthy <- true:
+			log.Debug("Notifying health OK")
+		default:
+			// Do nothing
+		}
 	}
 }
 

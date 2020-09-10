@@ -21,11 +21,17 @@ func (s *Space) GenerateKeyPair(ctx context.Context, useForce bool) (string, err
 		return "", err
 	}
 
+	// Wait for textile client to be ready before returning
+	<-s.tc.WaitForHealthy()
+
 	return mnemonic, nil
 }
 
 func (s *Space) RestoreKeyPairFromMnemonic(ctx context.Context, mnemonic string) error {
 	_, err := s.keychain.GenerateKeyFromMnemonic(keychain.WithMnemonic(mnemonic), keychain.WithOverride())
+
+	// Wait for textile client to be ready before returning
+	<-s.tc.WaitForHealthy()
 
 	return err
 }
