@@ -47,7 +47,17 @@ func (tc *textileClient) parseMessage(ctx context.Context, msg client.Message) (
 	err = json.Unmarshal(p, b)
 
 	if err != nil {
-		return nil, err
+		log.Error("Error parsing message into MessageBody type", err)
+
+		// returning generic notification since body was not able to be parsed
+		n := &domain.Notification{
+			ID:        msg.ID,
+			Body:      string(p),
+			CreatedAt: msg.CreatedAt.Unix(),
+			ReadAt:    msg.ReadAt.Unix(),
+		}
+
+		return n, nil
 	}
 
 	n := &domain.Notification{
@@ -153,7 +163,15 @@ func (tc *textileClient) listenForMessages(ctx context.Context) error {
 				// handle new message
 				log.Info("Received mail: " + e.MessageID.String())
 
-				p, err := tc.parseMessage(ctx, e.Message)
+				// need to fetch the message again because the event
+				// payload doesn't have the full deets, will remove
+				// once its fixed on txl end
+				msg, err := tc.mb.ListInboxMessages(ctx, client.WithSeek(e.MessageID.String()), client.WithLimit(1))
+				if err != nil {
+					return
+				}
+
+				p, err := tc.parseMessage(ctx, msg[0])
 				if err != nil {
 					log.Error("Unable to parse incoming message: ", err)
 				}
@@ -176,14 +194,19 @@ func (tc *textileClient) listenForMessages(ctx context.Context) error {
 	}()
 
 	// Start watching (the third param indicates we want to keep watching when offline)
-	_, err = tc.mb.WatchInbox(ctx, tc.mailEvents, true)
-	if err != nil {
-		return err
-	}
-	// TODO: handle connectivity state if needed
-	// for s := range state {
-	// 	// handle connectivity state
-	// }
+	go func() {
+		state, err := tc.mb.WatchInbox(ctx, tc.mailEvents, true)
+		if err != nil {
+			log.Error("Unable to watch mailbox, ", err)
+			return
+		}
+
+		// TODO: handle connectivity state if needed
+		for s := range state {
+			log.Info("received inbox watch state: " + s.State.String())
+		}
+	}()
+
 	return nil
 }
 

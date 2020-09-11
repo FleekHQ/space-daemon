@@ -69,6 +69,7 @@ func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth, uc Use
 		keypairDeleted:   make(chan bool),
 		shuttingDown:     make(chan bool),
 		onHealthy:        make(chan bool),
+		mailEvents:       make(chan mail.MailboxEvent),
 		isConnectedToHub: false,
 		hubAuth:          hubAuth,
 		mbNotifier:       nil,
