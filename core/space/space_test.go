@@ -15,8 +15,6 @@ import (
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 
-	"github.com/FleekHQ/space-daemon/config"
-
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/stretchr/testify/mock"
 
@@ -103,10 +101,6 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 		closeAndDelete(tmpFile2)
 		os.RemoveAll(dir)
 	}
-
-	cfg.On("GetString", config.Ipfsaddr, mock.Anything).Return(
-		"/ip4/127.0.0.1/tcp/5001",
-	)
 
 	mockPubKeyHex = "67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
 	mockPrivKeyHex = "dd55f8921f90fdf31c6ef9ad86bd90605602fd7d32dc8ea66ab72deb6a82821c67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"

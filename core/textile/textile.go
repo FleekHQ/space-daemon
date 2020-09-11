@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 
+	"github.com/ipfs/go-cid"
+
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
@@ -24,6 +26,7 @@ const (
 	threadsTarget                   = "127.0.0.1:3006"
 	defaultPersonalBucketSlug       = "personal"
 	defaultPersonalMirrorBucketSlug = "personal_mirror"
+	defaultPublicShareBucketSlug    = "personal_public"
 )
 
 type BucketRoot buckets_pb.Root
@@ -87,6 +90,8 @@ type Client interface {
 	MarkMirrorFileBackup(ctx context.Context, path, bucketSlug string) (*domain.MirrorFile, error)
 	GetReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*domain.SharedDirEntry, string, error)
 	GetPathAccessRoles(ctx context.Context, b Bucket, bucketKey, path string) ([]string, error)
+	GetPublicShareBucket(ctx context.Context) (Bucket, error)
+	DownloadPublicGatewayItem(ctx context.Context, cid cid.Cid) (io.ReadCloser, error)
 }
 
 type Buckd interface {
