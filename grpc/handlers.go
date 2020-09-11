@@ -53,7 +53,7 @@ func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDire
 
 		for _, m := range e.Members {
 			members = append(members, &pb.FileMember{
-				PublicKey: m.PublicKey,
+				Address: m.Address,
 			})
 		}
 
