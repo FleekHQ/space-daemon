@@ -41,6 +41,7 @@ jobs:
           echo "::set-output name=TXL_HUB_TARGET::TXL_HUB_TARGET_${STAGE}"
           echo "::set-output name=TXL_HUB_MA::TXL_HUB_MA_${STAGE}"
           echo "::set-output name=TXL_THREADS_TARGET::TXL_THREADS_TARGET_${STAGE}"
+          echo "::set-output name=TXL_HUB_GATEWAY_URL::TXL_HUB_GATEWAY_URL_${STAGE}"
           echo "::set-output name=TXL_USER_KEY::TXL_USER_KEY_${STAGE}"
           echo "::set-output name=TXL_USER_SECRET::TXL_USER_SECRET_${STAGE}"
       - name: Release via goreleaser
@@ -60,5 +61,6 @@ jobs:
           TXL_HUB_TARGET: ${{ secrets[steps.secretnames.outputs.TXL_HUB_TARGET] }}
           TXL_HUB_MA: ${{ secrets[steps.secretnames.outputs.TXL_HUB_MA] }}
           TXL_THREADS_TARGET: ${{ secrets[steps.secretnames.outputs.TXL_THREADS_TARGET] }}
+          TXL_HUB_GATEWAY_URL: ${{ secrets[steps.secretnames.outputs.TXL_HUB_GATEWAY_URL] }}
           TXL_USER_KEY: ${{ secrets[steps.secretnames.outputs.TXL_USER_KEY] }}
           TXL_USER_SECRET: ${{ secrets[steps.secretnames.outputs.TXL_USER_SECRET] }}
