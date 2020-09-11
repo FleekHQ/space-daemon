@@ -1,8 +1,13 @@
 package ipfs
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"strings"
+
 	"github.com/ipfs/go-cid"
 	chunker "github.com/ipfs/go-ipfs-chunker"
 	ipld "github.com/ipfs/go-ipld-format"
@@ -11,11 +16,7 @@ import (
 	"github.com/ipfs/go-unixfs/importer/helpers"
 	"github.com/ipfs/go-unixfs/importer/trickle"
 	mh "github.com/multiformats/go-multihash"
-	"io"
-	"strings"
 )
-
-
 
 func GetFileHash(r io.Reader) (string, error) {
 	hashFun := "sha2-256"
@@ -31,7 +32,7 @@ func GetFileHash(r io.Reader) (string, error) {
 	}
 	prefix.MhType = hashFunCode
 	prefix.MhLength = -1
-	prefix.Codec  = cid.DagProtobuf
+	prefix.Codec = cid.DagProtobuf
 
 	dagServ := NewDagService()
 	dbp := helpers.DagBuilderParams{
@@ -66,4 +67,19 @@ func GetFileHash(r io.Reader) (string, error) {
 
 }
 
+func DownloadIpfsItem(ctx context.Context, gatewayUrl string, cid cid.Cid) (io.ReadCloser, error) {
+	url := fmt.Sprintf("%s/ipfs/%s", gatewayUrl, cid.String())
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
 
+	client := http.Client{}
+
+	resp, err := client.Do(req.WithContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Body, nil
+}

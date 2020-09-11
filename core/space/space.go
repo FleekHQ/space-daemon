@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/FleekHQ/space-daemon/core/ipfs"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/vault"
 	crypto "github.com/libp2p/go-libp2p-crypto"
@@ -89,12 +88,7 @@ func NewService(
 		o.env = env.New()
 	}
 
-	ic, err := ipfs.NewSpaceIpfsClient(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	sv := services.NewSpace(store, tc, sync, cfg, o.env, kc, v, h, ic)
+	sv := services.NewSpace(store, tc, sync, cfg, o.env, kc, v, h)
 
 	return sv, nil
 }

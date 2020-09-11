@@ -231,10 +231,6 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 		return b, nil
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
 	ctx, dbID, err := tc.getOrCreateBucketContext(ctx, bucketSlug)
 
 	if err != nil {

@@ -36,7 +36,7 @@ func ParseDbIDFromString(dbID string) (*thread.ID, error) {
 
 type DeterministicThreadVariant string
 
-var (
+const (
 	MetathreadThreadVariant DeterministicThreadVariant = "metathread"
 )
 
