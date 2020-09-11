@@ -242,18 +242,18 @@ func getOpenFileReverseKey(bucketSlug string, bucketPath string) string {
 	return ReverseOpenFilesKeyPrefix + bucketSlug + ":" + bucketPath
 }
 
-func (bs *bucketSynchronizer) getOpenFileBucketKey(localPath string) (string, bool) {
+func (bs *bucketSynchronizer) getOpenFileBucketSlugAndPath(localPath string) (string, string, bool) {
 	var fi domain.AddWatchFile
 	var err error
 	if fi, err = bs.getOpenFileInfo(getOpenFileKey(localPath)); err != nil {
-		return "", false
+		return "", "", false
 	}
 
-	if fi.BucketKey == "" {
-		return "", false
+	if fi.BucketSlug == "" {
+		return "", "", false
 	}
 
-	return fi.BucketKey, true
+	return fi.BucketSlug, fi.BucketPath, true
 }
 
 // Helper function to set open file info in the store
