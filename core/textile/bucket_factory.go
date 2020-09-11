@@ -154,6 +154,10 @@ func (tc *textileClient) listBuckets(ctx context.Context) ([]Bucket, error) {
 
 	result := make([]Bucket, 0)
 	for _, b := range bucketList {
+		// Skip listing the mirror bucket
+		if b.Slug == defaultPersonalMirrorBucketSlug {
+			continue
+		}
 		bucketObj, err := tc.getBucket(ctx, b.Slug, nil)
 		if err != nil {
 			return nil, err
