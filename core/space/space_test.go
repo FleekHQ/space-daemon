@@ -23,6 +23,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/space/services"
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
+	"github.com/FleekHQ/space-daemon/core/textile/model"
 	"github.com/FleekHQ/space-daemon/core/vault"
 	"github.com/FleekHQ/space-daemon/mocks"
 	"github.com/stretchr/testify/assert"
@@ -228,6 +229,43 @@ func TestService_ListDirs(t *testing.T) {
 		mock.Anything,
 		"/somedir",
 	).Return(mockDirItemsSubfolder, nil)
+
+	mockBucket.On(
+		"Slug",
+	).Return(
+		"meow",
+	)
+
+	mocksModel := new(mocks.Model)
+
+	textileClient.On(
+		"GetModel",
+	).Return(
+		mocksModel,
+	)
+
+	mocksModel.On(
+		"FindBucket",
+		mock.Anything,
+		"meow",
+	).Return(&model.BucketSchema{
+		Slug:          "meow",
+		EncryptionKey: []byte("encryption_key"),
+		MirrorBucketSchema: &model.MirrorBucketSchema{
+			RemoteBucketKey: "remote_bucket_key",
+		},
+	}, nil)
+
+	textileClient.On(
+		"GetPathAccessRoles",
+		mock.Anything,
+		mock.Anything,
+		"remote_bucket_key",
+		mock.Anything,
+	).Return(
+		[]string{},
+		nil,
+	)
 
 	res, err := sv.ListDirs(context.Background(), "", "")
 
