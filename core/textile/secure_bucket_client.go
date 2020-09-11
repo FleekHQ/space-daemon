@@ -183,6 +183,7 @@ func (s *SecureBucketClient) ListPath(ctx context.Context, key, path string) (*b
 	for _, item := range result.Item.Items {
 		err = s.overwriteDecryptedItem(ctx, item)
 		if err != nil {
+			// Don't error on a single file not decrypted
 			log.Error("Error decrypting a file", err)
 		}
 	}
@@ -190,10 +191,11 @@ func (s *SecureBucketClient) ListPath(ctx context.Context, key, path string) (*b
 	// decrypt root item
 	err = s.overwriteDecryptedItem(ctx, result.Item)
 	if err != nil {
+		// Don't error on a single file not decrypted
 		log.Error("Error decrypting a file", err)
 	}
 
-	return result, err
+	return result, nil
 }
 
 func (s *SecureBucketClient) RemovePath(ctx context.Context, key, path string, opts ...bc.Option) (path.Resolved, error) {
