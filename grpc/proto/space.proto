@@ -579,8 +579,10 @@ message ListBucketsResponse {
 }
 
 enum NotificationType {
-  INVITATION = 0;
-  USAGEALERT = 1;
+  UNKNOWN = 0;
+  INVITATION = 1;
+  USAGEALERT = 2;
+  INVITATION_REPLY = 3;
 }
 
 enum InvitationStatus {

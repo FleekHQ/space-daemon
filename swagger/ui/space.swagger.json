@@ -1917,10 +1917,12 @@
     "spaceNotificationType": {
       "type": "string",
       "enum": [
+        "UNKNOWN",
         "INVITATION",
-        "USAGEALERT"
+        "USAGEALERT",
+        "INVITATION_REPLY"
       ],
-      "default": "INVITATION"
+      "default": "UNKNOWN"
     },
     "spaceOpenFileRequest": {
       "type": "object",

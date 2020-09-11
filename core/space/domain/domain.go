@@ -80,7 +80,8 @@ type FileSharingInfo struct {
 type NotificationTypes int
 
 const (
-	INVITATION NotificationTypes = iota
+	UNKNOWN NotificationTypes = iota
+	INVITATION
 	USAGEALERT
 	INVITATION_REPLY
 )
