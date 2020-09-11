@@ -148,6 +148,11 @@ func (s *Space) listDirAtPath(
 			relPath = item.Path
 		}
 
+		members, err := s.tc.GetPathAccessRoles(ctx, b, item.Path)
+		if err != nil {
+			return nil, err
+		}
+
 		entry := domain.FileInfo{
 			DirEntry: domain.DirEntry{
 				Path:          relPath,
@@ -158,6 +163,7 @@ func (s *Space) listDirAtPath(
 				// TODO: Get these fields from Textile Buckets
 				Created: time.Now().Format(time.RFC3339),
 				Updated: time.Now().Format(time.RFC3339),
+				Members: members,
 			},
 			IpfsHash: item.Cid,
 		}

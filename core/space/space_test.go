@@ -223,6 +223,22 @@ func TestService_ListDirs(t *testing.T) {
 		"/somedir",
 	).Return(mockDirItemsSubfolder, nil)
 
+	mockBucket.On(
+		"Slug",
+	).Return(
+		"meow",
+	)
+
+	textileClient.On(
+		"GetPathAccessRoles",
+		mock.Anything,
+		mock.Anything,
+		mock.Anything,
+	).Return(
+		[]domain.Member{},
+		nil,
+	)
+
 	res, err := sv.ListDirs(context.Background(), "", "")
 
 	assert.Nil(t, err)

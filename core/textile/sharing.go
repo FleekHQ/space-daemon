@@ -2,6 +2,7 @@ package textile
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -190,4 +191,42 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 	offset := files[len(files)-1].ID.String()
 
 	return items, offset, nil
+}
+
+func (tc *textileClient) GetPathAccessRoles(ctx context.Context, b Bucket, path string) ([]domain.Member, error) {
+	var err error
+	var bucketSlug, bucketKey string
+
+	bucketSlug = b.Slug()
+
+	bucket, err := tc.GetModel().FindBucket(ctx, bucketSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	bucketKey = bucket.RemoteBucketKey
+
+	hubCtx, _, err := tc.getBucketContext(ctx, bucket.RemoteDbID, bucketSlug, true, bucket.EncryptionKey)
+	if err != nil {
+		return nil, err
+	}
+
+	sbc := NewSecureBucketsClient(tc.hb, bucketSlug)
+
+	rs, err := sbc.PullPathAccessRoles(hubCtx, bucketKey, path)
+	if err != nil {
+		// log.Error(fmt.Sprintf("PullPathAccessRoles not resolved (bucketKey=%s bucketSlug=%s path=%s)", bucketKey, bucketSlug, path), err)
+		return []domain.Member{}, nil
+	}
+
+	log.Debug(fmt.Sprintf("PullPathAccessRoles roles=%+v", rs))
+
+	members := make([]domain.Member, 0)
+	for pubk, _ := range rs {
+		members = append(members, domain.Member{
+			Address: pubk,
+		})
+	}
+
+	return members, nil
 }
