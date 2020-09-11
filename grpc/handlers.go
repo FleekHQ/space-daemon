@@ -94,7 +94,7 @@ func (srv *grpcServer) ListDirectory(
 
 		for _, m := range e.Members {
 			members = append(members, &pb.FileMember{
-				PublicKey: m.PublicKey,
+				Address: m.Address,
 			})
 		}
 

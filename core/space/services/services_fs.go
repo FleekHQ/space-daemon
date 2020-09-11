@@ -132,11 +132,6 @@ func (s *Space) listDirAtPath(
 		return nil, err
 	}
 
-	bucket, err := s.tc.GetModel().FindBucket(ctx, b.Slug())
-	if err != nil {
-		return nil, err
-	}
-
 	relPathRegex := regexp.MustCompile(`\/ip(f|n)s\/[^\/]*(?P<relPath>\/.*)`)
 
 	entries := make([]domain.FileInfo, 0)
@@ -153,16 +148,9 @@ func (s *Space) listDirAtPath(
 			relPath = item.Path
 		}
 
-		pubks, err := s.tc.GetPathAccessRoles(ctx, b, bucket.RemoteBucketKey, item.Path)
+		members, err := s.tc.GetPathAccessRoles(ctx, b, item.Path)
 		if err != nil {
 			return nil, err
-		}
-
-		members := make([]domain.Member, 0)
-		for _, pubk := range pubks {
-			members = append(members, domain.Member{
-				Address: pubk,
-			})
 		}
 
 		entry := domain.FileInfo{
