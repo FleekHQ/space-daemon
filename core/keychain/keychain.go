@@ -3,6 +3,8 @@ package keychain
 import (
 	"crypto/ed25519"
 	"encoding/hex"
+	"os"
+	"path"
 	"strings"
 
 	"errors"
@@ -263,14 +265,34 @@ func (kc *keychain) getKeyRing() (ri.Keyring, error) {
 		return kc.ring, nil
 	}
 
+	ucd, err := os.UserConfigDir()
+	if err != nil {
+		return nil, err
+	}
+
 	return keyring.Open(keyring.Config{
-		ServiceName:                    "space",
-		FileDir:                        kc.fileDir + "/kc",
-		PassDir:                        kc.fileDir + "/kcpw",
-		PassPrefix:                     "space",
-		WinCredPrefix:                  "space",
+		ServiceName: "space",
+
+		// MacOS keychain
 		KeychainTrustApplication:       true,
 		KeychainAccessibleWhenUnlocked: true,
+
+		// KDE Wallet
+		KWalletAppID:  "space",
+		KWalletFolder: "space",
+
+		// Windows
+		WinCredPrefix: "space",
+
+		// freedesktop.org's Secret Service
+		LibSecretCollectionName: "space",
+
+		// Pass (https://www.passwordstore.org/)
+		PassPrefix: "space",
+		PassDir:    kc.fileDir + "/kcpw",
+
+		// Fallback encrypted file
+		FileDir: path.Join(ucd, "space", "keyring"),
 	})
 }
 
