@@ -129,6 +129,39 @@ func (s *SecureBucketClient) PullPath(ctx context.Context, key, path string, wri
 	return <-errs
 }
 
+func (s *SecureBucketClient) overwriteDecryptedItem(ctx context.Context, item *bucketspb.PathItem) error {
+	encryptionKey, err := s.getBucketEncryptionKey(ctx)
+	if err != nil {
+		return err
+	}
+	log.Debug("Processing Result Item", "name:"+item.Name, "path:"+item.Path)
+	if item.Name == ".textileseed" || item.Name == ".textile" {
+		return nil
+	}
+	// decrypt file name
+	item.Name, _, err = s.decryptPathData(ctx, encryptionKey, item.Name, nil)
+	if err != nil {
+		return err
+	}
+
+	// decrypts file path
+	matchedPaths := textileRelPathRegex.FindStringSubmatch(item.Path)
+	if len(matchedPaths) > 1 {
+		item.Path, _, err = s.decryptPathData(ctx, encryptionKey, matchedPaths[1], nil)
+		if err != nil {
+			return err
+		}
+	}
+	log.Debug("Processed Result Item", "name:"+item.Name, "path:"+item.Path)
+
+	// Item size is generally (content size + hmac (64 bytes))
+	if item.Size >= 64 {
+		item.Size = item.Size - 64
+	}
+
+	return nil
+}
+
 func (s *SecureBucketClient) ListPath(ctx context.Context, key, path string) (*bucketspb.ListPathResponse, error) {
 	path = cleanBucketPath(path)
 	encryptionKey, err := s.getBucketEncryptionKey(ctx)
@@ -148,25 +181,18 @@ func (s *SecureBucketClient) ListPath(ctx context.Context, key, path string) (*b
 
 	// decrypt result items
 	for _, item := range result.Item.Items {
-		log.Debug("Processing Result Item", "name:"+item.Name, "path:"+item.Path)
-		if item.Name == ".textileseed" || item.Name == ".textile" {
-			continue
-		}
-		// decrypt file name
-		item.Name, _, err = s.decryptPathData(ctx, encryptionKey, item.Name, nil)
-
-		// decrypts file path
-		matchedPaths := textileRelPathRegex.FindStringSubmatch(item.Path)
-		if len(matchedPaths) > 1 {
-			item.Path, _, err = s.decryptPathData(ctx, encryptionKey, matchedPaths[1], nil)
-		}
-		log.Debug("Processed Result Item", "name:"+item.Name, "path:"+item.Path)
-
-		// Item size is generally (content size + hmac (64 bytes))
-		if item.Size >= 64 {
-			item.Size = item.Size - 64
+		err = s.overwriteDecryptedItem(ctx, item)
+		if err != nil {
+			log.Error("Error decrypting a file", err)
 		}
 	}
+
+	// decrypt root item
+	err = s.overwriteDecryptedItem(ctx, result.Item)
+	if err != nil {
+		log.Error("Error decrypting a file", err)
+	}
+
 	return result, err
 }
 
