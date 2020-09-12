@@ -3,7 +3,6 @@ package grpc
 import (
 	"context"
 
-	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/grpc/pb"
 	"github.com/FleekHQ/space-daemon/log"
@@ -167,8 +166,12 @@ func (srv *grpcServer) sendNotificationEvent(event *pb.NotificationEventResponse
 	}
 }
 
-func (srv *grpcServer) SendNotificationEvent(event events.NotificationEvent) {
-	pe := &pb.NotificationEventResponse{}
+func (srv *grpcServer) SendNotificationEvent(notif *domain.Notification) {
+	parsedNotif := mapToPbNotification(*notif)
+
+	pe := &pb.NotificationEventResponse{
+		Notification: parsedNotif,
+	}
 
 	srv.sendNotificationEvent(pe)
 }

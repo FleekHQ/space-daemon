@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	"github.com/FleekHQ/space-daemon/config"
-	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
 	crypto "github.com/libp2p/go-libp2p-crypto"
@@ -19,7 +18,7 @@ import (
 )
 
 type GrpcMailboxNotifier interface {
-	SendNotificationEvent(event events.NotificationEvent)
+	SendNotificationEvent(notif *domain.Notification)
 }
 
 const mailboxSetupFlagStoreKey = "mailboxSetupFlag"
@@ -176,15 +175,7 @@ func (tc *textileClient) listenForMessages(ctx context.Context) error {
 					log.Error("Unable to parse incoming message: ", err)
 				}
 
-				i := events.NotificationEvent{
-					Body:          p.Body,
-					RelatedObject: p.RelatedObject,
-					Type:          events.NotificationType(p.NotificationType),
-					CreatedAt:     e.Message.CreatedAt.Unix(),
-					ReadAt:        e.Message.ReadAt.Unix(),
-				}
-
-				tc.mbNotifier.SendNotificationEvent(i)
+				tc.mbNotifier.SendNotificationEvent(p)
 			case mail.MessageRead:
 				// handle message read (inbox only)
 			case mail.MessageDeleted:
