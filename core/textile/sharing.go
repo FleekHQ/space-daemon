@@ -66,7 +66,7 @@ func (tc *textileClient) AcceptSharedFilesInvitation(
 		return domain.Invitation{}, errInvitationNotPending
 	}
 
-	err := tc.createReceivedFiles(ctx, invitation.InvitationID, true, invitation.ItemPaths, invitation.Keys)
+	err := tc.createReceivedFiles(ctx, invitation, true)
 	if err != nil {
 		return domain.Invitation{}, err
 	}
@@ -87,7 +87,7 @@ func (tc *textileClient) RejectSharedFilesInvitation(
 		return domain.Invitation{}, errInvitationNotPending
 	}
 
-	err := tc.createReceivedFiles(ctx, invitation.InvitationID, false, invitation.ItemPaths, [][]byte{})
+	err := tc.createReceivedFiles(ctx, invitation, false)
 	if err != nil {
 		return domain.Invitation{}, err
 	}
@@ -98,23 +98,29 @@ func (tc *textileClient) RejectSharedFilesInvitation(
 
 func (tc *textileClient) createReceivedFiles(
 	ctx context.Context,
-	invitationId string,
+	invitation domain.Invitation,
 	accepted bool,
-	paths []domain.FullPath,
-	keys [][]byte,
 ) error {
+	if len(invitation.ItemPaths) != len(invitation.Keys) {
+		return errors.New("size of encryption keys does not match all items shared")
+	}
+
 	// TODO: Make this is call a transaction on threads so any failure can be easily reverted
 
 	var allErr error
-	for i, path := range paths {
-		_, err := tc.GetModel().CreateReceivedFile(ctx, path, invitationId, accepted, keys[i])
+	for i, path := range invitation.ItemPaths {
+		encryptionKeys := []byte("")
+		if accepted {
+			encryptionKeys = invitation.Keys[i]
+		}
+		_, err := tc.GetModel().CreateReceivedFile(ctx, path, invitation.InvitationID, accepted, encryptionKeys)
 
 		// compose each create error
 		if err != nil {
 			if allErr == nil {
-				allErr = errors.New("Failed to accept some invitations")
+				allErr = errors.Wrap(err, "Failed to accept some invitations")
 			}
-			allErr = errors.Wrap(allErr, "")
+			allErr = errors.Wrap(err, allErr.Error())
 		}
 	}
 
