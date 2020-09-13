@@ -98,6 +98,11 @@ func (srv *grpcServer) ListDirectory(
 			})
 		}
 
+		var backupCount = 0
+		if e.BackedUp {
+			backupCount = 1
+		}
+
 		dirEntry := &pb.ListDirectoryEntry{
 			Path:          e.Path,
 			IsDir:         e.IsDir,
@@ -108,6 +113,7 @@ func (srv *grpcServer) ListDirectory(
 			FileExtension: e.FileExtension,
 			IpfsHash:      e.IpfsHash,
 			Members:       members,
+			BackupCount:   int64(backupCount),
 		}
 		dirEntries = append(dirEntries, dirEntry)
 	}

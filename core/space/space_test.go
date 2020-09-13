@@ -21,6 +21,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/space/services"
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
+	"github.com/FleekHQ/space-daemon/core/textile/model"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/core/vault"
 	"github.com/FleekHQ/space-daemon/mocks"
@@ -39,6 +40,7 @@ var (
 	mockKeychain   *mocks.Keychain
 	mockVault      *mocks.Vault
 	mockHub        *mocks.HubAuth
+	mockModel      *mocks.Model
 	mockPubKey     crypto.PubKey
 	mockPrivKey    crypto.PrivKey
 	mockPubKeyHex  string
@@ -70,6 +72,7 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 	mockKeychain = new(mocks.Keychain)
 	mockVault = new(mocks.Vault)
 	mockHub = new(mocks.HubAuth)
+	mockModel = new(mocks.Model)
 	var dir string
 	var err error
 	if dir, err = ioutil.TempDir("", "space-test-folders"); err != nil {
@@ -229,6 +232,28 @@ func TestService_ListDirs(t *testing.T) {
 	).Return(
 		"meow",
 	)
+
+	mockMirrorFiles := make(map[string]*model.MirrorFileSchema)
+
+	mockMirrorFiles[bucketPath+"/.textileseed"] = &model.MirrorFileSchema{
+		Backup: true,
+	}
+
+	mockMirrorFiles[bucketPath+"/somedir"] = &model.MirrorFileSchema{
+		Backup: true,
+	}
+
+	mockMirrorFiles[bucketPath+"/example.txt"] = &model.MirrorFileSchema{
+		Backup: true,
+	}
+
+	mockMirrorFiles[bucketPath+"/somedir/example.txt"] = &model.MirrorFileSchema{
+		Backup: true,
+	}
+
+	mockModel.On("FindMirrorFileByPaths", mock.Anything, mock.Anything).Return(mockMirrorFiles, nil)
+
+	textileClient.On("GetModel").Return(mockModel)
 
 	textileClient.On(
 		"GetPathAccessRoles",
