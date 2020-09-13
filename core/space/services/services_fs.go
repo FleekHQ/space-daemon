@@ -146,11 +146,6 @@ func (s *Space) listDirAtPath(
 		return nil, err
 	}
 
-	for k, v := range mirror_files {
-		log.Info("mirror file map key: " + k)
-		log.Info("mirror file map value: " + fmt.Sprintf("%+v\n", v))
-	}
-
 	entries := make([]domain.FileInfo, 0)
 	for _, item := range dir.Item.Items {
 		if item.Name == ".textileseed" || item.Name == ".textile" {
@@ -169,8 +164,6 @@ func (s *Space) listDirAtPath(
 		if err != nil {
 			return nil, err
 		}
-
-		log.Info("searching path: " + item.Path)
 
 		entry := domain.FileInfo{
 			DirEntry: domain.DirEntry{

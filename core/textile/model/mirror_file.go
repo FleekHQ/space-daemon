@@ -3,7 +3,6 @@ package model
 import (
 	"context"
 	"errors"
-	"fmt"
 	"path/filepath"
 	"strconv"
 
@@ -70,20 +69,11 @@ func (m *model) FindMirrorFileByPaths(ctx context.Context, paths []string) (map[
 
 	var qry *db.Query
 	for i, path := range paths {
-		log.Info("adding path to qry: " + path)
 		if i == 0 {
 			qry = db.Where("path").Eq(filepath.Clean(path))
 		} else {
 			qry = qry.Or(db.Where("path").Eq(filepath.Clean(path)))
 		}
-	}
-
-	allmirrorfiles, err := m.threads.Find(metaCtx, *dbID, mirrorFileModelName, &db.Query{}, &MirrorFileSchema{})
-	if err != nil {
-		return nil, err
-	}
-	for _, file := range allmirrorfiles.([]*MirrorFileSchema) {
-		log.Info("all mirror files, file: " + fmt.Sprintf("%+v\n", file))
 	}
 
 	rawMirrorFiles, err := m.threads.Find(metaCtx, *dbID, mirrorFileModelName, qry, &MirrorFileSchema{})
