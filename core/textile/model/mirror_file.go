@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"path/filepath"
-	"strconv"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
@@ -92,7 +91,6 @@ func (m *model) FindMirrorFileByPaths(ctx context.Context, paths []string) (map[
 
 	mirror_map := make(map[string]*MirrorFileSchema)
 	for _, mirror_file := range mirror_files {
-		log.Info("mirror file entry backup: " + strconv.FormatBool(mirror_file.Backup))
 		mirror_map[mirror_file.Path] = mirror_file
 	}
 
