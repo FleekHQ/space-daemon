@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/FleekHQ/space-daemon/core/textile"
+	"github.com/FleekHQ/space-daemon/core/textile/utils"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
@@ -257,12 +258,24 @@ func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket)
 		log.Error(fmt.Sprintf("error retrieving file from bucket %s in path %s", b.Key(), path), err)
 		return "", err
 	}
+
+	threadID, err := b.GetThreadID(ctx)
+	if err != nil {
+		log.Error(fmt.Sprintf("error getting thread id for bucket %s", b.Key()), err)
+		return "", err
+	}
+
+	dbID := utils.CastDbIDToString(*threadID)
+
 	// register temp file in watcher
 	addWatchFile := domain.AddWatchFile{
+		DbId:       dbID,
 		LocalPath:  tmpFile.Name(),
 		BucketPath: path,
 		BucketKey:  b.Key(),
+		BucketSlug: b.Slug(),
 	}
+
 	err = s.sync.AddFileWatch(addWatchFile)
 	if err != nil {
 		log.Error(fmt.Sprintf("error adding file to watch path %s from bucket %s in bucketpath %s", tmpFile.Name(), b.Key(), path), err)

@@ -56,9 +56,11 @@ type Member struct {
 }
 
 type AddWatchFile struct {
+	DbId       string `json:"dbId"`
 	LocalPath  string `json:"local_path"`
 	BucketPath string `json:"bucket_path"`
 	BucketKey  string `json:"bucket_key"`
+	BucketSlug string `json:"bucket_slug"`
 }
 
 type Identity struct {

@@ -21,6 +21,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/space/services"
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
+	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/core/vault"
 	"github.com/FleekHQ/space-daemon/mocks"
 	"github.com/stretchr/testify/assert"
@@ -313,6 +314,19 @@ func TestService_OpenFile(t *testing.T) {
 	mockBucket.On(
 		"Slug",
 	).Return(testKey)
+
+	testThreadID, err := utils.ParseDbIDFromString("AFKRGLCIX5CQWA2244J3GBH4ERF2MLNPJWVU72BPU2BGB5OOZH5PR7Q=")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mockBucket.On(
+		"GetThreadID",
+		mock.Anything,
+	).Return(
+		testThreadID,
+		nil,
+	)
 
 	res, err := sv.OpenFile(context.Background(), testPath, "", "")
 
