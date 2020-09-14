@@ -92,6 +92,7 @@ type Client interface {
 	GetPathAccessRoles(ctx context.Context, b Bucket, path string) ([]domain.Member, error)
 	GetPublicShareBucket(ctx context.Context) (Bucket, error)
 	DownloadPublicGatewayItem(ctx context.Context, cid cid.Cid) (io.ReadCloser, error)
+	AddCurrenUserAsFileOwner(ctx context.Context, b Bucket, path string) error
 }
 
 type Buckd interface {

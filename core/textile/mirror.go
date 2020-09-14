@@ -12,6 +12,7 @@ import (
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/textileio/go-threads/core/thread"
 	bc "github.com/textileio/textile/api/buckets/client"
+	"github.com/textileio/textile/buckets"
 )
 
 func (tc *textileClient) IsMirrorFile(ctx context.Context, path, bucketSlug string) bool {
@@ -37,6 +38,33 @@ func (tc *textileClient) MarkMirrorFileBackup(ctx context.Context, path, bucketS
 	}
 
 	return mf, nil
+}
+
+func (tc *textileClient) AddCurrenUserAsFileOwner(ctx context.Context, b Bucket, path string) error {
+	bucket, err := tc.GetModel().FindBucket(ctx, b.Slug())
+	if err != nil {
+		return err
+	}
+
+	hubCtx, _, err := tc.getBucketContext(ctx, bucket.RemoteDbID, b.Slug(), true, bucket.EncryptionKey)
+	if err != nil {
+		return err
+	}
+
+	bucketsClient := NewSecureBucketsClient(
+		tc.hb,
+		b.Slug(),
+	)
+
+	roles := make(map[string]buckets.Role)
+	pk, err := tc.kc.GetStoredPublicKey()
+	if err != nil {
+		return err
+	}
+	tpk := thread.NewLibp2pPubKey(pk)
+	roles[tpk.String()] = buckets.Admin
+
+	return bucketsClient.PushPathAccessRoles(hubCtx, bucket.RemoteBucketKey, path, roles)
 }
 
 func (tc *textileClient) UploadFileToHub(ctx context.Context, b Bucket, path string, reader io.Reader) (result path.Resolved, root path.Path, err error) {

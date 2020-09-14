@@ -548,6 +548,15 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 			return domain.AddItemResult{}, err
 		}
 
+		//add current user as admin on the remote file
+		err = s.tc.AddCurrenUserAsFileOwner(ctx, b, targetPathBucket)
+		if err != nil {
+			log.Error("Error adding current user as file owner", err)
+			// not returning since we dont want to halt the whole process
+			// also acl will still work since they are the owner
+			// of the thread so this is more for showing members view
+		}
+
 		_, err = s.tc.MarkMirrorFileBackup(ctx, targetPathBucket, b.Slug())
 		if err != nil {
 			log.Error(fmt.Sprintf("error creating mirror file Path=%s BucketSlug=%s", targetPathBucket, b.Key()), err)
