@@ -170,19 +170,24 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 
 		members := make([]domain.Member, 0)
 		for pubk, _ := range rs {
-			b, err := hex.DecodeString(pubk)
+			key := &thread.Libp2pPubKey{}
+
+			err = key.UnmarshalString(pubk)
 			if err != nil {
+				log.Error(fmt.Sprintf("key.UnmarshalString(pubk=%+v)", pubk), err)
 				return nil, "", err
 			}
 
-			pk, err := crypto.UnmarshalEd25519PublicKey([]byte(b))
+			pk := key.PubKey
+
+			b, err := pk.Raw()
 			if err != nil {
 				return nil, "", err
 			}
 
 			members = append(members, domain.Member{
 				Address:   address.DeriveAddress(pk),
-				PublicKey: pubk,
+				PublicKey: hex.EncodeToString(b),
 			})
 		}
 
@@ -242,19 +247,24 @@ func (tc *textileClient) GetPathAccessRoles(ctx context.Context, b Bucket, path 
 
 	members := make([]domain.Member, 0)
 	for pubk, _ := range rs {
-		b, err := hex.DecodeString(pubk)
+		key := &thread.Libp2pPubKey{}
+
+		err = key.UnmarshalString(pubk)
 		if err != nil {
+			log.Error(fmt.Sprintf("key.UnmarshalString(pubk=%+v)", pubk), err)
 			return nil, err
 		}
 
-		pk, err := crypto.UnmarshalEd25519PublicKey([]byte(b))
+		pk := key.PubKey
+
+		b, err := pk.Raw()
 		if err != nil {
 			return nil, err
 		}
 
 		members = append(members, domain.Member{
 			Address:   address.DeriveAddress(pk),
-			PublicKey: pubk,
+			PublicKey: hex.EncodeToString(b),
 		})
 	}
 
