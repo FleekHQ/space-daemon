@@ -54,20 +54,6 @@ func (_m *Client) AcceptSharedFilesInvitation(ctx context.Context, invitation do
 	return r0, r1
 }
 
-// AddCurrenUserAsFileOwner provides a mock function with given fields: ctx, b, _a2
-func (_m *Client) AddCurrenUserAsFileOwner(ctx context.Context, b textile.Bucket, _a2 string) error {
-	ret := _m.Called(ctx, b, _a2)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, textile.Bucket, string) error); ok {
-		r0 = rf(ctx, b, _a2)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // AttachMailboxNotifier provides a mock function with given fields: notif
 func (_m *Client) AttachMailboxNotifier(notif textile.GrpcMailboxNotifier) {
 	_m.Called(notif)
