@@ -65,6 +65,7 @@ func (srv *grpcServer) GetSharedWithMeFiles(ctx context.Context, request *pb.Get
 		for _, m := range e.Members {
 			members = append(members, &pb.FileMember{
 				PublicKey: m.PublicKey,
+				Address:   m.Address,
 			})
 		}
 
