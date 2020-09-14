@@ -543,7 +543,7 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 	_, fileName := filepath.Split(sourcePath)
 
 	var targetPathBucket string
-	if targetPath == "" {
+	if targetPath == "" || targetPath == "/" {
 		targetPathBucket = fileName
 	} else {
 		targetPathBucket = targetPath + "/" + fileName
