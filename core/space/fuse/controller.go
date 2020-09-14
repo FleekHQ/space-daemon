@@ -3,7 +3,6 @@ package fuse
 import (
 	"context"
 	"fmt"
-	"os"
 	"sync"
 
 	"github.com/FleekHQ/space-daemon/core/spacefs"
@@ -110,6 +109,7 @@ func (s *Controller) serve() {
 		if err != nil {
 			log.Error("error ending fuse server", err)
 		}
+		log.Info("FUSE Controller server ended")
 	}()
 }
 
@@ -134,10 +134,10 @@ func (s *Controller) Unmount() error {
 	err := s.vfs.Unmount()
 
 	// remove mounted path directory
-	if err == nil && s.mountPath != "" {
-		err := os.RemoveAll(s.mountPath)
-		log.Error("Failed to delete mount directory on unmount", err)
-	}
+	//if err == nil && s.mountPath != "" {
+	//	_ = os.RemoveAll(s.mountPath)
+	//	//log.Error("Failed to delete mount directory on unmount", err)
+	//}
 
 	return err
 }

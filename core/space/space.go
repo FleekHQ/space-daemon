@@ -3,6 +3,7 @@ package space
 import (
 	"context"
 	"errors"
+	"io"
 
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/vault"
@@ -37,6 +38,7 @@ type Service interface {
 	CreateBucket(ctx context.Context, slug string) (textile.Bucket, error)
 	ListBuckets(ctx context.Context) ([]textile.Bucket, error)
 	AddItems(ctx context.Context, sourcePaths []string, targetPath string, bucketName string) (<-chan domain.AddItemResult, domain.AddItemsResponse, error)
+	AddItemWithReader(ctx context.Context, reader io.Reader, targetPath, bucketName string) (domain.AddItemResult, error)
 	CreateIdentity(ctx context.Context, username string) (*domain.Identity, error)
 	GetIdentityByUsername(ctx context.Context, username string) (*domain.Identity, error)
 	GenerateFileSharingLink(ctx context.Context, encryptionPassword, path string, bucketName string) (domain.FileSharingInfo, error)

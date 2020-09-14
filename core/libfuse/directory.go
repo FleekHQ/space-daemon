@@ -4,7 +4,10 @@ package libfuse
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/FleekHQ/space-daemon/core/spacefs"
@@ -39,6 +42,15 @@ func (dir *VFSDir) Attr(ctx context.Context, attr *fuse.Attr) error {
 	}
 
 	attr.Mode = dirAttribute.Mode()
+
+	if uid, err := strconv.Atoi(dirAttribute.Uid()); err == nil {
+		attr.Uid = uint32(uid)
+	}
+
+	if gid, err := strconv.Atoi(dirAttribute.Gid()); err == nil {
+		attr.Gid = uint32(gid)
+	}
+
 	return nil
 }
 
@@ -60,6 +72,7 @@ func (dir *VFSDir) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 		entry := fuse.Dirent{
 			Name: entryAttribute.Name(),
 		}
+
 		if entryAttribute.IsDir() {
 			entry.Type = fuse.DT_Dir
 		} else {
@@ -113,7 +126,7 @@ func (dir *VFSDir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fu
 	path := dir.dirOps.Path()
 	log.Printf("Creating a file/directory: %+v in path: %s", *req, path)
 	dirEntry, err := dir.vfs.fsOps.CreateEntry(ctx, spacefs.CreateDirEntry{
-		Path: path + "/" + req.Name,
+		Path: fmt.Sprintf("%s%c%s", strings.TrimSuffix(path, "/"), '/', req.Name),
 		Mode: req.Mode,
 	})
 	if err != nil {

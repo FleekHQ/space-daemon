@@ -1,8 +1,11 @@
 package fsds
 
 import (
+	"fmt"
 	"os"
+	"os/user"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/FleekHQ/space-daemon/log"
@@ -10,18 +13,36 @@ import (
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 )
 
+var StandardFileAccessMode os.FileMode = 0600   // -rw-------
+var StandardDirAccessMode = os.ModeDir | 0700   // drwx------
+var RestrictedDirAccessMode = os.ModeDir | 0500 // dr-x------ only allow reading and opening directory for user
+
 // DirEntry implements the DirEntryOps
 type DirEntry struct {
 	entry domain.DirEntry
+	mode  os.FileMode
 }
 
 func NewDirEntry(entry domain.DirEntry) *DirEntry {
+	return NewDirEntryWithMode(entry, 0)
+}
+
+func NewDirEntryWithMode(entry domain.DirEntry, mode os.FileMode) *DirEntry {
 	return &DirEntry{
 		entry: entry,
+		mode:  mode,
 	}
 }
 
 func (d *DirEntry) Path() string {
+	if d.IsDir() {
+		return fmt.Sprintf(
+			"%s%c",
+			strings.TrimRight(d.entry.Path, fmt.Sprintf("%c", os.PathSeparator)),
+			os.PathSeparator,
+		)
+	}
+
 	return d.entry.Path
 }
 
@@ -51,18 +72,42 @@ func (d *DirEntry) Size() uint64 {
 // Currently if it is a file, returns all access permission 0766
 // but ideally should restrict the permission if owner is not the same as file
 func (d *DirEntry) Mode() os.FileMode {
-	if d.IsDir() {
-		return os.ModeDir
+	if d.mode != 0 {
+		return d.mode
 	}
 
-	return 0766 // -rwxrw-rw-
+	if d.IsDir() {
+		return StandardDirAccessMode
+	}
+
+	return StandardFileAccessMode
+}
+
+func (d *DirEntry) Uid() string {
+	// for now return id of currently logged in user
+	currentUser, err := user.Current()
+	if err != nil {
+		log.Error("Uid() Error fetching user.Current()", err)
+		return "0"
+	}
+
+	return currentUser.Uid
+}
+
+func (d *DirEntry) Gid() string {
+	currentUser, err := user.Current()
+	if err != nil {
+		log.Error("Gid() Error fetching user.Current()", err)
+		return "0"
+	}
+
+	return currentUser.Gid
 }
 
 // Ctime implements the DirEntryAttribute Interface
 // It returns the time the directory was created
 func (d *DirEntry) Ctime() time.Time {
-	layout := "2006-01-02T15:04:05.000Z"
-	t, err := time.Parse(layout, d.entry.Created)
+	t, err := time.Parse(time.RFC3339, d.entry.Created)
 
 	if err != nil {
 		log.Error("Error parsing direntry created time", err)
@@ -74,8 +119,7 @@ func (d *DirEntry) Ctime() time.Time {
 
 // ModTime returns the modification time
 func (d *DirEntry) ModTime() time.Time {
-	layout := "2006-01-02T15:04:05.000Z"
-	t, err := time.Parse(layout, d.entry.Updated)
+	t, err := time.Parse(time.RFC3339, d.entry.Updated)
 
 	if err != nil {
 		log.Error("Error parsing direntry updated time", err)
