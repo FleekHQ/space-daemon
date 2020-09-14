@@ -165,6 +165,11 @@ func (s *Space) listDirAtPath(
 			return nil, err
 		}
 
+		backedup := false
+		if mirror_files[item.Path] != nil {
+			backedup = mirror_files[item.Path].Backup
+		}
+
 		entry := domain.FileInfo{
 			DirEntry: domain.DirEntry{
 				Path:          relPath,
@@ -178,7 +183,7 @@ func (s *Space) listDirAtPath(
 				Members: members,
 			},
 			IpfsHash: item.Cid,
-			BackedUp: mirror_files[item.Path].Backup,
+			BackedUp: backedup,
 		}
 		entries = append(entries, entry)
 
