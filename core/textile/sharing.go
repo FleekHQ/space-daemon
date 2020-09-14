@@ -169,7 +169,7 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 		members := make([]domain.Member, 0)
 		for pubk, _ := range rs {
 			members = append(members, domain.Member{
-				Address: pubk,
+				PublicKey: pubk,
 			})
 		}
 
@@ -230,7 +230,7 @@ func (tc *textileClient) GetPathAccessRoles(ctx context.Context, b Bucket, path 
 	members := make([]domain.Member, 0)
 	for pubk, _ := range rs {
 		members = append(members, domain.Member{
-			Address: pubk,
+			PublicKey: pubk,
 		})
 	}
 
