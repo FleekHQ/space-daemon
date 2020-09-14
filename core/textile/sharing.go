@@ -2,6 +2,7 @@ package textile
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"path/filepath"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
+	"github.com/FleekHQ/space-daemon/core/util/address"
 	"github.com/FleekHQ/space-daemon/log"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/textileio/go-threads/core/thread"
@@ -168,7 +170,18 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 
 		members := make([]domain.Member, 0)
 		for pubk, _ := range rs {
+			b, err := hex.DecodeString(pubk)
+			if err != nil {
+				return nil, "", err
+			}
+
+			pk, err := crypto.UnmarshalEd25519PublicKey([]byte(b))
+			if err != nil {
+				return nil, "", err
+			}
+
 			members = append(members, domain.Member{
+				Address:   address.DeriveAddress(pk),
 				PublicKey: pubk,
 			})
 		}
@@ -229,7 +242,18 @@ func (tc *textileClient) GetPathAccessRoles(ctx context.Context, b Bucket, path 
 
 	members := make([]domain.Member, 0)
 	for pubk, _ := range rs {
+		b, err := hex.DecodeString(pubk)
+		if err != nil {
+			return nil, err
+		}
+
+		pk, err := crypto.UnmarshalEd25519PublicKey([]byte(b))
+		if err != nil {
+			return nil, err
+		}
+
 		members = append(members, domain.Member{
+			Address:   address.DeriveAddress(pk),
 			PublicKey: pubk,
 		})
 	}
