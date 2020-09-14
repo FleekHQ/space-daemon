@@ -12,6 +12,7 @@ import (
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/textileio/go-threads/core/thread"
 	bc "github.com/textileio/textile/api/buckets/client"
+	"github.com/textileio/textile/buckets"
 )
 
 func (tc *textileClient) IsMirrorFile(ctx context.Context, path, bucketSlug string) bool {
@@ -39,6 +40,18 @@ func (tc *textileClient) MarkMirrorFileBackup(ctx context.Context, path, bucketS
 	return mf, nil
 }
 
+func (tc *textileClient) addCurrentUserAsFileOwner(ctx context.Context, bucketsClient *SecureBucketClient, key, path string) error {
+	roles := make(map[string]buckets.Role)
+	pk, err := tc.kc.GetStoredPublicKey()
+	if err != nil {
+		return err
+	}
+	tpk := thread.NewLibp2pPubKey(pk)
+	roles[tpk.String()] = buckets.Admin
+
+	return bucketsClient.PushPathAccessRoles(ctx, key, path, roles)
+}
+
 func (tc *textileClient) UploadFileToHub(ctx context.Context, b Bucket, path string, reader io.Reader) (result path.Resolved, root path.Path, err error) {
 	// XXX: locking?
 
@@ -57,7 +70,20 @@ func (tc *textileClient) UploadFileToHub(ctx context.Context, b Bucket, path str
 		b.Slug(),
 	)
 
-	return bucketsClient.PushPath(hubCtx, bucket.RemoteBucketKey, path, reader)
+	result, root, err = bucketsClient.PushPath(hubCtx, bucket.RemoteBucketKey, path, reader)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = tc.addCurrentUserAsFileOwner(hubCtx, bucketsClient, bucket.RemoteBucketKey, path)
+	if err != nil {
+		// not returning since we dont want to halt the whole process
+		// also acl will still work since they are the owner
+		// of the thread so this is more for showing members view
+		log.Error("Unable to push path access roles for owner", err)
+	}
+
+	return result, root, nil
 }
 
 // Creates a mirror bucket.
