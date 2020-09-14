@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"errors"
+	"path/filepath"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
@@ -57,6 +58,43 @@ func (m *model) CreateMirrorBucket(ctx context.Context, bucketSlug string, mirro
 	}
 
 	return bucket, nil
+}
+
+func (m *model) FindMirrorFileByPaths(ctx context.Context, paths []string) (map[string]*MirrorFileSchema, error) {
+	metaCtx, dbID, err := m.initMirrorFileModel(ctx)
+	if err != nil || dbID == nil {
+		return nil, err
+	}
+
+	var qry *db.Query
+	for i, path := range paths {
+		if i == 0 {
+			qry = db.Where("path").Eq(filepath.Clean(path))
+		} else {
+			qry = qry.Or(db.Where("path").Eq(filepath.Clean(path)))
+		}
+	}
+
+	rawMirrorFiles, err := m.threads.Find(metaCtx, *dbID, mirrorFileModelName, qry, &MirrorFileSchema{})
+	if err != nil {
+		return nil, err
+	}
+
+	if rawMirrorFiles == nil {
+		return nil, nil
+	}
+
+	mirror_files := rawMirrorFiles.([]*MirrorFileSchema)
+	if len(mirror_files) == 0 {
+		return nil, nil
+	}
+
+	mirror_map := make(map[string]*MirrorFileSchema)
+	for _, mirror_file := range mirror_files {
+		mirror_map[mirror_file.Path] = mirror_file
+	}
+
+	return mirror_map, nil
 }
 
 // Finds the metadata of a file that has been shared to the user

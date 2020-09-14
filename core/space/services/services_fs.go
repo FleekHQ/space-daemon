@@ -135,6 +135,17 @@ func (s *Space) listDirAtPath(
 
 	relPathRegex := regexp.MustCompile(`\/ip(f|n)s\/[^\/]*(?P<relPath>\/.*)`)
 
+	mirrorfilepaths := make([]string, 0)
+	for _, item := range dir.Item.Items {
+		mirrorfilepaths = append(mirrorfilepaths, item.Path)
+	}
+
+	mirror_files, err := s.tc.GetModel().FindMirrorFileByPaths(ctx, mirrorfilepaths)
+	if err != nil {
+		log.Error("Error fetching mirror files", err)
+		return nil, err
+	}
+
 	entries := make([]domain.FileInfo, 0)
 	for _, item := range dir.Item.Items {
 		if item.Name == ".textileseed" || item.Name == ".textile" {
@@ -167,6 +178,7 @@ func (s *Space) listDirAtPath(
 				Members: members,
 			},
 			IpfsHash: item.Cid,
+			BackedUp: mirror_files[item.Path].Backup,
 		}
 		entries = append(entries, entry)
 
@@ -555,7 +567,12 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 
 	_, fileName := filepath.Split(sourcePath)
 
-	targetPathBucket := targetPath + "/" + fileName
+	var targetPathBucket string
+	if targetPath == "" || targetPath == "/" {
+		targetPathBucket = fileName
+	} else {
+		targetPathBucket = targetPath + "/" + fileName
+	}
 
 	// NOTE: could modify addFile to return back more info for processing
 	_, root, err := b.UploadFile(ctx, targetPathBucket, f)
