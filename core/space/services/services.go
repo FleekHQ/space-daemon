@@ -72,9 +72,10 @@ func NewSpace(
 }
 
 var textileClientInitTimeout = time.Second * 60
+var textileClientHubTimeout = time.Second * 60 * 3
 
 // Waits for textile client to be initialized before returning.
-func (s *Space) waitForTextileInit() error {
+func (s *Space) waitForTextileInit(ctx context.Context) error {
 	if s.tc.IsInitialized() {
 		return nil
 	}
@@ -84,20 +85,29 @@ func (s *Space) waitForTextileInit() error {
 		return errors.New("textile client not initialized in expected time")
 	case <-s.tc.WaitForInitialized():
 		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 }
 
 // Waits for textile client to be healthy (initialized and connected to hub) before returning.
 // If it exceeds the max amount of retries, it returns an error.
-func (s *Space) waitForTextileHub() error {
+func (s *Space) waitForTextileHub(ctx context.Context) error {
 	if s.tc.IsHealthy() {
 		return nil
 	}
 
-	err := <-s.tc.WaitForHealthy()
-	if err != nil {
-		return err
+	select {
+	case err := <-s.tc.WaitForHealthy():
+		// This returns error if there were 3 failed attempts to connect
+		if err != nil {
+			return err
+		}
+		return nil
+	case <-time.After(textileClientHubTimeout):
+		return errors.New("textile client not initialized in expected time")
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 
-	return nil
 }

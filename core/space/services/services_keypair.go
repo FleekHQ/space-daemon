@@ -72,7 +72,7 @@ func (s *Space) GetMnemonic(ctx context.Context) (string, error) {
 }
 
 func (s *Space) DeleteKeypair(ctx context.Context) error {
-	err := s.waitForTextileInit()
+	err := s.waitForTextileInit(ctx)
 	if err != nil {
 		return err
 	}

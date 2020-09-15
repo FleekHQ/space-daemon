@@ -208,7 +208,7 @@ func (s *Space) OpenSharedFile(ctx context.Context, hash, password, filename str
 		return domain.OpenFileInfo{}, err
 	}
 
-	err = s.waitForTextileHub()
+	err = s.waitForTextileHub(ctx)
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
@@ -241,7 +241,7 @@ func (s *Space) OpenSharedFile(ctx context.Context, hash, password, filename str
 }
 
 func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error {
-	err := s.waitForTextileHub()
+	err := s.waitForTextileHub(ctx)
 	if err != nil {
 		return err
 	}
@@ -355,7 +355,7 @@ var errFailedToNotifyInviter = errors.New("failed to notify inviter of invitatio
 
 // HandleSharedFilesInvitation accepts or rejects an invitation based on the invitation id
 func (s *Space) HandleSharedFilesInvitation(ctx context.Context, invitationId string, accept bool) error {
-	err := s.waitForTextileHub()
+	err := s.waitForTextileHub(ctx)
 	if err != nil {
 		return err
 	}
@@ -414,7 +414,7 @@ func (s *Space) HandleSharedFilesInvitation(ctx context.Context, invitationId st
 }
 
 func (s *Space) AddRecentlySharedPublicKeys(ctx context.Context, pubkeys []crypto.PubKey) error {
-	err := s.waitForTextileInit()
+	err := s.waitForTextileInit(ctx)
 	if err != nil {
 		return err
 	}
@@ -440,7 +440,7 @@ func (s *Space) AddRecentlySharedPublicKeys(ctx context.Context, pubkeys []crypt
 }
 
 func (s *Space) RecentlySharedPublicKeys(ctx context.Context) ([]crypto.PubKey, error) {
-	err := s.waitForTextileInit()
+	err := s.waitForTextileInit(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -470,7 +470,7 @@ func (s *Space) RecentlySharedPublicKeys(ctx context.Context) ([]crypto.PubKey, 
 
 // Returns a list of shared files the user has received and accepted
 func (s *Space) GetSharedWithMeFiles(ctx context.Context, seek string, limit int) ([]*domain.SharedDirEntry, string, error) {
-	err := s.waitForTextileInit()
+	err := s.waitForTextileInit(ctx)
 	if err != nil {
 		return nil, "", err
 	}

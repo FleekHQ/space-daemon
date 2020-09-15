@@ -10,7 +10,7 @@ import (
 const notificationsLastSeenAtStoreKey = "notificationsLastSeenAt"
 
 func (s *Space) GetNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error) {
-	err := s.waitForTextileHub()
+	err := s.waitForTextileHub(ctx)
 	if err != nil {
 		return nil, err
 	}
