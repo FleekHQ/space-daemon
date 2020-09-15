@@ -21,19 +21,16 @@ func (s *Space) GenerateKeyPair(ctx context.Context, useForce bool) (string, err
 		return "", err
 	}
 
-	// Wait for textile client to be ready before returning
-	<-s.tc.WaitForHealthy()
-
 	return mnemonic, nil
 }
 
 func (s *Space) RestoreKeyPairFromMnemonic(ctx context.Context, mnemonic string) error {
 	_, err := s.keychain.GenerateKeyFromMnemonic(keychain.WithMnemonic(mnemonic), keychain.WithOverride())
+	if err != nil {
+		return err
+	}
 
-	// Wait for textile client to be ready before returning
-	<-s.tc.WaitForHealthy()
-
-	return err
+	return nil
 }
 
 func (s *Space) GetPublicKey(ctx context.Context) (string, error) {
@@ -75,6 +72,11 @@ func (s *Space) GetMnemonic(ctx context.Context) (string, error) {
 }
 
 func (s *Space) DeleteKeypair(ctx context.Context) error {
+	err := s.waitForTextileInit(ctx)
+	if err != nil {
+		return err
+	}
+
 	if err := s.keychain.DeleteKeypair(); err != nil {
 		return err
 	}

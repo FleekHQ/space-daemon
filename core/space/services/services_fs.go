@@ -25,6 +25,11 @@ var bucketNotFoundErr = errors.New("Could not find bucket")
 
 // Creates a bucket
 func (s *Space) CreateBucket(ctx context.Context, slug string) (textile.Bucket, error) {
+	err := s.waitForTextileInit(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	b, err := s.tc.CreateBucket(ctx, slug)
 	if err != nil {
 		return nil, err
@@ -35,6 +40,11 @@ func (s *Space) CreateBucket(ctx context.Context, slug string) (textile.Bucket, 
 
 // Returns a list of buckets the current user has access to
 func (s *Space) ListBuckets(ctx context.Context) ([]textile.Bucket, error) {
+	err := s.waitForTextileInit(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	buckets, err := s.tc.ListBuckets(ctx)
 	if err != nil {
 		return nil, err
@@ -44,6 +54,11 @@ func (s *Space) ListBuckets(ctx context.Context) ([]textile.Bucket, error) {
 }
 
 func (s *Space) ShareBucket(ctx context.Context, slug string) (*domain.ThreadInfo, error) {
+	err := s.waitForTextileHub(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	r, err := s.tc.ShareBucket(ctx, slug)
 	if err != nil {
 		return nil, err
@@ -64,6 +79,11 @@ func (s *Space) ShareBucket(ctx context.Context, slug string) (*domain.ThreadInf
 }
 
 func (s *Space) JoinBucket(ctx context.Context, slug string, threadinfo *domain.ThreadInfo) (bool, error) {
+	err := s.waitForTextileHub(ctx)
+	if err != nil {
+		return false, err
+	}
+
 	r, err := s.tc.JoinBucket(ctx, slug, threadinfo)
 	if err != nil {
 		return false, err
@@ -73,7 +93,12 @@ func (s *Space) JoinBucket(ctx context.Context, slug string, threadinfo *domain.
 }
 
 func (s *Space) ToggleBucketBackup(ctx context.Context, bucketName string, bucketBackup bool) error {
-	_, err := s.tc.ToggleBucketBackup(ctx, bucketName, bucketBackup)
+	err := s.waitForTextileHub(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.tc.ToggleBucketBackup(ctx, bucketName, bucketBackup)
 	if err != nil {
 		return err
 	}
@@ -201,6 +226,11 @@ func (s *Space) listDirAtPath(
 
 // ListDir returns children entries at path in a bucket
 func (s *Space) ListDir(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error) {
+	err := s.waitForTextileInit(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	b, err := s.getBucketWithFallback(ctx, bucketName)
 	if err != nil {
 		return nil, err
@@ -216,6 +246,11 @@ func (s *Space) ListDir(ctx context.Context, path string, bucketName string) ([]
 // ListDirs lists all children entries at path in a bucket
 // Unlike ListDir, it includes all subfolders children recursively
 func (s *Space) ListDirs(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error) {
+	err := s.waitForTextileInit(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	b, err := s.getBucketWithFallback(ctx, bucketName)
 	if err != nil {
 		return nil, err
@@ -227,8 +262,12 @@ func (s *Space) ListDirs(ctx context.Context, path string, bucketName string) ([
 // Copies a file inside a bucket into a temp, unencrypted version of the file in the local file system
 // Include dbID if opening a shared file. Use dbID = "" otherwise.
 func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (domain.OpenFileInfo, error) {
+	err := s.waitForTextileInit(ctx)
+	if err != nil {
+		return domain.OpenFileInfo{}, err
+	}
+
 	var filePath string
-	var err error
 	var b textile.Bucket
 	// check if file exists in sync
 	if dbID != "" {
@@ -316,6 +355,11 @@ func (s *Space) createTempFileForPath(ctx context.Context, path string, inTempDi
 }
 
 func (s *Space) CreateFolder(ctx context.Context, path string, bucketName string) error {
+	err := s.waitForTextileInit(ctx)
+	if err != nil {
+		return err
+	}
+
 	b, err := s.getBucketWithFallback(ctx, bucketName)
 	if err != nil {
 		return err
@@ -341,6 +385,11 @@ func (s *Space) createFolder(ctx context.Context, path string, b textile.Bucket)
 }
 
 func (s *Space) AddItems(ctx context.Context, sourcePaths []string, targetPath string, bucketName string) (<-chan domain.AddItemResult, domain.AddItemsResponse, error) {
+	err := s.waitForTextileInit(ctx)
+	if err != nil {
+		return nil, domain.AddItemsResponse{}, err
+	}
+
 	// check if all sourcePaths exist, else return err
 	for _, sourcePath := range sourcePaths {
 		if !PathExists(sourcePath) {
@@ -374,6 +423,11 @@ func (s *Space) AddItemWithReader(
 	reader io.Reader,
 	targetPath, bucketName string,
 ) (domain.AddItemResult, error) {
+	err := s.waitForTextileInit(ctx)
+	if err != nil {
+		return domain.AddItemResult{}, err
+	}
+
 	b, err := s.getBucketWithFallback(ctx, bucketName)
 	if err != nil {
 		return domain.AddItemResult{}, err
