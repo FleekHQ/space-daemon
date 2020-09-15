@@ -48,7 +48,6 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 	addrAPI := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/3006")
 	addrAPIProxy := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/3007")
 	addrThreadsHost := cmd.AddrFromStr("/ip4/0.0.0.0/tcp/4006")
-	// TODO: replace with local blockstore
 
 	addrIpfsAPI := cmd.AddrFromStr(IpfsAddr)
 
@@ -62,17 +61,6 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 	// HOTFIX: in some linux environments the
 	// above connstr does not work
 	addrMongoURI := "mongodb://" + MongoUsr + ":" + MongoPw + "@" + MongoHost + "/?ssl=true&replicaSet=" + MongoRepSet + "&authSource=admin&retryWrites=true&w=majority"
-
-	// TODO: setup logging
-	// if logFile != "" {
-	// 	util.SetupDefaultLoggingConfig(logFile)
-	// }
-
-	// TODO: on shared bucket creation, add hub as replicator
-	// use dbinfo to get keys to give to host, to get hostid
-	// use textile client.GetHostId (against hub we want to
-	// replicate). it will give back a couple just dont use
-	// local one
 
 	usr, err := user.Current()
 	if err != nil {
