@@ -149,6 +149,7 @@ func TestService_CreateBucket(t *testing.T) {
 	}
 
 	textileClient.On("CreateBucket", mock.Anything, mock.Anything).Return(mockBucket, nil)
+	textileClient.On("IsInitialized").Return(true)
 
 	mockBucket.On(
 		"GetData",
@@ -215,6 +216,7 @@ func TestService_ListDirs(t *testing.T) {
 	}
 
 	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
+	textileClient.On("IsInitialized").Return(true)
 	mockBucket.On(
 		"ListDirectory",
 		mock.Anything,
@@ -325,6 +327,7 @@ func TestService_OpenFile(t *testing.T) {
 	)
 
 	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
+	textileClient.On("IsInitialized").Return(true)
 	mockBucket.On(
 		"GetFile",
 		mock.Anything,
@@ -375,6 +378,7 @@ func TestService_AddItems_FilesOnly(t *testing.T) {
 	testSourcePaths := getTempDir().fileNames
 
 	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
+	textileClient.On("IsInitialized").Return(true)
 
 	mockBucket.On(
 		"Key",
@@ -437,6 +441,7 @@ func TestService_AddItems_Folder(t *testing.T) {
 	targetBucketPath := bucketPath + "/" + folderName
 
 	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
+	textileClient.On("IsInitialized").Return(true)
 
 	mockBucket.On(
 		"Key",
@@ -502,6 +507,7 @@ func TestService_AddItems_OnError(t *testing.T) {
 	testSourcePaths := getTempDir().fileNames
 
 	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
+	textileClient.On("IsInitialized").Return(true)
 
 	mockBucket.On(
 		"Key",
@@ -720,9 +726,6 @@ func TestService_BackupAndRestore(t *testing.T) {
 	assert.NotNil(t, backup)
 
 	mockKeychain.On("ImportExistingKeyPair", mock.Anything, mock.Anything).Return(nil)
-	mockChan := make(chan bool, 1)
-	mockChan <- true
-	textileClient.On("WaitForHealthy").Return(mockChan)
 
 	err = sv.RecoverKeysByLocalBackup(ctx, path)
 
@@ -779,9 +782,6 @@ func TestService_VaultRestore(t *testing.T) {
 	mockVault.On("Retrieve", uuid, pass).Return(mockItems, nil)
 
 	mockKeychain.On("ImportExistingKeyPair", mock.Anything, mock.Anything).Return(nil)
-	mockChan := make(chan bool, 1)
-	mockChan <- true
-	textileClient.On("WaitForHealthy").Return(mockChan)
 
 	err := sv.RecoverKeysByPassphrase(ctx, uuid, pass)
 	assert.Nil(t, err)
@@ -793,6 +793,7 @@ func TestService_HandleSharedFilesInvitation_FailIfInvitationNotFound(t *testing
 	ctx := context.Background()
 	defer tearDown()
 
+	textileClient.On("IsHealthy").Return(true)
 	textileClient.On("GetMailAsNotifications", mock.Anything, "", 1).
 		Return(nil, errors.New("failed fetching"))
 
@@ -820,6 +821,7 @@ func TestService_HandleSharedFilesInvitation_Accepts_Correctly(t *testing.T) {
 		},
 	}
 
+	textileClient.On("IsHealthy").Return(true)
 	textileClient.On("GetMailAsNotifications", mock.Anything, invitationId, 1).
 		Return([]*domain.Notification{
 			{
@@ -859,6 +861,7 @@ func TestService_HandleSharedFilesInvitation_Rejects_Correctly(t *testing.T) {
 		},
 	}
 
+	textileClient.On("IsHealthy").Return(true)
 	textileClient.On("GetMailAsNotifications", mock.Anything, invitationId, 1).
 		Return([]*domain.Notification{
 			{

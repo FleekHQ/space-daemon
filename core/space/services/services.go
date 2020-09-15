@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/vault"
@@ -67,4 +69,35 @@ func NewSpace(
 		vault:    v,
 		hub:      h,
 	}
+}
+
+var textileClientInitTimeout = time.Second * 60
+
+// Waits for textile client to be initialized before returning.
+func (s *Space) waitForTextileInit() error {
+	if s.tc.IsInitialized() {
+		return nil
+	}
+
+	select {
+	case <-time.After(textileClientInitTimeout):
+		return errors.New("textile client not initialized in expected time")
+	case <-s.tc.WaitForInitialized():
+		return nil
+	}
+}
+
+// Waits for textile client to be healthy (initialized and connected to hub) before returning.
+// If it exceeds the max amount of retries, it returns an error.
+func (s *Space) waitForTextileHub() error {
+	if s.tc.IsHealthy() {
+		return nil
+	}
+
+	err := <-s.tc.WaitForHealthy()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

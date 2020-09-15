@@ -59,9 +59,6 @@ func (s *Space) RecoverKeysByLocalBackup(ctx context.Context, path string) error
 		return err
 	}
 
-	// Wait for textile client to be ready before returning
-	<-s.tc.WaitForHealthy()
-
 	return nil
 }
 
@@ -91,9 +88,6 @@ func (s *Space) RecoverKeysByPassphrase(ctx context.Context, uuid string, pass s
 	if err := s.keychain.ImportExistingKeyPair(unmarshalledPriv, privAndMnemonic[1]); err != nil {
 		return err
 	}
-
-	// Wait for textile client to be ready before returning
-	<-s.tc.WaitForHealthy()
 
 	return nil
 }

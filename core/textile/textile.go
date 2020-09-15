@@ -64,6 +64,8 @@ type Bucket interface {
 
 type Client interface {
 	IsRunning() bool
+	IsInitialized() bool
+	IsHealthy() bool
 	GetDefaultBucket(ctx context.Context) (Bucket, error)
 	GetBucket(ctx context.Context, slug string, remoteFile *GetBucketForRemoteFileInput) (Bucket, error)
 	GetThreadsConnection() (*threadsClient.Client, error)
@@ -76,7 +78,8 @@ type Client interface {
 	SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error)
 	Shutdown() error
 	WaitForReady() chan bool
-	WaitForHealthy() chan bool
+	WaitForHealthy() chan error
+	WaitForInitialized() chan bool
 	Start(ctx context.Context, cfg config.Config) error
 	GetMailAsNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error)
 	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey, keys [][]byte) error
@@ -92,6 +95,7 @@ type Client interface {
 	GetPathAccessRoles(ctx context.Context, b Bucket, path string) ([]domain.Member, error)
 	GetPublicShareBucket(ctx context.Context) (Bucket, error)
 	DownloadPublicGatewayItem(ctx context.Context, cid cid.Cid) (io.ReadCloser, error)
+	GetFailedHealthchecks() int
 }
 
 type Buckd interface {
