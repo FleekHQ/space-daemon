@@ -183,18 +183,22 @@ func (tc *textileClient) getBucketRootFromReceivedFile(ctx context.Context, file
 		return nil, nil, err
 	}
 
-	bucketListReply, err := tc.hb.List(remoteCtx)
+	sbs := NewSecureBucketsClient(
+		tc.hb,
+		receivedFile.Bucket,
+	)
+
+	b, err := sbs.ListPath(remoteCtx, receivedFile.BucketKey, receivedFile.Path)
+
 	if err != nil {
 		return nil, nil, err
 	}
 
-	for _, root := range bucketListReply.Roots {
-		if root.Name == receivedFile.Bucket {
-			return root, getCtxFn, nil
-		}
+	if b != nil {
+		return b.GetRoot(), getCtxFn, nil
 	}
-	return nil, nil, NotFound(receivedFile.Bucket)
 
+	return nil, nil, NotFound(receivedFile.Bucket)
 }
 
 func (tc *textileClient) getBucketRootFromSlug(ctx context.Context, slug string) (context.Context, *buckets_pb.Root, error) {

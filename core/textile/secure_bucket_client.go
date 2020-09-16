@@ -98,9 +98,6 @@ func (s *SecureBucketClient) PullPath(ctx context.Context, key, path string, wri
 		return err
 	}
 
-	res, _ := s.client.ListPath(ctx, key, "/")
-	log.Debug("res: " + string(res.Item.Items[1].Path))
-
 	errs := make(chan error)
 	pipeReader, pipeWriter := io.Pipe()
 

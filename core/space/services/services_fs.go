@@ -106,7 +106,7 @@ func (s *Space) ToggleBucketBackup(ctx context.Context, bucketName string, bucke
 	return nil
 }
 
-func (s *Space) getBucketForRemoteFile(ctx context.Context, bucketName string, dbID string, path string) (textile.Bucket, error) {
+func (s *Space) getBucketForRemoteFile(ctx context.Context, bucketName, dbID, path string) (textile.Bucket, error) {
 	input := &textile.GetBucketForRemoteFileInput{
 		Bucket: bucketName,
 		DbID:   dbID,
