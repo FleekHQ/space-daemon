@@ -45,6 +45,7 @@ type Model interface {
 	CreateMirrorFile(ctx context.Context, mirrorFile *domain.MirrorFile) (*MirrorFileSchema, error)
 	ListReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*ReceivedFileSchema, error)
 	FindMirrorFileByPaths(ctx context.Context, paths []string) (map[string]*MirrorFileSchema, error)
+	FindReceivedFilesByIds(ctx context.Context, ids []string) ([]*ReceivedFileSchema, error)
 }
 
 func New(st store.Store, kc keychain.Keychain, threads *threadsClient.Client, hubAuth hub.HubAuth) *model {

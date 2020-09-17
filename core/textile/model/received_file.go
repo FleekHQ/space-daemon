@@ -85,6 +85,31 @@ func (m *model) CreateReceivedFile(
 	}, nil
 }
 
+func (m *model) FindReceivedFilesByIds(ctx context.Context, ids []string) ([]*ReceivedFileSchema, error) {
+	metaCtx, dbID, err := m.initReceivedFileModel(ctx)
+	if err != nil || dbID == nil {
+		return nil, err
+	}
+
+	var qry *db.Query
+	for i, id := range ids {
+		if i == 0 {
+			qry = db.Where("invitationId").Eq(id)
+		} else {
+			qry = qry.Or(db.Where("invitationId").Eq(id))
+		}
+	}
+
+	fileSchemasRaw, err := m.threads.Find(metaCtx, *dbID, receivedFileModelName, qry, &ReceivedFileSchema{})
+	if err != nil {
+		return nil, err
+	}
+
+	fileSchemas := fileSchemasRaw.([]*ReceivedFileSchema)
+
+	return fileSchemas, nil
+}
+
 // Finds the metadata of a file that has been shared to the user
 func (m *model) FindReceivedFile(ctx context.Context, remoteDbID, bucket, path string) (*ReceivedFileSchema, error) {
 	metaCtx, dbID, err := m.initReceivedFileModel(ctx)

@@ -28,8 +28,8 @@ func mapToPbNotification(n domain.Notification) *pb.Notification {
 		pbinv := &pb.Invitation{
 			InvitationID:     n.ID,
 			InviterPublicKey: inv.InviterPublicKey,
-			// TODO: Status: come form shared with me thread,
-			ItemPaths: pbpths,
+			Status:           pb.InvitationStatus(inv.Status),
+			ItemPaths:        pbpths,
 		}
 		ro := &pb.Notification_InvitationValue{pbinv}
 		parsedNotif := &pb.Notification{
