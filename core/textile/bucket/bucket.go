@@ -28,6 +28,7 @@ type BucketsClient interface {
 	PullPath(ctx context.Context, key, pth string, writer io.Writer, opts ...bucketsClient.Option) error
 	ListPath(ctx context.Context, key, pth string) (*bucketsproto.ListPathResponse, error)
 	RemovePath(ctx context.Context, key, pth string, opts ...bucketsClient.Option) (path.Resolved, error)
+	ListIpfsPath(ctx context.Context, ipfsPath path.Path) (*bucketsproto.ListIpfsPathResponse, error)
 }
 
 // NOTE: all write operations should use the lock for the bucket to keep consistency

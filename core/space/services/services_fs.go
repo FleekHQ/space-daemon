@@ -195,6 +195,11 @@ func (s *Space) listDirAtPath(
 			backedup = mirror_files[item.Path].Backup
 		}
 
+		locallyAvailable := false
+		if e, _ := b.FileExists(ctx, item.Path); e == true {
+			locallyAvailable = true
+		}
+
 		entry := domain.FileInfo{
 			DirEntry: domain.DirEntry{
 				Path:          relPath,
@@ -207,8 +212,9 @@ func (s *Space) listDirAtPath(
 				Updated: time.Now().Format(time.RFC3339),
 				Members: members,
 			},
-			IpfsHash: item.Cid,
-			BackedUp: backedup,
+			IpfsHash:         item.Cid,
+			BackedUp:         backedup,
+			LocallyAvailable: locallyAvailable,
 		}
 		entries = append(entries, entry)
 

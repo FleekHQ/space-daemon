@@ -25,8 +25,9 @@ type ThreadInfo struct {
 
 type FileInfo struct {
 	DirEntry
-	IpfsHash string
-	BackedUp bool
+	IpfsHash         string
+	BackedUp         bool
+	LocallyAvailable bool
 }
 
 type OpenFileInfo struct {

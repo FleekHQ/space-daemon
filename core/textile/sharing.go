@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -158,7 +159,7 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 		name := f.Item.Name
 		isDir := false
 		size := f.GetItem().Size
-		ext := filepath.Ext(name)
+		ext := strings.Replace(filepath.Ext(name), ".", "", -1)
 
 		rs, err := sbc.PullPathAccessRoles(ctx, file.BucketKey, file.Path)
 		if err != nil {
@@ -195,7 +196,9 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 			Bucket: file.Bucket,
 			DbID:   file.DbID,
 			FileInfo: domain.FileInfo{
-				IpfsHash: ipfsHash,
+				IpfsHash:         ipfsHash,
+				LocallyAvailable: false,
+				BackedUp:         true,
 				DirEntry: domain.DirEntry{
 					Path:          file.Path,
 					IsDir:         isDir,

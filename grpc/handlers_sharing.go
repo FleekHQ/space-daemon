@@ -69,19 +69,26 @@ func (srv *grpcServer) GetSharedWithMeFiles(ctx context.Context, request *pb.Get
 			})
 		}
 
+		var backupCount = 0
+		if e.BackedUp {
+			backupCount = 1
+		}
+
 		dirEntry := &pb.SharedListDirectoryEntry{
 			DbId:   e.DbID,
 			Bucket: e.Bucket,
 			Entry: &pb.ListDirectoryEntry{
-				Path:          e.Path,
-				IsDir:         e.IsDir,
-				Name:          e.Name,
-				SizeInBytes:   e.SizeInBytes,
-				Created:       e.Created,
-				Updated:       e.Updated,
-				FileExtension: e.FileExtension,
-				IpfsHash:      e.IpfsHash,
-				Members:       members,
+				Path:               e.Path,
+				IsDir:              e.IsDir,
+				Name:               e.Name,
+				SizeInBytes:        e.SizeInBytes,
+				Created:            e.Created,
+				Updated:            e.Updated,
+				FileExtension:      e.FileExtension,
+				IpfsHash:           e.IpfsHash,
+				Members:            members,
+				IsLocallyAvailable: e.LocallyAvailable,
+				BackupCount:        int64(backupCount),
 			},
 		}
 		dirEntries = append(dirEntries, dirEntry)
