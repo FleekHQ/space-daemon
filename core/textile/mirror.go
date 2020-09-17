@@ -2,6 +2,7 @@ package textile
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/FleekHQ/space-daemon/config"
@@ -24,13 +25,15 @@ func (tc *textileClient) IsMirrorFile(ctx context.Context, path, bucketSlug stri
 	return false
 }
 
-func (tc *textileClient) MarkMirrorFileBackup(ctx context.Context, path, bucketSlug string) (*domain.MirrorFile, error) {
+// mark mirror file as backup
+func (tc *textileClient) SetMirrorFileBackup(ctx context.Context, path, bucketSlug string) (*domain.MirrorFile, error) {
 	mf := &domain.MirrorFile{
 		Path:       path,
 		BucketSlug: bucketSlug,
 		Backup:     true,
 		Shared:     false,
 	}
+
 	// TODO: upsert
 	_, err := tc.GetModel().CreateMirrorFile(ctx, mf)
 	if err != nil {
@@ -38,6 +41,28 @@ func (tc *textileClient) MarkMirrorFileBackup(ctx context.Context, path, bucketS
 	}
 
 	return mf, nil
+}
+
+// mark mirror file as not backup
+func (tc *textileClient) UnsetMirrorFileBackup(ctx context.Context, path, bucketSlug string) error {
+	mf, err := tc.GetModel().FindMirrorFileByPathAndBucketSlug(ctx, path, bucketSlug)
+	if err != nil {
+		return err
+	}
+	if mf != nil {
+		log.Warn(fmt.Sprintf("mirror file (path=%+v bucketSlug=%+v) does not exist", path, bucketSlug))
+		return nil
+	}
+
+	// do not delete the instance because it might be shared
+	mf.Backup = false
+
+	_, err = tc.GetModel().UpdateMirrorFile(ctx, mf)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (tc *textileClient) addCurrentUserAsFileOwner(ctx context.Context, bucketsClient *SecureBucketClient, key, path string) error {
@@ -84,6 +109,33 @@ func (tc *textileClient) UploadFileToHub(ctx context.Context, b Bucket, path str
 	}
 
 	return result, root, nil
+}
+
+// XXX: public in the interface as the reverse of UploadFileToHub?
+func (tc *textileClient) deleteFileFromHub(ctx context.Context, b Bucket, path string) (err error) {
+	// XXX: locking?
+
+	bucket, err := tc.GetModel().FindBucket(ctx, b.Slug())
+	if err != nil {
+		return err
+	}
+
+	hubCtx, _, err := tc.getBucketContext(ctx, bucket.RemoteDbID, b.Slug(), true, bucket.EncryptionKey)
+	if err != nil {
+		return err
+	}
+
+	bucketsClient := NewSecureBucketsClient(
+		tc.hb,
+		b.Slug(),
+	)
+
+	_, err = bucketsClient.RemovePath(hubCtx, bucket.RemoteBucketKey, path)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Creates a mirror bucket.

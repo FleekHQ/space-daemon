@@ -103,6 +103,23 @@ func (s *Space) ToggleBucketBackup(ctx context.Context, bucketName string, bucke
 		return err
 	}
 
+	b, err := s.tc.GetBucket(ctx, bucketName, nil)
+	if err != nil {
+		return err
+	}
+
+	if bucketBackup == true {
+		_, err = s.tc.BackupBucket(ctx, b)
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err = s.tc.UnbackupBucket(ctx, b)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -649,15 +666,8 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 	if s.tc.IsBucketBackup(ctx, b.Slug()) && !s.tc.IsMirrorFile(ctx, targetPathBucket, b.Slug()) {
 		f.Seek(0, io.SeekStart)
 
-		_, _, err = s.tc.UploadFileToHub(ctx, b, targetPathBucket, f)
+		err = s.tc.BackupFileWithReader(ctx, b, targetPathBucket, f)
 		if err != nil {
-			log.Error(fmt.Sprintf("error mirroring targetPath %s in bucket %s", targetPathBucket, b.Key()), err)
-			return domain.AddItemResult{}, err
-		}
-
-		_, err = s.tc.MarkMirrorFileBackup(ctx, targetPathBucket, b.Slug())
-		if err != nil {
-			log.Error(fmt.Sprintf("error creating mirror file Path=%s BucketSlug=%s", targetPathBucket, b.Key()), err)
 			return domain.AddItemResult{}, err
 		}
 	}
