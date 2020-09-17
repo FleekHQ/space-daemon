@@ -58,16 +58,23 @@ func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDire
 			})
 		}
 
+		var backupCount = 0
+		if e.BackedUp {
+			backupCount = 1
+		}
+
 		dirEntry := &pb.ListDirectoryEntry{
-			Path:          e.Path,
-			IsDir:         e.IsDir,
-			Name:          e.Name,
-			SizeInBytes:   e.SizeInBytes,
-			Created:       e.Created,
-			Updated:       e.Updated,
-			FileExtension: e.FileExtension,
-			IpfsHash:      e.IpfsHash,
-			Members:       members,
+			Path:               e.Path,
+			IsDir:              e.IsDir,
+			Name:               e.Name,
+			SizeInBytes:        e.SizeInBytes,
+			Created:            e.Created,
+			Updated:            e.Updated,
+			FileExtension:      e.FileExtension,
+			IpfsHash:           e.IpfsHash,
+			Members:            members,
+			IsLocallyAvailable: e.LocallyAvailable,
+			BackupCount:        int64(backupCount),
 		}
 		dirEntries = append(dirEntries, dirEntry)
 	}
@@ -106,16 +113,17 @@ func (srv *grpcServer) ListDirectory(
 		}
 
 		dirEntry := &pb.ListDirectoryEntry{
-			Path:          e.Path,
-			IsDir:         e.IsDir,
-			Name:          e.Name,
-			SizeInBytes:   e.SizeInBytes,
-			Created:       e.Created,
-			Updated:       e.Updated,
-			FileExtension: e.FileExtension,
-			IpfsHash:      e.IpfsHash,
-			Members:       members,
-			BackupCount:   int64(backupCount),
+			Path:               e.Path,
+			IsDir:              e.IsDir,
+			Name:               e.Name,
+			SizeInBytes:        e.SizeInBytes,
+			Created:            e.Created,
+			Updated:            e.Updated,
+			FileExtension:      e.FileExtension,
+			IpfsHash:           e.IpfsHash,
+			Members:            members,
+			BackupCount:        int64(backupCount),
+			IsLocallyAvailable: e.LocallyAvailable,
 		}
 		dirEntries = append(dirEntries, dirEntry)
 	}

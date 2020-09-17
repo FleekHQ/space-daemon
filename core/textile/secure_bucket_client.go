@@ -159,6 +159,10 @@ func (s *SecureBucketClient) overwriteDecryptedItem(ctx context.Context, item *b
 	return nil
 }
 
+func (s *SecureBucketClient) ListIpfsPath(ctx context.Context, pth path.Path) (*bucketspb.ListIpfsPathResponse, error) {
+	return s.client.ListIpfsPath(ctx, pth)
+}
+
 func (s *SecureBucketClient) ListPath(ctx context.Context, key, path string) (*bucketspb.ListPathResponse, error) {
 	path = cleanBucketPath(path)
 	encryptionKey, err := s.getBucketEncryptionKey(ctx)

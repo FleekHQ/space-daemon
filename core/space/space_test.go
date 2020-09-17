@@ -224,6 +224,12 @@ func TestService_ListDirs(t *testing.T) {
 	).Return(mockDirItems, nil)
 
 	mockBucket.On(
+		"FileExists",
+		mock.Anything,
+		mock.Anything,
+	).Return(true, nil)
+
+	mockBucket.On(
 		"ListDirectory",
 		mock.Anything,
 		"/somedir",
