@@ -124,7 +124,7 @@ func (m *model) getMetaThreadContext(ctx context.Context) (context.Context, *thr
 		return nil, nil, err
 	}
 
-	metathreadCtx, err := utils.GetThreadContext(ctx, metaThreadName, *dbID, false, m.kc, m.hubAuth)
+	metathreadCtx, err := utils.GetThreadContext(ctx, metaThreadName, *dbID, false, m.kc, m.hubAuth, m.threads)
 	if err != nil {
 		return nil, nil, err
 	}

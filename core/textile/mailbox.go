@@ -96,16 +96,17 @@ func (tc *textileClient) parseMessage(ctx context.Context, msgs []client.Message
 				return nil, err
 			}
 
-			if fsmap[i.InvitationID] == nil {
+			if fsmap[msg.ID] == nil {
 				i.Status = domain.PENDING
 			} else {
-				if fsmap[i.InvitationID].Accepted {
+				if fsmap[msg.ID].Accepted {
 					i.Status = domain.ACCEPTED
 				} else {
 					i.Status = domain.REJECTED
 				}
 			}
 
+			i.InvitationID = msg.ID
 			n.InvitationValue = *i
 			n.RelatedObject = *i
 		case domain.USAGEALERT:

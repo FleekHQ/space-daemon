@@ -74,7 +74,7 @@ func (tc *textileClient) getPublicShareBucketContext(ctx context.Context, bucket
 	if err != nil {
 		return nil, nil, err
 	}
-	ctx, err = utils.GetThreadContext(ctx, bucketSlug, dbId, true, tc.kc, tc.hubAuth)
+	ctx, err = utils.GetThreadContext(ctx, bucketSlug, dbId, true, tc.kc, tc.hubAuth, nil)
 	if err != nil {
 		return nil, nil, err
 	}

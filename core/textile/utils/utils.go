@@ -11,6 +11,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	crypto "github.com/libp2p/go-libp2p-crypto"
+	tc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/textile/api/common"
 	"golang.org/x/crypto/pbkdf2"
@@ -80,7 +81,7 @@ func getThreadName(userPubKey []byte, bucketSlug string) string {
 }
 
 // Readies a context to access a thread given its name and dbid
-func GetThreadContext(parentCtx context.Context, threadName string, dbID thread.ID, hub bool, kc keychain.Keychain, hubAuth hub.HubAuth) (context.Context, error) {
+func GetThreadContext(parentCtx context.Context, threadName string, dbID thread.ID, hub bool, kc keychain.Keychain, hubAuth hub.HubAuth, threadsClient *tc.Client) (context.Context, error) {
 	var err error
 	ctx := parentCtx
 
@@ -94,13 +95,23 @@ func GetThreadContext(parentCtx context.Context, threadName string, dbID thread.
 	}
 
 	var publicKey crypto.PubKey
-	if publicKey, err = kc.GetStoredPublicKey(); err != nil {
+	var privKey crypto.PrivKey
+	if privKey, publicKey, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
 		return nil, err
 	}
 
 	var pubKeyInBytes []byte
 	if pubKeyInBytes, err = publicKey.Bytes(); err != nil {
 		return nil, err
+	}
+
+	if threadsClient != nil {
+		tok, err := threadsClient.GetToken(ctx, thread.NewLibp2pIdentity(privKey))
+		if err != nil {
+			return nil, err
+		}
+
+		ctx = thread.NewTokenContext(ctx, tok)
 	}
 
 	ctx = common.NewThreadNameContext(ctx, getThreadName(pubKeyInBytes, threadName))

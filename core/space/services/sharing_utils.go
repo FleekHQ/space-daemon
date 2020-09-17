@@ -20,6 +20,7 @@ func extractInvitation(notification *domain.Notification) (domain.Invitation, er
 		return domain.Invitation{}, errInvitationNotFound
 	}
 
+	notification.InvitationValue.InvitationID = notification.ID
 	return notification.InvitationValue, nil
 }
 
