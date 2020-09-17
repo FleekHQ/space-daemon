@@ -9,6 +9,7 @@ import (
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
+	"github.com/FleekHQ/space-daemon/core/textile/model"
 	"github.com/FleekHQ/space-daemon/log"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/textileio/go-threads/core/thread"
@@ -36,60 +37,94 @@ type Mailbox interface {
 	Identity() thread.Identity
 }
 
-func (tc *textileClient) parseMessage(ctx context.Context, msg client.Message) (*domain.Notification, error) {
-	p, err := msg.Open(ctx, tc.mb.Identity())
+func (tc *textileClient) parseMessage(ctx context.Context, msgs []client.Message) ([]*domain.Notification, error) {
+	ns := make([]*domain.Notification, 0)
+
+	ids := []string{}
+	for _, n := range msgs {
+		ids = append(ids, n.ID)
+	}
+
+	fileschemas, err := tc.GetModel().FindReceivedFilesByIds(ctx, ids)
 	if err != nil {
 		return nil, err
 	}
 
-	b := &domain.MessageBody{}
-	err = json.Unmarshal(p, b)
+	// make map so we dont have to iterate each time
+	fsmap := make(map[string]*model.ReceivedFileSchema)
+	for _, fs := range fileschemas {
+		fsmap[fs.InvitationId] = fs
+	}
 
-	if err != nil {
-		log.Error("Error parsing message into MessageBody type", err)
+	for _, msg := range msgs {
+		p, err := msg.Open(ctx, tc.mb.Identity())
+		if err != nil {
+			return nil, err
+		}
 
-		// returning generic notification since body was not able to be parsed
+		b := &domain.MessageBody{}
+		err = json.Unmarshal(p, b)
+
+		if err != nil {
+			log.Error("Error parsing message into MessageBody type", err)
+
+			// returning generic notification since body was not able to be parsed
+			n := &domain.Notification{
+				ID:        msg.ID,
+				Body:      string(p),
+				CreatedAt: msg.CreatedAt.Unix(),
+				ReadAt:    msg.ReadAt.Unix(),
+			}
+
+			ns = append(ns, n)
+			continue
+		}
+
 		n := &domain.Notification{
-			ID:        msg.ID,
-			Body:      string(p),
-			CreatedAt: msg.CreatedAt.Unix(),
-			ReadAt:    msg.ReadAt.Unix(),
+			ID:               msg.ID,
+			Body:             string(p),
+			NotificationType: (*b).Type,
+			CreatedAt:        msg.CreatedAt.Unix(),
+			ReadAt:           msg.ReadAt.Unix(),
 		}
 
-		return n, nil
-	}
+		switch (*b).Type {
+		case domain.INVITATION:
+			i := &domain.Invitation{}
+			err := json.Unmarshal((*b).Body, i)
+			if err != nil {
+				return nil, err
+			}
 
-	n := &domain.Notification{
-		ID:               msg.ID,
-		Body:             string(p),
-		NotificationType: (*b).Type,
-		CreatedAt:        msg.CreatedAt.Unix(),
-		ReadAt:           msg.ReadAt.Unix(),
-	}
+			if fsmap[msg.ID] == nil {
+				i.Status = domain.PENDING
+			} else {
+				if fsmap[msg.ID].Accepted {
+					i.Status = domain.ACCEPTED
+				} else {
+					i.Status = domain.REJECTED
+				}
+			}
 
-	switch (*b).Type {
-	case domain.INVITATION:
-		i := &domain.Invitation{}
-		err := json.Unmarshal((*b).Body, i)
-		if err != nil {
-			return nil, err
+			i.InvitationID = msg.ID
+			n.InvitationValue = *i
+			n.RelatedObject = *i
+		case domain.USAGEALERT:
+			u := &domain.UsageAlert{}
+			err := json.Unmarshal((*b).Body, u)
+
+			if err != nil {
+				return nil, err
+			}
+			n.UsageAlertValue = *u
+			n.RelatedObject = *u
+		default:
 		}
 
-		n.InvitationValue = *i
-		n.RelatedObject = *i
-	case domain.USAGEALERT:
-		u := &domain.UsageAlert{}
-		err := json.Unmarshal((*b).Body, u)
-
-		if err != nil {
-			return nil, err
-		}
-		n.UsageAlertValue = *u
-		n.RelatedObject = *u
-	default:
+		ns = append(ns, n)
 	}
 
-	return n, nil
+	return ns, nil
 }
 
 func (tc *textileClient) SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error) {
@@ -116,7 +151,6 @@ func (tc *textileClient) GetMailAsNotifications(ctx context.Context, seek string
 	}
 
 	var err error
-	ns := []*domain.Notification{}
 
 	ctx, err = tc.getHubCtx(ctx)
 	if err != nil {
@@ -128,13 +162,9 @@ func (tc *textileClient) GetMailAsNotifications(ctx context.Context, seek string
 		return nil, err
 	}
 
-	for _, n := range notifs {
-		notif, err := tc.parseMessage(ctx, n)
-		if err != nil {
-			return nil, err
-		}
-
-		ns = append(ns, notif)
+	ns, err := tc.parseMessage(ctx, notifs)
+	if err != nil {
+		return nil, err
 	}
 
 	return ns, nil
@@ -170,12 +200,12 @@ func (tc *textileClient) listenForMessages(ctx context.Context) error {
 					return
 				}
 
-				p, err := tc.parseMessage(ctx, msg[0])
+				p, err := tc.parseMessage(ctx, msg)
 				if err != nil {
 					log.Error("Unable to parse incoming message: ", err)
 				}
 
-				tc.mbNotifier.SendNotificationEvent(p)
+				tc.mbNotifier.SendNotificationEvent(p[0])
 			case mail.MessageRead:
 				// handle message read (inbox only)
 			case mail.MessageDeleted:
