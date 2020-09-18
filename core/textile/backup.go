@@ -81,7 +81,7 @@ func (tc *textileClient) backupBucketFiles(ctx context.Context, bucket Bucket) (
 }
 
 // meta, key and share with me thread ids
-func (tc *textileClient) replicableThreadIds(ctx context.Context, bucket Bucket) ([]thread.ID, error) {
+func (tc *textileClient) userThreadIds(ctx context.Context, bucket Bucket) ([]thread.ID, error) {
 	dbIds := make([]thread.ID, 0)
 
 	// key
@@ -117,12 +117,12 @@ func (tc *textileClient) replicateThreadsToHub(ctx context.Context, bucket Bucke
 		}
 	}()
 
-	replicableThreadIds, err := tc.replicableThreadIds(ctx, bucket)
+	userThreadIds, err := tc.userThreadIds(ctx, bucket)
 	if err != nil {
 		return 0, err
 	}
 
-	for _, dbId := range replicableThreadIds {
+	for _, dbId := range userThreadIds {
 		err = tc.ReplicateThreadToHub(ctx, &dbId)
 		if err != nil {
 			return 0, err
@@ -225,12 +225,12 @@ func (tc *textileClient) unbackupBucketFiles(ctx context.Context, bucket Bucket)
 // dereplicate meta, key and shared with me threads
 func (tc *textileClient) dereplicateThreadsToHub(ctx context.Context, bucket Bucket) (count int, err error) {
 
-	replicableThreadIds, err := tc.replicableThreadIds(ctx, bucket)
+	userThreadIds, err := tc.userThreadIds(ctx, bucket)
 	if err != nil {
 		return 0, nil
 	}
 
-	for _, dbId := range replicableThreadIds {
+	for _, dbId := range userThreadIds {
 		err = tc.DereplicateThreadFromHub(ctx, &dbId)
 		if err != nil {
 			return 0, err
