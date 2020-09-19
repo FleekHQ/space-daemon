@@ -21,8 +21,8 @@ type ReceivedFileSchema struct {
 	Path          string          `json:"path"`
 	InvitationId  string          `json:"invitationId"`
 	Accepted      bool            `json:"accepted"`
-	BucketKey     string          `json:"bucketKey`
-	EncryptionKey []byte          `json:"encryptionKey`
+	BucketKey     string          `json:"bucketKey"`
+	EncryptionKey []byte          `json:"encryptionKey"`
 	CreatedAt     int64           `json:"created_at"`
 }
 
