@@ -17,7 +17,6 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/textileio/go-threads/core/thread"
-	"github.com/textileio/go-threads/db"
 	bc "github.com/textileio/textile/api/buckets/client"
 )
 
@@ -118,13 +117,7 @@ func (tc *textileClient) getPublicShareThread(ctx context.Context) (thread.ID, e
 
 	dbId := thread.NewIDV1(thread.Raw, 32)
 
-	managedKey, err := tc.kc.GetManagedThreadKey()
-	if err != nil {
-		log.Error("error getting managed thread key", err)
-		return thread.Undef, err
-	}
-
-	if err := tc.ht.NewDB(ctx, dbId, db.WithNewManagedThreadKey(managedKey)); err != nil {
+	if err := tc.ht.NewDB(ctx, dbId); err != nil {
 		return thread.Undef, err
 	}
 	log.Debug("Public share thread created")
