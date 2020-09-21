@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -51,6 +52,11 @@ func NewSpaceFSDataSource(service space.Service, configOptions ...FSDataSourceCo
 // Get returns the DirEntry information for item at path
 func (d *SpaceFSDataSource) Get(ctx context.Context, path string) (*DirEntry, error) {
 	log.Debug("FSDS.Get", "path:"+path)
+	baseName := filepath.Base(path)
+	if blackListedDirEntryNames[baseName] {
+		return nil, EntryNotFound
+	}
+
 	// handle quick lookup of home directory
 	if isBaseDirectory(path) {
 		return baseDir, nil
@@ -90,6 +96,10 @@ func (d *SpaceFSDataSource) findTLFDataSource(path string) *TLFDataSource {
 // GetChildren returns list of entries in a path
 func (d *SpaceFSDataSource) GetChildren(ctx context.Context, path string) ([]*DirEntry, error) {
 	log.Debug("FSDS.GetChildren", "path:"+path)
+	baseName := filepath.Base(path)
+	if blackListedDirEntryNames[baseName] {
+		return nil, EntryNotFound
+	}
 	if isBaseDirectory(path) {
 		return d.getTopLevelDirectories(), nil
 	}

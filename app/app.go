@@ -148,7 +148,11 @@ func (a *App) Start(ctx context.Context) error {
 	}
 
 	// setup FUSE FS Handler
-	sfs, err := spacefs.New(fsds.NewSpaceFSDataSource(sv, fsds.WithFilesDataSources(sv)))
+	sfs, err := spacefs.New(fsds.NewSpaceFSDataSource(
+		sv,
+		fsds.WithFilesDataSources(sv),
+		fsds.WithSharedWithMeDataSources(sv),
+	))
 	if err != nil {
 		log.Error("Failed to create space FUSE data source", err)
 		return err
