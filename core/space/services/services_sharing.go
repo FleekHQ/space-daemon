@@ -27,10 +27,18 @@ func (s *Space) GenerateFileSharingLink(
 	encryptionPassword string,
 	path string,
 	bucketName string,
+	dbID string,
 ) (domain.FileSharingInfo, error) {
 	_, fileName := filepath.Split(path)
 
-	bucket, err := s.getBucketWithFallback(ctx, bucketName)
+	var bucket t.Bucket
+	var err error
+
+	if dbID != "" {
+		bucket, err = s.getBucketForRemoteFile(ctx, bucketName, dbID, path)
+	} else {
+		bucket, err = s.getBucketWithFallback(ctx, bucketName)
+	}
 	if err != nil {
 		return domain.FileSharingInfo{}, err
 	}
@@ -121,15 +129,23 @@ func (s *Space) uploadSharedFileToIpfs(
 }
 
 // GenerateFilesSharingLink zips multiple files together
-func (s *Space) GenerateFilesSharingLink(ctx context.Context, encryptionPassword string, paths []string, bucketName string) (domain.FileSharingInfo, error) {
+func (s *Space) GenerateFilesSharingLink(ctx context.Context, encryptionPassword string, paths []string, bucketName, dbID string) (domain.FileSharingInfo, error) {
 	if len(paths) == 0 {
 		return EmptyFileSharingInfo, errors.New("no file passed to share link")
 	}
 	if len(paths) == 1 {
-		return s.GenerateFileSharingLink(ctx, encryptionPassword, paths[0], bucketName)
+		return s.GenerateFileSharingLink(ctx, encryptionPassword, paths[0], bucketName, dbID)
 	}
 
-	bucket, err := s.getBucketWithFallback(ctx, bucketName)
+	var bucket t.Bucket
+	var err error
+
+	if dbID != "" {
+		// Safe to use the first path to get the bucket as all shared files should be under the same dbID
+		bucket, err = s.getBucketForRemoteFile(ctx, bucketName, dbID, paths[0])
+	} else {
+		bucket, err = s.getBucketWithFallback(ctx, bucketName)
+	}
 	if err != nil {
 		return domain.FileSharingInfo{}, err
 	}
