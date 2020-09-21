@@ -62,6 +62,14 @@ type Bucket interface {
 	) (path.Resolved, error)
 }
 
+type backuper interface {
+	BackupBucket(ctx context.Context, bucket Bucket) (int, error)
+	BackupFileWithReader(ctx context.Context, bucket Bucket, path string, reader io.Reader) error
+	UnbackupBucket(ctx context.Context, bucket Bucket) (int, error)
+	IsBucketBackup(ctx context.Context, bucketSlug string) bool
+	IsMirrorFile(ctx context.Context, path, bucketSlug string) bool
+}
+
 type Client interface {
 	IsRunning() bool
 	IsInitialized() bool
@@ -89,19 +97,13 @@ type Client interface {
 	RejectSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
 	RemoveKeys() error
 	AttachMailboxNotifier(notif GrpcMailboxNotifier)
-	IsBucketBackup(ctx context.Context, bucketSlug string) bool
-	BackupBucket(ctx context.Context, bucket Bucket) (int, error)
-	UnbackupBucket(ctx context.Context, bucket Bucket) (int, error)
-	BackupFileWithReader(ctx context.Context, bucket Bucket, path string, reader io.Reader) error
-	IsMirrorFile(ctx context.Context, path, bucketSlug string) bool
 	UploadFileToHub(ctx context.Context, b Bucket, path string, reader io.Reader) (result path.Resolved, root path.Path, err error)
-	SetMirrorFileBackup(ctx context.Context, path, bucketSlug string) (*domain.MirrorFile, error)
-	UnsetMirrorFileBackup(ctx context.Context, path, bucketSlug string) error
 	GetReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*domain.SharedDirEntry, string, error)
 	GetPathAccessRoles(ctx context.Context, b Bucket, path string) ([]domain.Member, error)
 	GetPublicShareBucket(ctx context.Context) (Bucket, error)
 	DownloadPublicGatewayItem(ctx context.Context, cid cid.Cid) (io.ReadCloser, error)
 	GetFailedHealthchecks() int
+	backuper
 }
 
 type Buckd interface {

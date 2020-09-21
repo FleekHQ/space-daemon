@@ -25,8 +25,7 @@ func (tc *textileClient) IsMirrorFile(ctx context.Context, path, bucketSlug stri
 	return false
 }
 
-// mark mirror file as backup
-func (tc *textileClient) SetMirrorFileBackup(ctx context.Context, path, bucketSlug string) (*domain.MirrorFile, error) {
+func (tc *textileClient) setMirrorFileBackup(ctx context.Context, path, bucketSlug string) (*domain.MirrorFile, error) {
 	mf := &domain.MirrorFile{
 		Path:       path,
 		BucketSlug: bucketSlug,
@@ -43,8 +42,7 @@ func (tc *textileClient) SetMirrorFileBackup(ctx context.Context, path, bucketSl
 	return mf, nil
 }
 
-// mark mirror file as not backup
-func (tc *textileClient) UnsetMirrorFileBackup(ctx context.Context, path, bucketSlug string) error {
+func (tc *textileClient) unsetMirrorFileBackup(ctx context.Context, path, bucketSlug string) error {
 	mf, err := tc.GetModel().FindMirrorFileByPathAndBucketSlug(ctx, path, bucketSlug)
 	if err != nil {
 		return err
