@@ -281,7 +281,6 @@ func (tc *textileClient) isSharedFile(ctx context.Context, bucket Bucket, path s
 
 	roles, err := sbc.PullPathAccessRoles(ctx, bucket.Key(), path)
 	if err != nil {
-		// XXX: returning empty members list until we fix it on textile side
 		return false
 	}
 

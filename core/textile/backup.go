@@ -28,7 +28,7 @@ func (tc *textileClient) BackupFileWithReader(ctx context.Context, bucket Bucket
 	return nil
 }
 
-// backup a single file with an io.Reader provided
+// backup a single file with a path provided
 func (tc *textileClient) backupFile(ctx context.Context, bucket Bucket, path string) error {
 
 	errc := make(chan error, 1)
