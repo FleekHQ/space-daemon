@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/tls"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/libp2p/go-libp2p-core/crypto"
@@ -17,6 +19,7 @@ import (
 	tb "github.com/textileio/textile/buckets"
 	"github.com/textileio/textile/cmd"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type TextileBucketRoot buckets_pb.Root
@@ -33,7 +36,15 @@ func main() {
 	var opts []grpc.DialOption
 	hubTarget := host
 	threadstarget := host
-	opts = append(opts, grpc.WithInsecure())
+
+	if strings.Contains(host, "443") {
+		creds := credentials.NewTLS(&tls.Config{})
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+		auth.Secure = true
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+	}
+
 	opts = append(opts, grpc.WithPerRPCCredentials(auth))
 
 	buckets, err = bc.NewClient(hubTarget, opts...)
@@ -46,20 +57,35 @@ func main() {
 	}
 
 	user1, _, err := crypto.GenerateEd25519Key(rand.Reader)
+	if err != nil {
+		log.Println("error creating user1")
+		log.Fatal(err)
+	}
+
 	user2, _, err := crypto.GenerateEd25519Key(rand.Reader)
+	if err != nil {
+		log.Println("error creating user2")
+		log.Fatal(err)
+	}
 
 	// user 1 creates bucket and adds file
 
 	ctx := context.Background()
 	ctx = common.NewAPIKeyContext(ctx, key)
-	ctx, err = common.CreateAPISigContext(ctx, time.Now().Add(time.Minute*2), secret)
-	tok, err := threads.GetToken(ctx, thread.NewLibp2pIdentity(user1))
-	ctx = thread.NewTokenContext(ctx, tok)
 
+	ctx, err = common.CreateAPISigContext(ctx, time.Now().Add(time.Minute*2), secret)
 	if err != nil {
 		log.Println("error creating APISigContext")
 		log.Fatal(err)
 	}
+
+	tok, err := threads.GetToken(ctx, thread.NewLibp2pIdentity(user1))
+	if err != nil {
+		log.Println("error calling GetToken")
+		log.Fatal(err)
+	}
+
+	ctx = thread.NewTokenContext(ctx, tok)
 
 	bucket1name := "testbucket1"
 
