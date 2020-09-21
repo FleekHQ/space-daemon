@@ -118,12 +118,19 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 	log.Debug("getOrCreateBucketContext: Thread ID not found in meta store. Generating a new one...")
 	dbID := thread.NewIDV1(thread.Raw, 32)
 
-	log.Debug("getOrCreateBucketContext: Creating Thread DB for bucket " + bucketSlug + " at db " + dbID.String())
-	if err := tc.threads.NewDB(ctx, dbID); err != nil {
+	managedKey, err := tc.kc.GetManagedThreadKey()
+	if err != nil {
+		log.Error("error getting managed thread key", err)
 		return nil, nil, err
 	}
+
+	log.Debug("getOrCreateBucketContext: Creating Thread DB for bucket " + bucketSlug + " at db " + dbID.String())
+	if err := tc.threads.NewDB(ctx, dbID, db.WithNewManagedThreadKey(managedKey)); err != nil {
+		return nil, nil, err
+	}
+
 	log.Debug("getOrCreateBucketContext: Thread DB Created")
-	bucketSchema, err := m.CreateBucket(ctx, bucketSlug, utils.CastDbIDToString(dbID))
+	bucketSchema, err = m.CreateBucket(ctx, bucketSlug, utils.CastDbIDToString(dbID))
 	if err != nil {
 		return nil, nil, err
 	}

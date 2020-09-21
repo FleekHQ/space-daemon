@@ -12,6 +12,7 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/textileio/go-threads/core/thread"
+	"github.com/textileio/go-threads/db"
 	bc "github.com/textileio/textile/api/buckets/client"
 	"github.com/textileio/textile/buckets"
 )
@@ -173,8 +174,14 @@ func (tc *textileClient) createMirrorThread(ctx context.Context) (*thread.ID, er
 
 	dbID := thread.NewIDV1(thread.Raw, 32)
 
+	managedKey, err := tc.kc.GetManagedThreadKey()
+	if err != nil {
+		log.Error("error getting managed thread key", err)
+		return nil, err
+	}
+
 	log.Debug("createMirrorThread: Creating Thread DB for bucket at db " + dbID.String())
-	if err := tc.ht.NewDB(ctx, dbID); err != nil {
+	if err := tc.ht.NewDB(ctx, dbID, db.WithNewManagedThreadKey(managedKey)); err != nil {
 		return nil, err
 	}
 	log.Debug("createMirrorThread: Thread DB Created")

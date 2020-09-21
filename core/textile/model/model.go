@@ -12,6 +12,7 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
+	"github.com/textileio/go-threads/db"
 )
 
 const metaThreadName = "metathreadV1"
@@ -105,7 +106,13 @@ func (m *model) findOrCreateMetaThreadID(ctx context.Context) (*thread.ID, error
 
 	log.Debug("Model.findOrCreateMetaThreadID: Created meta thread in db " + dbID.String())
 
-	if err := m.threads.NewDB(ctx, dbID); err != nil {
+	managedKey, err := m.kc.GetManagedThreadKey()
+	if err != nil {
+		log.Error("error getting managed thread key", err)
+		return nil, err
+	}
+
+	if err := m.threads.NewDB(ctx, dbID, db.WithNewManagedThreadKey(managedKey)); err != nil {
 		return nil, err
 	}
 

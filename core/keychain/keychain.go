@@ -14,6 +14,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/textileio/go-threads/core/thread"
 )
 
 const PrivateKeyStoreKey = "key"
@@ -38,6 +39,7 @@ type Keychain interface {
 	GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error)
 	GetStoredPublicKey() (crypto.PubKey, error)
 	GetStoredMnemonic() (string, error)
+	GetManagedThreadKey() (thread.Key, error)
 	GenerateKeyPairWithForce() (pub []byte, priv []byte, err error)
 	Sign([]byte) ([]byte, error)
 	ImportExistingKeyPair(priv crypto.PrivKey, mnemonic string) error
@@ -365,4 +367,23 @@ func (kc *keychain) retrieveKeyPair() (privKey []byte, mnemonic string, err erro
 	}
 
 	return privKey, mnemonic, nil
+}
+
+func (kc *keychain) GetManagedThreadKey() (thread.Key, error) {
+	pub, err := kc.GetStoredPublicKey()
+	if err != nil {
+		return thread.Key{}, err
+	}
+
+	pubBytes, err := pub.Raw()
+	if err != nil {
+		return thread.Key{}, err
+	}
+
+	managedKey, err := thread.KeyFromBytes(pubBytes)
+	if err != nil {
+		return thread.Key{}, err
+	}
+
+	return managedKey, nil
 }
