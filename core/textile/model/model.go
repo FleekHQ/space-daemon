@@ -46,6 +46,7 @@ type Model interface {
 	UpdateMirrorFile(ctx context.Context, mirrorFile *MirrorFileSchema) (*MirrorFileSchema, error)
 	ListReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*ReceivedFileSchema, error)
 	FindMirrorFileByPaths(ctx context.Context, paths []string) (map[string]*MirrorFileSchema, error)
+	FindReceivedFilesByIds(ctx context.Context, ids []string) ([]*ReceivedFileSchema, error)
 }
 
 func New(st store.Store, kc keychain.Keychain, threads *threadsClient.Client, hubAuth hub.HubAuth) *model {
@@ -124,7 +125,7 @@ func (m *model) getMetaThreadContext(ctx context.Context) (context.Context, *thr
 		return nil, nil, err
 	}
 
-	metathreadCtx, err := utils.GetThreadContext(ctx, metaThreadName, *dbID, false, m.kc, m.hubAuth)
+	metathreadCtx, err := utils.GetThreadContext(ctx, metaThreadName, *dbID, false, m.kc, m.hubAuth, m.threads)
 	if err != nil {
 		return nil, nil, err
 	}

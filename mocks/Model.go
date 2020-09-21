@@ -246,6 +246,29 @@ func (_m *Model) FindReceivedFile(ctx context.Context, remoteDbID string, bucket
 	return r0, r1
 }
 
+// FindReceivedFilesByIds provides a mock function with given fields: ctx, ids
+func (_m *Model) FindReceivedFilesByIds(ctx context.Context, ids []string) ([]*model.ReceivedFileSchema, error) {
+	ret := _m.Called(ctx, ids)
+
+	var r0 []*model.ReceivedFileSchema
+	if rf, ok := ret.Get(0).(func(context.Context, []string) []*model.ReceivedFileSchema); ok {
+		r0 = rf(ctx, ids)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*model.ReceivedFileSchema)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, []string) error); ok {
+		r1 = rf(ctx, ids)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListBuckets provides a mock function with given fields: ctx
 func (_m *Model) ListBuckets(ctx context.Context) ([]*model.BucketSchema, error) {
 	ret := _m.Called(ctx)

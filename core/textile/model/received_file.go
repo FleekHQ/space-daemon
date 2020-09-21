@@ -21,8 +21,8 @@ type ReceivedFileSchema struct {
 	Path          string          `json:"path"`
 	InvitationId  string          `json:"invitationId"`
 	Accepted      bool            `json:"accepted"`
-	BucketKey     string          `json:"bucketKey`
-	EncryptionKey []byte          `json:"encryptionKey`
+	BucketKey     string          `json:"bucketKey"`
+	EncryptionKey []byte          `json:"encryptionKey"`
 	CreatedAt     int64           `json:"created_at"`
 }
 
@@ -83,6 +83,31 @@ func (m *model) CreateReceivedFile(
 		Accepted:     newInstance.Accepted,
 		CreatedAt:    newInstance.CreatedAt,
 	}, nil
+}
+
+func (m *model) FindReceivedFilesByIds(ctx context.Context, ids []string) ([]*ReceivedFileSchema, error) {
+	metaCtx, dbID, err := m.initReceivedFileModel(ctx)
+	if err != nil || dbID == nil {
+		return nil, err
+	}
+
+	var qry *db.Query
+	for i, id := range ids {
+		if i == 0 {
+			qry = db.Where("invitationId").Eq(id)
+		} else {
+			qry = qry.Or(db.Where("invitationId").Eq(id))
+		}
+	}
+
+	fileSchemasRaw, err := m.threads.Find(metaCtx, *dbID, receivedFileModelName, qry, &ReceivedFileSchema{})
+	if err != nil {
+		return nil, err
+	}
+
+	fileSchemas := fileSchemasRaw.([]*ReceivedFileSchema)
+
+	return fileSchemas, nil
 }
 
 // Finds the metadata of a file that has been shared to the user

@@ -84,7 +84,7 @@ func (tc *textileClient) getBucketContext(ctx context.Context, sDbID string, buc
 		log.Error("Error casting thread id", err)
 		return nil, nil, err
 	}
-	ctx, err = utils.GetThreadContext(ctx, bucketSlug, *dbID, ishub, tc.kc, tc.hubAuth)
+	ctx, err = utils.GetThreadContext(ctx, bucketSlug, *dbID, ishub, tc.kc, tc.hubAuth, nil)
 
 	if err != nil {
 		return nil, nil, err

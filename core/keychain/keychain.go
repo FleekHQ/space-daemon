@@ -12,6 +12,7 @@ import (
 	"github.com/99designs/keyring"
 	ri "github.com/FleekHQ/space-daemon/core/keychain/keyring"
 	"github.com/FleekHQ/space-daemon/core/store"
+	"github.com/FleekHQ/space-daemon/log"
 	"github.com/libp2p/go-libp2p-core/crypto"
 )
 
@@ -28,6 +29,7 @@ type keychain struct {
 	fileDir string
 	st      store.Store
 	ring    ri.Keyring
+	privKey *crypto.PrivKey
 }
 
 type Keychain interface {
@@ -118,6 +120,10 @@ func (kc *keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.Pub
 	var priv []byte
 	var err error
 
+	if kc.privKey != nil {
+		return *kc.privKey, (*kc.privKey).GetPublic(), nil
+	}
+
 	if priv, _, err = kc.retrieveKeyPair(); err != nil {
 		newErr := ErrKeyPairNotFound
 		return nil, nil, newErr
@@ -128,6 +134,8 @@ func (kc *keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.Pub
 	if unmarshalledPriv, err = crypto.UnmarshalEd25519PrivateKey(priv); err != nil {
 		return nil, nil, err
 	}
+
+	kc.privKey = &unmarshalledPriv
 
 	unmarshalledPub := unmarshalledPriv.GetPublic()
 
@@ -197,6 +205,8 @@ func (kc *keychain) ImportExistingKeyPair(priv crypto.PrivKey, mnemonic string) 
 		return err
 	}
 
+	kc.privKey = &priv
+
 	return nil
 }
 
@@ -214,6 +224,8 @@ func (kc *keychain) DeleteKeypair() error {
 	if err != nil {
 		return err
 	}
+
+	kc.privKey = nil
 
 	return nil
 }
@@ -245,6 +257,13 @@ func (kc *keychain) generateAndStoreKeyPair(seed []byte, mnemonic string) ([]byt
 	if err := kc.storeKeyPair(priv, pub, mnemonic); err != nil {
 		return nil, nil, err
 	}
+
+	privkey, err := crypto.UnmarshalEd25519PrivateKey(priv)
+	if err != nil {
+		log.Warn("Unable to cache priv key")
+	}
+
+	kc.privKey = &privkey
 
 	return pub, priv, nil
 }

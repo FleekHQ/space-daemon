@@ -112,7 +112,7 @@ type Invitation struct {
 	InvitationID     string           `json:"invitationID"`
 	Status           InvitationStatus `json:"status"`
 	ItemPaths        []FullPath       `json:"itemPaths"`
-	Keys             [][]byte         `json:""keys`
+	Keys             [][]byte         `json:"keys"`
 }
 
 type InvitationReply struct {
@@ -122,12 +122,12 @@ type InvitationReply struct {
 type UsageAlert struct {
 	Used    int64  `json:"used"`
 	Limit   int64  `json:"limit"`
-	Message string `json:message`
+	Message string `json:"message"`
 }
 
 type MessageBody struct {
 	Type NotificationTypes `json:"type"`
-	Body []byte            `json:"body`
+	Body []byte            `json:"body"`
 }
 
 type Notification struct {
@@ -141,7 +141,7 @@ type Notification struct {
 	InvitationValue       Invitation      `json:"invitationValue"`
 	UsageAlertValue       UsageAlert      `json:"usageAlertValue"`
 	InvitationAcceptValue InvitationReply `json:"invitationAcceptValue"`
-	RelatedObject         interface{}     `json:"relatedObject`
+	RelatedObject         interface{}     `json:"relatedObject"`
 }
 
 type APISessionTokens struct {
