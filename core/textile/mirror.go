@@ -26,21 +26,35 @@ func (tc *textileClient) IsMirrorFile(ctx context.Context, path, bucketSlug stri
 	return false
 }
 
-func (tc *textileClient) setMirrorFileBackup(ctx context.Context, path, bucketSlug string) (*domain.MirrorFile, error) {
-	mf := &domain.MirrorFile{
-		Path:       path,
-		BucketSlug: bucketSlug,
-		Backup:     true,
-		Shared:     false,
-	}
-
-	// TODO: upsert
-	_, err := tc.GetModel().CreateMirrorFile(ctx, mf)
+func (tc *textileClient) setMirrorFileBackup(ctx context.Context, path, bucketSlug string) error {
+	mf, err := tc.GetModel().FindMirrorFileByPathAndBucketSlug(ctx, path, bucketSlug)
 	if err != nil {
-		return nil, err
+		return err
+	}
+	if mf != nil {
+		// update
+		mf.Backup = true
+
+		_, err = tc.GetModel().UpdateMirrorFile(ctx, mf)
+		if err != nil {
+			return err
+		}
+	} else {
+		// create
+		mf := &domain.MirrorFile{
+			Path:       path,
+			BucketSlug: bucketSlug,
+			Backup:     true,
+			Shared:     false,
+		}
+
+		_, err := tc.GetModel().CreateMirrorFile(ctx, mf)
+		if err != nil {
+			return err
+		}
 	}
 
-	return mf, nil
+	return nil
 }
 
 func (tc *textileClient) unsetMirrorFileBackup(ctx context.Context, path, bucketSlug string) error {
@@ -48,7 +62,7 @@ func (tc *textileClient) unsetMirrorFileBackup(ctx context.Context, path, bucket
 	if err != nil {
 		return err
 	}
-	if mf != nil {
+	if mf == nil {
 		log.Warn(fmt.Sprintf("mirror file (path=%+v bucketSlug=%+v) does not exist", path, bucketSlug))
 		return nil
 	}

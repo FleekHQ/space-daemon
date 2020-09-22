@@ -20,7 +20,7 @@ func (tc *textileClient) BackupFileWithReader(ctx context.Context, bucket Bucket
 		return err
 	}
 
-	if _, err = tc.setMirrorFileBackup(ctx, path, bucket.Slug()); err != nil {
+	if err = tc.setMirrorFileBackup(ctx, path, bucket.Slug()); err != nil {
 		log.Error(fmt.Sprintf("error setting mirror file as backup (path=%+v b.Slug=%+v)", path, bucket.Slug()), err)
 		return err
 	}
@@ -45,13 +45,17 @@ func (tc *textileClient) backupFile(ctx context.Context, bucket Bucket, path str
 			log.Error(fmt.Sprintf("error getting file (path=%+v b.Slug=%+v)", path, bucket.Slug()), err)
 			return
 		}
+
+		errc <- nil
+
 	}()
-	if err := <-errc; err != nil {
-		return err
-	}
 
 	if err := tc.BackupFileWithReader(ctx, bucket, path, pipeReader); err != nil {
 		log.Error(fmt.Sprintf("error backing up file (path=%+v b.Slug=%+v)", path, bucket.Slug()), err)
+		return err
+	}
+
+	if err := <-errc; err != nil {
 		return err
 	}
 
@@ -72,27 +76,36 @@ func (tc *textileClient) backupBucketFiles(ctx context.Context, bucket Bucket, p
 		return 0, err
 	}
 
-	wg.Add(len(dir.Item.Items))
-
 	for _, item := range dir.Item.Items {
+		if item.Name == ".textileseed" || item.Name == ".textile" {
+			continue
+		}
+
 		if item.IsDir {
 			p := strings.Join([]string{path, item.Name}, "/")
 
 			n, err := tc.backupBucketFiles(ctx, bucket, p)
 			if err != nil {
-				return 0, err
+				return count, err
 			}
 
 			count += n
 			continue
 		}
 
+		wg.Add(1)
+
 		// parallelize the backups
 		go func(path string) {
 			defer wg.Done()
 
 			if err = tc.backupFile(ctx, bucket, path); err != nil {
-				errc <- err
+				select {
+				case errc <- err:
+					// make sure no block
+				default:
+				}
+
 				return
 			}
 
@@ -194,25 +207,29 @@ func (tc *textileClient) unbackupBucketFiles(ctx context.Context, bucket Bucket,
 	var wg sync.WaitGroup
 	var count int
 
-	dir, err := bucket.ListDirectory(ctx, "")
+	dir, err := bucket.ListDirectory(ctx, path)
 	if err != nil {
 		return 0, err
 	}
 
-	wg.Add(len(dir.Item.Items))
-
 	for _, item := range dir.Item.Items {
+		if item.Name == ".textileseed" || item.Name == ".textile" {
+			continue
+		}
+
 		if item.IsDir {
 			p := strings.Join([]string{path, item.Name}, "/")
 
 			n, err := tc.unbackupBucketFiles(ctx, bucket, p)
 			if err != nil {
-				return 0, err
+				return count, err
 			}
 
 			count += n
 			continue
 		}
+
+		wg.Add(1)
 
 		go func(path string) {
 			defer wg.Done()
@@ -223,6 +240,8 @@ func (tc *textileClient) unbackupBucketFiles(ctx context.Context, bucket Bucket,
 			if err = tc.unbackupFile(ctx, bucket, path); err != nil {
 				return
 			}
+
+			count += 1
 		}(item.Path)
 	}
 
