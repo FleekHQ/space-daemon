@@ -17,6 +17,8 @@ import (
 	"github.com/textileio/textile/buckets"
 )
 
+const mirrorThreadKeyName = "mirrorV1"
+
 func (tc *textileClient) IsMirrorFile(ctx context.Context, path, bucketSlug string) bool {
 	mirrorFile, _ := tc.GetModel().FindMirrorFileByPathAndBucketSlug(ctx, path, bucketSlug)
 	if mirrorFile != nil {
@@ -188,7 +190,7 @@ func (tc *textileClient) createMirrorThread(ctx context.Context) (*thread.ID, er
 
 	dbID := thread.NewIDV1(thread.Raw, 32)
 
-	managedKey, err := tc.kc.GetManagedThreadKey()
+	managedKey, err := tc.kc.GetManagedThreadKey(mirrorThreadKeyName)
 	if err != nil {
 		log.Error("error getting managed thread key", err)
 		return nil, err

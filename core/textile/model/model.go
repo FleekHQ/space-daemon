@@ -106,7 +106,7 @@ func (m *model) findOrCreateMetaThreadID(ctx context.Context) (*thread.ID, error
 
 	log.Debug("Model.findOrCreateMetaThreadID: Created meta thread in db " + dbID.String())
 
-	managedKey, err := m.kc.GetManagedThreadKey()
+	managedKey, err := m.kc.GetManagedThreadKey(metaThreadName)
 	if err != nil {
 		log.Error("error getting managed thread key", err)
 		return nil, err

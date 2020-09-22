@@ -2,7 +2,9 @@ package keychain
 
 import (
 	"crypto/ed25519"
+	"crypto/sha512"
 	"encoding/hex"
+	"golang.org/x/crypto/pbkdf2"
 	"os"
 	"path"
 	"strings"
@@ -39,7 +41,7 @@ type Keychain interface {
 	GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error)
 	GetStoredPublicKey() (crypto.PubKey, error)
 	GetStoredMnemonic() (string, error)
-	GetManagedThreadKey() (thread.Key, error)
+	GetManagedThreadKey(threadKeyName string) (thread.Key, error)
 	GenerateKeyPairWithForce() (pub []byte, priv []byte, err error)
 	Sign([]byte) ([]byte, error)
 	ImportExistingKeyPair(priv crypto.PrivKey, mnemonic string) error
@@ -369,7 +371,9 @@ func (kc *keychain) retrieveKeyPair() (privKey []byte, mnemonic string, err erro
 	return privKey, mnemonic, nil
 }
 
-func (kc *keychain) GetManagedThreadKey() (thread.Key, error) {
+func (kc *keychain) GetManagedThreadKey(threadKeyName string) (thread.Key, error) {
+	size := 32
+
 	pub, err := kc.GetStoredPublicKey()
 	if err != nil {
 		return thread.Key{}, err
@@ -380,7 +384,12 @@ func (kc *keychain) GetManagedThreadKey() (thread.Key, error) {
 		return thread.Key{}, err
 	}
 
-	managedKey, err := thread.KeyFromBytes(pubBytes)
+	num := pbkdf2.Key(pubBytes, []byte("threadID"+threadKeyName), 256, size, sha512.New)
+	if err != nil {
+		return thread.Key{}, err
+	}
+
+	managedKey, err := thread.KeyFromBytes(num)
 	if err != nil {
 		return thread.Key{}, err
 	}

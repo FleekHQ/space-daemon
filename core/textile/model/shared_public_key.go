@@ -97,7 +97,7 @@ func (m *model) initSharedPublicKey(ctx context.Context) (context.Context, *thre
 		return nil, nil, err
 	}
 
-	managedKey, err := m.kc.GetManagedThreadKey()
+	managedKey, err := m.kc.GetManagedThreadKey(metaThreadName)
 	if err != nil {
 		log.Error("error getting managed thread key", err)
 		return nil, nil, err
