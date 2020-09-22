@@ -121,20 +121,20 @@ func (_m *Keychain) GenerateKeyPairWithForce() ([]byte, []byte, error) {
 	return r0, r1, r2
 }
 
-// GetManagedThreadKey provides a mock function with given fields:
-func (_m *Keychain) GetManagedThreadKey() (thread.Key, error) {
-	ret := _m.Called()
+// GetManagedThreadKey provides a mock function with given fields: threadKeyName
+func (_m *Keychain) GetManagedThreadKey(threadKeyName string) (thread.Key, error) {
+	ret := _m.Called(threadKeyName)
 
 	var r0 thread.Key
-	if rf, ok := ret.Get(0).(func() thread.Key); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(string) thread.Key); ok {
+		r0 = rf(threadKeyName)
 	} else {
 		r0 = ret.Get(0).(thread.Key)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(threadKeyName)
 	} else {
 		r1 = ret.Error(1)
 	}
