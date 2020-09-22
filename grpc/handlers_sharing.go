@@ -103,7 +103,7 @@ func (srv *grpcServer) GetSharedWithMeFiles(ctx context.Context, request *pb.Get
 }
 
 func (srv *grpcServer) GeneratePublicFileLink(ctx context.Context, request *pb.GeneratePublicFileLinkRequest) (*pb.GeneratePublicFileLinkResponse, error) {
-	res, err := srv.sv.GenerateFilesSharingLink(ctx, request.Password, request.ItemPaths, request.Bucket)
+	res, err := srv.sv.GenerateFilesSharingLink(ctx, request.Password, request.ItemPaths, request.Bucket, request.DbId)
 	if err != nil {
 		return nil, err
 	}
