@@ -25,10 +25,6 @@ type filesDataSource struct {
 // Maybe consider caching at the level of SpaceFSDataSource when results are returned from top level file
 func (f *filesDataSource) Get(ctx context.Context, path string) (*DirEntry, error) {
 	baseName := filepath.Base(path)
-	if blackListedDirEntryNames[baseName] {
-		return nil, EntryNotFound
-	}
-
 	if isBaseDirectory(path) || path == "" {
 		return NewDirEntryWithMode(domain.DirEntry{
 			Path:    path,

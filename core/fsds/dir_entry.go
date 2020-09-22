@@ -21,6 +21,7 @@ var RestrictedDirAccessMode = os.ModeDir | 0500 // dr-x------ only allow reading
 type DirEntry struct {
 	entry domain.DirEntry
 	mode  os.FileMode
+	dbId  string
 }
 
 func NewDirEntry(entry domain.DirEntry) *DirEntry {

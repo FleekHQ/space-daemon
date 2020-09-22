@@ -31,6 +31,20 @@ func WithFilesDataSources(service space.Service) FSDataSourceConfig {
 	})
 }
 
+// Configure the default 'Shared With Me` data source to be included as a data source
+func WithSharedWithMeDataSources(service space.Service) FSDataSourceConfig {
+	basePath := fmt.Sprintf("%cShared With Me", os.PathSeparator)
+	return WithTLFDataSource(&TLFDataSource{
+		name:     "Shared With Me",
+		basePath: basePath,
+		FSDataSource: &sharedWithMeDataSource{
+			service:     service,
+			maxDirLimit: 1000,
+			cache:       make(map[string]*sharedFileEntry),
+		},
+	})
+}
+
 var blackListedDirEntryNames = map[string]bool{
 	// OSX specific special directories
 	".Trashes":              true,
