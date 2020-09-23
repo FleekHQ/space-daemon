@@ -93,11 +93,8 @@ func (tc *textileClient) isMirrorBackupFile(ctx context.Context, path, bucketSlu
 		log.Warn(fmt.Sprintf("mirror file (path=%+v bucketSlug=%+v) does not exist", path, bucketSlug))
 		return false
 	}
-	if mf.Backup == false {
-		return false
-	}
 
-	return true
+	return mf.Backup == true
 }
 
 func (tc *textileClient) addCurrentUserAsFileOwner(ctx context.Context, bucketsClient *SecureBucketClient, key, path string) error {
