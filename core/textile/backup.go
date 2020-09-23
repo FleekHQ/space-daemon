@@ -67,6 +67,8 @@ func (tc *textileClient) backupBucketFiles(ctx context.Context, bucket Bucket, p
 	var wg sync.WaitGroup
 	var count int
 
+	bucketSlug := bucket.Slug()
+
 	// XXX: we ignore errc (no atomicity at all) for now but we should return
 	// XXX: the errors, perhaps in a separate async call
 	errc := make(chan error)
@@ -99,6 +101,10 @@ func (tc *textileClient) backupBucketFiles(ctx context.Context, bucket Bucket, p
 		go func(path string) {
 			defer wg.Done()
 
+			// skip already set as backup
+			if tc.isMirrorBackupFile(ctx, bucketSlug, path) {
+				return
+			}
 			if err = tc.backupFile(ctx, bucket, path); err != nil {
 				select {
 				case errc <- err:

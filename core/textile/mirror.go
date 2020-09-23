@@ -28,6 +28,7 @@ func (tc *textileClient) IsMirrorFile(ctx context.Context, path, bucketSlug stri
 	return false
 }
 
+// set mirror file as backup
 func (tc *textileClient) setMirrorFileBackup(ctx context.Context, path, bucketSlug string) error {
 	mf, err := tc.GetModel().FindMirrorFileByPathAndBucketSlug(ctx, path, bucketSlug)
 	if err != nil {
@@ -59,6 +60,7 @@ func (tc *textileClient) setMirrorFileBackup(ctx context.Context, path, bucketSl
 	return nil
 }
 
+// unset mirror file as backup
 func (tc *textileClient) unsetMirrorFileBackup(ctx context.Context, path, bucketSlug string) error {
 	mf, err := tc.GetModel().FindMirrorFileByPathAndBucketSlug(ctx, path, bucketSlug)
 	if err != nil {
@@ -78,6 +80,24 @@ func (tc *textileClient) unsetMirrorFileBackup(ctx context.Context, path, bucket
 	}
 
 	return nil
+}
+
+// return true if mirror file is a backup
+func (tc *textileClient) isMirrorBackupFile(ctx context.Context, path, bucketSlug string) bool {
+	mf, err := tc.GetModel().FindMirrorFileByPathAndBucketSlug(ctx, path, bucketSlug)
+	if err != nil {
+		log.Error(fmt.Sprintf("Error checking if path=%+v bucketSlug=%+v is a mirror backup file", path, bucketSlug), err)
+		return false
+	}
+	if mf == nil {
+		log.Warn(fmt.Sprintf("mirror file (path=%+v bucketSlug=%+v) does not exist", path, bucketSlug))
+		return false
+	}
+	if mf.Backup == false {
+		return false
+	}
+
+	return true
 }
 
 func (tc *textileClient) addCurrentUserAsFileOwner(ctx context.Context, bucketsClient *SecureBucketClient, key, path string) error {
