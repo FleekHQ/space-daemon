@@ -379,7 +379,7 @@ func (kc *keychain) GetManagedThreadKey(threadKeyName string) (thread.Key, error
 		return thread.Key{}, err
 	}
 
-	num := pbkdf2.Key(privBytes, []byte("threadID"+threadKeyName), 256, size, sha512.New)
+	num := pbkdf2.Key(privBytes, []byte("threadKey"+threadKeyName), 256, size, sha512.New)
 	if err != nil {
 		return thread.Key{}, err
 	}
