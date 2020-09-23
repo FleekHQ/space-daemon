@@ -374,7 +374,12 @@ func (kc *keychain) retrieveKeyPair() (privKey []byte, mnemonic string, err erro
 func (kc *keychain) GetManagedThreadKey(threadKeyName string) (thread.Key, error) {
 	size := 32
 
-	privBytes, _, err := kc.retrieveKeyPair()
+	priv, _, err := kc.GetStoredKeyPairInLibP2PFormat()
+	if err != nil {
+		return thread.Key{}, err
+	}
+
+	privBytes, err := priv.Raw()
 	if err != nil {
 		return thread.Key{}, err
 	}
