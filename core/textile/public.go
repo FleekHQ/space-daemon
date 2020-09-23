@@ -116,6 +116,7 @@ func (tc *textileClient) getPublicShareThread(ctx context.Context) (thread.ID, e
 	}
 
 	dbId := thread.NewIDV1(thread.Raw, 32)
+
 	if err := tc.ht.NewDB(ctx, dbId); err != nil {
 		return thread.Undef, err
 	}

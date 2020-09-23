@@ -12,6 +12,7 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
+	"github.com/textileio/go-threads/db"
 )
 
 const metaThreadName = "metathreadV1"
@@ -43,6 +44,7 @@ type Model interface {
 	CreateMirrorBucket(ctx context.Context, bucketSlug string, mirrorBucket *MirrorBucketSchema) (*BucketSchema, error)
 	FindMirrorFileByPathAndBucketSlug(ctx context.Context, path, bucketSlug string) (*MirrorFileSchema, error)
 	CreateMirrorFile(ctx context.Context, mirrorFile *domain.MirrorFile) (*MirrorFileSchema, error)
+	UpdateMirrorFile(ctx context.Context, mirrorFile *MirrorFileSchema) (*MirrorFileSchema, error)
 	ListReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*ReceivedFileSchema, error)
 	FindMirrorFileByPaths(ctx context.Context, paths []string) (map[string]*MirrorFileSchema, error)
 	FindReceivedFilesByIds(ctx context.Context, ids []string) ([]*ReceivedFileSchema, error)
@@ -104,7 +106,13 @@ func (m *model) findOrCreateMetaThreadID(ctx context.Context) (*thread.ID, error
 
 	log.Debug("Model.findOrCreateMetaThreadID: Created meta thread in db " + dbID.String())
 
-	if err := m.threads.NewDB(ctx, dbID); err != nil {
+	managedKey, err := m.kc.GetManagedThreadKey(metaThreadName)
+	if err != nil {
+		log.Error("error getting managed thread key", err)
+		return nil, err
+	}
+
+	if err := m.threads.NewDB(ctx, dbID, db.WithNewManagedThreadKey(managedKey)); err != nil {
 		return nil, err
 	}
 

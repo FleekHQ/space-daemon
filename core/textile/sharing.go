@@ -273,3 +273,26 @@ func (tc *textileClient) GetPathAccessRoles(ctx context.Context, b Bucket, path 
 
 	return members, nil
 }
+
+// return true if file was shared
+// XXX: export this func?
+func (tc *textileClient) isSharedFile(ctx context.Context, bucket Bucket, path string) bool {
+	sbc := NewSecureBucketsClient(tc.hb, bucket.Slug())
+
+	roles, err := sbc.PullPathAccessRoles(ctx, bucket.Key(), path)
+	if err != nil {
+		return false
+	}
+
+	pk, err := tc.kc.GetStoredPublicKey()
+	if err != nil {
+		return false
+	}
+
+	tpk := thread.NewLibp2pPubKey(pk)
+
+	// shared means other roles than the user
+	delete(roles, tpk.String())
+
+	return len(roles) > 0
+}

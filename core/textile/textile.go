@@ -62,6 +62,14 @@ type Bucket interface {
 	) (path.Resolved, error)
 }
 
+type backuper interface {
+	BackupBucket(ctx context.Context, bucket Bucket) (int, error)
+	BackupFileWithReader(ctx context.Context, bucket Bucket, path string, reader io.Reader) error
+	UnbackupBucket(ctx context.Context, bucket Bucket) (int, error)
+	IsBucketBackup(ctx context.Context, bucketSlug string) bool
+	IsMirrorFile(ctx context.Context, path, bucketSlug string) bool
+}
+
 type Client interface {
 	IsRunning() bool
 	IsInitialized() bool
@@ -75,6 +83,8 @@ type Client interface {
 	JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error)
 	CreateBucket(ctx context.Context, bucketSlug string) (Bucket, error)
 	ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) (bool, error)
+	ReplicateThreadToHub(ctx context.Context, dbID *thread.ID) error
+	DereplicateThreadFromHub(ctx context.Context, dbID *thread.ID) error
 	SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error)
 	Shutdown() error
 	WaitForReady() chan bool
@@ -87,15 +97,13 @@ type Client interface {
 	RejectSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
 	RemoveKeys() error
 	AttachMailboxNotifier(notif GrpcMailboxNotifier)
-	IsBucketBackup(ctx context.Context, bucketSlug string) bool
-	IsMirrorFile(ctx context.Context, path, bucketSlug string) bool
 	UploadFileToHub(ctx context.Context, b Bucket, path string, reader io.Reader) (result path.Resolved, root path.Path, err error)
-	MarkMirrorFileBackup(ctx context.Context, path, bucketSlug string) (*domain.MirrorFile, error)
 	GetReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*domain.SharedDirEntry, string, error)
 	GetPathAccessRoles(ctx context.Context, b Bucket, path string) ([]domain.Member, error)
 	GetPublicShareBucket(ctx context.Context) (Bucket, error)
 	DownloadPublicGatewayItem(ctx context.Context, cid cid.Cid) (io.ReadCloser, error)
 	GetFailedHealthchecks() int
+	backuper
 }
 
 type Buckd interface {

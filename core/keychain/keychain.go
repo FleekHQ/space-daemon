@@ -2,7 +2,9 @@ package keychain
 
 import (
 	"crypto/ed25519"
+	"crypto/sha512"
 	"encoding/hex"
+	"golang.org/x/crypto/pbkdf2"
 	"os"
 	"path"
 	"strings"
@@ -14,6 +16,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/textileio/go-threads/core/thread"
 )
 
 const PrivateKeyStoreKey = "key"
@@ -38,6 +41,7 @@ type Keychain interface {
 	GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error)
 	GetStoredPublicKey() (crypto.PubKey, error)
 	GetStoredMnemonic() (string, error)
+	GetManagedThreadKey(threadKeyName string) (thread.Key, error)
 	GenerateKeyPairWithForce() (pub []byte, priv []byte, err error)
 	Sign([]byte) ([]byte, error)
 	ImportExistingKeyPair(priv crypto.PrivKey, mnemonic string) error
@@ -365,4 +369,30 @@ func (kc *keychain) retrieveKeyPair() (privKey []byte, mnemonic string, err erro
 	}
 
 	return privKey, mnemonic, nil
+}
+
+func (kc *keychain) GetManagedThreadKey(threadKeyName string) (thread.Key, error) {
+	size := 32
+
+	priv, _, err := kc.GetStoredKeyPairInLibP2PFormat()
+	if err != nil {
+		return thread.Key{}, err
+	}
+
+	privBytes, err := priv.Raw()
+	if err != nil {
+		return thread.Key{}, err
+	}
+
+	num := pbkdf2.Key(privBytes, []byte("threadKey"+threadKeyName), 256, size, sha512.New)
+	if err != nil {
+		return thread.Key{}, err
+	}
+
+	managedKey, err := thread.KeyFromBytes(num)
+	if err != nil {
+		return thread.Key{}, err
+	}
+
+	return managedKey, nil
 }

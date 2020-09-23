@@ -19,7 +19,6 @@ import (
 	"github.com/textileio/go-threads/db"
 	bc "github.com/textileio/textile/api/buckets/client"
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
-	"github.com/textileio/textile/cmd"
 	tdb "github.com/textileio/textile/threaddb"
 )
 
@@ -123,6 +122,7 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 	if err := tc.threads.NewDB(ctx, dbID); err != nil {
 		return nil, nil, err
 	}
+
 	log.Debug("getOrCreateBucketContext: Thread DB Created")
 	bucketSchema, err := m.CreateBucket(ctx, bucketSlug, utils.CastDbIDToString(dbID))
 	if err != nil {
@@ -285,7 +285,6 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 
 func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*db.Info, error) {
 	bs, err := tc.GetModel().FindBucket(ctx, bucketSlug)
-
 	if err != nil {
 		return nil, err
 	}
@@ -293,9 +292,8 @@ func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*d
 	dbID, err := utils.ParseDbIDFromString(bs.DbID)
 	b, err := tc.threads.GetDBInfo(ctx, *dbID)
 
-	// replicate with the hub
-	hubma := tc.cfg.GetString(config.TextileHubMa, "")
-	if _, err := tc.netc.AddReplicator(ctx, *dbID, cmd.AddrFromStr(hubma)); err != nil {
+	// replicate to the hub
+	if err := tc.ReplicateThreadToHub(ctx, dbID); err != nil {
 		log.Error("Unable to replicate on the hub: ", err)
 		// proceeding still because local/public IP
 		// addresses could be used to join thread
