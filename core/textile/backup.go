@@ -3,126 +3,107 @@ package textile
 import (
 	"context"
 	"fmt"
-	"io"
-	"strings"
-	"sync"
 
 	"github.com/FleekHQ/space-daemon/log"
 
 	"github.com/textileio/go-threads/core/thread"
 )
 
-// backup a single file with an io.Reader provided
-func (tc *textileClient) BackupFileWithReader(ctx context.Context, bucket Bucket, path string, reader io.Reader) (err error) {
+// // backup a single file with a path provided
+// func (tc *textileClient) backupFile(ctx context.Context, bucket Bucket, path string) error {
 
-	if _, _, err = tc.UploadFileToHub(ctx, bucket, path, reader); err != nil {
-		log.Error(fmt.Sprintf("error backuping up file with reader (path=%+v b.Slug=%+v)", path, bucket.Slug()), err)
-		return err
-	}
+// 	errc := make(chan error, 1)
+// 	pipeReader, pipeWriter := io.Pipe()
 
-	if err = tc.setMirrorFileBackup(ctx, path, bucket.Slug()); err != nil {
-		log.Error(fmt.Sprintf("error setting mirror file as backup (path=%+v b.Slug=%+v)", path, bucket.Slug()), err)
-		return err
-	}
+// 	// go routine for piping
+// 	go func() {
+// 		defer close(errc)
+// 		defer pipeWriter.Close()
 
-	return nil
-}
+// 		err := bucket.GetFile(ctx, path, pipeWriter)
+// 		if err != nil {
+// 			errc <- err
+// 			log.Error(fmt.Sprintf("error getting file (path=%+v b.Slug=%+v)", path, bucket.Slug()), err)
+// 			return
+// 		}
 
-// backup a single file with a path provided
-func (tc *textileClient) backupFile(ctx context.Context, bucket Bucket, path string) error {
+// 		errc <- nil
 
-	errc := make(chan error, 1)
-	pipeReader, pipeWriter := io.Pipe()
+// 	}()
 
-	// go routine for piping
-	go func() {
-		defer close(errc)
-		defer pipeWriter.Close()
+// 	if err := tc.BackupFileWithReader(ctx, bucket, path, pipeReader); err != nil {
+// 		log.Error(fmt.Sprintf("error backing up file (path=%+v b.Slug=%+v)", path, bucket.Slug()), err)
+// 		return err
+// 	}
 
-		err := bucket.GetFile(ctx, path, pipeWriter)
-		if err != nil {
-			errc <- err
-			log.Error(fmt.Sprintf("error getting file (path=%+v b.Slug=%+v)", path, bucket.Slug()), err)
-			return
-		}
+// 	if err := <-errc; err != nil {
+// 		return err
+// 	}
 
-		errc <- nil
+// 	return nil
+// }
 
-	}()
+// // backup all files in a bucket
+// func (tc *textileClient) backupBucketFiles(ctx context.Context, bucket Bucket, path string) (int, error) {
+// 	var wg sync.WaitGroup
+// 	var count int
 
-	if err := tc.BackupFileWithReader(ctx, bucket, path, pipeReader); err != nil {
-		log.Error(fmt.Sprintf("error backing up file (path=%+v b.Slug=%+v)", path, bucket.Slug()), err)
-		return err
-	}
+// 	bucketSlug := bucket.Slug()
 
-	if err := <-errc; err != nil {
-		return err
-	}
+// 	// XXX: we ignore errc (no atomicity at all) for now but we should return
+// 	// XXX: the errors, perhaps in a separate async call
+// 	errc := make(chan error)
 
-	return nil
-}
+// 	dir, err := bucket.ListDirectory(ctx, path)
+// 	if err != nil {
+// 		return 0, err
+// 	}
 
-// backup all files in a bucket
-func (tc *textileClient) backupBucketFiles(ctx context.Context, bucket Bucket, path string) (int, error) {
-	var wg sync.WaitGroup
-	var count int
+// 	for _, item := range dir.Item.Items {
+// 		if item.Name == ".textileseed" || item.Name == ".textile" {
+// 			continue
+// 		}
 
-	bucketSlug := bucket.Slug()
+// 		if item.IsDir {
+// 			p := strings.Join([]string{path, item.Name}, "/")
 
-	// XXX: we ignore errc (no atomicity at all) for now but we should return
-	// XXX: the errors, perhaps in a separate async call
-	errc := make(chan error)
+// 			n, err := tc.backupBucketFiles(ctx, bucket, p)
+// 			if err != nil {
+// 				return count, err
+// 			}
 
-	dir, err := bucket.ListDirectory(ctx, path)
-	if err != nil {
-		return 0, err
-	}
+// 			count += n
+// 			continue
+// 		}
 
-	for _, item := range dir.Item.Items {
-		if item.Name == ".textileseed" || item.Name == ".textile" {
-			continue
-		}
+// 		wg.Add(1)
 
-		if item.IsDir {
-			p := strings.Join([]string{path, item.Name}, "/")
+// 		// parallelize the backups
+// 		go func(path string) {
+// 			defer wg.Done()
 
-			n, err := tc.backupBucketFiles(ctx, bucket, p)
-			if err != nil {
-				return count, err
-			}
+// 			// skip already set as backup
+// 			if tc.isMirrorBackupFile(ctx, bucketSlug, path) {
+// 				return
+// 			}
+// 			if err = tc.backupFile(ctx, bucket, path); err != nil {
+// 				select {
+// 				case errc <- err:
+// 					// make sure no block
+// 				default:
+// 				}
 
-			count += n
-			continue
-		}
+// 				return
+// 			}
 
-		wg.Add(1)
+// 			count += 1
+// 		}(item.Path)
+// 	}
 
-		// parallelize the backups
-		go func(path string) {
-			defer wg.Done()
+// 	wg.Wait()
 
-			// skip already set as backup
-			if tc.isMirrorBackupFile(ctx, bucketSlug, path) {
-				return
-			}
-			if err = tc.backupFile(ctx, bucket, path); err != nil {
-				select {
-				case errc <- err:
-					// make sure no block
-				default:
-				}
-
-				return
-			}
-
-			count += 1
-		}(item.Path)
-	}
-
-	wg.Wait()
-
-	return count, nil
-}
+// 	return count, nil
+// }
 
 // meta, key and share with me thread ids
 func (tc *textileClient) userThreadIds(ctx context.Context, bucket Bucket) ([]thread.ID, error) {
@@ -177,83 +158,67 @@ func (tc *textileClient) replicateThreadsToHub(ctx context.Context, bucket Bucke
 	return len(replicatedDbIds), nil
 }
 
-// backup the bucket
-func (tc *textileClient) BackupBucket(ctx context.Context, bucket Bucket) (count int, err error) {
+// // backup the bucket
+// func (tc *textileClient) BackupBucket(ctx context.Context, bucket Bucket) (count int, err error) {
 
-	count, err = tc.backupBucketFiles(ctx, bucket, "")
-	if err != nil {
-		return 0, nil
-	}
+// 	count, err = tc.backupBucketFiles(ctx, bucket, "")
+// 	if err != nil {
+// 		return 0, nil
+// 	}
 
-	if _, err = tc.replicateThreadsToHub(ctx, bucket); err != nil {
-		return 0, nil
-	}
+// 	if _, err = tc.replicateThreadsToHub(ctx, bucket); err != nil {
+// 		return 0, nil
+// 	}
 
-	return count, nil
-}
+// 	return count, nil
+// }
 
-// unbackup a single file
-func (tc *textileClient) unbackupFile(ctx context.Context, bucket Bucket, path string) (err error) {
+// // unbackup all files in a bucket
+// func (tc *textileClient) unbackupBucketFiles(ctx context.Context, bucket Bucket, path string) (int, error) {
+// 	var wg sync.WaitGroup
+// 	var count int
 
-	if err = tc.unsetMirrorFileBackup(ctx, path, bucket.Slug()); err != nil {
-		log.Error(fmt.Sprintf("error unsetting mirror file as backup (path=%+v b.Slug=%+v)", path, bucket.Slug()), err)
-		return err
-	}
+// 	dir, err := bucket.ListDirectory(ctx, path)
+// 	if err != nil {
+// 		return 0, err
+// 	}
 
-	if err = tc.deleteFileFromHub(ctx, bucket, path); err != nil {
-		log.Error(fmt.Sprintf("error backuping up file with reader (path=%+v b.Slug=%+v)", path, bucket.Slug()), err)
-		return err
-	}
+// 	for _, item := range dir.Item.Items {
+// 		if item.Name == ".textileseed" || item.Name == ".textile" {
+// 			continue
+// 		}
 
-	return nil
-}
+// 		if item.IsDir {
+// 			p := strings.Join([]string{path, item.Name}, "/")
 
-// unbackup all files in a bucket
-func (tc *textileClient) unbackupBucketFiles(ctx context.Context, bucket Bucket, path string) (int, error) {
-	var wg sync.WaitGroup
-	var count int
+// 			n, err := tc.unbackupBucketFiles(ctx, bucket, p)
+// 			if err != nil {
+// 				return count, err
+// 			}
 
-	dir, err := bucket.ListDirectory(ctx, path)
-	if err != nil {
-		return 0, err
-	}
+// 			count += n
+// 			continue
+// 		}
 
-	for _, item := range dir.Item.Items {
-		if item.Name == ".textileseed" || item.Name == ".textile" {
-			continue
-		}
+// 		wg.Add(1)
 
-		if item.IsDir {
-			p := strings.Join([]string{path, item.Name}, "/")
+// 		go func(path string) {
+// 			defer wg.Done()
 
-			n, err := tc.unbackupBucketFiles(ctx, bucket, p)
-			if err != nil {
-				return count, err
-			}
+// 			if tc.isSharedFile(ctx, bucket, path) {
+// 				return
+// 			}
+// 			if err = tc.unbackupFile(ctx, bucket, path); err != nil {
+// 				return
+// 			}
 
-			count += n
-			continue
-		}
+// 			count += 1
+// 		}(item.Path)
+// 	}
 
-		wg.Add(1)
-
-		go func(path string) {
-			defer wg.Done()
-
-			if tc.isSharedFile(ctx, bucket, path) {
-				return
-			}
-			if err = tc.unbackupFile(ctx, bucket, path); err != nil {
-				return
-			}
-
-			count += 1
-		}(item.Path)
-	}
-
-	wg.Wait()
-	return count, nil
-}
+// 	wg.Wait()
+// 	return count, nil
+// }
 
 // dereplicate meta, key and shared with me threads
 func (tc *textileClient) dereplicateThreadsToHub(ctx context.Context, bucket Bucket) (int, error) {
@@ -275,17 +240,17 @@ func (tc *textileClient) dereplicateThreadsToHub(ctx context.Context, bucket Buc
 	return count, nil
 }
 
-// unbackup the bucket
-func (tc *textileClient) UnbackupBucket(ctx context.Context, bucket Bucket) (count int, err error) {
+// // unbackup the bucket
+// func (tc *textileClient) UnbackupBucket(ctx context.Context, bucket Bucket) (count int, err error) {
 
-	count, err = tc.unbackupBucketFiles(ctx, bucket, "")
-	if err != nil {
-		return 0, nil
-	}
+// 	count, err = tc.unbackupBucketFiles(ctx, bucket, "")
+// 	if err != nil {
+// 		return 0, nil
+// 	}
 
-	if _, err = tc.dereplicateThreadsToHub(ctx, bucket); err != nil {
-		return 0, nil
-	}
+// 	if _, err = tc.dereplicateThreadsToHub(ctx, bucket); err != nil {
+// 		return 0, nil
+// 	}
 
-	return count, nil
-}
+// 	return count, nil
+// }

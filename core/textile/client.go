@@ -13,8 +13,11 @@ import (
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	db "github.com/FleekHQ/space-daemon/core/store"
+	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/textile/model"
+	"github.com/FleekHQ/space-daemon/core/textile/notifier"
+	synchronizer "github.com/FleekHQ/space-daemon/core/textile/sync"
 	"github.com/FleekHQ/space-daemon/core/util/address"
 	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
@@ -55,6 +58,8 @@ type textileClient struct {
 	hubAuth            hub.HubAuth
 	mbNotifier         GrpcMailboxNotifier
 	failedHealthchecks int
+	sync               synchronizer.Synchronizer
+	notifier           bucket.Notifier
 }
 
 // Creates a new Textile Client
@@ -81,6 +86,8 @@ func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth, uc Use
 		hubAuth:            hubAuth,
 		mbNotifier:         nil,
 		failedHealthchecks: 0,
+		sync:               nil,
+		notifier:           nil,
 	}
 }
 
@@ -120,6 +127,24 @@ func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error)
 	}
 
 	return ctx, nil
+}
+
+func (tc *textileClient) initializeSync(ctx context.Context) {
+	getLocalBucketFn := func(ctx context.Context, slug string) (bucket.BucketInterface, error) {
+		return tc.getBucket(ctx, slug, nil)
+	}
+
+	getMirrorBucketFn := func(ctx context.Context, slug string) (bucket.BucketInterface, error) {
+		return tc.getBucketForMirror(ctx, slug)
+	}
+
+	tc.sync = synchronizer.New(
+		tc.store, tc.GetModel(), tc.kc, tc.hubAuth, tc.hb, tc.ht, tc.cfg, getMirrorBucketFn, getLocalBucketFn, tc.getBucketContext,
+	)
+
+	tc.notifier = notifier.New(tc.sync)
+
+	tc.sync.Start(ctx)
 }
 
 // Starts the Textile Client
@@ -163,6 +188,8 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.netc = netc
 	tc.ht = getHubThreadsClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 	tc.hb = getHubBucketClient(tc.cfg.GetString(config.TextileHubTarget, ""))
+
+	tc.initializeSync(ctx)
 
 	tc.isRunning = true
 
@@ -375,6 +402,8 @@ func (tc *textileClient) Shutdown() error {
 	if err := tc.threads.Close(); err != nil {
 		return err
 	}
+
+	tc.sync.Shutdown()
 
 	tc.bucketsClient = nil
 	tc.threads = nil

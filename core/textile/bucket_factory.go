@@ -69,6 +69,30 @@ func (tc *textileClient) getBucket(ctx context.Context, slug string, remoteFile 
 		),
 	)
 
+	// Attach a notifier if the bucket is local
+	// So that local ops can be synced to the remote node
+	if remoteFile == nil && tc.notifier != nil {
+		b.AttachNotifier(tc.notifier)
+	}
+
+	return b, nil
+}
+
+func (tc *textileClient) getBucketForMirror(ctx context.Context, slug string) (Bucket, error) {
+	root, getContextFn, newSlug, err := tc.getBucketRootForMirror(ctx, slug)
+	if err != nil {
+		return nil, err
+	}
+
+	b := bucket.New(
+		root,
+		getContextFn,
+		NewSecureBucketsClient(
+			tc.hb,
+			newSlug,
+		),
+	)
+
 	return b, nil
 }
 
@@ -201,6 +225,39 @@ func (tc *textileClient) getBucketRootFromReceivedFile(ctx context.Context, file
 	return nil, nil, NotFound(receivedFile.Bucket)
 }
 
+func (tc *textileClient) getBucketRootForMirror(ctx context.Context, slug string) (*buckets_pb.Root, bucket.GetBucketContextFn, string, error) {
+	bucket, err := tc.GetModel().FindBucket(ctx, slug)
+	if err != nil {
+		return nil, nil, "", err
+	}
+
+	getCtxFn := func(ctx context.Context, slug string) (context.Context, *thread.ID, error) {
+		return tc.getBucketContext(ctx, bucket.RemoteDbID, bucket.RemoteBucketSlug, true, bucket.EncryptionKey)
+	}
+
+	remoteCtx, _, err := getCtxFn(ctx, bucket.RemoteBucketSlug)
+	if err != nil {
+		return nil, nil, "", err
+	}
+
+	sbs := NewSecureBucketsClient(
+		tc.hb,
+		bucket.RemoteBucketSlug,
+	)
+
+	b, err := sbs.ListPath(remoteCtx, bucket.RemoteBucketKey, "")
+
+	if err != nil {
+		return nil, nil, "", err
+	}
+
+	if b != nil {
+		return b.GetRoot(), getCtxFn, bucket.RemoteBucketSlug, nil
+	}
+
+	return nil, nil, "", NotFound(bucket.RemoteBucketSlug)
+}
+
 func (tc *textileClient) getBucketRootFromSlug(ctx context.Context, slug string) (context.Context, *buckets_pb.Root, error) {
 	ctx, _, err := tc.getOrCreateBucketContext(ctx, slug)
 	if err != nil {
@@ -259,17 +316,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 		return nil, err
 	}
 
-	mirrorSchema, err := tc.createMirrorBucket(ctx, *schema)
-	if err != nil {
-		return nil, err
-	}
-
-	if mirrorSchema != nil {
-		_, err = m.CreateMirrorBucket(ctx, bucketSlug, mirrorSchema)
-		if err != nil {
-			return nil, err
-		}
-	}
+	tc.sync.NotifyBucketCreated(schema.Slug, schema.EncryptionKey)
 
 	newB := bucket.New(
 		b.Root,

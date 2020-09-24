@@ -26,9 +26,10 @@ type MirrorFileSchema struct {
 }
 
 type MirrorBucketSchema struct {
-	RemoteDbID      string `json:"remoteDbId"`
-	RemoteBucketKey string `json:"remoteBucketKey"`
-	HubAddr         string `json:"HubAddr"`
+	RemoteDbID       string `json:"remoteDbId"`
+	RemoteBucketKey  string `json:"remoteBucketKey"`
+	HubAddr          string `json:"HubAddr"`
+	RemoteBucketSlug string `json:"remoteBucketSlug"`
 }
 
 const mirrorFileModelName = "MirrorFile"
@@ -50,6 +51,7 @@ func (m *model) CreateMirrorBucket(ctx context.Context, bucketSlug string, mirro
 	bucket.RemoteDbID = mirrorBucket.RemoteDbID
 	bucket.HubAddr = mirrorBucket.HubAddr
 	bucket.RemoteBucketKey = mirrorBucket.RemoteBucketKey
+	bucket.RemoteBucketSlug = mirrorBucket.RemoteBucketSlug
 
 	instances := client.Instances{bucket}
 

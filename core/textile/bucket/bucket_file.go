@@ -14,7 +14,7 @@ func (b *Bucket) FileExists(ctx context.Context, pth string) (bool, error) {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
 
-	ctx, _, err := b.getContext(ctx)
+	ctx, _, err := b.GetContext(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -44,11 +44,21 @@ func (b *Bucket) FileExists(ctx context.Context, pth string) (bool, error) {
 func (b *Bucket) UploadFile(ctx context.Context, path string, reader io.Reader) (result path.Resolved, root path.Path, err error) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
-	ctx, _, err = b.getContext(ctx)
+	ctx, _, err = b.GetContext(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
-	return b.bucketsClient.PushPath(ctx, b.Key(), path, reader)
+
+	result, root, err = b.bucketsClient.PushPath(ctx, b.Key(), path, reader)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if b.notifier != nil {
+		b.notifier.OnUploadFile(b.Slug(), path, result, root)
+	}
+
+	return result, root, nil
 }
 
 // GetFile pulls path from bucket writing it to writer if it's a file.
@@ -56,7 +66,7 @@ func (b *Bucket) GetFile(ctx context.Context, path string, w io.Writer) error {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
 
-	ctx, _, err := b.getContext(ctx)
+	ctx, _, err := b.GetContext(ctx)
 	if err != nil {
 		return err
 	}

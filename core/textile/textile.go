@@ -10,7 +10,6 @@ import (
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/core/textile/model"
-	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
@@ -32,34 +31,7 @@ const (
 type BucketRoot buckets_pb.Root
 
 type Bucket interface {
-	Slug() string
-	Key() string
-	GetData() bucket.BucketData
-	GetThreadID(ctx context.Context) (*thread.ID, error)
-	DirExists(ctx context.Context, path string) (bool, error)
-	FileExists(ctx context.Context, path string) (bool, error)
-	UploadFile(
-		ctx context.Context,
-		path string,
-		reader io.Reader,
-	) (result path.Resolved, root path.Path, err error)
-	GetFile(
-		ctx context.Context,
-		path string,
-		w io.Writer,
-	) error
-	CreateDirectory(
-		ctx context.Context,
-		path string,
-	) (result path.Resolved, root path.Path, err error)
-	ListDirectory(
-		ctx context.Context,
-		path string,
-	) (*bucket.DirEntries, error)
-	DeleteDirOrFile(
-		ctx context.Context,
-		path string,
-	) (path.Resolved, error)
+	bucket.BucketInterface
 }
 
 type backuper interface {
@@ -97,13 +69,11 @@ type Client interface {
 	RejectSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
 	RemoveKeys() error
 	AttachMailboxNotifier(notif GrpcMailboxNotifier)
-	UploadFileToHub(ctx context.Context, b Bucket, path string, reader io.Reader) (result path.Resolved, root path.Path, err error)
 	GetReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*domain.SharedDirEntry, string, error)
 	GetPathAccessRoles(ctx context.Context, b Bucket, path string) ([]domain.Member, error)
 	GetPublicShareBucket(ctx context.Context) (Bucket, error)
 	DownloadPublicGatewayItem(ctx context.Context, cid cid.Cid) (io.ReadCloser, error)
 	GetFailedHealthchecks() int
-	backuper
 }
 
 type Buckd interface {

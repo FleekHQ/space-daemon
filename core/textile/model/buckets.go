@@ -54,9 +54,10 @@ func (m *model) CreateBucket(ctx context.Context, bucketSlug, dbID string) (*Buc
 		Backup:        true,
 		EncryptionKey: bucketEncryptionKey,
 		MirrorBucketSchema: &MirrorBucketSchema{
-			HubAddr:         "",
-			RemoteBucketKey: "",
-			RemoteDbID:      "",
+			HubAddr:          "",
+			RemoteBucketKey:  "",
+			RemoteDbID:       "",
+			RemoteBucketSlug: "",
 		},
 	}
 
@@ -76,9 +77,10 @@ func (m *model) CreateBucket(ctx context.Context, bucketSlug, dbID string) (*Buc
 		DbID:   newInstance.DbID,
 		Backup: newInstance.Backup,
 		MirrorBucketSchema: &MirrorBucketSchema{
-			HubAddr:         newInstance.MirrorBucketSchema.HubAddr,
-			RemoteBucketKey: newInstance.MirrorBucketSchema.RemoteBucketKey,
-			RemoteDbID:      newInstance.MirrorBucketSchema.RemoteDbID,
+			HubAddr:          newInstance.MirrorBucketSchema.HubAddr,
+			RemoteBucketKey:  newInstance.MirrorBucketSchema.RemoteBucketKey,
+			RemoteDbID:       newInstance.MirrorBucketSchema.RemoteDbID,
+			RemoteBucketSlug: newInstance.MirrorBucketSchema.RemoteBucketSlug,
 		},
 	}, nil
 }
