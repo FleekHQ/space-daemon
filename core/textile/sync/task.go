@@ -7,11 +7,13 @@ import (
 type taskType string
 
 const (
-	addItemTask      taskType = "ADD_ITEM"
-	removeItemTask   taskType = "REMOVE_ITEM"
-	createBucketTask taskType = "CREATE_BUCKET"
-	pinFileTask      taskType = "PIN_FILE"
-	unpinFileTask    taskType = "UNPIN_FILE"
+	addItemTask         taskType = "ADD_ITEM"
+	removeItemTask      taskType = "REMOVE_ITEM"
+	createBucketTask    taskType = "CREATE_BUCKET"
+	pinFileTask         taskType = "PIN_FILE"
+	unpinFileTask       taskType = "UNPIN_FILE"
+	bucketBackupOnTask  taskType = "TOGGLE_BACKUP_ON"
+	bucketBackupOffTask taskType = "TOGGLE_BACKUP_OFF"
 )
 
 type taskState string

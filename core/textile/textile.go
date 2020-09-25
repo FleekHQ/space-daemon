@@ -11,7 +11,6 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/core/textile/model"
 	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
 
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
@@ -34,14 +33,6 @@ type Bucket interface {
 	bucket.BucketInterface
 }
 
-type backuper interface {
-	BackupBucket(ctx context.Context, bucket Bucket) (int, error)
-	BackupFileWithReader(ctx context.Context, bucket Bucket, path string, reader io.Reader) error
-	UnbackupBucket(ctx context.Context, bucket Bucket) (int, error)
-	IsBucketBackup(ctx context.Context, bucketSlug string) bool
-	IsMirrorFile(ctx context.Context, path, bucketSlug string) bool
-}
-
 type Client interface {
 	IsRunning() bool
 	IsInitialized() bool
@@ -55,8 +46,6 @@ type Client interface {
 	JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error)
 	CreateBucket(ctx context.Context, bucketSlug string) (Bucket, error)
 	ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) (bool, error)
-	ReplicateThreadToHub(ctx context.Context, dbID *thread.ID) error
-	DereplicateThreadFromHub(ctx context.Context, dbID *thread.ID) error
 	SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error)
 	Shutdown() error
 	WaitForReady() chan bool

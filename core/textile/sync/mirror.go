@@ -71,6 +71,11 @@ func (s *synchronizer) unsetMirrorFileBackup(ctx context.Context, path, bucketSl
 }
 
 func (s *synchronizer) addCurrentUserAsFileOwner(ctx context.Context, bucket, path string) error {
+	bucketModel, err := s.model.FindBucket(ctx, bucket)
+	if err != nil {
+		return err
+	}
+
 	roles := make(map[string]buckets.Role)
 	pk, err := s.kc.GetStoredPublicKey()
 	if err != nil {
@@ -85,8 +90,12 @@ func (s *synchronizer) addCurrentUserAsFileOwner(ctx context.Context, bucket, pa
 	}
 
 	bucketsClient := mirror.GetClient()
+	bucketCtx, _, err := s.getBucketCtx(ctx, bucketModel.RemoteDbID, bucketModel.RemoteBucketSlug, true, bucketModel.EncryptionKey)
+	if err != nil {
+		return err
+	}
 
-	return bucketsClient.PushPathAccessRoles(ctx, mirror.GetData().Key, path, roles)
+	return bucketsClient.PushPathAccessRoles(bucketCtx, mirror.GetData().Key, path, roles)
 }
 
 // Creates a mirror bucket.
@@ -103,8 +112,6 @@ func (s *synchronizer) createMirrorBucket(ctx context.Context, slug string, enck
 		return nil, err
 	}
 
-	// create mirror bucket
-	// TODO: use bucketname + _mirror to support any local buckets not just personal
 	b, err := s.hubBuckets.Create(hubCtx, bucketsClient.WithName(newSlug), bucketsClient.WithPrivate(true))
 	if err != nil {
 		return nil, err

@@ -139,7 +139,7 @@ func (tc *textileClient) initializeSync(ctx context.Context) {
 	}
 
 	tc.sync = synchronizer.New(
-		tc.store, tc.GetModel(), tc.kc, tc.hubAuth, tc.hb, tc.ht, tc.cfg, getMirrorBucketFn, getLocalBucketFn, tc.getBucketContext,
+		tc.store, tc.GetModel(), tc.kc, tc.hubAuth, tc.hb, tc.ht, tc.netc, tc.cfg, getMirrorBucketFn, getLocalBucketFn, tc.getBucketContext,
 	)
 
 	tc.notifier = notifier.New(tc.sync)

@@ -34,30 +34,3 @@ func (tc *textileClient) isMirrorBackupFile(ctx context.Context, path, bucketSlu
 
 	return mf.Backup == true
 }
-
-// XXX: public in the interface as the reverse of UploadFileToHub?
-func (tc *textileClient) deleteFileFromHub(ctx context.Context, b Bucket, path string) (err error) {
-	// XXX: locking?
-
-	bucket, err := tc.GetModel().FindBucket(ctx, b.Slug())
-	if err != nil {
-		return err
-	}
-
-	hubCtx, _, err := tc.getBucketContext(ctx, bucket.RemoteDbID, b.Slug(), true, bucket.EncryptionKey)
-	if err != nil {
-		return err
-	}
-
-	bucketsClient := NewSecureBucketsClient(
-		tc.hb,
-		b.Slug(),
-	)
-
-	_, err = bucketsClient.RemovePath(hubCtx, bucket.RemoteBucketKey, path)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}

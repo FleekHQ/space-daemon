@@ -18,6 +18,7 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
+	nc "github.com/textileio/go-threads/net/api/client"
 	bucketsClient "github.com/textileio/textile/api/buckets/client"
 )
 
@@ -42,6 +43,7 @@ type synchronizer struct {
 	hubBuckets       *bucketsClient.Client
 	hubThreads       *threadsClient.Client
 	cfg              config.Config
+	netc             *nc.Client
 }
 
 // Creates a new Synchronizer
@@ -52,6 +54,7 @@ func New(
 	hubAuth hub.HubAuth,
 	hb *bucketsClient.Client,
 	ht *threadsClient.Client,
+	netc *nc.Client,
 	cfg config.Config,
 	getMirrorBucket GetMirrorBucketFn,
 	getBucket GetBucketFn,
@@ -81,6 +84,7 @@ func New(
 		hubBuckets:       hb,
 		hubThreads:       ht,
 		cfg:              cfg,
+		netc:             netc,
 	}
 }
 
@@ -90,6 +94,7 @@ func (s *synchronizer) NotifyItemAdded(bucket, path string) {
 	s.enqueueTask(t, s.taskQueue)
 
 	pft := newTask(pinFileTask, []string{bucket, path})
+	pft.Parallelizable = true
 	s.enqueueTask(pft, s.filePinningQueue)
 
 	s.syncNeeded <- true
@@ -101,12 +106,24 @@ func (s *synchronizer) NotifyItemRemoved(bucket, path string) {
 	s.enqueueTask(t, s.taskQueue)
 
 	uft := newTask(unpinFileTask, []string{bucket, path})
+	uft.Parallelizable = true
 	s.enqueueTask(uft, s.filePinningQueue)
+
 	s.syncNeeded <- true
 }
 
 func (s *synchronizer) NotifyBucketCreated(bucket string, enckey []byte) {
 	t := newTask(createBucketTask, []string{bucket, hex.EncodeToString(enckey)})
+	s.enqueueTask(t, s.taskQueue)
+}
+
+func (s *synchronizer) NotifyBucketBackupOn(bucket string) {
+	t := newTask(bucketBackupOnTask, []string{bucket})
+	s.enqueueTask(t, s.taskQueue)
+}
+
+func (s *synchronizer) NotifyBucketBackupOff(bucket string) {
+	t := newTask(bucketBackupOffTask, []string{bucket})
 	s.enqueueTask(t, s.taskQueue)
 }
 
@@ -178,8 +195,14 @@ func (s *synchronizer) executeTask(ctx context.Context, t *Task) error {
 		err = s.processRemoveItem(ctx, t)
 	case pinFileTask:
 		err = s.processPinFile(ctx, t)
+	case unpinFileTask:
+		err = s.processUnpinFile(ctx, t)
 	case createBucketTask:
 		err = s.processCreateBucket(ctx, t)
+	case bucketBackupOnTask:
+		err = s.processBucketBackupOn(ctx, t)
+	case bucketBackupOffTask:
+		err = s.processBucketBackupOff(ctx, t)
 	default:
 		log.Warn("Unexpected action on Textile sync, executeTask")
 	}
@@ -222,16 +245,18 @@ func (s *synchronizer) sync(ctx context.Context, queue *list.List) error {
 			continue
 		}
 
-		handleExecResult := func(err error) {
-			log.Debug(fmt.Sprintf("Textile sync [%s]: task complete with result: %e", queueName, err))
+		handleExecResult := func(queueEl *list.Element, err error) {
 
 			if err == errMaxRetriesSurpassed {
-				queue.Remove(curr)
+				queue.Remove(queueEl)
 			}
 
 			if err == nil {
 				// Task completed successfully
-				queue.Remove(curr)
+				log.Debug(fmt.Sprintf("Textile sync [%s]: task completed succesfully", queueName))
+				queue.Remove(queueEl)
+			} else {
+				log.Error(fmt.Sprintf("Textile sync [%s]: task failed", queueName), err)
 			}
 
 			if err := s.storeQueue(); err != nil {
@@ -240,13 +265,16 @@ func (s *synchronizer) sync(ctx context.Context, queue *list.List) error {
 		}
 
 		if task.Parallelizable {
+			// Creating aux var in case the go func gets ran after curr = curr.Next()
+			queueEl := curr
+
 			go func() {
 				err := s.executeTask(ctx, task)
-				handleExecResult(err)
+				handleExecResult(queueEl, err)
 			}()
 		} else {
 			err := s.executeTask(ctx, task)
-			handleExecResult(err)
+			handleExecResult(curr, err)
 
 			if err != nil {
 				// Break from the loop (avoid executing succeeding tasks)

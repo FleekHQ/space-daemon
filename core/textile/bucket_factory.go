@@ -19,6 +19,7 @@ import (
 	"github.com/textileio/go-threads/db"
 	bc "github.com/textileio/textile/api/buckets/client"
 	buckets_pb "github.com/textileio/textile/api/buckets/pb"
+	"github.com/textileio/textile/cmd"
 	tdb "github.com/textileio/textile/threaddb"
 )
 
@@ -340,7 +341,12 @@ func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*d
 	b, err := tc.threads.GetDBInfo(ctx, *dbID)
 
 	// replicate to the hub
-	if err := tc.ReplicateThreadToHub(ctx, dbID); err != nil {
+	hubma := tc.cfg.GetString(config.TextileHubMa, "")
+	if hubma == "" {
+		return nil, fmt.Errorf("no textile hub set")
+	}
+
+	if _, err := tc.netc.AddReplicator(ctx, *dbID, cmd.AddrFromStr(hubma)); err != nil {
 		log.Error("Unable to replicate on the hub: ", err)
 		// proceeding still because local/public IP
 		// addresses could be used to join thread
@@ -419,6 +425,12 @@ func (tc *textileClient) ToggleBucketBackup(ctx context.Context, bucketSlug stri
 	bucketSchema, err := tc.GetModel().BucketBackupToggle(ctx, bucketSlug, bucketBackup)
 	if err != nil {
 		return false, err
+	}
+
+	if bucketSchema.Backup {
+		tc.sync.NotifyBucketBackupOn(bucketSlug)
+	} else {
+		tc.sync.NotifyBucketBackupOff(bucketSlug)
 	}
 
 	return bucketSchema.Backup, nil
