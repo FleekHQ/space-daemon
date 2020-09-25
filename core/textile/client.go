@@ -144,6 +144,10 @@ func (tc *textileClient) initializeSync(ctx context.Context) {
 
 	tc.notifier = notifier.New(tc.sync)
 
+	if err := tc.sync.RestoreQueue(); err != nil {
+		log.Warn("Could not restore Textile synchronizer queue. Queue will start fresh.")
+	}
+
 	tc.sync.Start(ctx)
 }
 
