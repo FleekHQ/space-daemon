@@ -108,18 +108,6 @@ func (s *Space) ToggleBucketBackup(ctx context.Context, bucketName string, bucke
 		return err
 	}
 
-	// if bucketBackup == true {
-	// 	_, err = s.tc.BackupBucket(ctx, b)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// } else {
-	// 	_, err = s.tc.UnbackupBucket(ctx, b)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-
 	return nil
 }
 
