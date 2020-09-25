@@ -246,7 +246,6 @@ func (s *synchronizer) sync(ctx context.Context, queue *list.List) error {
 		}
 
 		handleExecResult := func(queueEl *list.Element, err error) {
-
 			if err == errMaxRetriesSurpassed {
 				queue.Remove(queueEl)
 			}
