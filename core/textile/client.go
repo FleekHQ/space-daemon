@@ -451,6 +451,10 @@ func (tc *textileClient) RemoveKeys() error {
 		return err
 	}
 
+	if err := tc.clearLocalMailbox(); err != nil {
+		return err
+	}
+
 	tc.isInitialized = false
 	tc.isConnectedToHub = false
 	tc.keypairDeleted <- true
