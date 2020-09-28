@@ -1,17 +1,16 @@
 package bucket
 
 import (
-	"bytes"
 	"context"
 	"io"
 	"regexp"
+	"time"
 
-	"github.com/FleekHQ/space-daemon/core/ipfs"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 )
 
-func (b *Bucket) FileExists(ctx context.Context, path string) (bool, error) {
+func (b *Bucket) FileExists(ctx context.Context, pth string) (bool, error) {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
 
@@ -20,29 +19,26 @@ func (b *Bucket) FileExists(ctx context.Context, path string) (bool, error) {
 		return false, err
 	}
 
-	lp, err := b.bucketsClient.ListPath(ctx, b.Key(), path)
+	listPathRes, err := b.bucketsClient.ListPath(ctx, b.GetData().Key, pth)
+	if err != nil {
+		return false, err
+	}
+
+	ctxWithDeadline, ctxCancel := context.WithDeadline(ctx, time.Now().Add(3*time.Second))
+	defer ctxCancel()
+
+	// Call ListIpfsPath with deadline to avoid waiting too much for DHT to resolve
+	_, err = b.bucketsClient.ListIpfsPath(ctxWithDeadline, path.New(listPathRes.Item.Cid))
 	if err != nil {
 		match, _ := regexp.MatchString(".*no link named.*under.*", err.Error())
 		if match {
 			return false, nil
 		}
-		log.Info("error doing list path on non existent directoy: ", err.Error())
 		// Since a nil would be interpreted as a false
 		return false, err
 	}
 
-	var fsHash string
-	if _, err := ipfs.GetFileHash(&bytes.Buffer{}); err != nil {
-		log.Error("Unable to get filehash: ", err)
-		return false, err
-	}
-
-	item := lp.GetItem()
-	if item.Cid == fsHash {
-		return true, nil
-	}
-
-	return false, nil
+	return true, nil
 }
 
 func (b *Bucket) UploadFile(ctx context.Context, path string, reader io.Reader) (result path.Resolved, root path.Path, err error) {

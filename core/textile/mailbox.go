@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
 	"os/user"
 	"path/filepath"
 
 	"github.com/FleekHQ/space-daemon/config"
-	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
+	"github.com/FleekHQ/space-daemon/core/textile/model"
 	"github.com/FleekHQ/space-daemon/log"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/textileio/go-threads/core/thread"
@@ -19,7 +20,7 @@ import (
 )
 
 type GrpcMailboxNotifier interface {
-	SendNotificationEvent(event events.NotificationEvent)
+	SendNotificationEvent(notif *domain.Notification)
 }
 
 const mailboxSetupFlagStoreKey = "mailboxSetupFlag"
@@ -37,51 +38,94 @@ type Mailbox interface {
 	Identity() thread.Identity
 }
 
-func (tc *textileClient) parseMessage(ctx context.Context, msg client.Message) (*domain.Notification, error) {
-	p, err := msg.Open(ctx, tc.mb.Identity())
+func (tc *textileClient) parseMessage(ctx context.Context, msgs []client.Message) ([]*domain.Notification, error) {
+	ns := make([]*domain.Notification, 0)
+
+	ids := []string{}
+	for _, n := range msgs {
+		ids = append(ids, n.ID)
+	}
+
+	fileschemas, err := tc.GetModel().FindReceivedFilesByIds(ctx, ids)
 	if err != nil {
 		return nil, err
 	}
 
-	b := &domain.MessageBody{}
-	err = json.Unmarshal(p, b)
-
-	if err != nil {
-		return nil, err
+	// make map so we dont have to iterate each time
+	fsmap := make(map[string]*model.ReceivedFileSchema)
+	for _, fs := range fileschemas {
+		fsmap[fs.InvitationId] = fs
 	}
 
-	n := &domain.Notification{
-		ID:               msg.ID,
-		Body:             string(p),
-		NotificationType: (*b).Type,
-		CreatedAt:        msg.CreatedAt.Unix(),
-		ReadAt:           msg.ReadAt.Unix(),
-	}
-
-	switch (*b).Type {
-	case domain.INVITATION:
-		i := &domain.Invitation{}
-		err := json.Unmarshal((*b).Body, i)
+	for _, msg := range msgs {
+		p, err := msg.Open(ctx, tc.mb.Identity())
 		if err != nil {
 			return nil, err
 		}
 
-		n.InvitationValue = *i
-		n.RelatedObject = i
-	case domain.USAGEALERT:
-		u := &domain.UsageAlert{}
-		err := json.Unmarshal((*b).Body, u)
+		b := &domain.MessageBody{}
+		err = json.Unmarshal(p, b)
 
 		if err != nil {
-			return nil, err
+			log.Error("Error parsing message into MessageBody type", err)
+
+			// returning generic notification since body was not able to be parsed
+			n := &domain.Notification{
+				ID:        msg.ID,
+				Body:      string(p),
+				CreatedAt: msg.CreatedAt.Unix(),
+				ReadAt:    msg.ReadAt.Unix(),
+			}
+
+			ns = append(ns, n)
+			continue
 		}
-		n.UsageAlertValue = *u
-		n.RelatedObject = u
-	default:
-		return nil, errors.New("Unsupported message type")
+
+		n := &domain.Notification{
+			ID:               msg.ID,
+			Body:             string(p),
+			NotificationType: (*b).Type,
+			CreatedAt:        msg.CreatedAt.Unix(),
+			ReadAt:           msg.ReadAt.Unix(),
+		}
+
+		switch (*b).Type {
+		case domain.INVITATION:
+			i := &domain.Invitation{}
+			err := json.Unmarshal((*b).Body, i)
+			if err != nil {
+				return nil, err
+			}
+
+			if fsmap[msg.ID] == nil {
+				i.Status = domain.PENDING
+			} else {
+				if fsmap[msg.ID].Accepted {
+					i.Status = domain.ACCEPTED
+				} else {
+					i.Status = domain.REJECTED
+				}
+			}
+
+			i.InvitationID = msg.ID
+			n.InvitationValue = *i
+			n.RelatedObject = *i
+		case domain.USAGEALERT:
+			u := &domain.UsageAlert{}
+			err := json.Unmarshal((*b).Body, u)
+
+			if err != nil {
+				return nil, err
+			}
+			n.UsageAlertValue = *u
+			n.RelatedObject = *u
+		default:
+		}
+
+		ns = append(ns, n)
 	}
 
-	return n, nil
+	return ns, nil
 }
 
 func (tc *textileClient) SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error) {
@@ -108,7 +152,6 @@ func (tc *textileClient) GetMailAsNotifications(ctx context.Context, seek string
 	}
 
 	var err error
-	ns := []*domain.Notification{}
 
 	ctx, err = tc.getHubCtx(ctx)
 	if err != nil {
@@ -120,13 +163,9 @@ func (tc *textileClient) GetMailAsNotifications(ctx context.Context, seek string
 		return nil, err
 	}
 
-	for _, n := range notifs {
-		notif, err := tc.parseMessage(ctx, n)
-		if err != nil {
-			return nil, err
-		}
-
-		ns = append(ns, notif)
+	ns, err := tc.parseMessage(ctx, notifs)
+	if err != nil {
+		return nil, err
 	}
 
 	return ns, nil
@@ -154,20 +193,20 @@ func (tc *textileClient) listenForMessages(ctx context.Context) error {
 				// handle new message
 				log.Info("Received mail: " + e.MessageID.String())
 
-				p, err := tc.parseMessage(ctx, e.Message)
+				// need to fetch the message again because the event
+				// payload doesn't have the full deets, will remove
+				// once its fixed on txl end
+				msg, err := tc.mb.ListInboxMessages(ctx, client.WithSeek(e.MessageID.String()), client.WithLimit(1))
+				if err != nil {
+					return
+				}
+
+				p, err := tc.parseMessage(ctx, msg)
 				if err != nil {
 					log.Error("Unable to parse incoming message: ", err)
 				}
 
-				i := events.NotificationEvent{
-					Body:          p.Body,
-					RelatedObject: p.RelatedObject,
-					Type:          events.NotificationType(p.NotificationType),
-					CreatedAt:     e.Message.CreatedAt.Unix(),
-					ReadAt:        e.Message.ReadAt.Unix(),
-				}
-
-				tc.mbNotifier.SendNotificationEvent(i)
+				tc.mbNotifier.SendNotificationEvent(p[0])
 			case mail.MessageRead:
 				// handle message read (inbox only)
 			case mail.MessageDeleted:
@@ -177,14 +216,19 @@ func (tc *textileClient) listenForMessages(ctx context.Context) error {
 	}()
 
 	// Start watching (the third param indicates we want to keep watching when offline)
-	_, err = tc.mb.WatchInbox(ctx, tc.mailEvents, true)
-	if err != nil {
-		return err
-	}
-	// TODO: handle connectivity state if needed
-	// for s := range state {
-	// 	// handle connectivity state
-	// }
+	go func() {
+		state, err := tc.mb.WatchInbox(ctx, tc.mailEvents, true)
+		if err != nil {
+			log.Error("Unable to watch mailbox, ", err)
+			return
+		}
+
+		// TODO: handle connectivity state if needed
+		for s := range state {
+			log.Info("received inbox watch state: " + s.State.String())
+		}
+	}()
+
 	return nil
 }
 
@@ -215,11 +259,16 @@ func (tc *textileClient) createMailBox(ctx context.Context, maillib *mail.Mail, 
 	return mailbox, nil
 }
 
-func (tc *textileClient) setupOrCreateMailBox(ctx context.Context) (*mail.Mailbox, error) {
-	maillib := mail.NewMail(cmd.NewClients("api.textile.io:443", true), mail.DefaultConfConfig())
-
+func getMailboxPath() string {
 	usr, _ := user.Current()
 	mbpath := filepath.Join(usr.HomeDir, ".fleek-space/textile/mail")
+	return mbpath
+}
+
+func (tc *textileClient) setupOrCreateMailBox(ctx context.Context) (*mail.Mailbox, error) {
+	maillib := mail.NewMail(cmd.NewClients(tc.cfg.GetString(config.TextileHubTarget, ""), true), mail.DefaultConfConfig())
+
+	mbpath := getMailboxPath()
 
 	var mailbox *mail.Mailbox
 	dbid, err := tc.store.Get([]byte(mailboxSetupFlagStoreKey))
@@ -239,4 +288,9 @@ func (tc *textileClient) setupOrCreateMailBox(ctx context.Context) (*mail.Mailbo
 	mid := mailbox.Identity()
 	log.Info("Mailbox identity: " + mid.GetPublic().String())
 	return mailbox, nil
+}
+
+func (tc *textileClient) clearLocalMailbox() error {
+	mbpath := getMailboxPath()
+	return os.RemoveAll(mbpath)
 }

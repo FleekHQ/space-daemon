@@ -17,6 +17,7 @@ import (
 	bc "github.com/textileio/textile/api/buckets/client"
 	bucketsClient "github.com/textileio/textile/api/buckets/client"
 	bucketspb "github.com/textileio/textile/api/buckets/pb"
+	"github.com/textileio/textile/buckets"
 )
 
 var textileRelPathRegex = regexp.MustCompile(`/ip[f|n]s/[^/]*(?P<relPath>/.*)`)
@@ -58,6 +59,34 @@ func (s *SecureBucketClient) PushPath(ctx context.Context, key, path string, rea
 	// but putting a TODO here in the meantime
 }
 
+func (s *SecureBucketClient) PushPathAccessRoles(ctx context.Context, key, path string, roles map[string]buckets.Role) error {
+	encryptionKey, err := s.getBucketEncryptionKey(ctx)
+	if err != nil {
+		return err
+	}
+
+	encryptedPath, _, err := s.encryptPathData(ctx, encryptionKey, path, nil)
+	if err != nil {
+		return err
+	}
+
+	return s.client.PushPathAccessRoles(ctx, key, encryptedPath, roles)
+}
+
+func (s *SecureBucketClient) PullPathAccessRoles(ctx context.Context, key, path string) (map[string]buckets.Role, error) {
+	encryptionKey, err := s.getBucketEncryptionKey(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	encryptedPath, _, err := s.encryptPathData(ctx, encryptionKey, path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.client.PullPathAccessRoles(ctx, key, encryptedPath)
+}
+
 func (s *SecureBucketClient) PullPath(ctx context.Context, key, path string, writer io.Writer, opts ...bc.Option) error {
 	encryptionKey, err := s.getBucketEncryptionKey(ctx)
 	if err != nil {
@@ -97,7 +126,44 @@ func (s *SecureBucketClient) PullPath(ctx context.Context, key, path string, wri
 	return <-errs
 }
 
-func (s *SecureBucketClient) ListPath(ctx context.Context, key, path string) (*bucketspb.ListPathReply, error) {
+func (s *SecureBucketClient) overwriteDecryptedItem(ctx context.Context, item *bucketspb.PathItem) error {
+	encryptionKey, err := s.getBucketEncryptionKey(ctx)
+	if err != nil {
+		return err
+	}
+	log.Debug("Processing Result Item", "name:"+item.Name, "path:"+item.Path)
+	if item.Name == ".textileseed" || item.Name == ".textile" {
+		return nil
+	}
+	// decrypt file name
+	item.Name, _, err = s.decryptPathData(ctx, encryptionKey, item.Name, nil)
+	if err != nil {
+		return err
+	}
+
+	// decrypts file path
+	matchedPaths := textileRelPathRegex.FindStringSubmatch(item.Path)
+	if len(matchedPaths) > 1 {
+		item.Path, _, err = s.decryptPathData(ctx, encryptionKey, matchedPaths[1], nil)
+		if err != nil {
+			return err
+		}
+	}
+	log.Debug("Processed Result Item", "name:"+item.Name, "path:"+item.Path)
+
+	// Item size is generally (content size + hmac (64 bytes))
+	if item.Size >= 64 {
+		item.Size = item.Size - 64
+	}
+
+	return nil
+}
+
+func (s *SecureBucketClient) ListIpfsPath(ctx context.Context, pth path.Path) (*bucketspb.ListIpfsPathResponse, error) {
+	return s.client.ListIpfsPath(ctx, pth)
+}
+
+func (s *SecureBucketClient) ListPath(ctx context.Context, key, path string) (*bucketspb.ListPathResponse, error) {
 	path = cleanBucketPath(path)
 	encryptionKey, err := s.getBucketEncryptionKey(ctx)
 	if err != nil {
@@ -116,26 +182,21 @@ func (s *SecureBucketClient) ListPath(ctx context.Context, key, path string) (*b
 
 	// decrypt result items
 	for _, item := range result.Item.Items {
-		log.Debug("Processing Result Item", "name:"+item.Name, "path:"+item.Path)
-		if item.Name == ".textileseed" || item.Name == ".textile" {
-			continue
-		}
-		// decrypt file name
-		item.Name, _, err = s.decryptPathData(ctx, encryptionKey, item.Name, nil)
-
-		// decrypts file path
-		matchedPaths := textileRelPathRegex.FindStringSubmatch(item.Path)
-		if len(matchedPaths) > 1 {
-			item.Path, _, err = s.decryptPathData(ctx, encryptionKey, matchedPaths[1], nil)
-		}
-		log.Debug("Processed Result Item", "name:"+item.Name, "path:"+item.Path)
-
-		// Item size is generally (content size + hmac (64 bytes))
-		if item.Size >= 64 {
-			item.Size = item.Size - 64
+		err = s.overwriteDecryptedItem(ctx, item)
+		if err != nil {
+			// Don't error on a single file not decrypted
+			log.Error("Error decrypting a file", err)
 		}
 	}
-	return result, err
+
+	// decrypt root item
+	err = s.overwriteDecryptedItem(ctx, result.Item)
+	if err != nil {
+		// Don't error on a single file not decrypted
+		log.Error("Error decrypting a file", err)
+	}
+
+	return result, nil
 }
 
 func (s *SecureBucketClient) RemovePath(ctx context.Context, key, path string, opts ...bc.Option) (path.Resolved, error) {

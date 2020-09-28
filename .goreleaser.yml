@@ -8,8 +8,8 @@ before:
 project_name: space
 builds:
   - id: space
-    env:
-      - CGO_ENABLED=0
+    # env:
+    #   - CGO_ENABLED=0
     ldflags:
       - -s -w -X main.mongousr={{ .Env.MONGO_USR }}
       - -X main.mongopw={{ .Env.MONGO_PW }}
@@ -22,6 +22,7 @@ builds:
       - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
       - -X main.textilehubma={{ .Env.TXL_HUB_MA }}
       - -X main.textilethreads={{ .Env.TXL_THREADS_TARGET }}
+      - -X main.textilehubgatewayurl={{ .Env.TXL_HUB_GATEWAY_URL }}
       - -X main.textileuserkey={{ .Env.TXL_USER_KEY }}
       - -X main.textileusersecret={{ .Env.TXL_USER_SECRET }}
     main: ./cmd/space-daemon/main.go
@@ -30,8 +31,8 @@ builds:
       - linux
 
   - id: space-darwin
-    env:
-      - CGO_ENABLED=0
+    # env:
+    #   - CGO_ENABLED=0
     ldflags:
       - -s -w -X main.mongousr={{ .Env.MONGO_USR }}
       - -X main.mongopw={{ .Env.MONGO_PW }}
@@ -44,6 +45,7 @@ builds:
       - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
       - -X main.textilehubma={{ .Env.TXL_HUB_MA }}
       - -X main.textilethreads={{ .Env.TXL_THREADS_TARGET }}
+      - -X main.textilehubgatewayurl={{ .Env.TXL_HUB_GATEWAY_URL }}
       - -X main.textileuserkey={{ .Env.TXL_USER_KEY }}
       - -X main.textileusersecret={{ .Env.TXL_USER_SECRET }}
     main: ./cmd/space-daemon/main.go
@@ -54,8 +56,8 @@ builds:
     #   post: gon -log-level debug ci/gon.hcl
 
   - id: space-win
-    env:
-      - CGO_ENABLED=0
+    # env:
+    #   - CGO_ENABLED=0
     ldflags:
       - -s -w -X main.mongousr={{ .Env.MONGO_USR }}
       - -X main.mongopw={{ .Env.MONGO_PW }}
@@ -68,6 +70,7 @@ builds:
       - -X main.textilehub={{ .Env.TXL_HUB_TARGET }}
       - -X main.textilehubma={{ .Env.TXL_HUB_MA }}
       - -X main.textilethreads={{ .Env.TXL_THREADS_TARGET }}
+      - -X main.textilehubgatewayurl={{ .Env.TXL_HUB_GATEWAY_URL }}
       - -X main.textileuserkey={{ .Env.TXL_USER_KEY }}
       - -X main.textileusersecret={{ .Env.TXL_USER_SECRET }}
     main: ./cmd/space-daemon/main.go

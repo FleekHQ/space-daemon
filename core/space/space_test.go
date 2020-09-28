@@ -15,14 +15,14 @@ import (
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 
-	"github.com/FleekHQ/space-daemon/config"
-
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/FleekHQ/space-daemon/core/space/services"
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
+	"github.com/FleekHQ/space-daemon/core/textile/model"
+	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/core/vault"
 	"github.com/FleekHQ/space-daemon/mocks"
 	"github.com/stretchr/testify/assert"
@@ -40,6 +40,7 @@ var (
 	mockKeychain   *mocks.Keychain
 	mockVault      *mocks.Vault
 	mockHub        *mocks.HubAuth
+	mockModel      *mocks.Model
 	mockPubKey     crypto.PubKey
 	mockPrivKey    crypto.PrivKey
 	mockPubKeyHex  string
@@ -71,6 +72,7 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 	mockKeychain = new(mocks.Keychain)
 	mockVault = new(mocks.Vault)
 	mockHub = new(mocks.HubAuth)
+	mockModel = new(mocks.Model)
 	var dir string
 	var err error
 	if dir, err = ioutil.TempDir("", "space-test-folders"); err != nil {
@@ -102,10 +104,6 @@ func initTestService(t *testing.T) (*services.Space, GetTestDir, TearDown) {
 		closeAndDelete(tmpFile2)
 		os.RemoveAll(dir)
 	}
-
-	cfg.On("GetString", config.Ipfsaddr, mock.Anything).Return(
-		"/ip4/127.0.0.1/tcp/5001",
-	)
 
 	mockPubKeyHex = "67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
 	mockPrivKeyHex = "dd55f8921f90fdf31c6ef9ad86bd90605602fd7d32dc8ea66ab72deb6a82821c67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
@@ -151,6 +149,7 @@ func TestService_CreateBucket(t *testing.T) {
 	}
 
 	textileClient.On("CreateBucket", mock.Anything, mock.Anything).Return(mockBucket, nil)
+	textileClient.On("IsInitialized").Return(true)
 
 	mockBucket.On(
 		"GetData",
@@ -175,8 +174,8 @@ func TestService_ListDirs(t *testing.T) {
 	bucketPath := "/ipfs/bafybeian44ntmjjfjbqt4dlkq4fiuhfzcxfunzuuzhbb7xkrnsdjb2sjha"
 
 	mockDirItems := &bucket.DirEntries{
-		Item: &buckets_pb.ListPathItem{
-			Items: []*buckets_pb.ListPathItem{
+		Item: &buckets_pb.PathItem{
+			Items: []*buckets_pb.PathItem{
 				{
 					Path:  bucketPath + "/.textileseed",
 					Name:  ".textileseed",
@@ -203,8 +202,8 @@ func TestService_ListDirs(t *testing.T) {
 	}
 
 	mockDirItemsSubfolder := &bucket.DirEntries{
-		Item: &buckets_pb.ListPathItem{
-			Items: []*buckets_pb.ListPathItem{
+		Item: &buckets_pb.PathItem{
+			Items: []*buckets_pb.PathItem{
 				{
 					Path:  bucketPath + "/somedir/example.txt",
 					Name:  "example.txt",
@@ -217,6 +216,7 @@ func TestService_ListDirs(t *testing.T) {
 	}
 
 	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
+	textileClient.On("IsInitialized").Return(true)
 	mockBucket.On(
 		"ListDirectory",
 		mock.Anything,
@@ -224,10 +224,54 @@ func TestService_ListDirs(t *testing.T) {
 	).Return(mockDirItems, nil)
 
 	mockBucket.On(
+		"FileExists",
+		mock.Anything,
+		mock.Anything,
+	).Return(true, nil)
+
+	mockBucket.On(
 		"ListDirectory",
 		mock.Anything,
 		"/somedir",
 	).Return(mockDirItemsSubfolder, nil)
+
+	mockBucket.On(
+		"Slug",
+	).Return(
+		"meow",
+	)
+
+	mockMirrorFiles := make(map[string]*model.MirrorFileSchema)
+
+	mockMirrorFiles[bucketPath+"/.textileseed"] = &model.MirrorFileSchema{
+		Backup: true,
+	}
+
+	mockMirrorFiles[bucketPath+"/somedir"] = &model.MirrorFileSchema{
+		Backup: true,
+	}
+
+	mockMirrorFiles[bucketPath+"/example.txt"] = &model.MirrorFileSchema{
+		Backup: true,
+	}
+
+	mockMirrorFiles[bucketPath+"/somedir/example.txt"] = &model.MirrorFileSchema{
+		Backup: true,
+	}
+
+	mockModel.On("FindMirrorFileByPaths", mock.Anything, mock.Anything).Return(mockMirrorFiles, nil)
+
+	textileClient.On("GetModel").Return(mockModel)
+
+	textileClient.On(
+		"GetPathAccessRoles",
+		mock.Anything,
+		mock.Anything,
+		mock.Anything,
+	).Return(
+		[]domain.Member{},
+		nil,
+	)
 
 	res, err := sv.ListDirs(context.Background(), "", "")
 
@@ -289,6 +333,7 @@ func TestService_OpenFile(t *testing.T) {
 	)
 
 	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
+	textileClient.On("IsInitialized").Return(true)
 	mockBucket.On(
 		"GetFile",
 		mock.Anything,
@@ -304,7 +349,20 @@ func TestService_OpenFile(t *testing.T) {
 		"Slug",
 	).Return(testKey)
 
-	res, err := sv.OpenFile(context.Background(), testPath, "")
+	testThreadID, err := utils.ParseDbIDFromString("AFKRGLCIX5CQWA2244J3GBH4ERF2MLNPJWVU72BPU2BGB5OOZH5PR7Q=")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mockBucket.On(
+		"GetThreadID",
+		mock.Anything,
+	).Return(
+		testThreadID,
+		nil,
+	)
+
+	res, err := sv.OpenFile(context.Background(), testPath, "", "")
 
 	assert.Nil(t, err)
 	assert.NotEmpty(t, res)
@@ -326,6 +384,7 @@ func TestService_AddItems_FilesOnly(t *testing.T) {
 	testSourcePaths := getTempDir().fileNames
 
 	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
+	textileClient.On("IsInitialized").Return(true)
 
 	mockBucket.On(
 		"Key",
@@ -388,6 +447,7 @@ func TestService_AddItems_Folder(t *testing.T) {
 	targetBucketPath := bucketPath + "/" + folderName
 
 	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
+	textileClient.On("IsInitialized").Return(true)
 
 	mockBucket.On(
 		"Key",
@@ -453,6 +513,7 @@ func TestService_AddItems_OnError(t *testing.T) {
 	testSourcePaths := getTempDir().fileNames
 
 	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
+	textileClient.On("IsInitialized").Return(true)
 
 	mockBucket.On(
 		"Key",
@@ -738,6 +799,7 @@ func TestService_HandleSharedFilesInvitation_FailIfInvitationNotFound(t *testing
 	ctx := context.Background()
 	defer tearDown()
 
+	textileClient.On("IsHealthy").Return(true)
 	textileClient.On("GetMailAsNotifications", mock.Anything, "", 1).
 		Return(nil, errors.New("failed fetching"))
 
@@ -765,6 +827,7 @@ func TestService_HandleSharedFilesInvitation_Accepts_Correctly(t *testing.T) {
 		},
 	}
 
+	textileClient.On("IsHealthy").Return(true)
 	textileClient.On("GetMailAsNotifications", mock.Anything, invitationId, 1).
 		Return([]*domain.Notification{
 			{
@@ -804,6 +867,7 @@ func TestService_HandleSharedFilesInvitation_Rejects_Correctly(t *testing.T) {
 		},
 	}
 
+	textileClient.On("IsHealthy").Return(true)
 	textileClient.On("GetMailAsNotifications", mock.Anything, invitationId, 1).
 		Return([]*domain.Notification{
 			{

@@ -97,7 +97,13 @@ func (m *model) initSharedPublicKey(ctx context.Context) (context.Context, *thre
 		return nil, nil, err
 	}
 
-	if err = m.threads.NewDB(metaCtx, *dbID); err != nil {
+	managedKey, err := m.kc.GetManagedThreadKey(metaThreadName)
+	if err != nil {
+		log.Error("error getting managed thread key", err)
+		return nil, nil, err
+	}
+
+	if err = m.threads.NewDB(metaCtx, *dbID, db.WithNewManagedThreadKey(managedKey)); err != nil {
 		log.Debug("initSharedPublicKey: db already exists")
 	}
 	if err := m.threads.NewCollection(metaCtx, *dbID, db.CollectionConfig{

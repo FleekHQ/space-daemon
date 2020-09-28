@@ -4,11 +4,14 @@ package mocks
 
 import (
 	config "github.com/FleekHQ/space-daemon/config"
+	cid "github.com/ipfs/go-cid"
 	client "github.com/textileio/go-threads/api/client"
 
 	context "context"
 
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
+
+	db "github.com/textileio/go-threads/db"
 
 	domain "github.com/FleekHQ/space-daemon/core/space/domain"
 
@@ -21,6 +24,8 @@ import (
 	path "github.com/ipfs/interface-go-ipfs-core/path"
 
 	textile "github.com/FleekHQ/space-daemon/core/textile"
+
+	thread "github.com/textileio/go-threads/core/thread"
 
 	usersclient "github.com/textileio/textile/api/users/client"
 )
@@ -56,6 +61,41 @@ func (_m *Client) AttachMailboxNotifier(notif textile.GrpcMailboxNotifier) {
 	_m.Called(notif)
 }
 
+// BackupBucket provides a mock function with given fields: ctx, bucket
+func (_m *Client) BackupBucket(ctx context.Context, bucket textile.Bucket) (int, error) {
+	ret := _m.Called(ctx, bucket)
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func(context.Context, textile.Bucket) int); ok {
+		r0 = rf(ctx, bucket)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, textile.Bucket) error); ok {
+		r1 = rf(ctx, bucket)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// BackupFileWithReader provides a mock function with given fields: ctx, bucket, _a2, reader
+func (_m *Client) BackupFileWithReader(ctx context.Context, bucket textile.Bucket, _a2 string, reader io.Reader) error {
+	ret := _m.Called(ctx, bucket, _a2, reader)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, textile.Bucket, string, io.Reader) error); ok {
+		r0 = rf(ctx, bucket, _a2, reader)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CreateBucket provides a mock function with given fields: ctx, bucketSlug
 func (_m *Client) CreateBucket(ctx context.Context, bucketSlug string) (textile.Bucket, error) {
 	ret := _m.Called(ctx, bucketSlug)
@@ -79,13 +119,50 @@ func (_m *Client) CreateBucket(ctx context.Context, bucketSlug string) (textile.
 	return r0, r1
 }
 
-// GetBucket provides a mock function with given fields: ctx, slug
-func (_m *Client) GetBucket(ctx context.Context, slug string) (textile.Bucket, error) {
-	ret := _m.Called(ctx, slug)
+// DereplicateThreadFromHub provides a mock function with given fields: ctx, dbID
+func (_m *Client) DereplicateThreadFromHub(ctx context.Context, dbID *thread.ID) error {
+	ret := _m.Called(ctx, dbID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *thread.ID) error); ok {
+		r0 = rf(ctx, dbID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DownloadPublicGatewayItem provides a mock function with given fields: ctx, _a1
+func (_m *Client) DownloadPublicGatewayItem(ctx context.Context, _a1 cid.Cid) (io.ReadCloser, error) {
+	ret := _m.Called(ctx, _a1)
+
+	var r0 io.ReadCloser
+	if rf, ok := ret.Get(0).(func(context.Context, cid.Cid) io.ReadCloser); ok {
+		r0 = rf(ctx, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(io.ReadCloser)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, cid.Cid) error); ok {
+		r1 = rf(ctx, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetBucket provides a mock function with given fields: ctx, slug, remoteFile
+func (_m *Client) GetBucket(ctx context.Context, slug string, remoteFile *textile.GetBucketForRemoteFileInput) (textile.Bucket, error) {
+	ret := _m.Called(ctx, slug, remoteFile)
 
 	var r0 textile.Bucket
-	if rf, ok := ret.Get(0).(func(context.Context, string) textile.Bucket); ok {
-		r0 = rf(ctx, slug)
+	if rf, ok := ret.Get(0).(func(context.Context, string, *textile.GetBucketForRemoteFileInput) textile.Bucket); ok {
+		r0 = rf(ctx, slug, remoteFile)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(textile.Bucket)
@@ -93,8 +170,8 @@ func (_m *Client) GetBucket(ctx context.Context, slug string) (textile.Bucket, e
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, slug)
+	if rf, ok := ret.Get(1).(func(context.Context, string, *textile.GetBucketForRemoteFileInput) error); ok {
+		r1 = rf(ctx, slug, remoteFile)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -123,6 +200,20 @@ func (_m *Client) GetDefaultBucket(ctx context.Context) (textile.Bucket, error) 
 	}
 
 	return r0, r1
+}
+
+// GetFailedHealthchecks provides a mock function with given fields:
+func (_m *Client) GetFailedHealthchecks() int {
+	ret := _m.Called()
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func() int); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	return r0
 }
 
 // GetMailAsNotifications provides a mock function with given fields: ctx, seek, limit
@@ -164,6 +255,82 @@ func (_m *Client) GetModel() model.Model {
 	return r0
 }
 
+// GetPathAccessRoles provides a mock function with given fields: ctx, b, _a2
+func (_m *Client) GetPathAccessRoles(ctx context.Context, b textile.Bucket, _a2 string) ([]domain.Member, error) {
+	ret := _m.Called(ctx, b, _a2)
+
+	var r0 []domain.Member
+	if rf, ok := ret.Get(0).(func(context.Context, textile.Bucket, string) []domain.Member); ok {
+		r0 = rf(ctx, b, _a2)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.Member)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, textile.Bucket, string) error); ok {
+		r1 = rf(ctx, b, _a2)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetPublicShareBucket provides a mock function with given fields: ctx
+func (_m *Client) GetPublicShareBucket(ctx context.Context) (textile.Bucket, error) {
+	ret := _m.Called(ctx)
+
+	var r0 textile.Bucket
+	if rf, ok := ret.Get(0).(func(context.Context) textile.Bucket); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(textile.Bucket)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetReceivedFiles provides a mock function with given fields: ctx, accepted, seek, limit
+func (_m *Client) GetReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*domain.SharedDirEntry, string, error) {
+	ret := _m.Called(ctx, accepted, seek, limit)
+
+	var r0 []*domain.SharedDirEntry
+	if rf, ok := ret.Get(0).(func(context.Context, bool, string, int) []*domain.SharedDirEntry); ok {
+		r0 = rf(ctx, accepted, seek, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*domain.SharedDirEntry)
+		}
+	}
+
+	var r1 string
+	if rf, ok := ret.Get(1).(func(context.Context, bool, string, int) string); ok {
+		r1 = rf(ctx, accepted, seek, limit)
+	} else {
+		r1 = ret.Get(1).(string)
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(context.Context, bool, string, int) error); ok {
+		r2 = rf(ctx, accepted, seek, limit)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
 // GetThreadsConnection provides a mock function with given fields:
 func (_m *Client) GetThreadsConnection() (*client.Client, error) {
 	ret := _m.Called()
@@ -194,6 +361,34 @@ func (_m *Client) IsBucketBackup(ctx context.Context, bucketSlug string) bool {
 	var r0 bool
 	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
 		r0 = rf(ctx, bucketSlug)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// IsHealthy provides a mock function with given fields:
+func (_m *Client) IsHealthy() bool {
+	ret := _m.Called()
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func() bool); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// IsInitialized provides a mock function with given fields:
+func (_m *Client) IsInitialized() bool {
+	ret := _m.Called()
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func() bool); ok {
+		r0 = rf()
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
@@ -273,29 +468,6 @@ func (_m *Client) ListBuckets(ctx context.Context) ([]textile.Bucket, error) {
 	return r0, r1
 }
 
-// MarkMirrorFileBackup provides a mock function with given fields: ctx, _a1, bucketSlug
-func (_m *Client) MarkMirrorFileBackup(ctx context.Context, _a1 string, bucketSlug string) (*domain.MirrorFile, error) {
-	ret := _m.Called(ctx, _a1, bucketSlug)
-
-	var r0 *domain.MirrorFile
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *domain.MirrorFile); ok {
-		r0 = rf(ctx, _a1, bucketSlug)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.MirrorFile)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, _a1, bucketSlug)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // RejectSharedFilesInvitation provides a mock function with given fields: ctx, invitation
 func (_m *Client) RejectSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error) {
 	ret := _m.Called(ctx, invitation)
@@ -331,6 +503,20 @@ func (_m *Client) RemoveKeys() error {
 	return r0
 }
 
+// ReplicateThreadToHub provides a mock function with given fields: ctx, dbID
+func (_m *Client) ReplicateThreadToHub(ctx context.Context, dbID *thread.ID) error {
+	ret := _m.Called(ctx, dbID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *thread.ID) error); ok {
+		r0 = rf(ctx, dbID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // SendMessage provides a mock function with given fields: ctx, recipient, body
 func (_m *Client) SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*usersclient.Message, error) {
 	ret := _m.Called(ctx, recipient, body)
@@ -354,16 +540,39 @@ func (_m *Client) SendMessage(ctx context.Context, recipient crypto.PubKey, body
 	return r0, r1
 }
 
+// SetMirrorFileBackup provides a mock function with given fields: ctx, _a1, bucketSlug
+func (_m *Client) SetMirrorFileBackup(ctx context.Context, _a1 string, bucketSlug string) (*domain.MirrorFile, error) {
+	ret := _m.Called(ctx, _a1, bucketSlug)
+
+	var r0 *domain.MirrorFile
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *domain.MirrorFile); ok {
+		r0 = rf(ctx, _a1, bucketSlug)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.MirrorFile)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, _a1, bucketSlug)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ShareBucket provides a mock function with given fields: ctx, bucketSlug
-func (_m *Client) ShareBucket(ctx context.Context, bucketSlug string) (*client.DBInfo, error) {
+func (_m *Client) ShareBucket(ctx context.Context, bucketSlug string) (*db.Info, error) {
 	ret := _m.Called(ctx, bucketSlug)
 
-	var r0 *client.DBInfo
-	if rf, ok := ret.Get(0).(func(context.Context, string) *client.DBInfo); ok {
+	var r0 *db.Info
+	if rf, ok := ret.Get(0).(func(context.Context, string) *db.Info); ok {
 		r0 = rf(ctx, bucketSlug)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*client.DBInfo)
+			r0 = ret.Get(0).(*db.Info)
 		}
 	}
 
@@ -377,13 +586,13 @@ func (_m *Client) ShareBucket(ctx context.Context, bucketSlug string) (*client.D
 	return r0, r1
 }
 
-// ShareFilesViaPublicKey provides a mock function with given fields: ctx, paths, pubkeys
-func (_m *Client) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error {
-	ret := _m.Called(ctx, paths, pubkeys)
+// ShareFilesViaPublicKey provides a mock function with given fields: ctx, paths, pubkeys, keys
+func (_m *Client) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey, keys [][]byte) error {
+	ret := _m.Called(ctx, paths, pubkeys, keys)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []domain.FullPath, []crypto.PubKey) error); ok {
-		r0 = rf(ctx, paths, pubkeys)
+	if rf, ok := ret.Get(0).(func(context.Context, []domain.FullPath, []crypto.PubKey, [][]byte) error); ok {
+		r0 = rf(ctx, paths, pubkeys, keys)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -440,6 +649,41 @@ func (_m *Client) ToggleBucketBackup(ctx context.Context, bucketSlug string, buc
 	return r0, r1
 }
 
+// UnbackupBucket provides a mock function with given fields: ctx, bucket
+func (_m *Client) UnbackupBucket(ctx context.Context, bucket textile.Bucket) (int, error) {
+	ret := _m.Called(ctx, bucket)
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func(context.Context, textile.Bucket) int); ok {
+		r0 = rf(ctx, bucket)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, textile.Bucket) error); ok {
+		r1 = rf(ctx, bucket)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UnsetMirrorFileBackup provides a mock function with given fields: ctx, _a1, bucketSlug
+func (_m *Client) UnsetMirrorFileBackup(ctx context.Context, _a1 string, bucketSlug string) error {
+	ret := _m.Called(ctx, _a1, bucketSlug)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, _a1, bucketSlug)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UploadFileToHub provides a mock function with given fields: ctx, b, _a2, reader
 func (_m *Client) UploadFileToHub(ctx context.Context, b textile.Bucket, _a2 string, reader io.Reader) (path.Resolved, path.Path, error) {
 	ret := _m.Called(ctx, b, _a2, reader)
@@ -470,6 +714,38 @@ func (_m *Client) UploadFileToHub(ctx context.Context, b textile.Bucket, _a2 str
 	}
 
 	return r0, r1, r2
+}
+
+// WaitForHealthy provides a mock function with given fields:
+func (_m *Client) WaitForHealthy() chan error {
+	ret := _m.Called()
+
+	var r0 chan error
+	if rf, ok := ret.Get(0).(func() chan error); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(chan error)
+		}
+	}
+
+	return r0
+}
+
+// WaitForInitialized provides a mock function with given fields:
+func (_m *Client) WaitForInitialized() chan bool {
+	ret := _m.Called()
+
+	var r0 chan bool
+	if rf, ok := ret.Get(0).(func() chan bool); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(chan bool)
+		}
+	}
+
+	return r0
 }
 
 // WaitForReady provides a mock function with given fields:

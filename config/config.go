@@ -13,6 +13,7 @@ const (
 	TextileHubTarget         = "space/textileHubTarget"
 	TextileHubMa             = "space/textileHubMa"
 	TextileThreadsTarget     = "space/textileThreadsTarget"
+	TextileHubGatewayUrl     = "space/TextileHubGatewayUrl"
 	TextileUserKey           = "space/textileUserKey"
 	TextileUserSecret        = "space/textileUserSecret"
 	MountFuseDrive           = "space/mountFuseDrive"
@@ -55,6 +56,7 @@ type Flags struct {
 	TextileHubTarget     string
 	TextileHubMa         string
 	TextileThreadsTarget string
+	TextileHubGatewayUrl string
 	TextileUserKey       string
 	TextileUserSecret    string
 }

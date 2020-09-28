@@ -15,6 +15,7 @@ type DirEntry struct {
 	Created       string
 	Updated       string
 	FileExtension string
+	Members       []Member
 }
 
 type ThreadInfo struct {
@@ -24,7 +25,9 @@ type ThreadInfo struct {
 
 type FileInfo struct {
 	DirEntry
-	IpfsHash string
+	IpfsHash         string
+	BackedUp         bool
+	LocallyAvailable bool
 }
 
 type OpenFileInfo struct {
@@ -49,10 +52,17 @@ type AddItemsResponse struct {
 	Error      error
 }
 
+type Member struct {
+	Address   string `json:"address"`
+	PublicKey string `json:"publicKey"`
+}
+
 type AddWatchFile struct {
+	DbId       string `json:"dbId"`
 	LocalPath  string `json:"local_path"`
 	BucketPath string `json:"bucket_path"`
 	BucketKey  string `json:"bucket_key"`
+	BucketSlug string `json:"bucket_slug"`
 }
 
 type Identity struct {
@@ -75,15 +85,17 @@ type FileSharingInfo struct {
 type NotificationTypes int
 
 const (
-	INVITATION NotificationTypes = iota
+	UNKNOWN NotificationTypes = iota
+	INVITATION
 	USAGEALERT
 	INVITATION_REPLY
 )
 
 type FullPath struct {
-	DbId   string `json:"dbId"`
-	Bucket string `json:"bucket"`
-	Path   string `json:"path"`
+	DbId      string `json:"dbId"`
+	BucketKey string `json:"bucketKey"`
+	Bucket    string `json:"bucket"`
+	Path      string `json:"path"`
 }
 
 type InvitationStatus int
@@ -100,17 +112,22 @@ type Invitation struct {
 	InvitationID     string           `json:"invitationID"`
 	Status           InvitationStatus `json:"status"`
 	ItemPaths        []FullPath       `json:"itemPaths"`
+	Keys             [][]byte         `json:"keys"`
+}
+
+type InvitationReply struct {
+	InvitationID string `json:"invitationID"`
 }
 
 type UsageAlert struct {
 	Used    int64  `json:"used"`
 	Limit   int64  `json:"limit"`
-	Message string `json:message`
+	Message string `json:"message"`
 }
 
 type MessageBody struct {
 	Type NotificationTypes `json:"type"`
-	Body []byte            `json:"body`
+	Body []byte            `json:"body"`
 }
 
 type Notification struct {
@@ -121,9 +138,10 @@ type Notification struct {
 	CreatedAt        int64             `json:"createdAt"`
 	ReadAt           int64             `json:"readAt"`
 	// QUESTION: is there a way to enforce that only one of the below is present
-	InvitationValue Invitation  `json:"invitationValue"`
-	UsageAlertValue UsageAlert  `json:"usageAlertValue"`
-	RelatedObject   interface{} `json:"relatedObject`
+	InvitationValue       Invitation      `json:"invitationValue"`
+	UsageAlertValue       UsageAlert      `json:"usageAlertValue"`
+	InvitationAcceptValue InvitationReply `json:"invitationAcceptValue"`
+	RelatedObject         interface{}     `json:"relatedObject"`
 }
 
 type APISessionTokens struct {
@@ -136,4 +154,11 @@ type MirrorFile struct {
 	BucketSlug string
 	Backup     bool
 	Shared     bool
+}
+
+type SharedDirEntry struct {
+	DbID   string
+	Bucket string
+	FileInfo
+	Members []Member // XXX: it is duplicated from FileInfo
 }

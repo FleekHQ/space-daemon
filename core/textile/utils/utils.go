@@ -11,6 +11,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	crypto "github.com/libp2p/go-libp2p-crypto"
+	tc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/textile/api/common"
 	"golang.org/x/crypto/pbkdf2"
@@ -36,7 +37,7 @@ func ParseDbIDFromString(dbID string) (*thread.ID, error) {
 
 type DeterministicThreadVariant string
 
-var (
+const (
 	MetathreadThreadVariant DeterministicThreadVariant = "metathread"
 )
 
@@ -44,18 +45,18 @@ func NewDeterministicThreadID(kc keychain.Keychain, threadVariant DeterministicT
 	size := 32
 	variant := thread.Raw
 
-	pub, err := kc.GetStoredPublicKey()
+	priv, _, err := kc.GetStoredKeyPairInLibP2PFormat()
 	if err != nil {
 		return thread.ID([]byte{}), err
 	}
 
-	pubInBytes, err := pub.Raw()
+	privInBytes, err := priv.Raw()
 	if err != nil {
 		return thread.ID([]byte{}), err
 	}
 
 	// Do a key derivation based on the private key, a constant nonce, and the thread variant
-	num := pbkdf2.Key(pubInBytes, []byte("threadID"+threadVariant), 256, size, sha512.New)
+	num := pbkdf2.Key(privInBytes, []byte("threadID"+threadVariant), 256, size, sha512.New)
 	if err != nil {
 		return thread.ID([]byte{}), err
 	}
@@ -80,7 +81,7 @@ func getThreadName(userPubKey []byte, bucketSlug string) string {
 }
 
 // Readies a context to access a thread given its name and dbid
-func GetThreadContext(parentCtx context.Context, threadName string, dbID thread.ID, hub bool, kc keychain.Keychain, hubAuth hub.HubAuth) (context.Context, error) {
+func GetThreadContext(parentCtx context.Context, threadName string, dbID thread.ID, hub bool, kc keychain.Keychain, hubAuth hub.HubAuth, threadsClient *tc.Client) (context.Context, error) {
 	var err error
 	ctx := parentCtx
 
@@ -94,13 +95,23 @@ func GetThreadContext(parentCtx context.Context, threadName string, dbID thread.
 	}
 
 	var publicKey crypto.PubKey
-	if publicKey, err = kc.GetStoredPublicKey(); err != nil {
+	var privKey crypto.PrivKey
+	if privKey, publicKey, err = kc.GetStoredKeyPairInLibP2PFormat(); err != nil {
 		return nil, err
 	}
 
 	var pubKeyInBytes []byte
 	if pubKeyInBytes, err = publicKey.Bytes(); err != nil {
 		return nil, err
+	}
+
+	if threadsClient != nil {
+		tok, err := threadsClient.GetToken(ctx, thread.NewLibp2pIdentity(privKey))
+		if err != nil {
+			return nil, err
+		}
+
+		ctx = thread.NewTokenContext(ctx, tok)
 	}
 
 	ctx = common.NewThreadNameContext(ctx, getThreadName(pubKeyInBytes, threadName))

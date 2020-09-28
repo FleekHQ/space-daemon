@@ -21,13 +21,14 @@ type BucketData struct {
 	UpdatedAt int64 `json:"updated_at"`
 }
 
-type DirEntries bucketsproto.ListPathReply
+type DirEntries bucketsproto.ListPathResponse
 
 type BucketsClient interface {
 	PushPath(ctx context.Context, key, pth string, reader io.Reader, opts ...bucketsClient.Option) (result path.Resolved, root path.Resolved, err error)
 	PullPath(ctx context.Context, key, pth string, writer io.Writer, opts ...bucketsClient.Option) error
-	ListPath(ctx context.Context, key, pth string) (*bucketsproto.ListPathReply, error)
+	ListPath(ctx context.Context, key, pth string) (*bucketsproto.ListPathResponse, error)
 	RemovePath(ctx context.Context, key, pth string, opts ...bucketsClient.Option) (path.Resolved, error)
+	ListIpfsPath(ctx context.Context, ipfsPath path.Path) (*bucketsproto.ListIpfsPathResponse, error)
 }
 
 // NOTE: all write operations should use the lock for the bucket to keep consistency
@@ -37,18 +38,18 @@ type Bucket struct {
 	lock             sync.RWMutex
 	root             *bucketsproto.Root
 	bucketsClient    BucketsClient
-	getBucketContext getBucketContextFn
+	getBucketContext GetBucketContextFn
 }
 
 func (b *Bucket) Slug() string {
 	return b.GetData().Name
 }
 
-type getBucketContextFn func(context.Context, string) (context.Context, *thread.ID, error)
+type GetBucketContextFn func(context.Context, string) (context.Context, *thread.ID, error)
 
 func New(
 	root *bucketsproto.Root,
-	getBucketContext getBucketContextFn,
+	getBucketContext GetBucketContextFn,
 	bucketsClient BucketsClient,
 ) *Bucket {
 	return &Bucket{

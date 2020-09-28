@@ -2,7 +2,11 @@ package keychain
 
 import (
 	"crypto/ed25519"
+	"crypto/sha512"
 	"encoding/hex"
+	"golang.org/x/crypto/pbkdf2"
+	"os"
+	"path"
 	"strings"
 
 	"errors"
@@ -10,7 +14,9 @@ import (
 	"github.com/99designs/keyring"
 	ri "github.com/FleekHQ/space-daemon/core/keychain/keyring"
 	"github.com/FleekHQ/space-daemon/core/store"
+	"github.com/FleekHQ/space-daemon/log"
 	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/textileio/go-threads/core/thread"
 )
 
 const PrivateKeyStoreKey = "key"
@@ -26,6 +32,7 @@ type keychain struct {
 	fileDir string
 	st      store.Store
 	ring    ri.Keyring
+	privKey *crypto.PrivKey
 }
 
 type Keychain interface {
@@ -34,6 +41,7 @@ type Keychain interface {
 	GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error)
 	GetStoredPublicKey() (crypto.PubKey, error)
 	GetStoredMnemonic() (string, error)
+	GetManagedThreadKey(threadKeyName string) (thread.Key, error)
 	GenerateKeyPairWithForce() (pub []byte, priv []byte, err error)
 	Sign([]byte) ([]byte, error)
 	ImportExistingKeyPair(priv crypto.PrivKey, mnemonic string) error
@@ -116,6 +124,10 @@ func (kc *keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.Pub
 	var priv []byte
 	var err error
 
+	if kc.privKey != nil {
+		return *kc.privKey, (*kc.privKey).GetPublic(), nil
+	}
+
 	if priv, _, err = kc.retrieveKeyPair(); err != nil {
 		newErr := ErrKeyPairNotFound
 		return nil, nil, newErr
@@ -126,6 +138,8 @@ func (kc *keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.Pub
 	if unmarshalledPriv, err = crypto.UnmarshalEd25519PrivateKey(priv); err != nil {
 		return nil, nil, err
 	}
+
+	kc.privKey = &unmarshalledPriv
 
 	unmarshalledPub := unmarshalledPriv.GetPublic()
 
@@ -195,6 +209,8 @@ func (kc *keychain) ImportExistingKeyPair(priv crypto.PrivKey, mnemonic string) 
 		return err
 	}
 
+	kc.privKey = &priv
+
 	return nil
 }
 
@@ -212,6 +228,8 @@ func (kc *keychain) DeleteKeypair() error {
 	if err != nil {
 		return err
 	}
+
+	kc.privKey = nil
 
 	return nil
 }
@@ -244,6 +262,13 @@ func (kc *keychain) generateAndStoreKeyPair(seed []byte, mnemonic string) ([]byt
 		return nil, nil, err
 	}
 
+	privkey, err := crypto.UnmarshalEd25519PrivateKey(priv)
+	if err != nil {
+		log.Warn("Unable to cache priv key")
+	}
+
+	kc.privKey = &privkey
+
 	return pub, priv, nil
 }
 
@@ -263,14 +288,34 @@ func (kc *keychain) getKeyRing() (ri.Keyring, error) {
 		return kc.ring, nil
 	}
 
+	ucd, err := os.UserConfigDir()
+	if err != nil {
+		return nil, err
+	}
+
 	return keyring.Open(keyring.Config{
-		ServiceName:                    "space",
-		FileDir:                        kc.fileDir + "/kc",
-		PassDir:                        kc.fileDir + "/kcpw",
-		PassPrefix:                     "space",
-		WinCredPrefix:                  "space",
+		ServiceName: "space",
+
+		// MacOS keychain
 		KeychainTrustApplication:       true,
 		KeychainAccessibleWhenUnlocked: true,
+
+		// KDE Wallet
+		KWalletAppID:  "space",
+		KWalletFolder: "space",
+
+		// Windows
+		WinCredPrefix: "space",
+
+		// freedesktop.org's Secret Service
+		LibSecretCollectionName: "space",
+
+		// Pass (https://www.passwordstore.org/)
+		PassPrefix: "space",
+		PassDir:    kc.fileDir + "/kcpw",
+
+		// Fallback encrypted file
+		FileDir: path.Join(ucd, "space", "keyring"),
 	})
 }
 
@@ -324,4 +369,30 @@ func (kc *keychain) retrieveKeyPair() (privKey []byte, mnemonic string, err erro
 	}
 
 	return privKey, mnemonic, nil
+}
+
+func (kc *keychain) GetManagedThreadKey(threadKeyName string) (thread.Key, error) {
+	size := 32
+
+	priv, _, err := kc.GetStoredKeyPairInLibP2PFormat()
+	if err != nil {
+		return thread.Key{}, err
+	}
+
+	privBytes, err := priv.Raw()
+	if err != nil {
+		return thread.Key{}, err
+	}
+
+	num := pbkdf2.Key(privBytes, []byte("threadKey"+threadKeyName), 256, size, sha512.New)
+	if err != nil {
+		return thread.Key{}, err
+	}
+
+	managedKey, err := thread.KeyFromBytes(num)
+	if err != nil {
+		return thread.Key{}, err
+	}
+
+	return managedKey, nil
 }

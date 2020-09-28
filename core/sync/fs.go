@@ -22,16 +22,16 @@ func (h *watcherHandler) OnCreate(ctx context.Context, path string, fileInfo os.
 	var newRoot ipfspath.Path
 	var err error
 
-	key, exists := h.bs.getOpenFileBucketKey(path)
+	bucketSlug, bucketPath, exists := h.bs.getOpenFileBucketSlugAndPath(path)
 	if !exists {
 		msg := fmt.Sprintf("error: could not find path %s", path)
 		log.Error(msg, fmt.Errorf(msg))
 		return
 	}
 
-	b, err := h.bs.textileClient.GetBucket(ctx, key)
+	b, err := h.bs.textileClient.GetBucket(ctx, bucketSlug, nil)
 	if err != nil {
-		msg := fmt.Sprintf("error: could not find bucket with key %s", key)
+		msg := fmt.Sprintf("error: could not find bucket with slug %s", bucketSlug)
 		log.Error(msg, fmt.Errorf(msg))
 		return
 	}
@@ -67,7 +67,7 @@ func (h *watcherHandler) OnCreate(ctx context.Context, path string, fileInfo os.
 			return
 		}
 
-		result, newRoot, err = b.UploadFile(ctx, path, fileReader)
+		result, newRoot, err = b.UploadFile(ctx, bucketPath, fileReader)
 	}
 
 	if err != nil {
@@ -81,7 +81,7 @@ func (h *watcherHandler) OnCreate(ctx context.Context, path string, fileInfo os.
 
 	log.Info(
 		"Successfully uploaded item to textile",
-		fmt.Sprintf("path:%s", path),
+		fmt.Sprintf("bucketPath:%s", bucketPath),
 		fmt.Sprintf("itemCid:%s", result.Cid()),
 		fmt.Sprintf("rootCid:%s", newRoot.String()),
 	)
@@ -93,21 +93,21 @@ func (h *watcherHandler) OnRemove(ctx context.Context, path string, fileInfo os.
 	log.Info("FS Handler: OnRemove", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileName:%s", fileInfo.Name()))
 	// TODO: Also synchronizer lock check here
 
-	key, exists := h.bs.getOpenFileBucketKey(path)
+	bucketSlug, bucketPath, exists := h.bs.getOpenFileBucketSlugAndPath(path)
 	if !exists {
 		msg := fmt.Sprintf("error: could not find path %s", path)
 		log.Error(msg, fmt.Errorf(msg))
 		return
 	}
 
-	b, err := h.bs.textileClient.GetBucket(ctx, key)
+	b, err := h.bs.textileClient.GetBucket(ctx, bucketSlug, nil)
 	if err != nil {
-		msg := fmt.Sprintf("error: could not find bucket with key %s", key)
+		msg := fmt.Sprintf("error: could not find bucket with slug %s", bucketSlug)
 		log.Error(msg, fmt.Errorf(msg))
 		return
 	}
 
-	_, err = b.DeleteDirOrFile(ctx, path)
+	_, err = b.DeleteDirOrFile(ctx, bucketPath)
 
 	if err != nil {
 		log.Error("Deleting from textile failed", err, fmt.Sprintf("path:%s", path))
@@ -125,16 +125,16 @@ func (h *watcherHandler) OnRemove(ctx context.Context, path string, fileInfo os.
 func (h *watcherHandler) OnWrite(ctx context.Context, path string, fileInfo os.FileInfo) {
 	log.Info("FS Handler: OnWrite", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileName:%s", fileInfo.Name()))
 
-	key, exists := h.bs.getOpenFileBucketKey(path)
+	bucketSlug, bucketPath, exists := h.bs.getOpenFileBucketSlugAndPath(path)
 	if !exists {
 		msg := fmt.Sprintf("error: could not find path %s", path)
 		log.Error(msg, fmt.Errorf(msg))
 		return
 	}
 
-	b, err := h.bs.textileClient.GetBucket(ctx, key)
+	b, err := h.bs.textileClient.GetBucket(ctx, bucketSlug, nil)
 	if err != nil {
-		msg := fmt.Sprintf("error: could not find bucket with key %s", key)
+		msg := fmt.Sprintf("error: could not find bucket with slug %s", bucketSlug)
 		log.Error(msg, fmt.Errorf(msg))
 		return
 	}
@@ -144,13 +144,13 @@ func (h *watcherHandler) OnWrite(ctx context.Context, path string, fileInfo os.F
 		return
 	}
 
-	_, _, err = b.UploadFile(ctx, path, fileReader)
+	_, _, err = b.UploadFile(ctx, bucketPath, fileReader)
 	if err != nil {
-		msg := fmt.Sprintf("error: could not sync file at path %s to bucket %s", path, key)
+		msg := fmt.Sprintf("error: could not sync file at path %s to bucket %s as %s", path, bucketSlug, bucketPath)
 		log.Error(msg, fmt.Errorf(msg))
 		return
 	}
-	msg := fmt.Sprintf("success syncing file at path %s to bucket %s", path, key)
+	msg := fmt.Sprintf("success syncing file at path %s to bucket %s as %s", path, bucketSlug, bucketPath)
 	log.Printf(msg)
 
 }

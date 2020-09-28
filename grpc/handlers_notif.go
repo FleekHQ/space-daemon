@@ -2,21 +2,19 @@ package grpc
 
 import (
 	"context"
-	"errors"
 
-	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/grpc/pb"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/golang/protobuf/ptypes/empty"
 )
 
-func mapToPbNotification(n domain.Notification) (*pb.Notification, error) {
+func mapToPbNotification(n domain.Notification) *pb.Notification {
 	// maybe there is a cooler way to do this (e.g., with reflection)
 	switch n.NotificationType {
 	case domain.INVITATION:
 		inv := n.InvitationValue
-		pbpths := make([]*pb.FullPath, len(inv.ItemPaths))
+		pbpths := make([]*pb.FullPath, 0)
 
 		for _, pth := range n.InvitationValue.ItemPaths {
 			pbpth := &pb.FullPath{
@@ -30,12 +28,10 @@ func mapToPbNotification(n domain.Notification) (*pb.Notification, error) {
 		pbinv := &pb.Invitation{
 			InvitationID:     n.ID,
 			InviterPublicKey: inv.InviterPublicKey,
-			// TODO: Status: come form shared with me thread,
-			ItemPaths: pbpths,
+			Status:           pb.InvitationStatus(inv.Status),
+			ItemPaths:        pbpths,
 		}
-		ro := &pb.Notification_InvitationValue{
-			InvitationValue: pbinv,
-		}
+		ro := &pb.Notification_InvitationValue{pbinv}
 		parsedNotif := &pb.Notification{
 			ID:            n.ID,
 			Body:          n.Body,
@@ -44,7 +40,7 @@ func mapToPbNotification(n domain.Notification) (*pb.Notification, error) {
 			RelatedObject: ro,
 			Type:          pb.NotificationType(n.NotificationType),
 		}
-		return parsedNotif, nil
+		return parsedNotif
 	case domain.USAGEALERT:
 		ua := n.UsageAlertValue
 		pbua := &pb.UsageAlert{
@@ -52,9 +48,7 @@ func mapToPbNotification(n domain.Notification) (*pb.Notification, error) {
 			Limit:   ua.Limit,
 			Message: ua.Message,
 		}
-		ro := &pb.Notification_UsageAlert{
-			UsageAlert: pbua,
-		}
+		ro := &pb.Notification_UsageAlert{pbua}
 		parsedNotif := &pb.Notification{
 			ID:            n.ID,
 			Body:          n.Body,
@@ -63,14 +57,40 @@ func mapToPbNotification(n domain.Notification) (*pb.Notification, error) {
 			RelatedObject: ro,
 			Type:          pb.NotificationType(n.NotificationType),
 		}
-		return parsedNotif, nil
+		return parsedNotif
+	case domain.INVITATION_REPLY:
+		ir := n.InvitationAcceptValue
+		pbir := &pb.InvitationAccept{
+			InvitationID: ir.InvitationID,
+		}
+		ro := &pb.Notification_InvitationAccept{pbir}
+		parsedNotif := &pb.Notification{
+			ID:            n.ID,
+			Body:          n.Body,
+			ReadAt:        n.ReadAt,
+			CreatedAt:     n.CreatedAt,
+			RelatedObject: ro,
+			Type:          pb.NotificationType(n.NotificationType),
+		}
+		return parsedNotif
 	default:
-		return nil, errors.New("Unsupported message type")
+		parsedNotif := &pb.Notification{
+			ID:        n.ID,
+			Body:      n.Body,
+			ReadAt:    n.ReadAt,
+			CreatedAt: n.CreatedAt,
+			Type:      pb.NotificationType(n.NotificationType),
+		}
+		return parsedNotif
 	}
 }
 
 func (srv *grpcServer) SetNotificationsLastSeenAt(ctx context.Context, request *pb.SetNotificationsLastSeenAtRequest) (*pb.SetNotificationsLastSeenAtResponse, error) {
-	return nil, errNotImplemented
+	err := srv.sv.SetNotificationsLastSeenAt(request.Timestamp)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.SetNotificationsLastSeenAtResponse{}, nil
 }
 
 func (srv *grpcServer) GetNotifications(ctx context.Context, request *pb.GetNotificationsRequest) (*pb.GetNotificationsResponse, error) {
@@ -83,10 +103,7 @@ func (srv *grpcServer) GetNotifications(ctx context.Context, request *pb.GetNoti
 	parsedNotifs := []*pb.Notification{}
 
 	for _, notif := range n {
-		parsedNotif, err := mapToPbNotification(*notif)
-		if err != nil {
-			return nil, err
-		}
+		parsedNotif := mapToPbNotification(*notif)
 		parsedNotifs = append(parsedNotifs, parsedNotif)
 	}
 
@@ -95,9 +112,17 @@ func (srv *grpcServer) GetNotifications(ctx context.Context, request *pb.GetNoti
 		no = parsedNotifs[len(parsedNotifs)-1].ID
 	}
 
+	ls, err := srv.sv.GetNotificationsLastSeenAt()
+	if err != nil {
+		// error getting last seen at but we dont want to fail the
+		// whole request for that
+		ls = 0
+	}
+
 	return &pb.GetNotificationsResponse{
 		Notifications: parsedNotifs,
 		NextOffset:    no,
+		LastSeenAt:    ls,
 	}, nil
 }
 
@@ -141,8 +166,12 @@ func (srv *grpcServer) sendNotificationEvent(event *pb.NotificationEventResponse
 	}
 }
 
-func (srv *grpcServer) SendNotificationEvent(event events.NotificationEvent) {
-	pe := &pb.NotificationEventResponse{}
+func (srv *grpcServer) SendNotificationEvent(notif *domain.Notification) {
+	parsedNotif := mapToPbNotification(*notif)
+
+	pe := &pb.NotificationEventResponse{
+		Notification: parsedNotif,
+	}
 
 	srv.sendNotificationEvent(pe)
 }

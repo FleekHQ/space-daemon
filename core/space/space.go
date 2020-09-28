@@ -3,8 +3,8 @@ package space
 import (
 	"context"
 	"errors"
+	"io"
 
-	"github.com/FleekHQ/space-daemon/core/ipfs"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/vault"
 	crypto "github.com/libp2p/go-libp2p-crypto"
@@ -21,7 +21,7 @@ import (
 // Service Layer should not depend on gRPC dependencies
 type Service interface {
 	RegisterSyncer(sync services.Syncer)
-	OpenFile(ctx context.Context, path string, bucketName string) (domain.OpenFileInfo, error)
+	OpenFile(ctx context.Context, path, bucketName, dbID string) (domain.OpenFileInfo, error)
 	GetConfig(ctx context.Context) domain.AppConfig
 	ListDirs(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error)
 	ListDir(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error)
@@ -38,10 +38,11 @@ type Service interface {
 	CreateBucket(ctx context.Context, slug string) (textile.Bucket, error)
 	ListBuckets(ctx context.Context) ([]textile.Bucket, error)
 	AddItems(ctx context.Context, sourcePaths []string, targetPath string, bucketName string) (<-chan domain.AddItemResult, domain.AddItemsResponse, error)
+	AddItemWithReader(ctx context.Context, reader io.Reader, targetPath, bucketName string) (domain.AddItemResult, error)
 	CreateIdentity(ctx context.Context, username string) (*domain.Identity, error)
 	GetIdentityByUsername(ctx context.Context, username string) (*domain.Identity, error)
-	GenerateFileSharingLink(ctx context.Context, encryptionPassword, path string, bucketName string) (domain.FileSharingInfo, error)
-	GenerateFilesSharingLink(ctx context.Context, encryptionPassword string, paths []string, bucketName string) (domain.FileSharingInfo, error)
+	GenerateFileSharingLink(ctx context.Context, encryptionPassword, path, bucketName, dbID string) (domain.FileSharingInfo, error)
+	GenerateFilesSharingLink(ctx context.Context, encryptionPassword string, paths []string, bucketName, dbID string) (domain.FileSharingInfo, error)
 	OpenSharedFile(ctx context.Context, cid, password, filename string) (domain.OpenFileInfo, error)
 	ShareBucket(ctx context.Context, slug string) (*domain.ThreadInfo, error)
 	JoinBucket(ctx context.Context, slug string, threadinfo *domain.ThreadInfo) (bool, error)
@@ -54,6 +55,9 @@ type Service interface {
 	GetAPISessionTokens(ctx context.Context) (*domain.APISessionTokens, error)
 	AddRecentlySharedPublicKeys(ctx context.Context, pubkeys []crypto.PubKey) error
 	RecentlySharedPublicKeys(ctx context.Context) ([]crypto.PubKey, error)
+	GetSharedWithMeFiles(ctx context.Context, seek string, limit int) ([]*domain.SharedDirEntry, string, error)
+	SetNotificationsLastSeenAt(timestamp int64) error
+	GetNotificationsLastSeenAt() (int64, error)
 }
 
 type serviceOptions struct {
@@ -86,12 +90,7 @@ func NewService(
 		o.env = env.New()
 	}
 
-	ic, err := ipfs.NewSpaceIpfsClient(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	sv := services.NewSpace(store, tc, sync, cfg, o.env, kc, v, h, ic)
+	sv := services.NewSpace(store, tc, sync, cfg, o.env, kc, v, h)
 
 	return sv, nil
 }

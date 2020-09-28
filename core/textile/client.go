@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/FleekHQ/space-daemon/config"
@@ -27,53 +28,82 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
+const healthcheckFailuresBeforeUnhealthy = 3
+
+var HealthcheckMaxRetriesReachedErr = errors.New(fmt.Sprintf("textile client not initialized after %d attempts", healthcheckFailuresBeforeUnhealthy))
+
 type textileClient struct {
-	store            db.Store
-	kc               keychain.Keychain
-	threads          *threadsClient.Client
-	ht               *threadsClient.Client
-	bucketsClient    *bucketsClient.Client
-	mb               Mailbox
-	hb               *bucketsClient.Client
-	isRunning        bool
-	isInitialized    bool
-	Ready            chan bool
-	keypairDeleted   chan bool
-	shuttingDown     chan bool
-	cfg              config.Config
-	isConnectedToHub bool
-	netc             *nc.Client
-	uc               UsersClient
-	mailEvents       chan mail.MailboxEvent
-	hubAuth          hub.HubAuth
-	mbNotifier       GrpcMailboxNotifier
+	store              db.Store
+	kc                 keychain.Keychain
+	threads            *threadsClient.Client
+	ht                 *threadsClient.Client
+	bucketsClient      *bucketsClient.Client
+	mb                 Mailbox
+	hb                 *bucketsClient.Client
+	isRunning          bool
+	isInitialized      bool
+	Ready              chan bool
+	keypairDeleted     chan bool
+	shuttingDown       chan bool
+	onHealthy          chan error
+	onInitialized      chan bool
+	cfg                config.Config
+	isConnectedToHub   bool
+	netc               *nc.Client
+	uc                 UsersClient
+	mailEvents         chan mail.MailboxEvent
+	hubAuth            hub.HubAuth
+	mbNotifier         GrpcMailboxNotifier
+	failedHealthchecks int
 }
 
 // Creates a new Textile Client
 func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth, uc UsersClient, mb Mailbox) *textileClient {
 	return &textileClient{
-		store:            store,
-		kc:               kc,
-		threads:          nil,
-		bucketsClient:    nil,
-		mb:               mb,
-		netc:             nil,
-		uc:               uc,
-		ht:               nil,
-		hb:               nil,
-		isRunning:        false,
-		isInitialized:    false,
-		Ready:            make(chan bool),
-		keypairDeleted:   make(chan bool),
-		shuttingDown:     make(chan bool),
-		isConnectedToHub: false,
-		hubAuth:          hubAuth,
-		mbNotifier:       nil,
+		store:              store,
+		kc:                 kc,
+		threads:            nil,
+		bucketsClient:      nil,
+		mb:                 mb,
+		netc:               nil,
+		uc:                 uc,
+		ht:                 nil,
+		hb:                 nil,
+		isRunning:          false,
+		isInitialized:      false,
+		Ready:              make(chan bool),
+		keypairDeleted:     make(chan bool),
+		shuttingDown:       make(chan bool),
+		onHealthy:          make(chan error),
+		onInitialized:      make(chan bool),
+		mailEvents:         make(chan mail.MailboxEvent),
+		isConnectedToHub:   false,
+		hubAuth:            hubAuth,
+		mbNotifier:         nil,
+		failedHealthchecks: 0,
 	}
 }
 
 func (tc *textileClient) WaitForReady() chan bool {
 	return tc.Ready
+}
+
+func (tc *textileClient) WaitForInitialized() chan bool {
+	return tc.onInitialized
+}
+
+// Returns an error if it exceeds the max amount of attempts
+func (tc *textileClient) WaitForHealthy() chan error {
+	return tc.onHealthy
+}
+
+func (tc *textileClient) IsInitialized() bool {
+	return tc.isInitialized
+}
+
+// Healthy means initialized and connected to hub
+func (tc *textileClient) IsHealthy() bool {
+	return tc.isInitialized && tc.isConnectedToHub
 }
 
 func (tc *textileClient) requiresRunning() error {
@@ -141,11 +171,13 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.Ready <- true
 
 	// Repeating healthcheck
+	healthcheckMutex := &sync.Mutex{}
 	for {
+		healthcheckMutex.Lock()
 		timeAfterNextCheck := 60 * time.Second
 		// Do more frequent checks if the client is not initialized/running
 		if tc.isConnectedToHub == false || tc.isInitialized == false {
-			timeAfterNextCheck = 5 * time.Second
+			timeAfterNextCheck = 3 * time.Second
 		}
 
 		// If it's trying to shutdown we return right away
@@ -163,10 +195,13 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 
 		// If it's trying to shutdown we return right away
 		case <-ctx.Done():
+			healthcheckMutex.Unlock()
 			return nil
 		case <-tc.shuttingDown:
+			healthcheckMutex.Unlock()
 			return nil
 		}
+		healthcheckMutex.Unlock()
 	}
 }
 
@@ -303,6 +338,13 @@ func (tc *textileClient) initialize(ctx context.Context) error {
 	}
 
 	tc.isInitialized = true
+	// Non-blocking channel send in case there are no listeners registered
+	select {
+	case tc.onInitialized <- true:
+		log.Debug("Notifying Textile Client init ready")
+	default:
+		// Do nothing
+	}
 	log.Debug("Textile Client initialized successfully")
 	return nil
 }
@@ -318,8 +360,14 @@ func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
 func (tc *textileClient) Shutdown() error {
 	tc.shuttingDown <- true
 	tc.isRunning = false
-	close(tc.Ready)
+
+	// Close channels
 	close(tc.mailEvents)
+	close(tc.Ready)
+	close(tc.onHealthy)
+	close(tc.keypairDeleted)
+	close(tc.shuttingDown)
+
 	if err := tc.bucketsClient.Close(); err != nil {
 		return err
 	}
@@ -347,6 +395,10 @@ func (tc *textileClient) IsRunning() bool {
 	return tc.isRunning
 }
 
+func (tc *textileClient) GetFailedHealthchecks() int {
+	return tc.failedHealthchecks
+}
+
 // Checks for connection and initialization needs.
 func (tc *textileClient) healthcheck(ctx context.Context) {
 	log.Debug("Textile Client healthcheck... Start.")
@@ -366,15 +418,40 @@ func (tc *textileClient) healthcheck(ctx context.Context) {
 	switch {
 	case tc.isInitialized == false:
 		log.Debug("Textile Client healthcheck... Not initialized yet.")
+		tc.failedHealthchecks = tc.failedHealthchecks + 1
 	case tc.isConnectedToHub == false:
 		log.Debug("Textile Client healthcheck... Not connected to hub.")
+		tc.failedHealthchecks = tc.failedHealthchecks + 1
 	default:
 		log.Debug("Textile Client healthcheck... OK.")
+		tc.failedHealthchecks = 0
+		// Non-blocking channel send in case there are no listeners registered
+		select {
+		case tc.onHealthy <- nil:
+			log.Debug("Notifying health OK")
+		default:
+			// Do nothing
+		}
+	}
+
+	if tc.failedHealthchecks >= 3 {
+		// Non-blocking channel send in case there are no listeners registered
+		select {
+		case tc.onHealthy <- HealthcheckMaxRetriesReachedErr:
+			log.Debug("Notifying healthcheck: max attempts surpassed")
+			tc.failedHealthchecks = 0
+		default:
+			// Do nothing
+		}
 	}
 }
 
 func (tc *textileClient) RemoveKeys() error {
 	if err := tc.hubAuth.ClearCache(); err != nil {
+		return err
+	}
+
+	if err := tc.clearLocalMailbox(); err != nil {
 		return err
 	}
 

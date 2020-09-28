@@ -10,117 +10,166 @@ import (
 
 	"github.com/FleekHQ/space-daemon/log"
 
-	"github.com/pkg/errors"
-
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 
 	"github.com/FleekHQ/space-daemon/core/space"
 )
 
 // EntryNotFound error when a directory is not found
-var EntryNotFound = errors.New("Directory entry not found")
+var EntryNotFound = syscall.ENOENT // errors.New("Directory entry not found")
+var baseDir = NewDirEntryWithMode(
+	domain.DirEntry{
+		Path:  "/",
+		IsDir: true,
+		Name:  "",
+	},
+	RestrictedDirAccessMode,
+)
 
 // SpaceFSDataSource is an implementation of the FSDataSource
 // It interacts with the Space Service Layer to provide data
 type SpaceFSDataSource struct {
-	service space.Service
+	service    space.Service
+	tlfSources []*TLFDataSource
+	// temp cache to speed up node fetching interactions
+	// TODO: handle cache invalidation
+	entryCache map[string]*DirEntry
 }
 
-func isBaseDirectory(path string) bool {
-	return path == "/"
-}
+func NewSpaceFSDataSource(service space.Service, configOptions ...FSDataSourceConfig) *SpaceFSDataSource {
+	config := dataSourceConfig{}
+	for _, configure := range configOptions {
+		configure(&config)
+	}
 
-func isNotExistError(err error) bool {
-	// Example of current error representing file not found:
-	// error: code = Unknown desc = no link named ".localized" under bafybeievqvkeo2ycggt4lino45pj3olv7yo2e6sybcmyphicejsvq2vimi[]
-	return strings.Contains(err.Error(), "no link named")
-}
-
-func NewSpaceFSDataSource(service space.Service) *SpaceFSDataSource {
 	return &SpaceFSDataSource{
-		service: service,
+		service:    service,
+		tlfSources: config.tlfSources,
+		entryCache: make(map[string]*DirEntry),
 	}
 }
 
 // Get returns the DirEntry information for item at path
 func (d *SpaceFSDataSource) Get(ctx context.Context, path string) (*DirEntry, error) {
-	log.Debug("FSDS.Get", "path="+path)
-	// handle quick lookup of home directory
-	if isBaseDirectory(path) {
-		return d.baseDirEntry(), nil
+	log.Debug("FSDS.Get", "path:"+path)
+	baseName := filepath.Base(path)
+	if blackListedDirEntryNames[baseName] {
+		return nil, EntryNotFound
 	}
 
-	baseName := filepath.Base(path)
-	parentPath := filepath.Dir(strings.TrimRight(path, "/") + "/..")
+	// handle quick lookup of home directory
+	if isBaseDirectory(path) {
+		return baseDir, nil
+	}
 
-	// TODO: Support non default bucket, passing "" for now which is default bucket
-	parentEntries, err := d.service.ListDir(ctx, parentPath, "")
+	// cache get results
+	if entry, exists := d.entryCache[path]; exists {
+		return entry, nil
+	}
+
+	dataSource := d.findTLFDataSource(path)
+	if dataSource == nil {
+		return nil, EntryNotFound
+	}
+
+	result, err := dataSource.Get(ctx, strings.TrimPrefix(path, dataSource.basePath))
 	if err != nil {
-		if isNotExistError(err) {
-			return nil, syscall.ENOENT
-		}
 		return nil, err
 	}
 
-	log.Debug(fmt.Sprintf("Parent Entries: %+v", parentEntries))
+	result.entry.Path = d.prefixBasePath(dataSource.basePath, result.entry.Path)
+	d.entryCache[path] = result
 
-	for _, entry := range parentEntries {
-		if entry.Name == baseName {
-			return NewDirEntry(entry.DirEntry), nil
+	return result, nil
+}
+
+func (d *SpaceFSDataSource) findTLFDataSource(path string) *TLFDataSource {
+	for _, i := range d.tlfSources {
+		if strings.HasPrefix(path, i.basePath) {
+			return i
 		}
 	}
 
-	return nil, EntryNotFound
-}
-
-// Helper function to construct entry for the home directory
-func (d *SpaceFSDataSource) baseDirEntry() *DirEntry {
-	return NewDirEntry(domain.DirEntry{
-		Path:        "", // filepath.Base("/"),
-		IsDir:       true,
-		Name:        "",
-		SizeInBytes: "0",
-	})
+	return nil
 }
 
 // GetChildren returns list of entries in a path
 func (d *SpaceFSDataSource) GetChildren(ctx context.Context, path string) ([]*DirEntry, error) {
-	// TODO: Support non default bucket, passing "" for now which is default bucket
-	domainEntries, err := d.service.ListDir(ctx, path, "")
-	if err != nil {
-		return nil, err
+	log.Debug("FSDS.GetChildren", "path:"+path)
+	baseName := filepath.Base(path)
+	if blackListedDirEntryNames[baseName] {
+		return nil, EntryNotFound
+	}
+	if isBaseDirectory(path) {
+		return d.getTopLevelDirectories(), nil
 	}
 
-	dirEntries := make([]*DirEntry, len(domainEntries))
-	for i, domainEntries := range domainEntries {
-		dirEntries[i] = NewDirEntry(domainEntries.DirEntry)
+	dataSource := d.findTLFDataSource(path)
+	if dataSource == nil {
+		return nil, EntryNotFound
 	}
 
-	return dirEntries, nil
+	result, err := dataSource.GetChildren(ctx, strings.TrimPrefix(path, dataSource.basePath))
+
+	// format results
+	if result != nil {
+		for _, entry := range result {
+			entry.entry.Path = d.prefixBasePath(dataSource.basePath, entry.entry.Path)
+			d.entryCache[entry.entry.Path] = entry
+		}
+	}
+
+	return result, err
 }
 
 // Open is invoked to read the content of a file
-func (d *SpaceFSDataSource) Open(ctx context.Context, path string) (ReadSeekCloser, error) {
-	// TODO: Support non default bucket, passing "" for now which is default bucket
-	openFileInfo, err := d.service.OpenFile(ctx, path, "")
-	if err != nil {
-		return nil, err
+func (d *SpaceFSDataSource) Open(ctx context.Context, path string) (FileReadWriterCloser, error) {
+	log.Debug("FSDS.Open", "path:"+path)
+	dataSource := d.findTLFDataSource(path)
+	if dataSource == nil {
+		return nil, EntryNotFound
 	}
 
-	file, err := os.Open(openFileInfo.Location)
-	return file, nil
+	return dataSource.Open(ctx, strings.TrimPrefix(path, dataSource.basePath))
 }
 
 // CreateEntry creates a directory or file based on the mode at the path
 func (d *SpaceFSDataSource) CreateEntry(ctx context.Context, path string, mode os.FileMode) (*DirEntry, error) {
-	if mode.IsDir() {
-		// TODO: Support non default bucket, passing "" for now which is default bucket
-		err := d.service.CreateFolder(ctx, path, "")
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		// TODO: Handle creating a file in service layer
+	log.Debug("FSDS.CreateEntry", "path:"+path)
+	dataSource := d.findTLFDataSource(path)
+	if dataSource == nil {
+		return nil, EntryNotFound
 	}
-	return nil, nil
+
+	result, err := dataSource.CreateEntry(ctx, strings.TrimPrefix(path, dataSource.basePath), mode)
+	if result != nil {
+		result.entry.Path = d.prefixBasePath(dataSource.basePath, result.entry.Path)
+	}
+
+	return result, err
+}
+
+// Returns list of top level entry
+// For now we only return the files directory
+func (d *SpaceFSDataSource) getTopLevelDirectories() []*DirEntry {
+	var directories []*DirEntry
+
+	for _, ds := range d.tlfSources {
+		directories = append(directories, NewDirEntryWithMode(
+			domain.DirEntry{
+				Path:  ds.basePath,
+				IsDir: true,
+				Name:  ds.name,
+				//Created:       "",
+				//Updated:       "",
+			},
+			RestrictedDirAccessMode,
+		))
+	}
+	return directories
+}
+
+// returns the path with the parent base path prefixed
+func (d *SpaceFSDataSource) prefixBasePath(basePath, path string) string {
+	return fmt.Sprintf("%s%s", basePath, path)
 }
