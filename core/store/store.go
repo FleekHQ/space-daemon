@@ -33,6 +33,7 @@ type Store interface {
 	SetString(key string, value string) error
 	Get(key []byte) ([]byte, error)
 	Remove(key []byte) error
+	DropAll() error
 	IsOpen() bool
 	KeysWithPrefix(prefix string) ([]string, error)
 }
@@ -260,4 +261,13 @@ func (store store) KeysWithPrefix(prefix string) ([]string, error) {
 
 func (store store) Shutdown() error {
 	return store.Close()
+}
+
+func (store store) DropAll() error {
+	db, err := store.getDb()
+	if err != nil {
+		return err
+	}
+
+	return db.DropAll()
 }

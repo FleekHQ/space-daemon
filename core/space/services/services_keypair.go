@@ -86,5 +86,10 @@ func (s *Space) DeleteKeypair(ctx context.Context) error {
 		return err
 	}
 
+	// Clear badger store
+	if err := s.store.DropAll(); err != nil {
+		return err
+	}
+
 	return nil
 }
