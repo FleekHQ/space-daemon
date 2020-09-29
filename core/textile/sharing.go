@@ -246,7 +246,7 @@ func (tc *textileClient) GetPathAccessRoles(ctx context.Context, b Bucket, path 
 		return []domain.Member{}, nil
 	}
 
-	log.Debug(fmt.Sprintf("PullPathAccessRoles roles=%+v", rs))
+	// log.Debug(fmt.Sprintf("PullPathAccessRoles roles=%+v", rs))
 
 	members := make([]domain.Member, 0)
 	for pubk, _ := range rs {

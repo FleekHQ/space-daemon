@@ -3,6 +3,9 @@ package sync
 import (
 	"container/list"
 	"encoding/json"
+	"fmt"
+
+	"github.com/FleekHQ/space-daemon/log"
 )
 
 const QueueStoreKey = "TextileSyncTaskQueue"
@@ -102,4 +105,28 @@ func (s *synchronizer) isTaskEnqueued(task *Task) bool {
 	}
 
 	return false
+}
+
+func (s *synchronizer) printQueueStats(queue *list.List) {
+	queueName := "buckets"
+	if queue == s.filePinningQueue {
+		queueName = "file pinning"
+	}
+
+	failed, queued, pending := 0, 0, 0
+
+	for curr := queue.Front(); curr != nil; curr = curr.Next() {
+		task := curr.Value.(*Task)
+
+		switch task.State {
+		case taskPending:
+			pending++
+		case taskFailed:
+			failed++
+		case taskQueued:
+			queued++
+		}
+	}
+
+	log.Debug(fmt.Sprintf("Textile sync [%s]: Total: %d, Queued: %d, Pending: %d, Failed: %d", queueName, queue.Len(), queued, pending, failed))
 }

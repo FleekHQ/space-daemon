@@ -140,7 +140,7 @@ func (m *model) FindBucket(ctx context.Context, bucketSlug string) (*BucketSchem
 	if len(buckets) == 0 {
 		return nil, errBucketNotFound
 	}
-	log.Debug("Model.FindBucket: returning bucket with dbid " + buckets[0].DbID)
+
 	return buckets[0], nil
 }
 
@@ -164,19 +164,15 @@ func (m *model) initBucketModel(ctx context.Context) (context.Context, *thread.I
 		return nil, nil, err
 	}
 
-	if err = m.threads.NewDB(metaCtx, *dbID); err != nil {
-		log.Debug("initBucketModel: db already exists")
-	}
-	if err := m.threads.NewCollection(metaCtx, *dbID, db.CollectionConfig{
+	m.threads.NewDB(metaCtx, *dbID)
+	m.threads.NewCollection(metaCtx, *dbID, db.CollectionConfig{
 		Name:   bucketModelName,
 		Schema: util.SchemaFromInstance(&BucketSchema{}, false),
 		Indexes: []db.Index{{
 			Path:   "slug",
 			Unique: true,
 		}},
-	}); err != nil {
-		log.Debug("initBucketModel: collection already exists")
-	}
+	})
 
 	return metaCtx, dbID, nil
 }

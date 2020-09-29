@@ -153,7 +153,6 @@ func (m *model) CreateMirrorFile(ctx context.Context, mirrorFile *domain.MirrorF
 	if err != nil {
 		return nil, err
 	}
-	log.Debug("stored mirror file with dbid " + newInstance.DbID)
 
 	id := res[0]
 	return &MirrorFileSchema{
@@ -199,19 +198,16 @@ func (m *model) initMirrorFileModel(ctx context.Context) (context.Context, *thre
 		return nil, nil, err
 	}
 
-	if err = m.threads.NewDB(metaCtx, *dbID); err != nil {
-		log.Debug("initMirrorFileModel: db already exists")
-	}
-	if err := m.threads.NewCollection(metaCtx, *dbID, db.CollectionConfig{
+	m.threads.NewDB(metaCtx, *dbID)
+
+	m.threads.NewCollection(metaCtx, *dbID, db.CollectionConfig{
 		Name:   mirrorFileModelName,
 		Schema: util.SchemaFromInstance(&MirrorFileSchema{}, false),
 		Indexes: []db.Index{{
 			Path:   "path",
 			Unique: true, // TODO: multicolumn index
 		}},
-	}); err != nil {
-		log.Debug("initMirrorFileModel: collection already exists")
-	}
+	})
 
 	return metaCtx, dbID, nil
 }

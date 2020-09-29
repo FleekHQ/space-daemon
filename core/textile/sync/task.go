@@ -23,6 +23,7 @@ const (
 	taskPending   taskState = "PENDING"
 	taskSucceeded taskState = "SUCCESS"
 	taskFailed    taskState = "FAILED"
+	taskDequeued  taskState = "DEQUEUED"
 )
 
 type Task struct {

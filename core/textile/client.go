@@ -236,9 +236,6 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	}
 }
 
-// notreturning error rn and this helper does
-// the logging if connection to hub fails, and
-// we continue with startup
 func (tc *textileClient) checkHubConnection(ctx context.Context) error {
 	// Get the public key to see if we have any
 	// Reject right away if not
@@ -436,17 +433,12 @@ func (tc *textileClient) GetFailedHealthchecks() int {
 func (tc *textileClient) healthcheck(ctx context.Context) {
 	log.Debug("Textile Client healthcheck... Start.")
 
-	// NOTE: since we check for the hub connection before the initialization
-	// this means that a hub connection is required to init for now. Leaving
-	// it like this for release and then we can have a better online vs offline
-	// state management work started asap in parallel (i.e., what happens if
-	// they are offline during init? and then what happens if they come back
-	// online post init and vice versa).
-	err := tc.checkHubConnection(ctx)
-
-	if err == nil && tc.isInitialized == false {
+	if tc.isInitialized == false {
+		// NOTE: Initialize does not need a hub connection as remote syncing is done in a background process
 		tc.initialize(ctx)
 	}
+
+	tc.checkHubConnection(ctx)
 
 	switch {
 	case tc.isInitialized == false:

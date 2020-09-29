@@ -26,6 +26,8 @@ type GetMirrorBucketFn func(ctx context.Context, slug string) (bucket.BucketInte
 type GetBucketFn func(ctx context.Context, slug string) (bucket.BucketInterface, error)
 type GetBucketCtxFn func(ctx context.Context, sDbID string, bucketSlug string, ishub bool, enckey []byte) (context.Context, *thread.ID, error)
 
+const maxParallelTasks = 16
+
 type synchronizer struct {
 	taskQueue        *list.List
 	filePinningQueue *list.List
@@ -94,6 +96,7 @@ func (s *synchronizer) NotifyItemAdded(bucket, path string) {
 	s.enqueueTask(t, s.taskQueue)
 
 	pft := newTask(pinFileTask, []string{bucket, path})
+	log.Debug("Notify pin called")
 	pft.Parallelizable = true
 	s.enqueueTask(pft, s.filePinningQueue)
 
@@ -185,7 +188,6 @@ func (s *synchronizer) Shutdown() {
 var errMaxRetriesSurpassed = errors.New("max retries surpassed")
 
 func (s *synchronizer) executeTask(ctx context.Context, t *Task) error {
-	t.State = taskPending
 	var err error
 
 	switch t.Type {
@@ -213,15 +215,20 @@ func (s *synchronizer) executeTask(ctx context.Context, t *Task) error {
 
 		// Remove from queue if it surpassed the max amount of retries
 		if t.MaxRetries != -1 && t.Retries > t.MaxRetries {
+			t.State = taskDequeued
 			return errMaxRetriesSurpassed
 		}
 
 		// Retry task
 		t.State = taskQueued
+	} else {
+		t.State = taskSucceeded
 	}
 
 	return err
 }
+
+var parallelTaskCount = 0
 
 func (s *synchronizer) sync(ctx context.Context, queue *list.List) error {
 	queueName := "buckets"
@@ -230,58 +237,65 @@ func (s *synchronizer) sync(ctx context.Context, queue *list.List) error {
 	}
 
 	log.Debug(fmt.Sprintf("Textile sync [%s]: Sync start", queueName))
-	if queue.Len() == 0 {
-		log.Debug(fmt.Sprintf("Textile sync [%s]: empty queue", queueName))
-	}
+	s.printQueueStats(queue)
 
-	curr := queue.Front()
-
-	for curr != nil {
+	for curr := queue.Front(); curr != nil; curr = curr.Next() {
 		task := curr.Value.(*Task)
 
-		log.Debug(fmt.Sprintf("Textile sync [%s]: Processing task %s", queueName, task.Type))
 		if task.State != taskQueued {
 			// If task is already in process or finished, skip
 			continue
 		}
+		log.Debug(fmt.Sprintf("Textile sync [%s]: Processing task %s", queueName, task.Type))
+		task.State = taskPending
 
-		handleExecResult := func(queueEl *list.Element, err error) {
-			if err == errMaxRetriesSurpassed {
-				queue.Remove(queueEl)
-			}
-
+		handleExecResult := func(err error) {
 			if err == nil {
 				// Task completed successfully
 				log.Debug(fmt.Sprintf("Textile sync [%s]: task completed succesfully", queueName))
-				queue.Remove(queueEl)
 			} else {
 				log.Error(fmt.Sprintf("Textile sync [%s]: task failed", queueName), err)
 			}
-
-			if err := s.storeQueue(); err != nil {
-				log.Error("Error while storing Textile task queue state", err)
-			}
 		}
 
-		if task.Parallelizable {
-			// Creating aux var in case the go func gets ran after curr = curr.Next()
-			queueEl := curr
+		if task.Parallelizable && parallelTaskCount < maxParallelTasks {
+			parallelTaskCount++
 
 			go func() {
 				err := s.executeTask(ctx, task)
-				handleExecResult(queueEl, err)
+				handleExecResult(err)
+				parallelTaskCount--
 			}()
 		} else {
 			err := s.executeTask(ctx, task)
-			handleExecResult(curr, err)
+			handleExecResult(err)
 
 			if err != nil {
-				// Break from the loop (avoid executing succeeding tasks)
+				// Break from the loop (avoid executing next tasks)
 				return err
 			}
 		}
+	}
 
-		curr = curr.Next()
+	// Remove successful and dequeued tasks from queue
+	curr := queue.Front()
+	for curr != nil {
+		task := curr.Value.(*Task)
+		next := curr.Next()
+
+		switch task.State {
+		case taskDequeued:
+			queue.Remove(curr)
+		case taskSucceeded:
+			queue.Remove(curr)
+		default:
+		}
+
+		curr = next
+	}
+
+	if err := s.storeQueue(); err != nil {
+		log.Error("Error while storing Textile task queue state", err)
 	}
 
 	log.Debug(fmt.Sprintf("Textile sync [%s]: Sync end", queueName))

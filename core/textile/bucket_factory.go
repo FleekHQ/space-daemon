@@ -102,8 +102,6 @@ func (tc *textileClient) GetDefaultBucket(ctx context.Context) (Bucket, error) {
 }
 
 func (tc *textileClient) getBucketContext(ctx context.Context, sDbID string, bucketSlug string, ishub bool, enckey []byte) (context.Context, *thread.ID, error) {
-	log.Debug("getBucketContext: Getting bucket context with dbid:" + sDbID)
-
 	dbID, err := utils.ParseDbIDFromString(sDbID)
 	if err != nil {
 		log.Error("Error casting thread id", err)
@@ -122,9 +120,6 @@ func (tc *textileClient) getBucketContext(ctx context.Context, sDbID string, buc
 
 // Returns a context that works for accessing a bucket
 func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error) {
-	log.Debug("getOrCreateBucketContext: Getting bucket context")
-
-	log.Debug("getOrCreateBucketContext: Fetching thread id from meta store")
 	m := tc.GetModel()
 	bucketSchema, notFoundErr := m.FindBucket(ctx, bucketSlug)
 
@@ -158,7 +153,6 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 	if err != nil {
 		return nil, nil, err
 	}
-	log.Debug("getOrCreateBucketContext: Returning bucket context")
 
 	return bucketCtx, &dbID, err
 }
