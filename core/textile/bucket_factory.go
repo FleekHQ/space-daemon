@@ -259,6 +259,13 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 		return nil, err
 	}
 
+	// this is redundant with the mirror bucket, we can remove that once
+	// we confirm this poc works
+	err = tc.syncBucketThread(ctx, *dbID)
+	if err != nil {
+		return nil, err
+	}
+
 	mirrorSchema, err := tc.createMirrorBucket(ctx, *schema)
 	if err != nil {
 		return nil, err

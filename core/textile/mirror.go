@@ -140,6 +140,20 @@ func (tc *textileClient) UploadFileToHub(ctx context.Context, b Bucket, path str
 		log.Error("Unable to push path access roles for owner", err)
 	}
 
+	// also push to sync thread on hub (this is only
+	// needed because we need to pin this on the hub
+	// as well)
+	hubCtx, _, err = tc.getBucketContext(ctx, bucket.DbID, b.Slug(), true, bucket.EncryptionKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	syncresult, root, err := bucketsClient.PushPath(hubCtx, b.Key(), path, reader)
+	if err != nil {
+		log.Error("Error on new bucket hub sync: ", err)
+	} else {
+		log.Info("Pushing path on new sync hub bucket: " + syncresult.String())
+	}
+
 	return result, root, nil
 }
 
@@ -173,6 +187,18 @@ func (tc *textileClient) deleteFileFromHub(ctx context.Context, b Bucket, path s
 // Creates a mirror bucket.
 func (tc *textileClient) createMirrorBucket(ctx context.Context, schema model.BucketSchema) (*model.MirrorBucketSchema, error) {
 	log.Debug("Creating a new mirror bucket with slug " + defaultPersonalMirrorBucketSlug)
+
+	// this is redundant with the mirror bucket, we can remove that once
+	// we confirm this poc works
+	id, err := utils.ParseDbIDFromString(schema.DbID)
+	if err != nil {
+		return nil, err
+	}
+	err = tc.syncBucketThread(ctx, *id)
+	if err != nil {
+		return nil, err
+	}
+
 	dbID, err := tc.createMirrorThread(ctx)
 	if err != nil {
 		return nil, err
