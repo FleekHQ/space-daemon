@@ -114,6 +114,11 @@ func (h *watcherHandler) OnRemove(ctx context.Context, path string, fileInfo os.
 		return
 	}
 
+	if err = h.bs.textileClient.UnbackupFile(ctx, b, bucketPath); err != nil {
+		log.Error("Unbackuping failed", err, fmt.Sprintf("path:%s", bucketPath))
+		return
+	}
+
 	log.Info(
 		"Successfully deleted item from textile",
 		fmt.Sprintf("path:%s", path),

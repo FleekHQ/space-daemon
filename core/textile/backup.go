@@ -180,6 +180,14 @@ func (tc *textileClient) replicateThreadsToHub(ctx context.Context, bucket Bucke
 // backup the bucket
 func (tc *textileClient) BackupBucket(ctx context.Context, bucket Bucket) (count int, err error) {
 
+	done, count, err := tc.IsBackupDone(ctx, bucket)
+	if err != nil {
+		return 0, nil
+	}
+	if done {
+		return count, nil
+	}
+
 	count, err = tc.backupBucketFiles(ctx, bucket, "")
 	if err != nil {
 		return 0, nil
@@ -193,7 +201,7 @@ func (tc *textileClient) BackupBucket(ctx context.Context, bucket Bucket) (count
 }
 
 // unbackup a single file
-func (tc *textileClient) unbackupFile(ctx context.Context, bucket Bucket, path string) (err error) {
+func (tc *textileClient) UnbackupFile(ctx context.Context, bucket Bucket, path string) (err error) {
 
 	if err = tc.unsetMirrorFileBackup(ctx, path, bucket.Slug()); err != nil {
 		log.Error(fmt.Sprintf("error unsetting mirror file as backup (path=%+v b.Slug=%+v)", path, bucket.Slug()), err)
@@ -243,7 +251,7 @@ func (tc *textileClient) unbackupBucketFiles(ctx context.Context, bucket Bucket,
 			if tc.isSharedFile(ctx, bucket, path) {
 				return
 			}
-			if err = tc.unbackupFile(ctx, bucket, path); err != nil {
+			if err = tc.UnbackupFile(ctx, bucket, path); err != nil {
 				return
 			}
 
@@ -288,4 +296,46 @@ func (tc *textileClient) UnbackupBucket(ctx context.Context, bucket Bucket) (cou
 	}
 
 	return count, nil
+}
+
+// return number of backed up items
+func (tc *textileClient) ItemsBackupCount(ctx context.Context, bucket Bucket) (int32, error) {
+
+	b, err := tc.GetModel().FindBucket(ctx, bucket.Slug())
+	if err != nil {
+		return 0, err
+	}
+
+	hubCtx, _, err := tc.getBucketContext(ctx, b.RemoteDbID, bucket.Slug(), true, b.EncryptionKey)
+	if err != nil {
+		return 0, err
+	}
+
+	return bucket.ItemsCount(hubCtx, "")
+}
+
+// return true if all items are backed up
+func (tc *textileClient) IsBackupDone(ctx context.Context, bucket Bucket) (bool, int, error) {
+	itemsBackupCount, err := tc.ItemsBackupCount(ctx, bucket)
+	if err != nil {
+		return false, 0, err
+	}
+
+	itemsCount, err := bucket.ItemsCount(ctx, "")
+	if err != nil {
+		return false, int(itemsBackupCount), err
+	}
+
+	return itemsCount < itemsBackupCount, int(itemsBackupCount), nil
+}
+
+// return true if not all items are backed up
+func (tc *textileClient) IsBackupInProgress(ctx context.Context, bucket Bucket) (bool, error) {
+
+	done, _, err := tc.IsBackupDone(ctx, bucket)
+	if err != nil {
+		return false, err
+	}
+
+	return !done, nil
 }

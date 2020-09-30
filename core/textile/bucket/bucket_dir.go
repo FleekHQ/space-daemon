@@ -80,3 +80,31 @@ func (b *Bucket) DeleteDirOrFile(ctx context.Context, path string) (path.Resolve
 
 	return b.bucketsClient.RemovePath(ctx, b.Key(), path)
 }
+
+// return the recursive items count for a path
+func (b *Bucket) ItemsCount(ctx context.Context, path string) (int32, error) {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
+
+	var count int32
+
+	dir, err := b.ListDirectory(ctx, path)
+	if err != nil {
+		return 0, err
+	}
+
+	count = dir.Item.ItemsCount
+
+	for _, item := range dir.Item.Items {
+		if item.IsDir {
+			n, err := b.ItemsCount(ctx, item.Path)
+			if err != nil {
+				return 0, err
+			}
+
+			count += n
+		}
+	}
+
+	return count, nil
+}

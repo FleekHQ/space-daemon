@@ -60,12 +60,17 @@ type Bucket interface {
 		ctx context.Context,
 		path string,
 	) (path.Resolved, error)
+	ItemsCount(ctx context.Context, path string) (int32, error)
 }
 
 type backuper interface {
 	BackupBucket(ctx context.Context, bucket Bucket) (int, error)
 	BackupFileWithReader(ctx context.Context, bucket Bucket, path string, reader io.Reader) error
 	UnbackupBucket(ctx context.Context, bucket Bucket) (int, error)
+	UnbackupFile(ctx context.Context, bucket Bucket, path string) error
+	ItemsBackupCount(ctx context.Context, bucket Bucket) (int32, error)
+	IsBackupDone(ctx context.Context, bucket Bucket) (bool, int, error)
+	IsBackupInProgress(ctx context.Context, bucket Bucket) (bool, error)
 	IsBucketBackup(ctx context.Context, bucketSlug string) bool
 	IsMirrorFile(ctx context.Context, path, bucketSlug string) bool
 }
