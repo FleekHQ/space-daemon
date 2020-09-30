@@ -1,7 +1,7 @@
 package sync
 
 import (
-	"github.com/odeke-em/go-uuid"
+	"strings"
 )
 
 type taskType string
@@ -39,7 +39,7 @@ type Task struct {
 }
 
 func newTask(t taskType, args []string) *Task {
-	id := uuid.UUID1().String()
+	id := string(t) + "_" + strings.Join(args, "_")
 
 	return &Task{
 		ID:             id,
