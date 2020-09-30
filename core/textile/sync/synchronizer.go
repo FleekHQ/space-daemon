@@ -228,8 +228,6 @@ func (s *synchronizer) executeTask(ctx context.Context, t *Task) error {
 	return err
 }
 
-var parallelTaskCount = 0
-
 func (s *synchronizer) sync(ctx context.Context, queue *list.List) error {
 	queueName := "buckets"
 	if queue == s.filePinningQueue {
@@ -238,6 +236,8 @@ func (s *synchronizer) sync(ctx context.Context, queue *list.List) error {
 
 	log.Debug(fmt.Sprintf("Textile sync [%s]: Sync start", queueName))
 	s.printQueueStats(queue)
+
+	parallelTaskCount := 0
 
 	for curr := queue.Front(); curr != nil; curr = curr.Next() {
 		task := curr.Value.(*Task)
