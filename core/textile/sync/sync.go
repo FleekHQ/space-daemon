@@ -13,4 +13,5 @@ type Synchronizer interface {
 	Start(ctx context.Context)
 	RestoreQueue() error
 	Shutdown()
+	String() string
 }

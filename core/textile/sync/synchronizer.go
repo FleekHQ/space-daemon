@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	s "sync"
+	"sync"
 	"time"
 
 	"github.com/FleekHQ/space-daemon/config"
@@ -35,8 +35,8 @@ type synchronizer struct {
 	st               store.Store
 	model            model.Model
 	syncNeeded       chan (bool)
-	shuttingDown     chan (bool)
-	queueMutexMap    map[*list.List]*s.Mutex
+	shuttingDownMap  map[*list.List]chan (bool)
+	queueMutexMap    map[*list.List]*sync.Mutex
 	getMirrorBucket  GetMirrorBucketFn
 	getBucket        GetBucketFn
 	getBucketCtx     GetBucketCtxFn
@@ -46,6 +46,7 @@ type synchronizer struct {
 	hubThreads       *threadsClient.Client
 	cfg              config.Config
 	netc             *nc.Client
+	queueWg          sync.WaitGroup
 }
 
 // Creates a new Synchronizer
@@ -65,9 +66,15 @@ func New(
 	taskQueue := list.New()
 	filePinningQueue := list.New()
 
-	queueMutexMap := make(map[*list.List]*s.Mutex)
-	queueMutexMap[taskQueue] = &s.Mutex{}
-	queueMutexMap[filePinningQueue] = &s.Mutex{}
+	queueMutexMap := make(map[*list.List]*sync.Mutex)
+	queueMutexMap[taskQueue] = &sync.Mutex{}
+	queueMutexMap[filePinningQueue] = &sync.Mutex{}
+
+	shuttingDownMap := make(map[*list.List]chan bool)
+	shuttingDownMap[taskQueue] = make(chan bool)
+	shuttingDownMap[filePinningQueue] = make(chan bool)
+
+	queueWg := sync.WaitGroup{}
 
 	return &synchronizer{
 		taskQueue:        taskQueue,
@@ -76,7 +83,7 @@ func New(
 		st:               st,
 		model:            model,
 		syncNeeded:       make(chan bool),
-		shuttingDown:     make(chan bool),
+		shuttingDownMap:  shuttingDownMap,
 		queueMutexMap:    queueMutexMap,
 		getMirrorBucket:  getMirrorBucket,
 		getBucket:        getBucket,
@@ -87,6 +94,7 @@ func New(
 		hubThreads:       ht,
 		cfg:              cfg,
 		netc:             netc,
+		queueWg:          queueWg,
 	}
 }
 
@@ -96,11 +104,10 @@ func (s *synchronizer) NotifyItemAdded(bucket, path string) {
 	s.enqueueTask(t, s.taskQueue)
 
 	pft := newTask(pinFileTask, []string{bucket, path})
-	log.Debug("Notify pin called")
 	pft.Parallelizable = true
 	s.enqueueTask(pft, s.filePinningQueue)
 
-	s.syncNeeded <- true
+	s.notifySyncNeeded()
 }
 
 // Notify Textile synchronizer that a remove item operation needs to be synced
@@ -112,32 +119,47 @@ func (s *synchronizer) NotifyItemRemoved(bucket, path string) {
 	uft.Parallelizable = true
 	s.enqueueTask(uft, s.filePinningQueue)
 
-	s.syncNeeded <- true
+	s.notifySyncNeeded()
 }
 
 func (s *synchronizer) NotifyBucketCreated(bucket string, enckey []byte) {
 	t := newTask(createBucketTask, []string{bucket, hex.EncodeToString(enckey)})
 	s.enqueueTask(t, s.taskQueue)
+	s.notifySyncNeeded()
 }
 
 func (s *synchronizer) NotifyBucketBackupOn(bucket string) {
 	t := newTask(bucketBackupOnTask, []string{bucket})
 	s.enqueueTask(t, s.taskQueue)
+
+	s.notifySyncNeeded()
 }
 
 func (s *synchronizer) NotifyBucketBackupOff(bucket string) {
 	t := newTask(bucketBackupOffTask, []string{bucket})
 	s.enqueueTask(t, s.taskQueue)
+
+	s.notifySyncNeeded()
+}
+
+func (s *synchronizer) notifySyncNeeded() {
+	select {
+	case s.syncNeeded <- true:
+	default:
+	}
 }
 
 // Starts the synchronizer, which will constantly be checking if there are syncing tasks pending
 func (s *synchronizer) Start(ctx context.Context) {
+	s.queueWg.Add(2)
 	// Sync loop
 	go func() {
 		s.startSyncLoop(ctx, s.taskQueue)
+		s.queueWg.Done()
 	}()
 	go func() {
 		s.startSyncLoop(ctx, s.filePinningQueue)
+		s.queueWg.Done()
 	}()
 }
 
@@ -157,6 +179,7 @@ func (s *synchronizer) startSyncLoop(ctx context.Context, queue *list.List) {
 	s.sync(ctx, queue)
 	queueMutex.Unlock()
 
+Loop:
 	for {
 		queueMutex.Lock()
 		timeAfterNextSync := 30 * time.Second
@@ -171,10 +194,11 @@ func (s *synchronizer) startSyncLoop(ctx context.Context, queue *list.List) {
 		// Break execution in case of shutdown
 		case <-ctx.Done():
 			queueMutex.Unlock()
-			return
-		case <-s.shuttingDown:
+			s.Shutdown()
+			break Loop
+		case <-s.shuttingDownMap[queue]:
 			queueMutex.Unlock()
-			return
+			break Loop
 		}
 
 		queueMutex.Unlock()
@@ -182,7 +206,20 @@ func (s *synchronizer) startSyncLoop(ctx context.Context, queue *list.List) {
 }
 
 func (s *synchronizer) Shutdown() {
-	s.shuttingDown <- true
+	s.shuttingDownMap[s.taskQueue] <- true
+	s.shuttingDownMap[s.filePinningQueue] <- true
+	s.queueWg.Wait()
+}
+
+func (s *synchronizer) String() string {
+	queues := []*list.List{s.filePinningQueue, s.taskQueue}
+
+	res := ""
+	for _, q := range queues {
+		res = res + s.queueString(q) + "\n"
+	}
+
+	return res
 }
 
 var errMaxRetriesSurpassed = errors.New("max retries surpassed")
@@ -235,9 +272,10 @@ func (s *synchronizer) sync(ctx context.Context, queue *list.List) error {
 	}
 
 	log.Debug(fmt.Sprintf("Textile sync [%s]: Sync start", queueName))
-	s.printQueueStats(queue)
+	log.Debug(s.queueString(queue))
 
 	parallelTaskCount := 0
+	ptWg := sync.WaitGroup{}
 
 	for curr := queue.Front(); curr != nil; curr = curr.Next() {
 		task := curr.Value.(*Task)
@@ -260,11 +298,13 @@ func (s *synchronizer) sync(ctx context.Context, queue *list.List) error {
 
 		if task.Parallelizable && parallelTaskCount < maxParallelTasks {
 			parallelTaskCount++
+			ptWg.Add(1)
 
 			go func() {
 				err := s.executeTask(ctx, task)
 				handleExecResult(err)
 				parallelTaskCount--
+				ptWg.Done()
 			}()
 		} else {
 			err := s.executeTask(ctx, task)
@@ -293,6 +333,8 @@ func (s *synchronizer) sync(ctx context.Context, queue *list.List) error {
 
 		curr = next
 	}
+
+	ptWg.Wait()
 
 	if err := s.storeQueue(); err != nil {
 		log.Error("Error while storing Textile task queue state", err)

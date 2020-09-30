@@ -4,16 +4,13 @@ import (
 	"container/list"
 	"encoding/json"
 	"fmt"
-
-	"github.com/FleekHQ/space-daemon/log"
 )
 
 const QueueStoreKey = "TextileSyncTaskQueue"
 
 type marshalledQueue struct {
-	queueAsSlice     []*Task          `json:"queueAsSlice"`
-	fileQueueAsSlice []*Task          `json:"fileQueueAsSlice"`
-	hashMap          map[string]*Task `json:"queueHashMap"`
+	QueueAsSlice     []Task `json:"queueAsSlice"`
+	FileQueueAsSlice []Task `json:"fileQueueAsSlice"`
 }
 
 func (s *synchronizer) enqueueTask(task *Task, queue *list.List) {
@@ -35,27 +32,26 @@ func (s *synchronizer) dequeueTask(queue *list.List) *Task {
 
 func (s *synchronizer) storeQueue() error {
 	// Store main queue
-	queueAsSlice := []*Task{}
+	queueAsSlice := []Task{}
 	currEl := s.taskQueue.Front()
 
 	for currEl != nil {
-		queueAsSlice = append(queueAsSlice, currEl.Value.(*Task))
+		queueAsSlice = append(queueAsSlice, *currEl.Value.(*Task))
 		currEl = currEl.Next()
 	}
 
 	// Store file pinning queue
-	fileQueueAsSlice := []*Task{}
+	fileQueueAsSlice := []Task{}
 	currEl = s.filePinningQueue.Front()
 
 	for currEl != nil {
-		fileQueueAsSlice = append(fileQueueAsSlice, currEl.Value.(*Task))
+		fileQueueAsSlice = append(fileQueueAsSlice, *currEl.Value.(*Task))
 		currEl = currEl.Next()
 	}
 
 	objToMarshal := &marshalledQueue{
-		queueAsSlice:     queueAsSlice,
-		fileQueueAsSlice: fileQueueAsSlice,
-		hashMap:          s.queueHashMap,
+		QueueAsSlice:     queueAsSlice,
+		FileQueueAsSlice: fileQueueAsSlice,
 	}
 
 	marshalled, err := json.Marshal(objToMarshal)
@@ -90,12 +86,12 @@ func (s *synchronizer) restoreQueue() error {
 		return err
 	}
 
-	for _, el := range queue.queueAsSlice {
-		s.enqueueTask(el, s.taskQueue)
+	for _, el := range queue.QueueAsSlice {
+		s.enqueueTask(&el, s.taskQueue)
 	}
 
-	for _, el := range queue.fileQueueAsSlice {
-		s.enqueueTask(el, s.filePinningQueue)
+	for _, el := range queue.FileQueueAsSlice {
+		s.enqueueTask(&el, s.filePinningQueue)
 	}
 
 	return nil
@@ -109,7 +105,7 @@ func (s *synchronizer) isTaskEnqueued(task *Task) bool {
 	return false
 }
 
-func (s *synchronizer) printQueueStats(queue *list.List) {
+func (s *synchronizer) queueString(queue *list.List) string {
 	queueName := "buckets"
 	if queue == s.filePinningQueue {
 		queueName = "file pinning"
@@ -130,5 +126,5 @@ func (s *synchronizer) printQueueStats(queue *list.List) {
 		}
 	}
 
-	log.Debug(fmt.Sprintf("Textile sync [%s]: Total: %d, Queued: %d, Pending: %d, Failed: %d", queueName, queue.Len(), queued, pending, failed))
+	return fmt.Sprintf("Textile sync [%s]: Total: %d, Queued: %d, Pending: %d, Failed: %d", queueName, queue.Len(), queued, pending, failed)
 }
