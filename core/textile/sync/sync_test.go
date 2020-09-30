@@ -3,6 +3,7 @@ package sync_test
 import (
 	"context"
 	"errors"
+	sy "sync"
 	"testing"
 
 	"github.com/FleekHQ/space-daemon/core/textile"
@@ -55,7 +56,12 @@ func initSync(t *testing.T) sync.Synchronizer {
 	return s
 }
 
+var mutex = &sy.Mutex{}
+
 func TestSync_ProcessTask(t *testing.T) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	s := initSync(t)
 	ctx := context.Background()
 
@@ -79,6 +85,9 @@ func TestSync_ProcessTask(t *testing.T) {
 }
 
 func TestSync_Restore(t *testing.T) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	s := initSync(t)
 	ctx := context.Background()
 

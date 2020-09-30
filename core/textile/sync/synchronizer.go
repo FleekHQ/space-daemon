@@ -46,7 +46,7 @@ type synchronizer struct {
 	hubThreads       *threadsClient.Client
 	cfg              config.Config
 	netc             *nc.Client
-	queueWg          sync.WaitGroup
+	queueWg          *sync.WaitGroup
 }
 
 // Creates a new Synchronizer
@@ -74,7 +74,7 @@ func New(
 	shuttingDownMap[taskQueue] = make(chan bool)
 	shuttingDownMap[filePinningQueue] = make(chan bool)
 
-	queueWg := sync.WaitGroup{}
+	queueWg := &sync.WaitGroup{}
 
 	return &synchronizer{
 		taskQueue:        taskQueue,
@@ -209,6 +209,14 @@ func (s *synchronizer) Shutdown() {
 	s.shuttingDownMap[s.taskQueue] <- true
 	s.shuttingDownMap[s.filePinningQueue] <- true
 	s.queueWg.Wait()
+
+	if err := s.storeQueue(); err != nil {
+		log.Error("Error while storing Textile task queue state", err)
+	}
+
+	close(s.shuttingDownMap[s.taskQueue])
+	close(s.shuttingDownMap[s.filePinningQueue])
+	close(s.syncNeeded)
 }
 
 func (s *synchronizer) String() string {
@@ -317,6 +325,8 @@ func (s *synchronizer) sync(ctx context.Context, queue *list.List) error {
 		}
 	}
 
+	ptWg.Wait()
+
 	// Remove successful and dequeued tasks from queue
 	curr := queue.Front()
 	for curr != nil {
@@ -332,12 +342,6 @@ func (s *synchronizer) sync(ctx context.Context, queue *list.List) error {
 		}
 
 		curr = next
-	}
-
-	ptWg.Wait()
-
-	if err := s.storeQueue(); err != nil {
-		log.Error("Error while storing Textile task queue state", err)
 	}
 
 	log.Debug(fmt.Sprintf("Textile sync [%s]: Sync end", queueName))
