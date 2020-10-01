@@ -133,7 +133,7 @@ func (s *SecureBucketClient) overwriteDecryptedItem(ctx context.Context, item *b
 	if err != nil {
 		return err
 	}
-	if utils.IsSpecialFileName(item.Name) {
+	if utils.IsMetaFileName(item.Name) {
 		return nil
 	}
 	// decrypt file name

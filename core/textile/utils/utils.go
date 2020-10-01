@@ -128,7 +128,7 @@ func RandBytes(size int) ([]byte, error) {
 	return b, err
 }
 
-func IsSpecialFileName(pathOrName string) bool {
+func IsMetaFileName(pathOrName string) bool {
 	_, name := filepath.Split(pathOrName)
 
 	if name == ".textileseed" || name == ".textile" {

@@ -68,7 +68,7 @@ func (s *synchronizer) uploadAllFilesInPath(ctx context.Context, bucket, path st
 	}
 
 	for _, item := range dir.Item.Items {
-		if utils.IsSpecialFileName(item.Name) {
+		if utils.IsMetaFileName(item.Name) {
 			continue
 		}
 
@@ -117,7 +117,7 @@ func (s *synchronizer) deleteAllFilesInPath(ctx context.Context, bucket, path st
 	}
 
 	for _, item := range dir.Item.Items {
-		if utils.IsSpecialFileName(item.Name) {
+		if utils.IsMetaFileName(item.Name) {
 			continue
 		}
 
