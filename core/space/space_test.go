@@ -394,11 +394,6 @@ func TestService_AddItems_FilesOnly(t *testing.T) {
 		"Slug",
 	).Return("personal")
 
-	textileClient.On(
-		"IsBucketBackup",
-		mock.Anything, mock.Anything,
-	).Return(false)
-
 	mockPath.On("String").Return("hash")
 
 	for _, f := range testSourcePaths {
@@ -474,11 +469,6 @@ func TestService_AddItems_Folder(t *testing.T) {
 	mockBucket.On(
 		"Slug",
 	).Return("personal")
-
-	textileClient.On(
-		"IsBucketBackup",
-		mock.Anything, mock.Anything,
-	).Return(false)
 
 	ch, res, err := sv.AddItems(context.Background(), testSourcePaths, bucketPath, "")
 

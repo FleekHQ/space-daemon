@@ -3,6 +3,7 @@ package textile
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"regexp"
 	"strings"
@@ -131,7 +132,6 @@ func (s *SecureBucketClient) overwriteDecryptedItem(ctx context.Context, item *b
 	if err != nil {
 		return err
 	}
-	log.Debug("Processing Result Item", "name:"+item.Name, "path:"+item.Path)
 	if item.Name == ".textileseed" || item.Name == ".textile" {
 		return nil
 	}
@@ -149,7 +149,6 @@ func (s *SecureBucketClient) overwriteDecryptedItem(ctx context.Context, item *b
 			return err
 		}
 	}
-	log.Debug("Processed Result Item", "name:"+item.Name, "path:"+item.Path)
 
 	// Item size is generally (content size + hmac (64 bytes))
 	if item.Size >= 64 {
@@ -185,7 +184,7 @@ func (s *SecureBucketClient) ListPath(ctx context.Context, key, path string) (*b
 		err = s.overwriteDecryptedItem(ctx, item)
 		if err != nil {
 			// Don't error on a single file not decrypted
-			log.Error("Error decrypting a file", err)
+			log.Debug(fmt.Sprintf("Error decrypting a file: %s", err.Error()))
 		}
 	}
 
@@ -193,7 +192,7 @@ func (s *SecureBucketClient) ListPath(ctx context.Context, key, path string) (*b
 	err = s.overwriteDecryptedItem(ctx, result.Item)
 	if err != nil {
 		// Don't error on a single file not decrypted
-		log.Error("Error decrypting a file", err)
+		log.Debug(fmt.Sprintf("Error decrypting a file: %s", err.Error()))
 	}
 
 	return result, nil

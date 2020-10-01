@@ -43,6 +43,7 @@ require (
 	github.com/multiformats/go-multibase v0.0.3
 	github.com/multiformats/go-multihash v0.0.14
 	github.com/odeke-em/go-utils v0.0.0-20170224015737-e8ebaed0777a
+	github.com/odeke-em/go-uuid v0.0.0-20151221120446-b211d769a9aa
 	github.com/pkg/errors v0.9.1
 	github.com/radovskyb/watcher v1.0.7
 	github.com/rakyll/statik v0.1.7

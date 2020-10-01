@@ -7,8 +7,6 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
-
-	"github.com/FleekHQ/space-daemon/log"
 )
 
 func parseKeys(key []byte) (aesKey, iv, hmacKey []byte, err error) {
@@ -87,7 +85,6 @@ func EncryptPathItems(key []byte, path string, plainReader io.Reader) (string, i
 // NOTE: key must be a 64 byte long key
 func DecryptPathItems(key []byte, path string, encryptedReader io.Reader) (string, io.ReadCloser, error) {
 	// decrypt path
-	log.Debug("Decrypting Path Items", "path:"+path)
 	aesKey, iv, hmacKey, err := parseKeys(key)
 	if err != nil {
 		return "", nil, err
