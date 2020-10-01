@@ -118,6 +118,54 @@ func (_m *Bucket) FileExists(ctx context.Context, _a1 string) (bool, error) {
 	return r0, r1
 }
 
+// GetClient provides a mock function with given fields:
+func (_m *Bucket) GetClient() bucket.BucketsClient {
+	ret := _m.Called()
+
+	var r0 bucket.BucketsClient
+	if rf, ok := ret.Get(0).(func() bucket.BucketsClient); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(bucket.BucketsClient)
+		}
+	}
+
+	return r0
+}
+
+// GetContext provides a mock function with given fields: ctx
+func (_m *Bucket) GetContext(ctx context.Context) (context.Context, *thread.ID, error) {
+	ret := _m.Called(ctx)
+
+	var r0 context.Context
+	if rf, ok := ret.Get(0).(func(context.Context) context.Context); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(context.Context)
+		}
+	}
+
+	var r1 *thread.ID
+	if rf, ok := ret.Get(1).(func(context.Context) *thread.ID); ok {
+		r1 = rf(ctx)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*thread.ID)
+		}
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(context.Context) error); ok {
+		r2 = rf(ctx)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
 // GetData provides a mock function with given fields:
 func (_m *Bucket) GetData() bucket.BucketData {
 	ret := _m.Called()
