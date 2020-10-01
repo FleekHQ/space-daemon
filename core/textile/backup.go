@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
 
 	"github.com/textileio/go-threads/core/thread"
@@ -79,7 +80,7 @@ func (tc *textileClient) backupBucketFiles(ctx context.Context, bucket Bucket, p
 	}
 
 	for _, item := range dir.Item.Items {
-		if item.Name == ".textileseed" || item.Name == ".textile" {
+		if utils.IsSpecialFileName(item.Name) {
 			continue
 		}
 
@@ -219,7 +220,7 @@ func (tc *textileClient) unbackupBucketFiles(ctx context.Context, bucket Bucket,
 	}
 
 	for _, item := range dir.Item.Items {
-		if item.Name == ".textileseed" || item.Name == ".textile" {
+		if utils.IsSpecialFileName(item.Name) {
 			continue
 		}
 

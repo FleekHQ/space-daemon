@@ -190,7 +190,7 @@ func (s *Space) listDirAtPath(
 
 	entries := make([]domain.FileInfo, 0)
 	for _, item := range dir.Item.Items {
-		if item.Name == ".textileseed" || item.Name == ".textile" {
+		if utils.IsSpecialFileName(item.Name) {
 			continue
 		}
 

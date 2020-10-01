@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/FleekHQ/space-daemon/core/textile/common"
+	"github.com/FleekHQ/space-daemon/core/textile/utils"
 
 	"github.com/FleekHQ/space-daemon/log"
 
@@ -132,7 +133,7 @@ func (s *SecureBucketClient) overwriteDecryptedItem(ctx context.Context, item *b
 		return err
 	}
 	log.Debug("Processing Result Item", "name:"+item.Name, "path:"+item.Path)
-	if item.Name == ".textileseed" || item.Name == ".textile" {
+	if utils.IsSpecialFileName(item.Name) {
 		return nil
 	}
 	// decrypt file name
