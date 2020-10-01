@@ -7,6 +7,7 @@ import (
 	"encoding/base32"
 	"encoding/binary"
 	"encoding/hex"
+	"path/filepath"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
@@ -125,4 +126,14 @@ func RandBytes(size int) ([]byte, error) {
 	b := make([]byte, size)
 	_, err := rand.Read(b)
 	return b, err
+}
+
+func IsMetaFileName(pathOrName string) bool {
+	_, name := filepath.Split(pathOrName)
+
+	if name == ".textileseed" || name == ".textile" {
+		return true
+	}
+
+	return false
 }
