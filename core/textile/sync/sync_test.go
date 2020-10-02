@@ -69,7 +69,7 @@ func TestSync_ProcessTask(t *testing.T) {
 
 	// Makes the processAddItem and processPinFilefail right away
 	mockModel.On("FindBucket", mock.Anything, mock.Anything).Return(nil, errors.New("some error"))
-	mockClient.On("GetBucket", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("some error"))
+	// mockClient.On("GetBucket", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("some error"))
 
 	mockStore.On("Set", mock.Anything, mock.Anything).Return(nil)
 
@@ -77,7 +77,7 @@ func TestSync_ProcessTask(t *testing.T) {
 
 	s.Shutdown()
 
-	expectedState := "Textile sync [file pinning]: Total: 1, Queued: 1, Pending: 0, Failed: 0\nTextile sync [buckets]: Total: 1, Queued: 1, Pending: 0, Failed: 0\n"
+	expectedState := "Textile sync [file pinning]: Total: 0, Queued: 0, Pending: 0, Failed: 0\nTextile sync [buckets]: Total: 1, Queued: 1, Pending: 0, Failed: 0\n"
 
 	assert.Equal(t, expectedState, s.String())
 	mockModel.AssertExpectations(t)

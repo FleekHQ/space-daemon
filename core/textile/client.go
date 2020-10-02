@@ -501,3 +501,7 @@ func (tc *textileClient) requiresHubConnection() error {
 	}
 	return nil
 }
+
+func (tc *textileClient) AttachSynchronizerNotifier(notif synchronizer.EventNotifier) {
+	tc.sync.AttachNotifier(notif)
+}

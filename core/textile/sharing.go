@@ -199,6 +199,10 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 				IpfsHash:         ipfsHash,
 				LocallyAvailable: false,
 				BackedUp:         true,
+
+				// TODO: Reflect correct state when we add local updates syncing to remote
+				BackupInProgress: false,
+
 				DirEntry: domain.DirEntry{
 					Path:          file.Path,
 					IsDir:         isDir,
