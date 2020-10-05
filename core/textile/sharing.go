@@ -16,7 +16,7 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/textileio/go-threads/core/thread"
-	"github.com/textileio/textile/buckets"
+	"github.com/textileio/textile/v2/buckets"
 )
 
 func (tc *textileClient) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey, keys [][]byte) error {

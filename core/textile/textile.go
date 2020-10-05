@@ -13,8 +13,8 @@ import (
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/textileio/go-threads/db"
 
-	buckets_pb "github.com/textileio/textile/api/buckets/pb"
-	"github.com/textileio/textile/api/users/client"
+	buckets_pb "github.com/textileio/textile/v2/api/buckets/pb"
+	"github.com/textileio/textile/v2/api/users/client"
 
 	threadsClient "github.com/textileio/go-threads/api/client"
 )

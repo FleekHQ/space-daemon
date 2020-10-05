@@ -16,7 +16,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	mbase "github.com/multiformats/go-multibase"
 	"github.com/textileio/go-threads/core/thread"
-	"github.com/textileio/textile/api/common"
+	"github.com/textileio/textile/v2/api/common"
 	"golang.org/x/net/websocket"
 )
 
