@@ -217,20 +217,20 @@ func (_m *Bucket) GetThreadID(ctx context.Context) (*thread.ID, error) {
 	return r0, r1
 }
 
-// ItemsCount provides a mock function with given fields: ctx, _a1
-func (_m *Bucket) ItemsCount(ctx context.Context, _a1 string) (int32, error) {
-	ret := _m.Called(ctx, _a1)
+// ItemsCount provides a mock function with given fields: ctx, _a1, withRecursive
+func (_m *Bucket) ItemsCount(ctx context.Context, _a1 string, withRecursive bool) (int32, error) {
+	ret := _m.Called(ctx, _a1, withRecursive)
 
 	var r0 int32
-	if rf, ok := ret.Get(0).(func(context.Context, string) int32); ok {
-		r0 = rf(ctx, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, string, bool) int32); ok {
+		r0 = rf(ctx, _a1, withRecursive)
 	} else {
 		r0 = ret.Get(0).(int32)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, _a1)
+	if rf, ok := ret.Get(1).(func(context.Context, string, bool) error); ok {
+		r1 = rf(ctx, _a1, withRecursive)
 	} else {
 		r1 = ret.Error(1)
 	}
