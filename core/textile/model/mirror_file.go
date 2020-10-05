@@ -16,19 +16,20 @@ import (
 )
 
 type MirrorFileSchema struct {
-	ID         core.InstanceID `json:"_id"`
-	Path       string          `json:"path"`
-	BucketSlug string          `json:"bucket_slug"`
-	Backup     bool            `json:"backup"`
-	Shared     bool            `json:"shared"`
-
-	DbID string
+	ID               core.InstanceID `json:"_id"`
+	Path             string          `json:"path"`
+	BucketSlug       string          `json:"bucket_slug"`
+	Backup           bool            `json:"backup"`
+	Shared           bool            `json:"shared"`
+	BackupInProgress bool            `json:"backupInProgress"`
+	DbID             string
 }
 
 type MirrorBucketSchema struct {
-	RemoteDbID      string `json:"remoteDbId"`
-	RemoteBucketKey string `json:"remoteBucketKey"`
-	HubAddr         string `json:"HubAddr"`
+	RemoteDbID       string `json:"remoteDbId"`
+	RemoteBucketKey  string `json:"remoteBucketKey"`
+	HubAddr          string `json:"HubAddr"`
+	RemoteBucketSlug string `json:"remoteBucketSlug"`
 }
 
 const mirrorFileModelName = "MirrorFile"
@@ -50,6 +51,7 @@ func (m *model) CreateMirrorBucket(ctx context.Context, bucketSlug string, mirro
 	bucket.RemoteDbID = mirrorBucket.RemoteDbID
 	bucket.HubAddr = mirrorBucket.HubAddr
 	bucket.RemoteBucketKey = mirrorBucket.RemoteBucketKey
+	bucket.RemoteBucketSlug = mirrorBucket.RemoteBucketSlug
 
 	instances := client.Instances{bucket}
 
@@ -139,10 +141,11 @@ func (m *model) CreateMirrorFile(ctx context.Context, mirrorFile *domain.MirrorF
 	}
 
 	newInstance := &MirrorFileSchema{
-		Path:       mirrorFile.Path,
-		BucketSlug: mirrorFile.BucketSlug,
-		Backup:     mirrorFile.Backup,
-		Shared:     mirrorFile.Shared,
+		Path:             mirrorFile.Path,
+		BucketSlug:       mirrorFile.BucketSlug,
+		Backup:           mirrorFile.Backup,
+		BackupInProgress: mirrorFile.BackupInProgress,
+		Shared:           mirrorFile.Shared,
 	}
 
 	instances := client.Instances{newInstance}
@@ -151,16 +154,16 @@ func (m *model) CreateMirrorFile(ctx context.Context, mirrorFile *domain.MirrorF
 	if err != nil {
 		return nil, err
 	}
-	log.Debug("stored mirror file with dbid " + newInstance.DbID)
 
 	id := res[0]
 	return &MirrorFileSchema{
-		Path:       newInstance.Path,
-		BucketSlug: newInstance.BucketSlug,
-		Backup:     newInstance.Backup,
-		Shared:     newInstance.Shared,
-		ID:         core.InstanceID(id),
-		DbID:       newInstance.DbID,
+		Path:             newInstance.Path,
+		BucketSlug:       newInstance.BucketSlug,
+		Backup:           newInstance.Backup,
+		BackupInProgress: newInstance.BackupInProgress,
+		Shared:           newInstance.Shared,
+		ID:               core.InstanceID(id),
+		DbID:             newInstance.DbID,
 	}, nil
 }
 
@@ -197,19 +200,22 @@ func (m *model) initMirrorFileModel(ctx context.Context) (context.Context, *thre
 		return nil, nil, err
 	}
 
-	if err = m.threads.NewDB(metaCtx, *dbID); err != nil {
-		log.Debug("initMirrorFileModel: db already exists")
-	}
-	if err := m.threads.NewCollection(metaCtx, *dbID, db.CollectionConfig{
+	m.threads.NewDB(metaCtx, *dbID)
+
+	m.threads.NewCollection(metaCtx, *dbID, db.CollectionConfig{
 		Name:   mirrorFileModelName,
 		Schema: util.SchemaFromInstance(&MirrorFileSchema{}, false),
 		Indexes: []db.Index{{
 			Path:   "path",
 			Unique: true, // TODO: multicolumn index
 		}},
-	}); err != nil {
-		log.Debug("initMirrorFileModel: collection already exists")
-	}
+	})
+
+	// Migrates db by adding new fields between old version of the daemon and a new one
+	m.threads.UpdateCollection(metaCtx, *dbID, db.CollectionConfig{
+		Name:   mirrorFileModelName,
+		Schema: util.SchemaFromInstance(&MirrorFileSchema{}, false),
+	})
 
 	return metaCtx, dbID, nil
 }

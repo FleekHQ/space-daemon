@@ -1862,6 +1862,10 @@
           "items": {
             "$ref": "#/definitions/spaceFileMember"
           }
+        },
+        "isBackupInProgress": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },

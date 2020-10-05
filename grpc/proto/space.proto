@@ -357,6 +357,7 @@ message ListDirectoryEntry {
   bool isLocallyAvailable = 9;
   int64 backupCount = 10;
   repeated FileMember members = 11;
+  bool isBackupInProgress = 12;
 }
 
 message SharedListDirectoryEntry {

@@ -41,7 +41,7 @@ func (b *Bucket) DirExists(ctx context.Context, path string) (bool, error) {
 func (b *Bucket) CreateDirectory(ctx context.Context, path string) (result path.Resolved, root path.Path, err error) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
-	ctx, _, err = b.getContext(ctx)
+	ctx, _, err = b.GetContext(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -55,7 +55,7 @@ func (b *Bucket) CreateDirectory(ctx context.Context, path string) (result path.
 func (b *Bucket) ListDirectory(ctx context.Context, path string) (*DirEntries, error) {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
-	ctx, _, err := b.getContext(ctx)
+	ctx, _, err := b.GetContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (b *Bucket) DeleteDirOrFile(ctx context.Context, path string) (path.Resolve
 	b.lock.Lock()
 	defer b.lock.Unlock()
 
-	ctx, _, err := b.getContext(ctx)
+	ctx, _, err := b.GetContext(ctx)
 	if err != nil {
 		return nil, err
 	}

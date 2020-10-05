@@ -13,8 +13,11 @@ import (
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	db "github.com/FleekHQ/space-daemon/core/store"
+	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/textile/model"
+	"github.com/FleekHQ/space-daemon/core/textile/notifier"
+	synchronizer "github.com/FleekHQ/space-daemon/core/textile/sync"
 	"github.com/FleekHQ/space-daemon/core/util/address"
 	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
@@ -55,6 +58,8 @@ type textileClient struct {
 	hubAuth            hub.HubAuth
 	mbNotifier         GrpcMailboxNotifier
 	failedHealthchecks int
+	sync               synchronizer.Synchronizer
+	notifier           bucket.Notifier
 }
 
 // Creates a new Textile Client
@@ -81,6 +86,8 @@ func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth, uc Use
 		hubAuth:            hubAuth,
 		mbNotifier:         nil,
 		failedHealthchecks: 0,
+		sync:               nil,
+		notifier:           nil,
 	}
 }
 
@@ -120,6 +127,28 @@ func (tc *textileClient) getHubCtx(ctx context.Context) (context.Context, error)
 	}
 
 	return ctx, nil
+}
+
+func (tc *textileClient) initializeSync(ctx context.Context) {
+	getLocalBucketFn := func(ctx context.Context, slug string) (bucket.BucketInterface, error) {
+		return tc.getBucket(ctx, slug, nil)
+	}
+
+	getMirrorBucketFn := func(ctx context.Context, slug string) (bucket.BucketInterface, error) {
+		return tc.getBucketForMirror(ctx, slug)
+	}
+
+	tc.sync = synchronizer.New(
+		tc.store, tc.GetModel(), tc.kc, tc.hubAuth, tc.hb, tc.ht, tc.netc, tc.cfg, getMirrorBucketFn, getLocalBucketFn, tc.getBucketContext,
+	)
+
+	tc.notifier = notifier.New(tc.sync)
+
+	if err := tc.sync.RestoreQueue(); err != nil {
+		log.Warn("Could not restore Textile synchronizer queue. Queue will start fresh.")
+	}
+
+	tc.sync.Start(ctx)
 }
 
 // Starts the Textile Client
@@ -164,6 +193,8 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.ht = getHubThreadsClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 	tc.hb = getHubBucketClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 
+	tc.initializeSync(ctx)
+
 	tc.isRunning = true
 
 	tc.healthcheck(ctx)
@@ -205,9 +236,6 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	}
 }
 
-// notreturning error rn and this helper does
-// the logging if connection to hub fails, and
-// we continue with startup
 func (tc *textileClient) checkHubConnection(ctx context.Context) error {
 	// Get the public key to see if we have any
 	// Reject right away if not
@@ -376,6 +404,8 @@ func (tc *textileClient) Shutdown() error {
 		return err
 	}
 
+	tc.sync.Shutdown()
+
 	tc.bucketsClient = nil
 	tc.threads = nil
 
@@ -403,17 +433,12 @@ func (tc *textileClient) GetFailedHealthchecks() int {
 func (tc *textileClient) healthcheck(ctx context.Context) {
 	log.Debug("Textile Client healthcheck... Start.")
 
-	// NOTE: since we check for the hub connection before the initialization
-	// this means that a hub connection is required to init for now. Leaving
-	// it like this for release and then we can have a better online vs offline
-	// state management work started asap in parallel (i.e., what happens if
-	// they are offline during init? and then what happens if they come back
-	// online post init and vice versa).
-	err := tc.checkHubConnection(ctx)
-
-	if err == nil && tc.isInitialized == false {
+	if tc.isInitialized == false {
+		// NOTE: Initialize does not need a hub connection as remote syncing is done in a background process
 		tc.initialize(ctx)
 	}
+
+	tc.checkHubConnection(ctx)
 
 	switch {
 	case tc.isInitialized == false:
@@ -475,4 +500,8 @@ func (tc *textileClient) requiresHubConnection() error {
 		return errors.New("ran an operation that requires connection to hub")
 	}
 	return nil
+}
+
+func (tc *textileClient) AttachSynchronizerNotifier(notif synchronizer.EventNotifier) {
+	tc.sync.AttachNotifier(notif)
 }

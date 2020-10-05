@@ -103,21 +103,9 @@ func (s *Space) ToggleBucketBackup(ctx context.Context, bucketName string, bucke
 		return err
 	}
 
-	b, err := s.tc.GetBucket(ctx, bucketName, nil)
+	_, err = s.tc.GetBucket(ctx, bucketName, nil)
 	if err != nil {
 		return err
-	}
-
-	if bucketBackup == true {
-		_, err = s.tc.BackupBucket(ctx, b)
-		if err != nil {
-			return err
-		}
-	} else {
-		_, err = s.tc.UnbackupBucket(ctx, b)
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -208,8 +196,10 @@ func (s *Space) listDirAtPath(
 		}
 
 		backedup := false
+		backupInProgress := false
 		if mirror_files[item.Path] != nil {
 			backedup = mirror_files[item.Path].Backup
+			backupInProgress = mirror_files[item.Path].BackupInProgress
 		}
 
 		locallyAvailable := false
@@ -232,6 +222,7 @@ func (s *Space) listDirAtPath(
 			IpfsHash:         item.Cid,
 			BackedUp:         backedup,
 			LocallyAvailable: locallyAvailable,
+			BackupInProgress: backupInProgress,
 		}
 		entries = append(entries, entry)
 
@@ -661,15 +652,6 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 	if err != nil {
 		log.Error(fmt.Sprintf("error creating targetPath %s in bucket %s", targetPathBucket, b.Key()), err)
 		return domain.AddItemResult{}, err
-	}
-
-	if s.tc.IsBucketBackup(ctx, b.Slug()) && !s.tc.IsMirrorFile(ctx, targetPathBucket, b.Slug()) {
-		f.Seek(0, io.SeekStart)
-
-		err = s.tc.BackupFileWithReader(ctx, b, targetPathBucket, f)
-		if err != nil {
-			return domain.AddItemResult{}, err
-		}
 	}
 
 	fi, err := f.Stat()

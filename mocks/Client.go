@@ -21,11 +21,9 @@ import (
 
 	model "github.com/FleekHQ/space-daemon/core/textile/model"
 
-	path "github.com/ipfs/interface-go-ipfs-core/path"
+	sync "github.com/FleekHQ/space-daemon/core/textile/sync"
 
 	textile "github.com/FleekHQ/space-daemon/core/textile"
-
-	thread "github.com/textileio/go-threads/core/thread"
 
 	usersclient "github.com/textileio/textile/api/users/client"
 )
@@ -61,39 +59,9 @@ func (_m *Client) AttachMailboxNotifier(notif textile.GrpcMailboxNotifier) {
 	_m.Called(notif)
 }
 
-// BackupBucket provides a mock function with given fields: ctx, bucket
-func (_m *Client) BackupBucket(ctx context.Context, bucket textile.Bucket) (int, error) {
-	ret := _m.Called(ctx, bucket)
-
-	var r0 int
-	if rf, ok := ret.Get(0).(func(context.Context, textile.Bucket) int); ok {
-		r0 = rf(ctx, bucket)
-	} else {
-		r0 = ret.Get(0).(int)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, textile.Bucket) error); ok {
-		r1 = rf(ctx, bucket)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// BackupFileWithReader provides a mock function with given fields: ctx, bucket, _a2, reader
-func (_m *Client) BackupFileWithReader(ctx context.Context, bucket textile.Bucket, _a2 string, reader io.Reader) error {
-	ret := _m.Called(ctx, bucket, _a2, reader)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, textile.Bucket, string, io.Reader) error); ok {
-		r0 = rf(ctx, bucket, _a2, reader)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
+// AttachSynchronizerNotifier provides a mock function with given fields: notif
+func (_m *Client) AttachSynchronizerNotifier(notif sync.EventNotifier) {
+	_m.Called(notif)
 }
 
 // CreateBucket provides a mock function with given fields: ctx, bucketSlug
@@ -117,20 +85,6 @@ func (_m *Client) CreateBucket(ctx context.Context, bucketSlug string) (textile.
 	}
 
 	return r0, r1
-}
-
-// DereplicateThreadFromHub provides a mock function with given fields: ctx, dbID
-func (_m *Client) DereplicateThreadFromHub(ctx context.Context, dbID *thread.ID) error {
-	ret := _m.Called(ctx, dbID)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *thread.ID) error); ok {
-		r0 = rf(ctx, dbID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 // DownloadPublicGatewayItem provides a mock function with given fields: ctx, _a1
@@ -255,13 +209,13 @@ func (_m *Client) GetModel() model.Model {
 	return r0
 }
 
-// GetPathAccessRoles provides a mock function with given fields: ctx, b, _a2
-func (_m *Client) GetPathAccessRoles(ctx context.Context, b textile.Bucket, _a2 string) ([]domain.Member, error) {
-	ret := _m.Called(ctx, b, _a2)
+// GetPathAccessRoles provides a mock function with given fields: ctx, b, path
+func (_m *Client) GetPathAccessRoles(ctx context.Context, b textile.Bucket, path string) ([]domain.Member, error) {
+	ret := _m.Called(ctx, b, path)
 
 	var r0 []domain.Member
 	if rf, ok := ret.Get(0).(func(context.Context, textile.Bucket, string) []domain.Member); ok {
-		r0 = rf(ctx, b, _a2)
+		r0 = rf(ctx, b, path)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]domain.Member)
@@ -270,7 +224,7 @@ func (_m *Client) GetPathAccessRoles(ctx context.Context, b textile.Bucket, _a2 
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, textile.Bucket, string) error); ok {
-		r1 = rf(ctx, b, _a2)
+		r1 = rf(ctx, b, path)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -354,69 +308,6 @@ func (_m *Client) GetThreadsConnection() (*client.Client, error) {
 	return r0, r1
 }
 
-// IsBackupDone provides a mock function with given fields: ctx, bucket
-func (_m *Client) IsBackupDone(ctx context.Context, bucket textile.Bucket) (bool, int, error) {
-	ret := _m.Called(ctx, bucket)
-
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(context.Context, textile.Bucket) bool); ok {
-		r0 = rf(ctx, bucket)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	var r1 int
-	if rf, ok := ret.Get(1).(func(context.Context, textile.Bucket) int); ok {
-		r1 = rf(ctx, bucket)
-	} else {
-		r1 = ret.Get(1).(int)
-	}
-
-	var r2 error
-	if rf, ok := ret.Get(2).(func(context.Context, textile.Bucket) error); ok {
-		r2 = rf(ctx, bucket)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
-}
-
-// IsBackupInProgress provides a mock function with given fields: ctx, bucket
-func (_m *Client) IsBackupInProgress(ctx context.Context, bucket textile.Bucket) (bool, error) {
-	ret := _m.Called(ctx, bucket)
-
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(context.Context, textile.Bucket) bool); ok {
-		r0 = rf(ctx, bucket)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, textile.Bucket) error); ok {
-		r1 = rf(ctx, bucket)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// IsBucketBackup provides a mock function with given fields: ctx, bucketSlug
-func (_m *Client) IsBucketBackup(ctx context.Context, bucketSlug string) bool {
-	ret := _m.Called(ctx, bucketSlug)
-
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
-		r0 = rf(ctx, bucketSlug)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	return r0
-}
-
 // IsHealthy provides a mock function with given fields:
 func (_m *Client) IsHealthy() bool {
 	ret := _m.Called()
@@ -445,20 +336,6 @@ func (_m *Client) IsInitialized() bool {
 	return r0
 }
 
-// IsMirrorFile provides a mock function with given fields: ctx, _a1, bucketSlug
-func (_m *Client) IsMirrorFile(ctx context.Context, _a1 string, bucketSlug string) bool {
-	ret := _m.Called(ctx, _a1, bucketSlug)
-
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
-		r0 = rf(ctx, _a1, bucketSlug)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	return r0
-}
-
 // IsRunning provides a mock function with given fields:
 func (_m *Client) IsRunning() bool {
 	ret := _m.Called()
@@ -471,27 +348,6 @@ func (_m *Client) IsRunning() bool {
 	}
 
 	return r0
-}
-
-// ItemsBackupCount provides a mock function with given fields: ctx, bucket
-func (_m *Client) ItemsBackupCount(ctx context.Context, bucket textile.Bucket) (int32, error) {
-	ret := _m.Called(ctx, bucket)
-
-	var r0 int32
-	if rf, ok := ret.Get(0).(func(context.Context, textile.Bucket) int32); ok {
-		r0 = rf(ctx, bucket)
-	} else {
-		r0 = ret.Get(0).(int32)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, textile.Bucket) error); ok {
-		r1 = rf(ctx, bucket)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // JoinBucket provides a mock function with given fields: ctx, slug, ti
@@ -566,20 +422,6 @@ func (_m *Client) RemoveKeys() error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func() error); ok {
 		r0 = rf()
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// ReplicateThreadToHub provides a mock function with given fields: ctx, dbID
-func (_m *Client) ReplicateThreadToHub(ctx context.Context, dbID *thread.ID) error {
-	ret := _m.Called(ctx, dbID)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *thread.ID) error); ok {
-		r0 = rf(ctx, dbID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -694,73 +536,6 @@ func (_m *Client) ToggleBucketBackup(ctx context.Context, bucketSlug string, buc
 	}
 
 	return r0, r1
-}
-
-// UnbackupBucket provides a mock function with given fields: ctx, bucket
-func (_m *Client) UnbackupBucket(ctx context.Context, bucket textile.Bucket) (int, error) {
-	ret := _m.Called(ctx, bucket)
-
-	var r0 int
-	if rf, ok := ret.Get(0).(func(context.Context, textile.Bucket) int); ok {
-		r0 = rf(ctx, bucket)
-	} else {
-		r0 = ret.Get(0).(int)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, textile.Bucket) error); ok {
-		r1 = rf(ctx, bucket)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UnbackupFile provides a mock function with given fields: ctx, bucket, _a2
-func (_m *Client) UnbackupFile(ctx context.Context, bucket textile.Bucket, _a2 string) error {
-	ret := _m.Called(ctx, bucket, _a2)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, textile.Bucket, string) error); ok {
-		r0 = rf(ctx, bucket, _a2)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// UploadFileToHub provides a mock function with given fields: ctx, b, _a2, reader
-func (_m *Client) UploadFileToHub(ctx context.Context, b textile.Bucket, _a2 string, reader io.Reader) (path.Resolved, path.Path, error) {
-	ret := _m.Called(ctx, b, _a2, reader)
-
-	var r0 path.Resolved
-	if rf, ok := ret.Get(0).(func(context.Context, textile.Bucket, string, io.Reader) path.Resolved); ok {
-		r0 = rf(ctx, b, _a2, reader)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(path.Resolved)
-		}
-	}
-
-	var r1 path.Path
-	if rf, ok := ret.Get(1).(func(context.Context, textile.Bucket, string, io.Reader) path.Path); ok {
-		r1 = rf(ctx, b, _a2, reader)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(path.Path)
-		}
-	}
-
-	var r2 error
-	if rf, ok := ret.Get(2).(func(context.Context, textile.Bucket, string, io.Reader) error); ok {
-		r2 = rf(ctx, b, _a2, reader)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
 }
 
 // WaitForHealthy provides a mock function with given fields:

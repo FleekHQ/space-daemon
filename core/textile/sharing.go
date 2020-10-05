@@ -199,6 +199,10 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 				IpfsHash:         ipfsHash,
 				LocallyAvailable: false,
 				BackedUp:         true,
+
+				// TODO: Reflect correct state when we add local updates syncing to remote
+				BackupInProgress: false,
+
 				DirEntry: domain.DirEntry{
 					Path:          file.Path,
 					IsDir:         isDir,
@@ -246,7 +250,7 @@ func (tc *textileClient) GetPathAccessRoles(ctx context.Context, b Bucket, path 
 		return []domain.Member{}, nil
 	}
 
-	log.Debug(fmt.Sprintf("PullPathAccessRoles roles=%+v", rs))
+	// log.Debug(fmt.Sprintf("PullPathAccessRoles roles=%+v", rs))
 
 	members := make([]domain.Member, 0)
 	for pubk, _ := range rs {

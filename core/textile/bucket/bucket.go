@@ -9,6 +9,7 @@ import (
 	"github.com/textileio/go-threads/core/thread"
 	bucketsClient "github.com/textileio/textile/api/buckets/client"
 	bucketsproto "github.com/textileio/textile/api/buckets/pb"
+	"github.com/textileio/textile/buckets"
 )
 
 type BucketData struct {
@@ -29,6 +30,48 @@ type BucketsClient interface {
 	ListPath(ctx context.Context, key, pth string) (*bucketsproto.ListPathResponse, error)
 	RemovePath(ctx context.Context, key, pth string, opts ...bucketsClient.Option) (path.Resolved, error)
 	ListIpfsPath(ctx context.Context, ipfsPath path.Path) (*bucketsproto.ListIpfsPathResponse, error)
+	PushPathAccessRoles(ctx context.Context, key, path string, roles map[string]buckets.Role) error
+}
+
+type BucketInterface interface {
+	Slug() string
+	Key() string
+	GetData() BucketData
+	GetContext(ctx context.Context) (context.Context, *thread.ID, error)
+	GetClient() BucketsClient
+	GetThreadID(ctx context.Context) (*thread.ID, error)
+	DirExists(ctx context.Context, path string) (bool, error)
+	FileExists(ctx context.Context, path string) (bool, error)
+	UploadFile(
+		ctx context.Context,
+		path string,
+		reader io.Reader,
+	) (result path.Resolved, root path.Path, err error)
+	GetFile(
+		ctx context.Context,
+		path string,
+		w io.Writer,
+	) error
+	CreateDirectory(
+		ctx context.Context,
+		path string,
+	) (result path.Resolved, root path.Path, err error)
+	ListDirectory(
+		ctx context.Context,
+		path string,
+	) (*DirEntries, error)
+	DeleteDirOrFile(
+		ctx context.Context,
+		path string,
+	) (path.Resolved, error)
+	ItemsCount(
+		ctx context.Context,
+		path string,
+	) (int32, error)
+}
+
+type Notifier interface {
+	OnUploadFile(bucketSlug string, bucketPath string, result path.Resolved, root path.Path)
 }
 
 // NOTE: all write operations should use the lock for the bucket to keep consistency
@@ -39,6 +82,7 @@ type Bucket struct {
 	root             *bucketsproto.Root
 	bucketsClient    BucketsClient
 	getBucketContext GetBucketContextFn
+	notifier         Notifier
 }
 
 func (b *Bucket) Slug() string {
@@ -56,6 +100,7 @@ func New(
 		root:             root,
 		bucketsClient:    bucketsClient,
 		getBucketContext: getBucketContext,
+		notifier:         nil,
 	}
 }
 
@@ -74,15 +119,23 @@ func (b *Bucket) GetData() BucketData {
 	}
 }
 
-func (b *Bucket) getContext(ctx context.Context) (context.Context, *thread.ID, error) {
+func (b *Bucket) GetContext(ctx context.Context) (context.Context, *thread.ID, error) {
 	return b.getBucketContext(ctx, b.root.Name)
 }
 
+func (b *Bucket) GetClient() BucketsClient {
+	return b.bucketsClient
+}
+
 func (b *Bucket) GetThreadID(ctx context.Context) (*thread.ID, error) {
-	_, threadID, err := b.getContext(ctx)
+	_, threadID, err := b.GetContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	return threadID, nil
+}
+
+func (b *Bucket) AttachNotifier(n Notifier) {
+	b.notifier = n
 }
