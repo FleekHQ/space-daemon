@@ -196,8 +196,10 @@ func (s *Space) listDirAtPath(
 		}
 
 		backedup := false
+		backupInProgress := false
 		if mirror_files[item.Path] != nil {
 			backedup = mirror_files[item.Path].Backup
+			backupInProgress = mirror_files[item.Path].BackupInProgress
 		}
 
 		locallyAvailable := false
@@ -220,6 +222,7 @@ func (s *Space) listDirAtPath(
 			IpfsHash:         item.Cid,
 			BackedUp:         backedup,
 			LocallyAvailable: locallyAvailable,
+			BackupInProgress: backupInProgress,
 		}
 		entries = append(entries, entry)
 

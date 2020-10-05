@@ -2,7 +2,13 @@ package sync
 
 import (
 	"context"
+
+	"github.com/FleekHQ/space-daemon/core/events"
 )
+
+type EventNotifier interface {
+	SendFileEvent(event events.FileEvent)
+}
 
 type Synchronizer interface {
 	NotifyItemAdded(bucket, path string)
@@ -14,4 +20,5 @@ type Synchronizer interface {
 	RestoreQueue() error
 	Shutdown()
 	String() string
+	AttachNotifier(EventNotifier)
 }

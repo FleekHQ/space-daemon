@@ -21,6 +21,8 @@ import (
 
 	model "github.com/FleekHQ/space-daemon/core/textile/model"
 
+	sync "github.com/FleekHQ/space-daemon/core/textile/sync"
+
 	textile "github.com/FleekHQ/space-daemon/core/textile"
 
 	usersclient "github.com/textileio/textile/api/users/client"
@@ -54,6 +56,11 @@ func (_m *Client) AcceptSharedFilesInvitation(ctx context.Context, invitation do
 
 // AttachMailboxNotifier provides a mock function with given fields: notif
 func (_m *Client) AttachMailboxNotifier(notif textile.GrpcMailboxNotifier) {
+	_m.Called(notif)
+}
+
+// AttachSynchronizerNotifier provides a mock function with given fields: notif
+func (_m *Client) AttachSynchronizerNotifier(notif sync.EventNotifier) {
 	_m.Called(notif)
 }
 

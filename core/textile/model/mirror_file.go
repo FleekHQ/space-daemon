@@ -16,13 +16,13 @@ import (
 )
 
 type MirrorFileSchema struct {
-	ID         core.InstanceID `json:"_id"`
-	Path       string          `json:"path"`
-	BucketSlug string          `json:"bucket_slug"`
-	Backup     bool            `json:"backup"`
-	Shared     bool            `json:"shared"`
-
-	DbID string
+	ID               core.InstanceID `json:"_id"`
+	Path             string          `json:"path"`
+	BucketSlug       string          `json:"bucket_slug"`
+	Backup           bool            `json:"backup"`
+	Shared           bool            `json:"shared"`
+	BackupInProgress bool            `json:"backupInProgress"`
+	DbID             string
 }
 
 type MirrorBucketSchema struct {
@@ -141,10 +141,11 @@ func (m *model) CreateMirrorFile(ctx context.Context, mirrorFile *domain.MirrorF
 	}
 
 	newInstance := &MirrorFileSchema{
-		Path:       mirrorFile.Path,
-		BucketSlug: mirrorFile.BucketSlug,
-		Backup:     mirrorFile.Backup,
-		Shared:     mirrorFile.Shared,
+		Path:             mirrorFile.Path,
+		BucketSlug:       mirrorFile.BucketSlug,
+		Backup:           mirrorFile.Backup,
+		BackupInProgress: mirrorFile.BackupInProgress,
+		Shared:           mirrorFile.Shared,
 	}
 
 	instances := client.Instances{newInstance}
@@ -156,12 +157,13 @@ func (m *model) CreateMirrorFile(ctx context.Context, mirrorFile *domain.MirrorF
 
 	id := res[0]
 	return &MirrorFileSchema{
-		Path:       newInstance.Path,
-		BucketSlug: newInstance.BucketSlug,
-		Backup:     newInstance.Backup,
-		Shared:     newInstance.Shared,
-		ID:         core.InstanceID(id),
-		DbID:       newInstance.DbID,
+		Path:             newInstance.Path,
+		BucketSlug:       newInstance.BucketSlug,
+		Backup:           newInstance.Backup,
+		BackupInProgress: newInstance.BackupInProgress,
+		Shared:           newInstance.Shared,
+		ID:               core.InstanceID(id),
+		DbID:             newInstance.DbID,
 	}, nil
 }
 
@@ -207,6 +209,12 @@ func (m *model) initMirrorFileModel(ctx context.Context) (context.Context, *thre
 			Path:   "path",
 			Unique: true, // TODO: multicolumn index
 		}},
+	})
+
+	// Migrates db by adding new fields between old version of the daemon and a new one
+	m.threads.UpdateCollection(metaCtx, *dbID, db.CollectionConfig{
+		Name:   mirrorFileModelName,
+		Schema: util.SchemaFromInstance(&MirrorFileSchema{}, false),
 	})
 
 	return metaCtx, dbID, nil
