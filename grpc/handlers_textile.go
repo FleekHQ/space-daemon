@@ -11,7 +11,7 @@ import (
 func parseBucket(ctx context.Context, b textile.Bucket) *pb.Bucket {
 	bd := b.GetData()
 
-	itemsCount, _ := b.ItemsCount(ctx, bd.Path)
+	itemsCount, _ := b.ItemsCount(ctx, bd.Path, true)
 
 	br := &pb.Bucket{
 		Key:        bd.Key,

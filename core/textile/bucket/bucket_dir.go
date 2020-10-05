@@ -82,7 +82,7 @@ func (b *Bucket) DeleteDirOrFile(ctx context.Context, path string) (path.Resolve
 }
 
 // return the recursive items count for a path
-func (b *Bucket) ItemsCount(ctx context.Context, path string) (int32, error) {
+func (b *Bucket) ItemsCount(ctx context.Context, path string, withRecursive bool) (int32, error) {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
 
@@ -95,14 +95,16 @@ func (b *Bucket) ItemsCount(ctx context.Context, path string) (int32, error) {
 
 	count = dir.Item.ItemsCount
 
-	for _, item := range dir.Item.Items {
-		if item.IsDir {
-			n, err := b.ItemsCount(ctx, item.Path)
-			if err != nil {
-				return 0, err
-			}
+	if withRecursive {
+		for _, item := range dir.Item.Items {
+			if item.IsDir {
+				n, err := b.ItemsCount(ctx, item.Path, withRecursive)
+				if err != nil {
+					return 0, err
+				}
 
-			count += n
+				count += n
+			}
 		}
 	}
 

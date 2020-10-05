@@ -67,6 +67,7 @@ type BucketInterface interface {
 	ItemsCount(
 		ctx context.Context,
 		path string,
+		withRecursive bool,
 	) (int32, error)
 }
 
