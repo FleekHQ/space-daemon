@@ -8,14 +8,18 @@ import (
 	"github.com/FleekHQ/space-daemon/grpc/pb"
 )
 
-func parseBucket(b textile.Bucket) *pb.Bucket {
+func parseBucket(ctx context.Context, b textile.Bucket) *pb.Bucket {
 	bd := b.GetData()
+
+	itemsCount, _ := b.ItemsCount(ctx, bd.Path, false)
+
 	br := &pb.Bucket{
-		Key:       bd.Key,
-		Name:      bd.Name,
-		Path:      bd.Path,
-		CreatedAt: bd.CreatedAt,
-		UpdatedAt: bd.UpdatedAt,
+		Key:        bd.Key,
+		Name:       bd.Name,
+		Path:       bd.Path,
+		CreatedAt:  bd.CreatedAt,
+		UpdatedAt:  bd.UpdatedAt,
+		ItemsCount: itemsCount,
 
 		// TODO: Fill these out from metathread + identity service call
 		Members:          []*pb.BucketMember{},
@@ -31,7 +35,7 @@ func (srv *grpcServer) CreateBucket(ctx context.Context, request *pb.CreateBucke
 		return nil, err
 	}
 
-	parsedBucket := parseBucket(b)
+	parsedBucket := parseBucket(ctx, b)
 	return &pb.CreateBucketResponse{
 		Bucket: parsedBucket,
 	}, nil
@@ -46,7 +50,7 @@ func (srv *grpcServer) ListBuckets(ctx context.Context, request *pb.ListBucketsR
 	parsedBuckets := []*pb.Bucket{}
 
 	for _, b := range buckets {
-		parsedBucket := parseBucket(b)
+		parsedBucket := parseBucket(ctx, b)
 		parsedBuckets = append(parsedBuckets, parsedBucket)
 	}
 

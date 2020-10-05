@@ -65,8 +65,13 @@ func (s *synchronizer) processRemoveItem(ctx context.Context, task *Task) error 
 
 	s.notifySyncNeeded()
 
-	// TODO: Remove file from mirror
-	return nil
+	if err := s.unsetMirrorFileBackup(ctx, path, bucket); err != nil {
+		return err
+	}
+
+	err := s.deleteFileFromRemote(ctx, bucket, path)
+
+	return err
 }
 
 func (s *synchronizer) processPinFile(ctx context.Context, task *Task) error {

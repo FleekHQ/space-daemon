@@ -1440,6 +1440,10 @@
         "isBackupEnabled": {
           "type": "boolean",
           "format": "boolean"
+        },
+        "itemsCount": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

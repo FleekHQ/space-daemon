@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 )
@@ -79,4 +80,38 @@ func (b *Bucket) DeleteDirOrFile(ctx context.Context, path string) (path.Resolve
 	}
 
 	return b.bucketsClient.RemovePath(ctx, b.Key(), path)
+}
+
+// return the recursive items count for a path
+func (b *Bucket) ItemsCount(ctx context.Context, path string, withRecursive bool) (int32, error) {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
+
+	var count int32
+
+	dir, err := b.ListDirectory(ctx, path)
+	if err != nil {
+		return 0, err
+	}
+
+	count = dir.Item.ItemsCount
+
+	if withRecursive {
+		for _, item := range dir.Item.Items {
+			if utils.IsMetaFileName(item.Name) {
+				continue
+			}
+
+			if item.IsDir {
+				n, err := b.ItemsCount(ctx, item.Path, withRecursive)
+				if err != nil {
+					return 0, err
+				}
+
+				count += n
+			}
+		}
+	}
+
+	return count, nil
 }

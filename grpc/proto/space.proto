@@ -399,6 +399,7 @@ message Bucket {
   repeated BucketMember members = 6;
   bool isPersonalBucket = 7;
   bool isBackupEnabled = 8;
+  int32 itemsCount = 9;
 }
 
 message CreateBucketResponse {
