@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 )
@@ -97,6 +98,10 @@ func (b *Bucket) ItemsCount(ctx context.Context, path string, withRecursive bool
 
 	if withRecursive {
 		for _, item := range dir.Item.Items {
+			if utils.IsMetaFileName(item.Name) {
+				continue
+			}
+
 			if item.IsDir {
 				n, err := b.ItemsCount(ctx, item.Path, withRecursive)
 				if err != nil {
