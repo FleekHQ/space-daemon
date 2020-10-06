@@ -338,6 +338,8 @@ message ToggleBucketBackupResponse {}
 
 message ListDirectoriesRequest {
   string bucket = 1;
+  bool omitSubfolderContent = 2;
+  bool omitMembers = 3;
 }
 
 message FileMember {
@@ -373,6 +375,8 @@ message ListDirectoriesResponse {
 message ListDirectoryRequest {
   string path = 1;
   string bucket = 2;
+  bool listSubfolderContent = 3;
+  bool omitMembers = 4;
 }
 
 message ListDirectoryResponse {
