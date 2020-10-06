@@ -2,7 +2,7 @@ module github.com/FleekHQ/space-daemon
 
 go 1.14
 
-replace github.com/ipfs/go-datastore v0.4.4 => github.com/textileio/go-datastore v0.4.5-0.20200728205504-ffeb3591b248
+replace github.com/ipfs/go-datastore v0.4.5 => github.com/textileio/go-datastore v0.4.5-0.20200728205504-ffeb3591b248
 
 replace github.com/ipfs/go-ds-badger v0.2.4 => github.com/textileio/go-ds-badger v0.2.5-0.20200728212847-1ec9ac5e644c
 
@@ -20,9 +20,10 @@ require (
 	github.com/golang/protobuf v1.4.2
 	github.com/google/uuid v1.1.1
 	github.com/grpc-ecosystem/grpc-gateway v1.14.6
+	github.com/hsanjuan/ipfs-lite v1.1.16 // indirect
 	github.com/improbable-eng/grpc-web v0.13.0
 	github.com/ipfs/go-cid v0.0.7
-	github.com/ipfs/go-ipfs v0.6.1-0.20200817102359-90a573354af2
+	github.com/ipfs/go-ipfs v0.7.0-rc1.0.20200910003437-a322bfe9f0fa
 	github.com/ipfs/go-ipfs-chunker v0.0.5
 	github.com/ipfs/go-ipfs-config v0.9.0
 	github.com/ipfs/go-ipfs-files v0.0.8
@@ -39,7 +40,7 @@ require (
 	github.com/libp2p/go-libp2p-peerstore v0.2.6
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/multiformats/go-base32 v0.0.3
-	github.com/multiformats/go-multiaddr v0.3.0
+	github.com/multiformats/go-multiaddr v0.3.1
 	github.com/multiformats/go-multibase v0.0.3
 	github.com/multiformats/go-multihash v0.0.14
 	github.com/odeke-em/go-utils v0.0.0-20170224015737-e8ebaed0777a
@@ -55,9 +56,9 @@ require (
 	github.com/tyler-smith/go-bip39 v1.0.2
 	go.etcd.io/etcd v3.3.22+incompatible
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.0.0-20200625001655-4c5254603344
+	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980
+	golang.org/x/sys v0.0.0-20200615200032-f1bc736245b1
 	google.golang.org/genproto v0.0.0-20200702021140-07506425bd67
 	google.golang.org/grpc v1.31.0
 	google.golang.org/protobuf v1.25.0
