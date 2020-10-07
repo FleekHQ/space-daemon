@@ -43,7 +43,6 @@ func (s *synchronizer) processAddItem(ctx context.Context, task *Task) error {
 	}
 
 	pft := newTask(pinFileTask, []string{bucket, path})
-	pft.Parallelizable = true
 	s.enqueueTask(pft, s.filePinningQueue)
 
 	s.notifySyncNeeded()
@@ -60,7 +59,6 @@ func (s *synchronizer) processRemoveItem(ctx context.Context, task *Task) error 
 	path := task.Args[1]
 
 	uft := newTask(unpinFileTask, []string{bucket, path})
-	uft.Parallelizable = true
 	s.enqueueTask(uft, s.filePinningQueue)
 
 	s.notifySyncNeeded()
