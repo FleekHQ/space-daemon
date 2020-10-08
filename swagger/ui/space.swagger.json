@@ -1440,6 +1440,10 @@
         "isBackupEnabled": {
           "type": "boolean",
           "format": "boolean"
+        },
+        "itemsCount": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -1858,6 +1862,10 @@
           "items": {
             "$ref": "#/definitions/spaceFileMember"
           }
+        },
+        "isBackupInProgress": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },

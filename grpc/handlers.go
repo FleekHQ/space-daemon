@@ -15,7 +15,7 @@ var errNotImplemented = errors.New("Not implemented")
 
 func (srv *grpcServer) sendFileEvent(event *pb.FileEventResponse) {
 	if srv.fileEventStream != nil {
-		log.Info("sending events to client")
+		log.Info("sending events to client", event.String())
 		srv.fileEventStream.Send(event)
 	}
 }
@@ -75,6 +75,7 @@ func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDire
 			Members:            members,
 			IsLocallyAvailable: e.LocallyAvailable,
 			BackupCount:        int64(backupCount),
+			IsBackupInProgress: e.BackupInProgress,
 		}
 		dirEntries = append(dirEntries, dirEntry)
 	}
@@ -124,6 +125,7 @@ func (srv *grpcServer) ListDirectory(
 			Members:            members,
 			BackupCount:        int64(backupCount),
 			IsLocallyAvailable: e.LocallyAvailable,
+			IsBackupInProgress: e.BackupInProgress,
 		}
 		dirEntries = append(dirEntries, dirEntry)
 	}

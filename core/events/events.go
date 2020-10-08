@@ -9,9 +9,11 @@ import (
 type FileEventType string
 
 const (
-	FileAdded   FileEventType = "FileAdded"
-	FileDeleted FileEventType = "FileDeleted"
-	FileUpdated FileEventType = "FileUpdated"
+	FileAdded            FileEventType = "FileAdded"
+	FileDeleted          FileEventType = "FileDeleted"
+	FileUpdated          FileEventType = "FileUpdated"
+	FileBackupInProgress FileEventType = "FileBackupInProgress"
+	FileBackupReady      FileEventType = "FileBackupReady"
 
 	FolderAdded   FileEventType = "FolderAdded"
 	FolderDeleted FileEventType = "FolderDeleted"
@@ -20,16 +22,18 @@ const (
 )
 
 type FileEvent struct {
-	Path string
-	Info os.FileInfo
-	Type FileEventType
+	Path   string
+	Bucket string
+	Info   os.FileInfo
+	Type   FileEventType
 }
 
-func NewFileEvent(path string, eventType FileEventType, info os.FileInfo) FileEvent {
+func NewFileEvent(path, bucket string, eventType FileEventType, info os.FileInfo) FileEvent {
 	return FileEvent{
-		Path: path,
-		Type: eventType,
-		Info: info,
+		Path:   path,
+		Bucket: bucket,
+		Type:   eventType,
+		Info:   info,
 	}
 }
 

@@ -47,6 +47,7 @@ type synchronizer struct {
 	cfg              config.Config
 	netc             *nc.Client
 	queueWg          *sync.WaitGroup
+	eventNotifier    EventNotifier
 }
 
 // Creates a new Synchronizer
@@ -103,10 +104,6 @@ func (s *synchronizer) NotifyItemAdded(bucket, path string) {
 	t := newTask(addItemTask, []string{bucket, path})
 	s.enqueueTask(t, s.taskQueue)
 
-	pft := newTask(pinFileTask, []string{bucket, path})
-	pft.Parallelizable = true
-	s.enqueueTask(pft, s.filePinningQueue)
-
 	s.notifySyncNeeded()
 }
 
@@ -114,10 +111,6 @@ func (s *synchronizer) NotifyItemAdded(bucket, path string) {
 func (s *synchronizer) NotifyItemRemoved(bucket, path string) {
 	t := newTask(removeItemTask, []string{bucket, path})
 	s.enqueueTask(t, s.taskQueue)
-
-	uft := newTask(unpinFileTask, []string{bucket, path})
-	uft.Parallelizable = true
-	s.enqueueTask(uft, s.filePinningQueue)
 
 	s.notifySyncNeeded()
 }
@@ -347,4 +340,8 @@ func (s *synchronizer) sync(ctx context.Context, queue *list.List) error {
 	log.Debug(fmt.Sprintf("Textile sync [%s]: Sync end", queueName))
 
 	return nil
+}
+
+func (s *synchronizer) AttachNotifier(notif EventNotifier) {
+	s.eventNotifier = notif
 }

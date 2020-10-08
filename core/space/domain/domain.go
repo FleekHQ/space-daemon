@@ -28,6 +28,7 @@ type FileInfo struct {
 	IpfsHash         string
 	BackedUp         bool
 	LocallyAvailable bool
+	BackupInProgress bool
 }
 
 type OpenFileInfo struct {
@@ -150,10 +151,11 @@ type APISessionTokens struct {
 }
 
 type MirrorFile struct {
-	Path       string
-	BucketSlug string
-	Backup     bool
-	Shared     bool
+	Path             string
+	BucketSlug       string
+	Backup           bool
+	Shared           bool
+	BackupInProgress bool
 }
 
 type SharedDirEntry struct {

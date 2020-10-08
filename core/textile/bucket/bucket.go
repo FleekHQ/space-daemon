@@ -64,6 +64,11 @@ type BucketInterface interface {
 		ctx context.Context,
 		path string,
 	) (path.Resolved, error)
+	ItemsCount(
+		ctx context.Context,
+		path string,
+		withRecursive bool,
+	) (int32, error)
 }
 
 type Notifier interface {

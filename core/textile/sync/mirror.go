@@ -17,14 +17,15 @@ import (
 
 const mirrorThreadKeyName = "mirrorV1"
 
-func (s *synchronizer) setMirrorFileBackup(ctx context.Context, path, bucketSlug string) error {
+func (s *synchronizer) setMirrorFileBackup(ctx context.Context, path, bucketSlug string, isInProgress bool) error {
 	mf, err := s.model.FindMirrorFileByPathAndBucketSlug(ctx, path, bucketSlug)
 	if err != nil {
 		return err
 	}
 	if mf != nil {
 		// update
-		mf.Backup = true
+		mf.Backup = !isInProgress
+		mf.BackupInProgress = isInProgress
 
 		_, err = s.model.UpdateMirrorFile(ctx, mf)
 		if err != nil {
@@ -33,10 +34,11 @@ func (s *synchronizer) setMirrorFileBackup(ctx context.Context, path, bucketSlug
 	} else {
 		// create
 		mf := &domain.MirrorFile{
-			Path:       path,
-			BucketSlug: bucketSlug,
-			Backup:     true,
-			Shared:     false,
+			Path:             path,
+			BucketSlug:       bucketSlug,
+			Backup:           !isInProgress,
+			BackupInProgress: isInProgress,
+			Shared:           false,
 		}
 
 		_, err := s.model.CreateMirrorFile(ctx, mf)
