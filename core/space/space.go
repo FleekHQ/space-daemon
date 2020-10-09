@@ -23,8 +23,8 @@ type Service interface {
 	RegisterSyncer(sync services.Syncer)
 	OpenFile(ctx context.Context, path, bucketName, dbID string) (domain.OpenFileInfo, error)
 	GetConfig(ctx context.Context) domain.AppConfig
-	ListDirs(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error)
-	ListDir(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error)
+	ListDirs(ctx context.Context, path string, bucketName string, listMembers bool) ([]domain.FileInfo, error)
+	ListDir(ctx context.Context, path string, bucketName string, listMembers bool) ([]domain.FileInfo, error)
 	GenerateKeyPair(ctx context.Context, useForce bool) (mnemonic string, err error)
 	DeleteKeypair(ctx context.Context) error
 	GetMnemonic(ctx context.Context) (mnemonic string, err error)

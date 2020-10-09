@@ -297,6 +297,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "omitMembers",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
           }
         ],
         "tags": [
@@ -359,6 +366,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "omitMembers",
+            "in": "query",
+            "required": false,
+            "type": "boolean",
+            "format": "boolean"
           }
         ],
         "tags": [
