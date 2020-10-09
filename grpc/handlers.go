@@ -43,7 +43,7 @@ func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDire
 	bucketName := request.Bucket
 	listMembers := !request.OmitMembers
 
-	entries, err := srv.sv.ListDirs(ctx, "", bucketName, true, listMembers)
+	entries, err := srv.sv.ListDirs(ctx, "", bucketName, listMembers)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (srv *grpcServer) ListDirectory(
 ) (*pb.ListDirectoryResponse, error) {
 	listMembers := !request.OmitMembers
 
-	entries, err := srv.sv.ListDir(ctx, request.GetPath(), request.GetBucket(), false, listMembers)
+	entries, err := srv.sv.ListDir(ctx, request.GetPath(), request.GetBucket(), listMembers)
 	if err != nil {
 		return nil, err
 	}
