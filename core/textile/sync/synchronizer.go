@@ -135,6 +135,13 @@ func (s *synchronizer) NotifyBucketBackupOff(bucket string) {
 	s.notifySyncNeeded()
 }
 
+func (s *synchronizer) NotifyBucketRestore(bucket string) {
+	t := newTask(bucketRestoreTask, []string{bucket})
+	s.enqueueTask(t, s.taskQueue)
+
+	s.notifySyncNeeded()
+}
+
 func (s *synchronizer) notifySyncNeeded() {
 	select {
 	case s.syncNeeded <- true:
@@ -243,6 +250,8 @@ func (s *synchronizer) executeTask(ctx context.Context, t *Task) error {
 		err = s.processBucketBackupOn(ctx, t)
 	case bucketBackupOffTask:
 		err = s.processBucketBackupOff(ctx, t)
+	case bucketRestoreTask:
+		err = s.processBucketRestoreTask(ctx, t)
 	default:
 		log.Warn("Unexpected action on Textile sync, executeTask")
 	}

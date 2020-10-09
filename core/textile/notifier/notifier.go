@@ -18,3 +18,7 @@ func New(s sync.Synchronizer) *Notifier {
 func (n *Notifier) OnUploadFile(bucketSlug string, bucketPath string, result path.Resolved, root path.Path) {
 	n.s.NotifyItemAdded(bucketSlug, bucketPath)
 }
+
+func (n *Notifier) OnDownloadFile(bucketSlug string, bucketPath string, result path.Resolved, root path.Path) {
+	n.s.NotifyItemAdded(bucketSlug, bucketPath)
+}

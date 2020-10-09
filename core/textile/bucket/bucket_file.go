@@ -61,6 +61,27 @@ func (b *Bucket) UploadFile(ctx context.Context, path string, reader io.Reader) 
 	return result, root, nil
 }
 
+func (b *Bucket) DownloadFile(ctx context.Context, path string, reader io.Reader) (result path.Resolved, root path.Path, err error) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
+	ctx, _, err = b.GetContext(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	result, root, err = b.bucketsClient.PushPath(ctx, b.Key(), path, reader)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if b.notifier != nil {
+		b.notifier.OnDownloadFile(b.Slug(), path, result, root)
+	}
+
+	return result, root, nil
+}
+
 // GetFile pulls path from bucket writing it to writer if it's a file.
 func (b *Bucket) GetFile(ctx context.Context, path string, w io.Writer) error {
 	b.lock.RLock()

@@ -16,13 +16,14 @@ import (
 )
 
 type MirrorFileSchema struct {
-	ID               core.InstanceID `json:"_id"`
-	Path             string          `json:"path"`
-	BucketSlug       string          `json:"bucket_slug"`
-	Backup           bool            `json:"backup"`
-	Shared           bool            `json:"shared"`
-	BackupInProgress bool            `json:"backupInProgress"`
-	DbID             string
+	ID                core.InstanceID `json:"_id"`
+	Path              string          `json:"path"`
+	BucketSlug        string          `json:"bucket_slug"`
+	Backup            bool            `json:"backup"`
+	Shared            bool            `json:"shared"`
+	BackupInProgress  bool            `json:"backupInProgress"`
+	RestoreInProgress bool            `json:"restoreInProgress"`
+	DbID              string
 }
 
 type MirrorBucketSchema struct {
@@ -141,11 +142,12 @@ func (m *model) CreateMirrorFile(ctx context.Context, mirrorFile *domain.MirrorF
 	}
 
 	newInstance := &MirrorFileSchema{
-		Path:             mirrorFile.Path,
-		BucketSlug:       mirrorFile.BucketSlug,
-		Backup:           mirrorFile.Backup,
-		BackupInProgress: mirrorFile.BackupInProgress,
-		Shared:           mirrorFile.Shared,
+		Path:              mirrorFile.Path,
+		BucketSlug:        mirrorFile.BucketSlug,
+		Backup:            mirrorFile.Backup,
+		BackupInProgress:  mirrorFile.BackupInProgress,
+		RestoreInProgress: mirrorFile.RestoreInProgress,
+		Shared:            mirrorFile.Shared,
 	}
 
 	instances := client.Instances{newInstance}
@@ -157,13 +159,14 @@ func (m *model) CreateMirrorFile(ctx context.Context, mirrorFile *domain.MirrorF
 
 	id := res[0]
 	return &MirrorFileSchema{
-		Path:             newInstance.Path,
-		BucketSlug:       newInstance.BucketSlug,
-		Backup:           newInstance.Backup,
-		BackupInProgress: newInstance.BackupInProgress,
-		Shared:           newInstance.Shared,
-		ID:               core.InstanceID(id),
-		DbID:             newInstance.DbID,
+		Path:              newInstance.Path,
+		BucketSlug:        newInstance.BucketSlug,
+		Backup:            newInstance.Backup,
+		BackupInProgress:  newInstance.BackupInProgress,
+		RestoreInProgress: newInstance.RestoreInProgress,
+		Shared:            newInstance.Shared,
+		ID:                core.InstanceID(id),
+		DbID:              newInstance.DbID,
 	}, nil
 }
 

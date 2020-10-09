@@ -64,18 +64,19 @@ func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDire
 		}
 
 		dirEntry := &pb.ListDirectoryEntry{
-			Path:               e.Path,
-			IsDir:              e.IsDir,
-			Name:               e.Name,
-			SizeInBytes:        e.SizeInBytes,
-			Created:            e.Created,
-			Updated:            e.Updated,
-			FileExtension:      e.FileExtension,
-			IpfsHash:           e.IpfsHash,
-			Members:            members,
-			IsLocallyAvailable: e.LocallyAvailable,
-			BackupCount:        int64(backupCount),
-			IsBackupInProgress: e.BackupInProgress,
+			Path:                e.Path,
+			IsDir:               e.IsDir,
+			Name:                e.Name,
+			SizeInBytes:         e.SizeInBytes,
+			Created:             e.Created,
+			Updated:             e.Updated,
+			FileExtension:       e.FileExtension,
+			IpfsHash:            e.IpfsHash,
+			Members:             members,
+			IsLocallyAvailable:  e.LocallyAvailable,
+			BackupCount:         int64(backupCount),
+			IsBackupInProgress:  e.BackupInProgress,
+			IsRestoreInProgress: e.RestoreInProgress,
 		}
 		dirEntries = append(dirEntries, dirEntry)
 	}
@@ -114,18 +115,19 @@ func (srv *grpcServer) ListDirectory(
 		}
 
 		dirEntry := &pb.ListDirectoryEntry{
-			Path:               e.Path,
-			IsDir:              e.IsDir,
-			Name:               e.Name,
-			SizeInBytes:        e.SizeInBytes,
-			Created:            e.Created,
-			Updated:            e.Updated,
-			FileExtension:      e.FileExtension,
-			IpfsHash:           e.IpfsHash,
-			Members:            members,
-			BackupCount:        int64(backupCount),
-			IsLocallyAvailable: e.LocallyAvailable,
-			IsBackupInProgress: e.BackupInProgress,
+			Path:                e.Path,
+			IsDir:               e.IsDir,
+			Name:                e.Name,
+			SizeInBytes:         e.SizeInBytes,
+			Created:             e.Created,
+			Updated:             e.Updated,
+			FileExtension:       e.FileExtension,
+			IpfsHash:            e.IpfsHash,
+			Members:             members,
+			BackupCount:         int64(backupCount),
+			IsLocallyAvailable:  e.LocallyAvailable,
+			IsBackupInProgress:  e.BackupInProgress,
+			IsRestoreInProgress: e.RestoreInProgress,
 		}
 		dirEntries = append(dirEntries, dirEntry)
 	}

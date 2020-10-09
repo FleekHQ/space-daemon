@@ -47,6 +47,11 @@ type BucketInterface interface {
 		path string,
 		reader io.Reader,
 	) (result path.Resolved, root path.Path, err error)
+	DownloadFile(
+		ctx context.Context,
+		path string,
+		reader io.Reader,
+	) (result path.Resolved, root path.Path, err error)
 	GetFile(
 		ctx context.Context,
 		path string,
@@ -73,6 +78,7 @@ type BucketInterface interface {
 
 type Notifier interface {
 	OnUploadFile(bucketSlug string, bucketPath string, result path.Resolved, root path.Path)
+	OnDownloadFile(bucketSlug string, bucketPath string, result path.Resolved, root path.Path)
 }
 
 // NOTE: all write operations should use the lock for the bucket to keep consistency

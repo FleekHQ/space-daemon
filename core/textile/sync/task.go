@@ -14,6 +14,7 @@ const (
 	unpinFileTask       taskType = "UNPIN_FILE"
 	bucketBackupOnTask  taskType = "TOGGLE_BACKUP_ON"
 	bucketBackupOffTask taskType = "TOGGLE_BACKUP_OFF"
+	bucketRestoreTask   taskType = "BUCKET_RESTORE"
 )
 
 type taskState string

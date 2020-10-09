@@ -25,10 +25,11 @@ type ThreadInfo struct {
 
 type FileInfo struct {
 	DirEntry
-	IpfsHash         string
-	BackedUp         bool
-	LocallyAvailable bool
-	BackupInProgress bool
+	IpfsHash          string
+	BackedUp          bool
+	LocallyAvailable  bool
+	BackupInProgress  bool
+	RestoreInProgress bool
 }
 
 type OpenFileInfo struct {
@@ -151,11 +152,12 @@ type APISessionTokens struct {
 }
 
 type MirrorFile struct {
-	Path             string
-	BucketSlug       string
-	Backup           bool
-	Shared           bool
-	BackupInProgress bool
+	Path              string
+	BucketSlug        string
+	Backup            bool
+	Shared            bool
+	BackupInProgress  bool
+	RestoreInProgress bool
 }
 
 type SharedDirEntry struct {

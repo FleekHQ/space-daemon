@@ -92,19 +92,30 @@ func (s *Space) JoinBucket(ctx context.Context, slug string, threadinfo *domain.
 	return r, nil
 }
 
-func (s *Space) ToggleBucketBackup(ctx context.Context, bucketName string, bucketBackup bool) error {
+func (s *Space) ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) error {
 	err := s.waitForTextileHub(ctx)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.tc.ToggleBucketBackup(ctx, bucketName, bucketBackup)
+	_, err = s.tc.ToggleBucketBackup(ctx, bucketSlug, bucketBackup)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.tc.GetBucket(ctx, bucketName, nil)
+	_, err = s.tc.GetBucket(ctx, bucketSlug, nil)
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Space) BucketBackupRestore(ctx context.Context, bucketSlug string) error {
+	if err := s.waitForTextileHub(ctx); err != nil {
+		return err
+	}
+	if err := s.tc.BucketBackupRestore(ctx, bucketSlug); err != nil {
 		return err
 	}
 
@@ -197,9 +208,11 @@ func (s *Space) listDirAtPath(
 
 		backedup := false
 		backupInProgress := false
+		restoreInProgress := false
 		if mirror_files[item.Path] != nil {
 			backedup = mirror_files[item.Path].Backup
 			backupInProgress = mirror_files[item.Path].BackupInProgress
+			restoreInProgress = mirror_files[item.Path].RestoreInProgress
 		}
 
 		locallyAvailable := false
@@ -219,10 +232,11 @@ func (s *Space) listDirAtPath(
 				Updated: time.Now().Format(time.RFC3339),
 				Members: members,
 			},
-			IpfsHash:         item.Cid,
-			BackedUp:         backedup,
-			LocallyAvailable: locallyAvailable,
-			BackupInProgress: backupInProgress,
+			IpfsHash:          item.Cid,
+			BackedUp:          backedup,
+			LocallyAvailable:  locallyAvailable,
+			BackupInProgress:  backupInProgress,
+			RestoreInProgress: restoreInProgress,
 		}
 		entries = append(entries, entry)
 

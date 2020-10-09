@@ -169,3 +169,21 @@ func (s *synchronizer) processBucketBackupOff(ctx context.Context, task *Task) e
 
 	return s.deleteAllFilesInPath(ctx, bucket, "")
 }
+
+func (s *synchronizer) processBucketRestoreTask(ctx context.Context, task *Task) error {
+	if err := checkTaskType(task, bucketRestoreTask); err != nil {
+		return err
+	}
+
+	bucket := task.Args[0]
+
+	if err := s.restoreBucket(ctx, bucket); err != nil {
+		return err
+	}
+
+	if s.eventNotifier != nil {
+		s.eventNotifier.SendFileEvent(events.NewFileEvent("", bucket, events.FileRestoreInProgress, nil))
+	}
+
+	return nil
+}
