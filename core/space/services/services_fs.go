@@ -244,7 +244,7 @@ func (s *Space) listDirAtPath(
 }
 
 // ListDir returns children entries at path in a bucket
-func (s *Space) ListDir(ctx context.Context, path string, bucketName string, listSubfolderContent bool, listMembers bool) ([]domain.FileInfo, error) {
+func (s *Space) ListDir(ctx context.Context, path string, bucketName string, listMembers bool) ([]domain.FileInfo, error) {
 	err := s.waitForTextileInit(ctx)
 	if err != nil {
 		return nil, err
@@ -259,12 +259,12 @@ func (s *Space) ListDir(ctx context.Context, path string, bucketName string, lis
 		return nil, errors.New("Could not find buckets")
 	}
 
-	return s.listDirAtPath(ctx, b, path, listSubfolderContent, listMembers)
+	return s.listDirAtPath(ctx, b, path, false, listMembers)
 }
 
 // ListDirs lists all children entries at path in a bucket
 // Unlike ListDir, it includes all subfolders children recursively
-func (s *Space) ListDirs(ctx context.Context, path string, bucketName string, listSubfolderContent bool, listMembers bool) ([]domain.FileInfo, error) {
+func (s *Space) ListDirs(ctx context.Context, path string, bucketName string, listMembers bool) ([]domain.FileInfo, error) {
 	err := s.waitForTextileInit(ctx)
 	if err != nil {
 		return nil, err
@@ -275,7 +275,7 @@ func (s *Space) ListDirs(ctx context.Context, path string, bucketName string, li
 		return nil, err
 	}
 
-	return s.listDirAtPath(ctx, b, path, listSubfolderContent, listMembers)
+	return s.listDirAtPath(ctx, b, path, true, listMembers)
 }
 
 // Copies a file inside a bucket into a temp, unencrypted version of the file in the local file system

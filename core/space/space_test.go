@@ -273,7 +273,7 @@ func TestService_ListDirs(t *testing.T) {
 		nil,
 	)
 
-	res, err := sv.ListDirs(context.Background(), "", "", true, true)
+	res, err := sv.ListDirs(context.Background(), "", "", true)
 
 	assert.Nil(t, err)
 	assert.NotEmpty(t, res)

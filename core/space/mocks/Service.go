@@ -507,13 +507,13 @@ func (_m *Service) ListBuckets(ctx context.Context) ([]textile.Bucket, error) {
 	return r0, r1
 }
 
-// ListDir provides a mock function with given fields: ctx, path, bucketName, listSubfolderContent, listMembers
-func (_m *Service) ListDir(ctx context.Context, path string, bucketName string, listSubfolderContent bool, listMembers bool) ([]domain.FileInfo, error) {
-	ret := _m.Called(ctx, path, bucketName, listSubfolderContent, listMembers)
+// ListDir provides a mock function with given fields: ctx, path, bucketName, listMembers
+func (_m *Service) ListDir(ctx context.Context, path string, bucketName string, listMembers bool) ([]domain.FileInfo, error) {
+	ret := _m.Called(ctx, path, bucketName, listMembers)
 
 	var r0 []domain.FileInfo
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, bool, bool) []domain.FileInfo); ok {
-		r0 = rf(ctx, path, bucketName, listSubfolderContent, listMembers)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, bool) []domain.FileInfo); ok {
+		r0 = rf(ctx, path, bucketName, listMembers)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]domain.FileInfo)
@@ -521,8 +521,8 @@ func (_m *Service) ListDir(ctx context.Context, path string, bucketName string, 
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, bool, bool) error); ok {
-		r1 = rf(ctx, path, bucketName, listSubfolderContent, listMembers)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, bool) error); ok {
+		r1 = rf(ctx, path, bucketName, listMembers)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -530,13 +530,13 @@ func (_m *Service) ListDir(ctx context.Context, path string, bucketName string, 
 	return r0, r1
 }
 
-// ListDirs provides a mock function with given fields: ctx, path, bucketName, listSubfolderContent, listMembers
-func (_m *Service) ListDirs(ctx context.Context, path string, bucketName string, listSubfolderContent bool, listMembers bool) ([]domain.FileInfo, error) {
-	ret := _m.Called(ctx, path, bucketName, listSubfolderContent, listMembers)
+// ListDirs provides a mock function with given fields: ctx, path, bucketName, listMembers
+func (_m *Service) ListDirs(ctx context.Context, path string, bucketName string, listMembers bool) ([]domain.FileInfo, error) {
+	ret := _m.Called(ctx, path, bucketName, listMembers)
 
 	var r0 []domain.FileInfo
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, bool, bool) []domain.FileInfo); ok {
-		r0 = rf(ctx, path, bucketName, listSubfolderContent, listMembers)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, bool) []domain.FileInfo); ok {
+		r0 = rf(ctx, path, bucketName, listMembers)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]domain.FileInfo)
@@ -544,8 +544,8 @@ func (_m *Service) ListDirs(ctx context.Context, path string, bucketName string,
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, bool, bool) error); ok {
-		r1 = rf(ctx, path, bucketName, listSubfolderContent, listMembers)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, bool) error); ok {
+		r1 = rf(ctx, path, bucketName, listMembers)
 	} else {
 		r1 = ret.Error(1)
 	}

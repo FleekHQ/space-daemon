@@ -37,7 +37,7 @@ func (f *filesDataSource) Get(ctx context.Context, path string) (*DirEntry, erro
 
 	log.Debug("FileDS Get", fmt.Sprintf("path:%s", path))
 
-	itemsInParent, err := f.service.ListDir(ctx, path, DefaultBucketName, false, true)
+	itemsInParent, err := f.service.ListDir(ctx, path, DefaultBucketName, true)
 	if err != nil {
 		if !isNotExistError(err) {
 			return nil, EntryNotFound
@@ -87,7 +87,7 @@ func (f *filesDataSource) Get(ctx context.Context, path string) (*DirEntry, erro
 
 func (f *filesDataSource) GetChildren(ctx context.Context, path string) ([]*DirEntry, error) {
 	log.Debug("FileDS GetChildren", fmt.Sprintf("path:%s", path))
-	domainEntries, err := f.service.ListDir(ctx, path, DefaultBucketName, false, true)
+	domainEntries, err := f.service.ListDir(ctx, path, DefaultBucketName, true)
 	if err != nil {
 		return nil, err
 	}
