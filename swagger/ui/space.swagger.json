@@ -299,13 +299,6 @@
             "type": "string"
           },
           {
-            "name": "listSubfolderContent",
-            "in": "query",
-            "required": false,
-            "type": "boolean",
-            "format": "boolean"
-          },
-          {
             "name": "omitMembers",
             "in": "query",
             "required": false,
@@ -373,13 +366,6 @@
             "in": "query",
             "required": false,
             "type": "string"
-          },
-          {
-            "name": "omitSubfolderContent",
-            "in": "query",
-            "required": false,
-            "type": "boolean",
-            "format": "boolean"
           },
           {
             "name": "omitMembers",
