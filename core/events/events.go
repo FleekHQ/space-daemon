@@ -17,7 +17,7 @@ const (
 
 	FileRestoreInProgress FileEventType = "FileRestoreInProgress"
 	FileRestored          FileEventType = "FileRestored"
-	FileRestoring         FileEventType = "FileRestoreInProgress"
+	FileRestoring         FileEventType = "FileRestoring"
 
 	FolderAdded   FileEventType = "FolderAdded"
 	FolderDeleted FileEventType = "FolderDeleted"
