@@ -24,7 +24,7 @@ func (s *synchronizer) setMirrorFileBackup(ctx context.Context, path, bucketSlug
 	}
 	if mf != nil {
 		// update
-		mf.Backup = true
+		mf.Backup = !isInProgress
 		mf.BackupInProgress = isInProgress
 
 		_, err = s.model.UpdateMirrorFile(ctx, mf)
