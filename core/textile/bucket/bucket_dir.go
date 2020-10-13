@@ -9,6 +9,8 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/ipfs/interface-go-ipfs-core/path"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 // Keep file is added to empty directories
@@ -114,4 +116,52 @@ func (b *Bucket) ItemsCount(ctx context.Context, path string, withRecursive bool
 	}
 
 	return count, nil
+}
+
+func (b *Bucket) Cids(ctx context.Context, path string, withRecursive bool) ([]string, error) {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
+
+	cids := make([]string, 0)
+
+	dir, err := b.ListDirectory(ctx, path)
+	if err != nil {
+		return []string{}, err
+	}
+
+	for _, item := range dir.Item.Items {
+		if utils.IsMetaFileName(item.Name) {
+			continue
+		}
+
+		cids = append(cids, item.Cid)
+
+		if withRecursive && item.IsDir {
+			subCids, err := b.Cids(ctx, item.Path, withRecursive)
+			if err != nil {
+				return []string{}, err
+			}
+
+			cids = append(cids, subCids...)
+		}
+	}
+
+	return cids, nil
+}
+
+func (b *Bucket) SyncedWith(ctx context.Context, otherBucket BucketInterface, path string, withRecursive bool) (bool, error) {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
+
+	cids, err := b.Cids(ctx, path, withRecursive)
+	if err != nil {
+		return false, err
+	}
+
+	otherCids, err := otherBucket.Cids(ctx, path, withRecursive)
+	if err != nil {
+		return false, err
+	}
+
+	return cmp.Equal(cids, otherCids), nil
 }

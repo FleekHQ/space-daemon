@@ -62,6 +62,15 @@ func (s *synchronizer) uploadAllFilesInPath(ctx context.Context, bucket, path st
 		return err
 	}
 
+	mirrorBucket, err := s.getMirrorBucket(ctx, bucket)
+	if err != nil {
+		return err
+	}
+
+	if synced, err := localBucket.SyncedWith(ctx, mirrorBucket, "", false); synced || err != nil {
+		return err
+	}
+
 	dir, err := localBucket.ListDirectory(ctx, path)
 	if err != nil {
 		return err
@@ -85,7 +94,6 @@ func (s *synchronizer) uploadAllFilesInPath(ctx context.Context, bucket, path st
 
 		// If the current item is a file, we add it to the queue so that it both gets pinned and synced
 		s.NotifyItemAdded(bucket, path)
-
 	}
 
 	return nil

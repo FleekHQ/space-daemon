@@ -69,6 +69,17 @@ type BucketInterface interface {
 		path string,
 		withRecursive bool,
 	) (int32, error)
+	Cids(
+		ctx context.Context,
+		path string,
+		withRecursive bool,
+	) ([]string, error)
+	SyncedWith(
+		ctx context.Context,
+		otherBucket BucketInterface,
+		path string,
+		withRecursive bool,
+	) (bool, error)
 }
 
 type Notifier interface {
