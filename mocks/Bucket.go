@@ -21,6 +21,29 @@ type Bucket struct {
 	mock.Mock
 }
 
+// Cids provides a mock function with given fields: ctx, _a1, withRecursive
+func (_m *Bucket) Cids(ctx context.Context, _a1 string, withRecursive bool) ([]string, error) {
+	ret := _m.Called(ctx, _a1, withRecursive)
+
+	var r0 []string
+	if rf, ok := ret.Get(0).(func(context.Context, string, bool) []string); ok {
+		r0 = rf(ctx, _a1, withRecursive)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string, bool) error); ok {
+		r1 = rf(ctx, _a1, withRecursive)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CreateDirectory provides a mock function with given fields: ctx, _a1
 func (_m *Bucket) CreateDirectory(ctx context.Context, _a1 string) (path.Resolved, path.Path, error) {
 	ret := _m.Called(ctx, _a1)
@@ -287,6 +310,27 @@ func (_m *Bucket) Slug() string {
 	}
 
 	return r0
+}
+
+// SyncedWith provides a mock function with given fields: ctx, otherBucket, _a2, withRecursive
+func (_m *Bucket) SyncedWith(ctx context.Context, otherBucket bucket.BucketInterface, _a2 string, withRecursive bool) (bool, error) {
+	ret := _m.Called(ctx, otherBucket, _a2, withRecursive)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, bucket.BucketInterface, string, bool) bool); ok {
+		r0 = rf(ctx, otherBucket, _a2, withRecursive)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, bucket.BucketInterface, string, bool) error); ok {
+		r1 = rf(ctx, otherBucket, _a2, withRecursive)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // UploadFile provides a mock function with given fields: ctx, _a1, reader
