@@ -42,7 +42,7 @@ func (tc *textileClient) ShareFilesViaPublicKey(ctx context.Context, paths []dom
 			roles[tpk.String()] = buckets.Admin
 		}
 
-		sbc := NewSecureBucketsClient(tc.hb, pth.Bucket)
+		sbc := tc.getSecureBucketsClient(tc.hb)
 
 		err := sbc.PushPathAccessRoles(ctx, pth.BucketKey, pth.Path, roles)
 		if err != nil {
@@ -148,7 +148,7 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 			return nil, "", err
 		}
 
-		sbc := NewSecureBucketsClient(tc.hb, file.Bucket)
+		sbc := tc.getSecureBucketsClient(tc.hb)
 
 		f, err := sbc.ListPath(ctx, file.BucketKey, file.Path)
 		if err != nil {
@@ -242,7 +242,7 @@ func (tc *textileClient) GetPathAccessRoles(ctx context.Context, b Bucket, path 
 		return nil, err
 	}
 
-	sbc := NewSecureBucketsClient(tc.hb, bucketSlug)
+	sbc := tc.getSecureBucketsClient(tc.hb)
 
 	rs, err := sbc.PullPathAccessRoles(hubCtx, bucketKey, path)
 	if err != nil {
@@ -281,7 +281,7 @@ func (tc *textileClient) GetPathAccessRoles(ctx context.Context, b Bucket, path 
 // return true if file was shared
 // XXX: export this func?
 func (tc *textileClient) isSharedFile(ctx context.Context, bucket Bucket, path string) bool {
-	sbc := NewSecureBucketsClient(tc.hb, bucket.Slug())
+	sbc := tc.getSecureBucketsClient(tc.hb)
 
 	roles, err := sbc.PullPathAccessRoles(ctx, bucket.Key(), path)
 	if err != nil {

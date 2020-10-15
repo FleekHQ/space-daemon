@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/FleekHQ/space-daemon/config"
+	httpapi "github.com/ipfs/go-ipfs-http-client"
+	iface "github.com/ipfs/interface-go-ipfs-core"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	db "github.com/FleekHQ/space-daemon/core/store"
@@ -20,6 +22,7 @@ import (
 	synchronizer "github.com/FleekHQ/space-daemon/core/textile/sync"
 	"github.com/FleekHQ/space-daemon/core/util/address"
 	"github.com/FleekHQ/space-daemon/log"
+	ma "github.com/multiformats/go-multiaddr"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	nc "github.com/textileio/go-threads/net/api/client"
 	bucketsClient "github.com/textileio/textile/api/buckets/client"
@@ -60,6 +63,7 @@ type textileClient struct {
 	failedHealthchecks int
 	sync               synchronizer.Synchronizer
 	notifier           bucket.Notifier
+	ipfsClient         iface.CoreAPI
 }
 
 // Creates a new Textile Client
@@ -185,6 +189,17 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 		cmd.Fatal(err)
 	} else {
 		netc = n
+	}
+
+	multiAddr, err := ma.NewMultiaddr(cfg.GetString(config.Ipfsnodeaddr, "/ip4/127.0.0.1/tcp/5001"))
+	if err != nil {
+		cmd.Fatal(err)
+	}
+
+	if ic, err := httpapi.NewApi(multiAddr); err != nil {
+		cmd.Fatal(err)
+	} else {
+		tc.ipfsClient = ic
 	}
 
 	tc.bucketsClient = buckets
@@ -489,6 +504,10 @@ func (tc *textileClient) RemoveKeys() error {
 
 func (tc *textileClient) GetModel() model.Model {
 	return model.New(tc.store, tc.kc, tc.threads, tc.hubAuth)
+}
+
+func (tc *textileClient) getSecureBucketsClient(baseClient *bucketsClient.Client) *SecureBucketClient {
+	return NewSecureBucketsClient(baseClient, tc.bucketsClient, tc.kc, tc.store, tc.threads)
 }
 
 func (tc *textileClient) requiresHubConnection() error {

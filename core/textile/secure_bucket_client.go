@@ -5,9 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
 	"regexp"
 	"strings"
 
+	"github.com/FleekHQ/space-daemon/core/keychain"
+	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/core/textile/common"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
 
@@ -15,7 +19,10 @@ import (
 
 	"github.com/FleekHQ/space-daemon/core/textile/bucket/crypto"
 
+	iface "github.com/ipfs/interface-go-ipfs-core"
 	"github.com/ipfs/interface-go-ipfs-core/path"
+	threadsClient "github.com/textileio/go-threads/api/client"
+	"github.com/textileio/go-threads/core/thread"
 	bc "github.com/textileio/textile/api/buckets/client"
 	bucketsClient "github.com/textileio/textile/api/buckets/client"
 	bucketspb "github.com/textileio/textile/api/buckets/pb"
@@ -28,17 +35,29 @@ var textileRelPathRegex = regexp.MustCompile(`/ip[f|n]s/[^/]*(?P<relPath>/.*)`)
 // It encrypts data being pushed to the underlying textile client
 // and also decrypts response from the underlying textile client
 type SecureBucketClient struct {
-	client     *bucketsClient.Client
-	bucketSlug string
+	client      *bucketsClient.Client
+	cacheClient *bucketsClient.Client
+	kc          keychain.Keychain
+	st          store.Store
+	threads     *threadsClient.Client
+	ipfsClient  iface.CoreAPI
 }
 
 func NewSecureBucketsClient(
 	client *bucketsClient.Client,
-	bucketSlug string,
+	cacheClient *bucketsClient.Client,
+	kc keychain.Keychain,
+	st store.Store,
+	threads *threadsClient.Client,
+	ipfsClient iface.CoreAPI,
 ) *SecureBucketClient {
 	return &SecureBucketClient{
-		client:     client,
-		bucketSlug: bucketSlug,
+		client:      client,
+		cacheClient: cacheClient,
+		kc:          kc,
+		st:          st,
+		threads:     threads,
+		ipfsClient:  ipfsClient,
 	}
 }
 
@@ -107,7 +126,7 @@ func (s *SecureBucketClient) PullPath(ctx context.Context, key, path string, wri
 
 	go func() {
 		defer pipeWriter.Close()
-		if err := s.client.PullPath(ctx, key, encryptedPath, pipeWriter, opts...); err != nil {
+		if err := s.racePullFile(ctx, key, encryptedPath, pipeWriter, opts...); err != nil {
 			errs <- err
 		}
 	}()
@@ -125,7 +144,8 @@ func (s *SecureBucketClient) PullPath(ctx context.Context, key, path string, wri
 			return
 		}
 	}()
-	return <-errs
+	err = <-errs
+	return err
 }
 
 func (s *SecureBucketClient) overwriteDecryptedItem(ctx context.Context, item *bucketspb.PathItem) error {
@@ -244,4 +264,226 @@ func (s *SecureBucketClient) decryptPathData(
 // would later include logic to normalize paths from other operating systems like windows
 func cleanBucketPath(path string) string {
 	return strings.TrimPrefix(path, "/")
+}
+
+type pathPullingFn func(context.Context, string, string, io.Writer, ...bc.Option) (bool, error)
+
+type pullSuccessResponse struct {
+	file        *os.File
+	shouldCache bool
+}
+
+func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) error {
+	pullers := []pathPullingFn{s.pullFileFromLocal, s.pullFileFromClient, s.pullFileFromDAG}
+
+	pullSuccess := make(chan *pullSuccessResponse)
+	errc := make(chan error)
+	defer close(pullSuccess)
+
+	ctxWithCancel, cancelPulls := context.WithCancel(ctx)
+	pendingFns := len(pullers)
+	erroredFns := 0
+
+	for _, fn := range pullers {
+		f, err := ioutil.TempFile("", "*-"+encPath)
+		if err != nil {
+			cancelPulls()
+			return err
+		}
+		defer f.Close()
+		defer os.Remove(f.Name())
+
+		go func(fn pathPullingFn, f *os.File) {
+			shouldCache, err := fn(ctxWithCancel, key, encPath, f, opts...)
+			if err != nil {
+				errc <- err
+				return
+			}
+
+			chanRes := &pullSuccessResponse{
+				file:        f,
+				shouldCache: shouldCache,
+			}
+
+			pullSuccess <- chanRes
+			errc <- nil
+		}(fn, f)
+	}
+
+	var pullErr error
+
+	// Wait for either all pullers to fail or for one to succeed
+	go func() {
+		for {
+			select {
+			case err := <-errc:
+				pendingFns--
+
+				if err != nil {
+					erroredFns++
+					pullErr = err
+				}
+				if pendingFns <= 0 && erroredFns >= len(pullers) {
+					// All functions failed. Stop waiting
+					pullSuccess <- nil
+				}
+
+				if pendingFns <= 0 {
+					close(errc)
+					return
+				}
+			}
+		}
+	}()
+
+	pullResponse := <-pullSuccess
+	cancelPulls()
+
+	// Return error if all pull functions failed
+	if erroredFns >= len(pullers) || pullResponse == nil {
+		return pullErr
+	}
+
+	finalFile := pullResponse.file
+	shouldCache := pullResponse.shouldCache
+
+	// Copy pulled file to upstream writer
+	resErrc := make(chan error)
+	defer close(resErrc)
+	go func() {
+		from, err := os.Open(finalFile.Name())
+		if err != nil {
+			resErrc <- err
+			return
+		}
+		defer from.Close()
+
+		_, err = io.Copy(w, from)
+		resErrc <- err
+	}()
+
+	// Copy pulled file to local cache
+	cacheErrc := make(chan error)
+	defer close(cacheErrc)
+	go func() {
+		var err error
+		if s.cacheClient == nil || !shouldCache {
+			cacheErrc <- nil
+			return
+		}
+		from, err := os.Open(finalFile.Name())
+		if err != nil {
+			cacheErrc <- err
+			return
+		}
+		defer from.Close()
+
+		cacheCtx, _, err := s.getCacheBucketCtx(ctx)
+		if err != nil {
+			cacheErrc <- err
+			return
+		}
+
+		res, root, err := s.cacheClient.PushPath(cacheCtx, key, encPath, from, opts...)
+		log.Debug(res.Cid().String(), root.String())
+
+		cacheErrc <- err
+	}()
+
+	if err := <-resErrc; err != nil {
+		return err
+	}
+
+	if err := <-cacheErrc; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *SecureBucketClient) pullFileFromClient(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) (shouldCache bool, err error) {
+	shouldCache = true
+	if s.cacheClient == s.client {
+		// File already in local bucket
+		shouldCache = false
+	}
+
+	if err = s.client.PullPath(ctx, key, encPath, w, opts...); err != nil {
+		return false, err
+	}
+	return shouldCache, nil
+}
+
+var errNoLocalClient = errors.New("No cache client available")
+
+func (s *SecureBucketClient) pullFileFromLocal(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) (shouldCache bool, err error) {
+	shouldCache = false
+	if s.cacheClient == nil {
+		return false, errNoLocalClient
+	}
+
+	cacheCtx, _, err := s.getCacheBucketCtx(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	listPathRes, err := s.client.ListPath(ctx, key, encPath)
+	if err != nil {
+		return false, err
+	}
+
+	log.Debug(string(listPathRes.Item.Path))
+
+	listPathRes2, err := s.cacheClient.ListPath(cacheCtx, key, "")
+	if err != nil {
+		return false, err
+	}
+
+	log.Debug(string(listPathRes.Item.Path))
+	log.Debug(string(listPathRes2.Item.Path))
+
+	if err := s.cacheClient.PullPath(cacheCtx, key, encPath, w, opts...); err != nil {
+		return false, err
+	}
+	return shouldCache, nil
+}
+
+func (s *SecureBucketClient) pullFileFromDAG(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) (shouldCache bool, err error) {
+	shouldCache = true
+
+	if s.cacheClient == nil {
+		return false, errNoLocalClient
+	}
+
+	listPathRes, err := s.client.ListPath(ctx, key, encPath)
+	if err != nil {
+		return false, err
+	}
+
+	cacheCtx, _, err := s.getCacheBucketCtx(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	if err := s.cacheClient.PullIpfsPath(cacheCtx, path.New(listPathRes.Item.Cid), w, opts...); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+const cacheBucketThreadName = "cache_bucket"
+
+func (s *SecureBucketClient) getCacheBucketCtx(ctx context.Context) (context.Context, *thread.ID, error) {
+	dbID, err := utils.FindOrCreateDeterministicThreadID(ctx, utils.CacheBucketVariant, cacheBucketThreadName, s.kc, s.st, s.threads)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cacheCtx, err := utils.GetThreadContext(ctx, cacheBucketThreadName, *dbID, false, s.kc, nil, s.threads)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return cacheCtx, dbID, nil
 }

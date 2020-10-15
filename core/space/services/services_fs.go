@@ -297,15 +297,15 @@ func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (do
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
-	if filePath, exists := s.sync.GetOpenFilePath(b.Slug(), path); exists {
-		// sanity check in case file was deleted or moved
-		if PathExists(filePath) {
-			// return file handle
-			return domain.OpenFileInfo{
-				Location: filePath,
-			}, nil
-		}
-	}
+	// if filePath, exists := s.sync.GetOpenFilePath(b.Slug(), path); exists {
+	// 	// sanity check in case file was deleted or moved
+	// 	if PathExists(filePath) {
+	// 		// return file handle
+	// 		return domain.OpenFileInfo{
+	// 			Location: filePath,
+	// 		}, nil
+	// 	}
+	// }
 
 	// else, open new file on FS
 	filePath, err = s.openFileOnFs(ctx, path, b)

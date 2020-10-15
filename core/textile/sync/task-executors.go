@@ -80,14 +80,17 @@ func (s *synchronizer) processPinFile(ctx context.Context, task *Task) error {
 	bucket := task.Args[0]
 	path := task.Args[1]
 
-	err := s.uploadFileToRemote(ctx, bucket, path)
+	if err := s.uploadFileToRemote(ctx, bucket, path); err != nil {
+		return err
+	}
+
 	s.setMirrorFileBackup(ctx, path, bucket, false)
 
 	if s.eventNotifier != nil {
 		s.eventNotifier.SendFileEvent(events.NewFileEvent(path, bucket, events.FileBackupReady, nil))
 	}
 
-	return err
+	return nil
 }
 
 func (s *synchronizer) processUnpinFile(ctx context.Context, task *Task) error {

@@ -64,10 +64,7 @@ func (tc *textileClient) getBucket(ctx context.Context, slug string, remoteFile 
 	b := bucket.New(
 		root,
 		getContextFn,
-		NewSecureBucketsClient(
-			bucketsClient,
-			slug,
-		),
+		tc.getSecureBucketsClient(bucketsClient),
 	)
 
 	// Attach a notifier if the bucket is local
@@ -80,7 +77,7 @@ func (tc *textileClient) getBucket(ctx context.Context, slug string, remoteFile 
 }
 
 func (tc *textileClient) getBucketForMirror(ctx context.Context, slug string) (Bucket, error) {
-	root, getContextFn, newSlug, err := tc.getBucketRootForMirror(ctx, slug)
+	root, getContextFn, _, err := tc.getBucketRootForMirror(ctx, slug)
 	if err != nil {
 		return nil, err
 	}
@@ -88,10 +85,7 @@ func (tc *textileClient) getBucketForMirror(ctx context.Context, slug string) (B
 	b := bucket.New(
 		root,
 		getContextFn,
-		NewSecureBucketsClient(
-			tc.hb,
-			newSlug,
-		),
+		tc.getSecureBucketsClient(tc.hb),
 	)
 
 	return b, nil
@@ -202,10 +196,7 @@ func (tc *textileClient) getBucketRootFromReceivedFile(ctx context.Context, file
 		return nil, nil, err
 	}
 
-	sbs := NewSecureBucketsClient(
-		tc.hb,
-		receivedFile.Bucket,
-	)
+	sbs := tc.getSecureBucketsClient(tc.hb)
 
 	b, err := sbs.ListPath(remoteCtx, receivedFile.BucketKey, receivedFile.Path)
 
@@ -235,10 +226,7 @@ func (tc *textileClient) getBucketRootForMirror(ctx context.Context, slug string
 		return nil, nil, "", err
 	}
 
-	sbs := NewSecureBucketsClient(
-		tc.hb,
-		bucket.RemoteBucketSlug,
-	)
+	sbs := tc.getSecureBucketsClient(tc.hb)
 
 	b, err := sbs.ListPath(remoteCtx, bucket.RemoteBucketKey, "")
 
@@ -316,10 +304,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 	newB := bucket.New(
 		b.Root,
 		tc.getOrCreateBucketContext,
-		NewSecureBucketsClient(
-			tc.bucketsClient,
-			bucketSlug,
-		),
+		tc.getSecureBucketsClient(tc.bucketsClient),
 	)
 
 	return newB, nil
