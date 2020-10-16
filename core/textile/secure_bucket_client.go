@@ -277,7 +277,7 @@ type pullSuccessResponse struct {
 }
 
 func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) error {
-	pullers := []pathPullingFn{s.pullFileFromLocal, s.pullFileFromClient, s.pullFileFromDAG}
+	pullers := []pathPullingFn{s.pullFileFromLocal, s.pullFileFromClient, s.pullFileFromDHT}
 	// pullers := []pathPullingFn{s.pullFileFromLocal}
 
 	pullSuccess := make(chan *pullSuccessResponse)
@@ -463,7 +463,7 @@ func (s *SecureBucketClient) pullFileFromLocal(ctx context.Context, key, encPath
 	return shouldCache, nil
 }
 
-func (s *SecureBucketClient) pullFileFromDAG(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) (shouldCache bool, err error) {
+func (s *SecureBucketClient) pullFileFromDHT(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) (shouldCache bool, err error) {
 	shouldCache = true
 
 	// return shouldCache, nil
