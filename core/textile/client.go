@@ -191,7 +191,12 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 		netc = n
 	}
 
-	multiAddr, err := ma.NewMultiaddr(cfg.GetString(config.Ipfsnodeaddr, "/ip4/127.0.0.1/tcp/5001"))
+	ipfsNodeAddr := cfg.GetString(config.Ipfsnodeaddr, "/ip4/127.0.0.1/tcp/5001")
+	if ipfsNodeAddr == "" {
+		ipfsNodeAddr = "/ip4/127.0.0.1/tcp/5001"
+	}
+
+	multiAddr, err := ma.NewMultiaddr(ipfsNodeAddr)
 	if err != nil {
 		cmd.Fatal(err)
 	}
@@ -507,7 +512,8 @@ func (tc *textileClient) GetModel() model.Model {
 }
 
 func (tc *textileClient) getSecureBucketsClient(baseClient *bucketsClient.Client) *SecureBucketClient {
-	return NewSecureBucketsClient(baseClient, tc.bucketsClient, tc.kc, tc.store, tc.threads)
+	isRemote := baseClient == tc.hb
+	return NewSecureBucketsClient(baseClient, tc.kc, tc.store, tc.threads, tc.ipfsClient, isRemote)
 }
 
 func (tc *textileClient) requiresHubConnection() error {

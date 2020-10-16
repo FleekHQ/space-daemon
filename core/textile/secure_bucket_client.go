@@ -19,7 +19,10 @@ import (
 
 	"github.com/FleekHQ/space-daemon/core/textile/bucket/crypto"
 
+	"github.com/ipfs/go-cid"
+	ipfsfiles "github.com/ipfs/go-ipfs-files"
 	iface "github.com/ipfs/interface-go-ipfs-core"
+	"github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
@@ -35,29 +38,29 @@ var textileRelPathRegex = regexp.MustCompile(`/ip[f|n]s/[^/]*(?P<relPath>/.*)`)
 // It encrypts data being pushed to the underlying textile client
 // and also decrypts response from the underlying textile client
 type SecureBucketClient struct {
-	client      *bucketsClient.Client
-	cacheClient *bucketsClient.Client
-	kc          keychain.Keychain
-	st          store.Store
-	threads     *threadsClient.Client
-	ipfsClient  iface.CoreAPI
+	client     *bucketsClient.Client
+	kc         keychain.Keychain
+	st         store.Store
+	threads    *threadsClient.Client
+	ipfsClient iface.CoreAPI
+	isRemote   bool
 }
 
 func NewSecureBucketsClient(
 	client *bucketsClient.Client,
-	cacheClient *bucketsClient.Client,
 	kc keychain.Keychain,
 	st store.Store,
 	threads *threadsClient.Client,
 	ipfsClient iface.CoreAPI,
+	isRemote bool,
 ) *SecureBucketClient {
 	return &SecureBucketClient{
-		client:      client,
-		cacheClient: cacheClient,
-		kc:          kc,
-		st:          st,
-		threads:     threads,
-		ipfsClient:  ipfsClient,
+		client:     client,
+		kc:         kc,
+		st:         st,
+		threads:    threads,
+		ipfsClient: ipfsClient,
+		isRemote:   isRemote,
 	}
 }
 
@@ -275,6 +278,7 @@ type pullSuccessResponse struct {
 
 func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) error {
 	pullers := []pathPullingFn{s.pullFileFromLocal, s.pullFileFromClient, s.pullFileFromDAG}
+	// pullers := []pathPullingFn{s.pullFileFromLocal}
 
 	pullSuccess := make(chan *pullSuccessResponse)
 	errc := make(chan error)
@@ -367,7 +371,7 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 	defer close(cacheErrc)
 	go func() {
 		var err error
-		if s.cacheClient == nil || !shouldCache {
+		if !shouldCache {
 			cacheErrc <- nil
 			return
 		}
@@ -378,14 +382,20 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 		}
 		defer from.Close()
 
-		cacheCtx, _, err := s.getCacheBucketCtx(ctx)
+		p, err := s.ipfsClient.Unixfs().Add(
+			ctx,
+			ipfsfiles.NewReaderFile(from),
+			options.Unixfs.Pin(false), // Turn to true when we enable DHT discovery
+			options.Unixfs.Progress(false),
+			options.Unixfs.CidVersion(1),
+		)
 		if err != nil {
 			cacheErrc <- err
 			return
 		}
 
-		res, root, err := s.cacheClient.PushPath(cacheCtx, key, encPath, from, opts...)
-		log.Debug(res.Cid().String(), root.String())
+		cidBinary := p.Cid().Bytes()
+		err = s.st.Set(getFileCacheKey(encPath), cidBinary)
 
 		cacheErrc <- err
 	}()
@@ -401,9 +411,15 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 	return nil
 }
 
+const fileCachePrefix = "file_cache"
+
+func getFileCacheKey(encPath string) []byte {
+	return []byte(fileCachePrefix + ":" + encPath)
+}
+
 func (s *SecureBucketClient) pullFileFromClient(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) (shouldCache bool, err error) {
 	shouldCache = true
-	if s.cacheClient == s.client {
+	if s.isRemote == false {
 		// File already in local bucket
 		shouldCache = false
 	}
@@ -418,58 +434,40 @@ var errNoLocalClient = errors.New("No cache client available")
 
 func (s *SecureBucketClient) pullFileFromLocal(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) (shouldCache bool, err error) {
 	shouldCache = false
-	if s.cacheClient == nil {
-		return false, errNoLocalClient
+
+	cidBinary, err := s.st.Get(getFileCacheKey(encPath))
+	if cidBinary == nil || err != nil {
+		return false, errors.New("CID not stored in local cache")
 	}
 
-	cacheCtx, _, err := s.getCacheBucketCtx(ctx)
+	_, c, err := cid.CidFromBytes(cidBinary)
 	if err != nil {
 		return false, err
 	}
 
-	listPathRes, err := s.client.ListPath(ctx, key, encPath)
+	node, err := s.ipfsClient.Unixfs().Get(ctx, path.New(c.String()))
 	if err != nil {
 		return false, err
 	}
+	defer node.Close()
 
-	log.Debug(string(listPathRes.Item.Path))
+	file := ipfsfiles.ToFile(node)
+	if file == nil {
+		return false, errors.New("File is a directory")
+	}
 
-	listPathRes2, err := s.cacheClient.ListPath(cacheCtx, key, "")
-	if err != nil {
+	if _, err := io.Copy(w, file); err != nil {
 		return false, err
 	}
 
-	log.Debug(string(listPathRes.Item.Path))
-	log.Debug(string(listPathRes2.Item.Path))
-
-	if err := s.cacheClient.PullPath(cacheCtx, key, encPath, w, opts...); err != nil {
-		return false, err
-	}
 	return shouldCache, nil
 }
 
 func (s *SecureBucketClient) pullFileFromDAG(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) (shouldCache bool, err error) {
 	shouldCache = true
 
-	if s.cacheClient == nil {
-		return false, errNoLocalClient
-	}
-
-	listPathRes, err := s.client.ListPath(ctx, key, encPath)
-	if err != nil {
-		return false, err
-	}
-
-	cacheCtx, _, err := s.getCacheBucketCtx(ctx)
-	if err != nil {
-		return false, err
-	}
-
-	if err := s.cacheClient.PullIpfsPath(cacheCtx, path.New(listPathRes.Item.Cid), w, opts...); err != nil {
-		return false, err
-	}
-
-	return true, nil
+	// return shouldCache, nil
+	return false, errors.New("Not implemented")
 }
 
 const cacheBucketThreadName = "cache_bucket"

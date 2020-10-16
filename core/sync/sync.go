@@ -242,18 +242,18 @@ func getOpenFileReverseKey(bucketSlug string, bucketPath string) string {
 	return ReverseOpenFilesKeyPrefix + bucketSlug + ":" + bucketPath
 }
 
-func (bs *bucketSynchronizer) getOpenFileBucketSlugAndPath(localPath string) (string, string, bool) {
+func (bs *bucketSynchronizer) getOpenFileBucketSlugAndPath(localPath string) (domain.AddWatchFile, bool) {
 	var fi domain.AddWatchFile
 	var err error
 	if fi, err = bs.getOpenFileInfo(getOpenFileKey(localPath)); err != nil {
-		return "", "", false
+		return domain.AddWatchFile{}, false
 	}
 
 	if fi.BucketSlug == "" {
-		return "", "", false
+		return domain.AddWatchFile{}, false
 	}
 
-	return fi.BucketSlug, fi.BucketPath, true
+	return fi, true
 }
 
 // Helper function to set open file info in the store
@@ -265,7 +265,7 @@ func (bs *bucketSynchronizer) addFileInfoToStore(addFileInfo domain.AddWatchFile
 	if err := bs.store.SetString(getOpenFileKey(addFileInfo.LocalPath), string(out)); err != nil {
 		return err
 	}
-	reverseKey := getOpenFileReverseKey(addFileInfo.BucketKey, addFileInfo.BucketPath)
+	reverseKey := getOpenFileReverseKey(addFileInfo.BucketSlug, addFileInfo.BucketPath)
 	if err := bs.store.SetString(reverseKey, string(out)); err != nil {
 		return err
 	}
@@ -277,7 +277,7 @@ func (bs *bucketSynchronizer) removeFileInfo(addFileInfo domain.AddWatchFile) er
 	if err := bs.store.Remove([]byte(getOpenFileKey(addFileInfo.LocalPath))); err != nil {
 		return err
 	}
-	reverseKey := getOpenFileReverseKey(addFileInfo.BucketKey, addFileInfo.BucketPath)
+	reverseKey := getOpenFileReverseKey(addFileInfo.BucketSlug, addFileInfo.BucketPath)
 	if err := bs.store.Remove([]byte(reverseKey)); err != nil {
 		return err
 	}

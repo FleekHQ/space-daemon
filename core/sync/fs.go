@@ -7,6 +7,7 @@ import (
 
 	ipfspath "github.com/ipfs/interface-go-ipfs-core/path"
 
+	"github.com/FleekHQ/space-daemon/core/textile"
 	"github.com/FleekHQ/space-daemon/log"
 )
 
@@ -22,12 +23,15 @@ func (h *watcherHandler) OnCreate(ctx context.Context, path string, fileInfo os.
 	var newRoot ipfspath.Path
 	var err error
 
-	bucketSlug, bucketPath, exists := h.bs.getOpenFileBucketSlugAndPath(path)
+	watchInfo, exists := h.bs.getOpenFileBucketSlugAndPath(path)
 	if !exists {
 		msg := fmt.Sprintf("error: could not find path %s", path)
 		log.Error(msg, fmt.Errorf(msg))
 		return
 	}
+
+	bucketSlug := watchInfo.BucketSlug
+	bucketPath := watchInfo.BucketPath
 
 	b, err := h.bs.textileClient.GetBucket(ctx, bucketSlug, nil)
 	if err != nil {
@@ -93,12 +97,14 @@ func (h *watcherHandler) OnRemove(ctx context.Context, path string, fileInfo os.
 	log.Info("FS Handler: OnRemove", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileName:%s", fileInfo.Name()))
 	// TODO: Also synchronizer lock check here
 
-	bucketSlug, bucketPath, exists := h.bs.getOpenFileBucketSlugAndPath(path)
+	watchInfo, exists := h.bs.getOpenFileBucketSlugAndPath(path)
 	if !exists {
 		msg := fmt.Sprintf("error: could not find path %s", path)
 		log.Error(msg, fmt.Errorf(msg))
 		return
 	}
+	bucketSlug := watchInfo.BucketSlug
+	bucketPath := watchInfo.BucketPath
 
 	b, err := h.bs.textileClient.GetBucket(ctx, bucketSlug, nil)
 	if err != nil {
@@ -125,14 +131,28 @@ func (h *watcherHandler) OnRemove(ctx context.Context, path string, fileInfo os.
 func (h *watcherHandler) OnWrite(ctx context.Context, path string, fileInfo os.FileInfo) {
 	log.Info("FS Handler: OnWrite", fmt.Sprintf("path:%s", path), fmt.Sprintf("fileName:%s", fileInfo.Name()))
 
-	bucketSlug, bucketPath, exists := h.bs.getOpenFileBucketSlugAndPath(path)
+	watchInfo, exists := h.bs.getOpenFileBucketSlugAndPath(path)
 	if !exists {
 		msg := fmt.Sprintf("error: could not find path %s", path)
 		log.Error(msg, fmt.Errorf(msg))
 		return
 	}
 
-	b, err := h.bs.textileClient.GetBucket(ctx, bucketSlug, nil)
+	var b textile.Bucket
+	var err error
+	bucketSlug := watchInfo.BucketSlug
+	bucketPath := watchInfo.BucketPath
+
+	if watchInfo.IsRemote {
+		b, err = h.bs.textileClient.GetBucket(ctx, bucketSlug, &textile.GetBucketForRemoteFileInput{
+			Bucket: bucketSlug,
+			DbID:   watchInfo.DbId,
+			Path:   watchInfo.BucketPath,
+		})
+	} else {
+		b, err = h.bs.textileClient.GetBucket(ctx, bucketSlug, nil)
+	}
+
 	if err != nil {
 		msg := fmt.Sprintf("error: could not find bucket with slug %s", bucketSlug)
 		log.Error(msg, fmt.Errorf(msg))
