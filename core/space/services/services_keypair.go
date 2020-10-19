@@ -77,12 +77,12 @@ func (s *Space) DeleteKeypair(ctx context.Context) error {
 		return err
 	}
 
-	if err := s.keychain.DeleteKeypair(); err != nil {
+	// Tell the textile client to stop operations
+	if err := s.tc.RemoveKeys(ctx); err != nil {
 		return err
 	}
 
-	// Tell the textile client to stop operations
-	if err := s.tc.RemoveKeys(); err != nil {
+	if err := s.keychain.DeleteKeypair(); err != nil {
 		return err
 	}
 

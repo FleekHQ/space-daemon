@@ -18,6 +18,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/model"
 	"github.com/FleekHQ/space-daemon/core/textile/notifier"
 	synchronizer "github.com/FleekHQ/space-daemon/core/textile/sync"
+	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/core/util/address"
 	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
@@ -471,7 +472,7 @@ func (tc *textileClient) healthcheck(ctx context.Context) {
 	}
 }
 
-func (tc *textileClient) RemoveKeys() error {
+func (tc *textileClient) RemoveKeys(ctx context.Context) error {
 	if err := tc.hubAuth.ClearCache(); err != nil {
 		return err
 	}
@@ -483,6 +484,16 @@ func (tc *textileClient) RemoveKeys() error {
 	tc.isInitialized = false
 	tc.isConnectedToHub = false
 	tc.keypairDeleted <- true
+
+	metathreadID, err := utils.NewDeterministicThreadID(tc.kc, utils.MetathreadThreadVariant)
+	if err != nil {
+		return err
+	}
+
+	err = tc.threads.DeleteDB(ctx, metathreadID)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

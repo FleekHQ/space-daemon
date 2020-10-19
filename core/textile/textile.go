@@ -57,7 +57,7 @@ type Client interface {
 	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey, keys [][]byte) error
 	AcceptSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
 	RejectSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
-	RemoveKeys() error
+	RemoveKeys(ctx context.Context) error
 	AttachMailboxNotifier(notif GrpcMailboxNotifier)
 	AttachSynchronizerNotifier(notif sync.EventNotifier)
 	GetReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*domain.SharedDirEntry, string, error)
