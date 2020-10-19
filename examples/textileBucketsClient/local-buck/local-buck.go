@@ -10,10 +10,10 @@ import (
 	tc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 	nc "github.com/textileio/go-threads/net/api/client"
-	bc "github.com/textileio/textile/api/buckets/client"
-	"github.com/textileio/textile/api/common"
-	"github.com/textileio/textile/cmd"
-	"github.com/textileio/textile/core"
+	bc "github.com/textileio/textile/v2/api/buckets/client"
+	"github.com/textileio/textile/v2/api/common"
+	"github.com/textileio/textile/v2/cmd"
+	"github.com/textileio/textile/v2/core"
 	"google.golang.org/grpc"
 )
 

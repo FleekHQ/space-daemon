@@ -7,9 +7,9 @@ import (
 
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/textileio/go-threads/core/thread"
-	bucketsClient "github.com/textileio/textile/api/buckets/client"
-	bucketsproto "github.com/textileio/textile/api/buckets/pb"
-	"github.com/textileio/textile/buckets"
+	bucketsClient "github.com/textileio/textile/v2/api/buckets/client"
+	bucketsproto "github.com/textileio/textile/v2/api/buckets/pb"
+	"github.com/textileio/textile/v2/buckets"
 )
 
 type BucketData struct {

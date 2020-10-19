@@ -11,8 +11,8 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
-	bucketsClient "github.com/textileio/textile/api/buckets/client"
-	"github.com/textileio/textile/buckets"
+	bucketsClient "github.com/textileio/textile/v2/api/buckets/client"
+	"github.com/textileio/textile/v2/buckets"
 )
 
 const mirrorThreadKeyName = "mirrorV1"
