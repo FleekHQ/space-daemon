@@ -2,8 +2,9 @@ package services
 
 import (
 	"context"
+	"errors"
+	"time"
 
-	"github.com/FleekHQ/space-daemon/core/ipfs"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/vault"
 
@@ -25,7 +26,6 @@ type Space struct {
 	keychain keychain.Keychain
 	vault    vault.Vault
 	hub      hub.HubAuth
-	ic       ipfs.Client
 }
 
 type Syncer interface {
@@ -58,7 +58,6 @@ func NewSpace(
 	kc keychain.Keychain,
 	v vault.Vault,
 	h hub.HubAuth,
-	ic ipfs.Client,
 ) *Space {
 	return &Space{
 		store:    st,
@@ -69,6 +68,46 @@ func NewSpace(
 		keychain: kc,
 		vault:    v,
 		hub:      h,
-		ic:       ic,
 	}
+}
+
+var textileClientInitTimeout = time.Second * 60
+var textileClientHubTimeout = time.Second * 60 * 3
+
+// Waits for textile client to be initialized before returning.
+func (s *Space) waitForTextileInit(ctx context.Context) error {
+	if s.tc.IsInitialized() {
+		return nil
+	}
+
+	select {
+	case <-time.After(textileClientInitTimeout):
+		return errors.New("textile client not initialized in expected time")
+	case <-s.tc.WaitForInitialized():
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+// Waits for textile client to be healthy (initialized and connected to hub) before returning.
+// If it exceeds the max amount of retries, it returns an error.
+func (s *Space) waitForTextileHub(ctx context.Context) error {
+	if s.tc.IsHealthy() {
+		return nil
+	}
+
+	select {
+	case err := <-s.tc.WaitForHealthy():
+		// This returns error if there were 3 failed attempts to connect
+		if err != nil {
+			return err
+		}
+		return nil
+	case <-time.After(textileClientHubTimeout):
+		return errors.New("textile client not initialized in expected time")
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
 }

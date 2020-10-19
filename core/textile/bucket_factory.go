@@ -15,38 +15,82 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/alecthomas/jsonschema"
-	textileApiClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
-	bc "github.com/textileio/textile/api/buckets/client"
-	buckets_pb "github.com/textileio/textile/api/buckets/pb"
-	"github.com/textileio/textile/cmd"
-	tdb "github.com/textileio/textile/threaddb"
+	bc "github.com/textileio/textile/v2/api/buckets/client"
+	buckets_pb "github.com/textileio/textile/v2/api/buckets/pb"
+	"github.com/textileio/textile/v2/cmd"
+	tdb "github.com/textileio/textile/v2/threaddb"
 )
 
 func NotFound(slug string) error {
 	return errors.New(fmt.Sprintf("bucket %s not found", slug))
 }
 
-func (tc *textileClient) GetBucket(ctx context.Context, slug string) (Bucket, error) {
+type GetBucketForRemoteFileInput struct {
+	Path   string
+	DbID   string
+	Bucket string
+}
+
+// Gets a wrapped bucket
+// remoteFile is optional. Include if looking for wrappers for remote buckets (mainly used for received files)
+func (tc *textileClient) GetBucket(ctx context.Context, slug string, remoteFile *GetBucketForRemoteFileInput) (Bucket, error) {
 	if err := tc.requiresRunning(); err != nil {
 		return nil, err
 	}
 
-	return tc.getBucket(ctx, slug)
+	return tc.getBucket(ctx, slug, remoteFile)
 }
 
-func (tc *textileClient) getBucket(ctx context.Context, slug string) (Bucket, error) {
-	ctx, root, err := tc.getBucketRootFromSlug(ctx, slug)
+// Gets a wrapped bucket
+// remoteFile is optional. Include if looking for wrappers for remote buckets (mainly used for received files)
+func (tc *textileClient) getBucket(ctx context.Context, slug string, remoteFile *GetBucketForRemoteFileInput) (Bucket, error) {
+	var root *buckets_pb.Root
+	getContextFn := tc.getOrCreateBucketContext
+	bucketsClient := tc.bucketsClient
+	var err error
+
+	if remoteFile == nil {
+		_, root, err = tc.getBucketRootFromSlug(ctx, slug)
+	} else {
+		root, getContextFn, err = tc.getBucketRootFromReceivedFile(ctx, remoteFile)
+		bucketsClient = tc.hb
+	}
 	if err != nil {
 		return nil, err
 	}
+
 	b := bucket.New(
 		root,
-		tc.getOrCreateBucketContext,
+		getContextFn,
 		NewSecureBucketsClient(
-			tc.bucketsClient,
+			bucketsClient,
 			slug,
+		),
+	)
+
+	// Attach a notifier if the bucket is local
+	// So that local ops can be synced to the remote node
+	if remoteFile == nil && tc.notifier != nil {
+		b.AttachNotifier(tc.notifier)
+	}
+
+	return b, nil
+}
+
+func (tc *textileClient) getBucketForMirror(ctx context.Context, slug string) (Bucket, error) {
+	root, getContextFn, newSlug, err := tc.getBucketRootForMirror(ctx, slug)
+	if err != nil {
+		return nil, err
+	}
+
+	b := bucket.New(
+		root,
+		getContextFn,
+		NewSecureBucketsClient(
+			tc.hb,
+			newSlug,
 		),
 	)
 
@@ -54,18 +98,16 @@ func (tc *textileClient) getBucket(ctx context.Context, slug string) (Bucket, er
 }
 
 func (tc *textileClient) GetDefaultBucket(ctx context.Context) (Bucket, error) {
-	return tc.GetBucket(ctx, defaultPersonalBucketSlug)
+	return tc.GetBucket(ctx, defaultPersonalBucketSlug, nil)
 }
 
 func (tc *textileClient) getBucketContext(ctx context.Context, sDbID string, bucketSlug string, ishub bool, enckey []byte) (context.Context, *thread.ID, error) {
-	log.Debug("getBucketContext: Getting bucket context with dbid:" + sDbID)
-
 	dbID, err := utils.ParseDbIDFromString(sDbID)
 	if err != nil {
 		log.Error("Error casting thread id", err)
 		return nil, nil, err
 	}
-	ctx, err = utils.GetThreadContext(ctx, bucketSlug, *dbID, ishub, tc.kc, tc.hubAuth)
+	ctx, err = utils.GetThreadContext(ctx, bucketSlug, *dbID, ishub, tc.kc, tc.hubAuth, nil)
 
 	if err != nil {
 		return nil, nil, err
@@ -78,9 +120,6 @@ func (tc *textileClient) getBucketContext(ctx context.Context, sDbID string, buc
 
 // Returns a context that works for accessing a bucket
 func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlug string) (context.Context, *thread.ID, error) {
-	log.Debug("getOrCreateBucketContext: Getting bucket context")
-
-	log.Debug("getOrCreateBucketContext: Fetching thread id from meta store")
 	m := tc.GetModel()
 	bucketSchema, notFoundErr := m.FindBucket(ctx, bucketSlug)
 
@@ -103,6 +142,7 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 	if err := tc.threads.NewDB(ctx, dbID); err != nil {
 		return nil, nil, err
 	}
+
 	log.Debug("getOrCreateBucketContext: Thread DB Created")
 	bucketSchema, err := m.CreateBucket(ctx, bucketSlug, utils.CastDbIDToString(dbID))
 	if err != nil {
@@ -113,7 +153,6 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 	if err != nil {
 		return nil, nil, err
 	}
-	log.Debug("getOrCreateBucketContext: Returning bucket context")
 
 	return bucketCtx, &dbID, err
 }
@@ -134,7 +173,11 @@ func (tc *textileClient) listBuckets(ctx context.Context) ([]Bucket, error) {
 
 	result := make([]Bucket, 0)
 	for _, b := range bucketList {
-		bucketObj, err := tc.getBucket(ctx, b.Slug)
+		// Skip listing the mirror bucket
+		if b.Slug == defaultPersonalMirrorBucketSlug {
+			continue
+		}
+		bucketObj, err := tc.getBucket(ctx, b.Slug, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -142,6 +185,72 @@ func (tc *textileClient) listBuckets(ctx context.Context) ([]Bucket, error) {
 	}
 
 	return result, nil
+}
+
+func (tc *textileClient) getBucketRootFromReceivedFile(ctx context.Context, file *GetBucketForRemoteFileInput) (*buckets_pb.Root, bucket.GetBucketContextFn, error) {
+	receivedFile, err := tc.GetModel().FindReceivedFile(ctx, file.DbID, file.Bucket, file.Path)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	getCtxFn := func(ctx context.Context, slug string) (context.Context, *thread.ID, error) {
+		return tc.getBucketContext(ctx, receivedFile.DbID, receivedFile.Bucket, true, receivedFile.EncryptionKey)
+	}
+
+	remoteCtx, _, err := getCtxFn(ctx, receivedFile.Bucket)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	sbs := NewSecureBucketsClient(
+		tc.hb,
+		receivedFile.Bucket,
+	)
+
+	b, err := sbs.ListPath(remoteCtx, receivedFile.BucketKey, receivedFile.Path)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if b != nil {
+		return b.GetRoot(), getCtxFn, nil
+	}
+
+	return nil, nil, NotFound(receivedFile.Bucket)
+}
+
+func (tc *textileClient) getBucketRootForMirror(ctx context.Context, slug string) (*buckets_pb.Root, bucket.GetBucketContextFn, string, error) {
+	bucket, err := tc.GetModel().FindBucket(ctx, slug)
+	if err != nil {
+		return nil, nil, "", err
+	}
+
+	getCtxFn := func(ctx context.Context, slug string) (context.Context, *thread.ID, error) {
+		return tc.getBucketContext(ctx, bucket.RemoteDbID, bucket.RemoteBucketSlug, true, bucket.EncryptionKey)
+	}
+
+	remoteCtx, _, err := getCtxFn(ctx, bucket.RemoteBucketSlug)
+	if err != nil {
+		return nil, nil, "", err
+	}
+
+	sbs := NewSecureBucketsClient(
+		tc.hb,
+		bucket.RemoteBucketSlug,
+	)
+
+	b, err := sbs.ListPath(remoteCtx, bucket.RemoteBucketKey, "")
+
+	if err != nil {
+		return nil, nil, "", err
+	}
+
+	if b != nil {
+		return b.GetRoot(), getCtxFn, bucket.RemoteBucketSlug, nil
+	}
+
+	return nil, nil, "", NotFound(bucket.RemoteBucketSlug)
 }
 
 func (tc *textileClient) getBucketRootFromSlug(ctx context.Context, slug string) (context.Context, *buckets_pb.Root, error) {
@@ -178,12 +287,8 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 	var err error
 	m := tc.GetModel()
 
-	if b, _ := tc.getBucket(ctx, bucketSlug); b != nil {
+	if b, _ := tc.getBucket(ctx, bucketSlug, nil); b != nil {
 		return b, nil
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	ctx, dbID, err := tc.getOrCreateBucketContext(ctx, bucketSlug)
@@ -194,29 +299,19 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 
 	log.Debug("Creating Bucket in db " + dbID.String())
 	// create bucket
-	b, err := tc.bucketsClient.Init(ctx, bc.WithName(bucketSlug), bc.WithPrivate(true))
+	b, err := tc.bucketsClient.Create(ctx, bc.WithName(bucketSlug), bc.WithPrivate(true))
 	if err != nil {
 		return nil, err
 	}
 
 	// We store the bucket in a meta thread so that we can later fetch a list of all buckets
 	log.Debug("Bucket " + bucketSlug + " created. Storing metadata.")
-	schema, err := m.CreateBucket(ctx, bucketSlug, dbID.String())
+	schema, err := m.CreateBucket(ctx, bucketSlug, utils.CastDbIDToString(*dbID))
 	if err != nil {
 		return nil, err
 	}
 
-	mirrorSchema, err := tc.createMirrorBucket(ctx, *schema)
-	if err != nil {
-		return nil, err
-	}
-
-	if mirrorSchema != nil {
-		_, err = m.CreateMirrorBucket(ctx, bucketSlug, mirrorSchema)
-		if err != nil {
-			return nil, err
-		}
-	}
+	tc.sync.NotifyBucketCreated(schema.Slug, schema.EncryptionKey)
 
 	newB := bucket.New(
 		b.Root,
@@ -230,9 +325,8 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 	return newB, nil
 }
 
-func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*textileApiClient.DBInfo, error) {
+func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*db.Info, error) {
 	bs, err := tc.GetModel().FindBucket(ctx, bucketSlug)
-
 	if err != nil {
 		return nil, err
 	}
@@ -240,15 +334,19 @@ func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*t
 	dbID, err := utils.ParseDbIDFromString(bs.DbID)
 	b, err := tc.threads.GetDBInfo(ctx, *dbID)
 
-	// replicate with the hub
+	// replicate to the hub
 	hubma := tc.cfg.GetString(config.TextileHubMa, "")
+	if hubma == "" {
+		return nil, fmt.Errorf("no textile hub set")
+	}
+
 	if _, err := tc.netc.AddReplicator(ctx, *dbID, cmd.AddrFromStr(hubma)); err != nil {
 		log.Error("Unable to replicate on the hub: ", err)
 		// proceeding still because local/public IP
 		// addresses could be used to join thread
 	}
 
-	return b, err
+	return &b, err
 }
 
 func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address string, key thread.Key, bucketSlug string) error {
@@ -323,6 +421,12 @@ func (tc *textileClient) ToggleBucketBackup(ctx context.Context, bucketSlug stri
 		return false, err
 	}
 
+	if bucketSchema.Backup {
+		tc.sync.NotifyBucketBackupOn(bucketSlug)
+	} else {
+		tc.sync.NotifyBucketBackupOff(bucketSlug)
+	}
+
 	return bucketSchema.Backup, nil
 }
 
@@ -333,4 +437,12 @@ func (tc *textileClient) IsBucketBackup(ctx context.Context, bucketSlug string) 
 	}
 
 	return bucketSchema.Backup
+}
+
+func GetDefaultBucketSlug() string {
+	return defaultPersonalBucketSlug
+}
+
+func GetDefaultMirrorBucketSlug() string {
+	return defaultPersonalMirrorBucketSlug
 }

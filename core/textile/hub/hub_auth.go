@@ -6,6 +6,7 @@ import (
 	b64 "encoding/base64"
 	"encoding/json"
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/FleekHQ/space-daemon/config"
@@ -15,7 +16,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	mbase "github.com/multiformats/go-multibase"
 	"github.com/textileio/go-threads/core/thread"
-	"github.com/textileio/textile/api/common"
+	"github.com/textileio/textile/v2/api/common"
 	"golang.org/x/net/websocket"
 )
 
@@ -67,16 +68,18 @@ type HubAuth interface {
 }
 
 type hub struct {
-	st  store.Store
-	kc  keychain.Keychain
-	cfg config.Config
+	st               store.Store
+	kc               keychain.Keychain
+	cfg              config.Config
+	fetchTokensMutex *sync.Mutex
 }
 
 func New(st store.Store, kc keychain.Keychain, cfg config.Config) *hub {
 	return &hub{
-		st:  st,
-		kc:  kc,
-		cfg: cfg,
+		st:               st,
+		kc:               kc,
+		cfg:              cfg,
+		fetchTokensMutex: &sync.Mutex{},
 	}
 }
 
@@ -229,6 +232,8 @@ func (h *hub) getTokensThroughChallenge(ctx context.Context) (*inMessageTokenVal
 }
 
 func (h *hub) GetTokensWithCache(ctx context.Context) (*AuthTokens, error) {
+	h.fetchTokensMutex.Lock()
+	defer h.fetchTokensMutex.Unlock()
 	if tokensInStore, _ := h.retrieveTokens(); tokensInStore != nil {
 		return &AuthTokens{
 			HubToken: tokensInStore.Token,

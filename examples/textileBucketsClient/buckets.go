@@ -28,11 +28,11 @@ import (
 	netapiclient "github.com/textileio/go-threads/net/api/client"
 	netpb "github.com/textileio/go-threads/net/api/pb"
 	"github.com/textileio/go-threads/util"
-	bc "github.com/textileio/textile/api/buckets/client"
-	pb "github.com/textileio/textile/api/buckets/pb"
-	"github.com/textileio/textile/api/common"
-	uc "github.com/textileio/textile/api/users/client"
-	"github.com/textileio/textile/cmd"
+	bc "github.com/textileio/textile/v2/api/buckets/client"
+	pb "github.com/textileio/textile/v2/api/buckets/pb"
+	"github.com/textileio/textile/v2/api/common"
+	uc "github.com/textileio/textile/v2/api/users/client"
+	"github.com/textileio/textile/v2/cmd"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -182,7 +182,7 @@ type Bucket struct {
 	UpdatedAt int64 `json:"updated_at"`
 }
 
-func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, netclient *netapiclient.Client, user string, bucketSlug string) *pb.InitReply {
+func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, netclient *netapiclient.Client, user string, bucketSlug string) *pb.CreateResponse {
 	// only needed for hub connections
 
 	key := os.Getenv("TXL_USER_KEY")
@@ -263,8 +263,8 @@ func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, netclien
 
 	ctx = common.NewThreadIDContext(ctx, dbID)
 	// create bucket
-	buck, err := buckets.Init(ctx, bc.WithName(bucketSlug), bc.WithPrivate(true))
-	buckets.Init(ctx, bc.WithName(bucketSlug+"2"), bc.WithPrivate(true))
+	buck, err := buckets.Create(ctx, bc.WithName(bucketSlug), bc.WithPrivate(true))
+	buckets.Create(ctx, bc.WithName(bucketSlug+"2"), bc.WithPrivate(true))
 
 	log.Println("finished creating bucket")
 
@@ -323,7 +323,7 @@ func initUser(threads *tc.Client, buckets *bc.Client, users *uc.Client, netclien
 
 	go func() {
 		time.Sleep(time.Second)
-		buckets.Init(ctx, bc.WithName(bucketSlug+"3"), bc.WithPrivate(true))
+		buckets.Create(ctx, bc.WithName(bucketSlug+"3"), bc.WithPrivate(true))
 	}()
 
 	// a separete go routine that keeps checking if msgs are there

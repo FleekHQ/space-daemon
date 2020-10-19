@@ -140,7 +140,7 @@ func (a *App) Start(ctx context.Context) error {
 		a.cfg,
 		kc,
 		v,
-		hub.New(appStore, kc, a.cfg),
+		hubAuth,
 		space.WithEnv(a.env),
 	)
 	if svErr != nil {
@@ -148,7 +148,11 @@ func (a *App) Start(ctx context.Context) error {
 	}
 
 	// setup FUSE FS Handler
-	sfs, err := spacefs.New(fsds.NewSpaceFSDataSource(sv))
+	sfs, err := spacefs.New(fsds.NewSpaceFSDataSource(
+		sv,
+		fsds.WithFilesDataSources(sv),
+		fsds.WithSharedWithMeDataSources(sv),
+	))
 	if err != nil {
 		log.Error("Failed to create space FUSE data source", err)
 		return err
@@ -174,6 +178,7 @@ func (a *App) Start(ctx context.Context) error {
 	)
 
 	textileClient.AttachMailboxNotifier(srv)
+	textileClient.AttachSynchronizerNotifier(srv)
 	err = a.RunAsync("BucketSync", bucketSync, func() error {
 		bucketSync.RegisterNotifier(srv)
 		return bucketSync.Start(ctx)

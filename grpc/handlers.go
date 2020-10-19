@@ -15,7 +15,7 @@ var errNotImplemented = errors.New("Not implemented")
 
 func (srv *grpcServer) sendFileEvent(event *pb.FileEventResponse) {
 	if srv.fileEventStream != nil {
-		log.Info("sending events to client")
+		log.Info("sending events to client", event.String())
 		srv.fileEventStream.Send(event)
 	}
 }
@@ -49,15 +49,33 @@ func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDire
 	dirEntries := make([]*pb.ListDirectoryEntry, 0)
 
 	for _, e := range entries {
+		members := make([]*pb.FileMember, 0)
+
+		for _, m := range e.Members {
+			members = append(members, &pb.FileMember{
+				Address:   m.Address,
+				PublicKey: m.PublicKey,
+			})
+		}
+
+		var backupCount = 0
+		if e.BackedUp {
+			backupCount = 1
+		}
+
 		dirEntry := &pb.ListDirectoryEntry{
-			Path:          e.Path,
-			IsDir:         e.IsDir,
-			Name:          e.Name,
-			SizeInBytes:   e.SizeInBytes,
-			Created:       e.Created,
-			Updated:       e.Updated,
-			FileExtension: e.FileExtension,
-			IpfsHash:      e.IpfsHash,
+			Path:               e.Path,
+			IsDir:              e.IsDir,
+			Name:               e.Name,
+			SizeInBytes:        e.SizeInBytes,
+			Created:            e.Created,
+			Updated:            e.Updated,
+			FileExtension:      e.FileExtension,
+			IpfsHash:           e.IpfsHash,
+			Members:            members,
+			IsLocallyAvailable: e.LocallyAvailable,
+			BackupCount:        int64(backupCount),
+			IsBackupInProgress: e.BackupInProgress,
 		}
 		dirEntries = append(dirEntries, dirEntry)
 	}
@@ -81,15 +99,33 @@ func (srv *grpcServer) ListDirectory(
 	dirEntries := make([]*pb.ListDirectoryEntry, 0)
 
 	for _, e := range entries {
+		members := make([]*pb.FileMember, 0)
+
+		for _, m := range e.Members {
+			members = append(members, &pb.FileMember{
+				Address:   m.Address,
+				PublicKey: m.PublicKey,
+			})
+		}
+
+		var backupCount = 0
+		if e.BackedUp {
+			backupCount = 1
+		}
+
 		dirEntry := &pb.ListDirectoryEntry{
-			Path:          e.Path,
-			IsDir:         e.IsDir,
-			Name:          e.Name,
-			SizeInBytes:   e.SizeInBytes,
-			Created:       e.Created,
-			Updated:       e.Updated,
-			FileExtension: e.FileExtension,
-			IpfsHash:      e.IpfsHash,
+			Path:               e.Path,
+			IsDir:              e.IsDir,
+			Name:               e.Name,
+			SizeInBytes:        e.SizeInBytes,
+			Created:            e.Created,
+			Updated:            e.Updated,
+			FileExtension:      e.FileExtension,
+			IpfsHash:           e.IpfsHash,
+			Members:            members,
+			BackupCount:        int64(backupCount),
+			IsLocallyAvailable: e.LocallyAvailable,
+			IsBackupInProgress: e.BackupInProgress,
 		}
 		dirEntries = append(dirEntries, dirEntry)
 	}
@@ -153,7 +189,7 @@ func (srv *grpcServer) registerTxlStream(stream pb.SpaceApi_TxlSubscribeServer) 
 }
 
 func (srv *grpcServer) OpenFile(ctx context.Context, request *pb.OpenFileRequest) (*pb.OpenFileResponse, error) {
-	fi, err := srv.sv.OpenFile(ctx, request.Path, request.Bucket)
+	fi, err := srv.sv.OpenFile(ctx, request.Path, request.Bucket, request.DbId)
 	if err != nil {
 		return nil, err
 	}

@@ -24,6 +24,7 @@ type VFS struct {
 	ctx             context.Context
 	fsOps           spacefs.FSOps
 	mountConnection *fuse.Conn
+	mountPath       string
 }
 
 // NewVFileSystem creates a new Virtual FileSystem object
@@ -52,6 +53,7 @@ func (vfs *VFS) Mount(mountPath, fsName string) error {
 		return err
 	}
 
+	vfs.mountPath = mountPath
 	vfs.mountConnection = c
 	return nil
 }
@@ -78,6 +80,8 @@ func (vfs *VFS) Serve() error {
 		return err
 	}
 
+	// reset mount connection
+	vfs.mountConnection = nil
 	return nil
 }
 
@@ -88,6 +92,11 @@ func (vfs *VFS) Unmount() error {
 	}
 
 	err := vfs.mountConnection.Close()
+	if err != nil {
+		return err
+	}
+
+	err = fuse.Unmount(vfs.mountPath)
 	if err != nil {
 		return err
 	}
@@ -109,8 +118,6 @@ func (vfs *VFS) Root() (fs.Node, error) {
 		log.Error("VFS.Root() error", err)
 		return nil, err
 	}
-
-	log.Printf("Root Dir: %+v", rootDir)
 
 	node := &VFSDir{
 		vfs:    vfs,

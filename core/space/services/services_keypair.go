@@ -26,8 +26,11 @@ func (s *Space) GenerateKeyPair(ctx context.Context, useForce bool) (string, err
 
 func (s *Space) RestoreKeyPairFromMnemonic(ctx context.Context, mnemonic string) error {
 	_, err := s.keychain.GenerateKeyFromMnemonic(keychain.WithMnemonic(mnemonic), keychain.WithOverride())
+	if err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }
 
 func (s *Space) GetPublicKey(ctx context.Context) (string, error) {
@@ -69,12 +72,22 @@ func (s *Space) GetMnemonic(ctx context.Context) (string, error) {
 }
 
 func (s *Space) DeleteKeypair(ctx context.Context) error {
+	err := s.waitForTextileInit(ctx)
+	if err != nil {
+		return err
+	}
+
 	if err := s.keychain.DeleteKeypair(); err != nil {
 		return err
 	}
 
 	// Tell the textile client to stop operations
 	if err := s.tc.RemoveKeys(); err != nil {
+		return err
+	}
+
+	// Clear badger store
+	if err := s.store.DropAll(); err != nil {
 		return err
 	}
 

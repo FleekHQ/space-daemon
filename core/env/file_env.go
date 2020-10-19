@@ -1,10 +1,11 @@
 package env
 
 import (
-	"github.com/joho/godotenv"
 	syslog "log"
 	"os"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 type spaceEnv struct {

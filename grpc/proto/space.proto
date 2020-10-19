@@ -357,6 +357,7 @@ message ListDirectoryEntry {
   bool isLocallyAvailable = 9;
   int64 backupCount = 10;
   repeated FileMember members = 11;
+  bool isBackupInProgress = 12;
 }
 
 message SharedListDirectoryEntry {
@@ -398,6 +399,7 @@ message Bucket {
   repeated BucketMember members = 6;
   bool isPersonalBucket = 7;
   bool isBackupEnabled = 8;
+  int32 itemsCount = 9;
 }
 
 message CreateBucketResponse {
@@ -444,6 +446,7 @@ message TextileEventResponse {
 message OpenFileRequest {
   string path = 1;
   string bucket = 2;
+  string dbId = 3; // optional field to specify shared with me file
 }
 
 message OpenFileResponse {
@@ -578,8 +581,10 @@ message ListBucketsResponse {
 }
 
 enum NotificationType {
-  INVITATION = 0;
-  USAGEALERT = 1;
+  UNKNOWN = 0;
+  INVITATION = 1;
+  USAGEALERT = 2;
+  INVITATION_REPLY = 3;
 }
 
 enum InvitationStatus {
@@ -601,6 +606,10 @@ message UsageAlert {
   string message = 3;
 }
 
+message InvitationAccept {
+  string invitationID = 2;
+}
+
 message Notification {
   string ID = 1; // underlying message id from textile
   string subject = 2;
@@ -608,10 +617,11 @@ message Notification {
   oneof relatedObject {
     Invitation invitationValue = 4;
     UsageAlert usageAlert = 5;
+    InvitationAccept invitationAccept = 6;
   }
-  NotificationType type = 6;
-  int64 createdAt = 7;
-  int64 readAt = 8;
+  NotificationType type = 7;
+  int64 createdAt = 8;
+  int64 readAt = 9;
 }
 
 message HandleFilesInvitationRequest {

@@ -4,8 +4,9 @@ package libfuse
 
 import (
 	"context"
-	"io"
 	"log"
+	"os"
+	"syscall"
 
 	"github.com/FleekHQ/space-daemon/core/spacefs"
 
@@ -14,6 +15,7 @@ import (
 )
 
 var _ fs.Node = (*VFSFile)(nil)
+var _ = fs.NodeAccesser(&VFSFile{})
 var _ = fs.NodeOpener(&VFSFile{})
 var _ = fs.HandleReader(&VFSFileHandler{})
 var _ = fs.HandleWriter(&VFSFileHandler{})
@@ -53,6 +55,41 @@ func (vfile *VFSFile) Attr(ctx context.Context, attr *fuse.Attr) error {
 	return nil
 }
 
+// Access implements the fs.NodeAccesser interface for File. This is necessary
+// for macOS to correctly identify plaintext files as plaintext. If not
+// implemented, bazil-fuse returns a nil error for every call, so when macOS
+// checks for executable bit using Access (instead of Attr!), it gets a
+// success, which makes it think the file is executable, yielding a "Unix
+// executable" UTI.
+func (vfile *VFSFile) Access(ctx context.Context, r *fuse.AccessRequest) (err error) {
+	if int(r.Uid) != os.Getuid() &&
+		// Finder likes to use UID 0 for some operations. osxfuse already allows
+		// ACCESS and GETXATTR requests from root to go through. This allows root
+		// in ACCESS handler.
+		int(r.Uid) != 0 {
+		// short path: not accessible by anybody other than root or the current user
+		return syscall.EPERM
+	}
+
+	if r.Mask&03 == 0 {
+		// Since we only check for w and x bits, we can return nil early here.
+		return nil
+	}
+
+	// check is executable mask enable
+	if r.Mask&01 != 0 {
+		_, err := vfile.fileOps.Attribute()
+		if err != nil {
+			return err
+		}
+		// for now always return permission error for executable calls
+		// we are not supporting executable at the moment
+		return syscall.EPERM
+	}
+
+	return nil
+}
+
 // Open create a handle responsible for reading the file and also closing the file after reading
 func (vfile *VFSFile) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fs.Handle, error) {
 	log.Printf("Opening content of file %s", vfile.fileOps.Path())
@@ -81,14 +118,8 @@ func NewVFSFileHandler(ctx context.Context, vfile *VFSFile) (*VFSFileHandler, er
 // Ideally, decryption of the content of the file should be happening here
 func (vfh *VFSFileHandler) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) error {
 	log.Printf("Reading content of file %s, and size: %d", vfh.path, req.Size)
-	_, err := vfh.readWriteOps.Seek(req.Offset, io.SeekStart)
-	if err != nil {
-		log.Printf("Seeking to %d error: %s", req.Offset, err.Error())
-		return err
-	}
-
 	buf := make([]byte, req.Size)
-	n, err := vfh.readWriteOps.Read(buf)
+	n, err := vfh.readWriteOps.Read(ctx, buf, req.Offset)
 	if err != nil {
 		log.Printf("Reading error: %s", err.Error())
 		return err
@@ -102,14 +133,9 @@ func (vfh *VFSFileHandler) Read(ctx context.Context, req *fuse.ReadRequest, resp
 // Ideally, encryption of the content of the file should be happening here
 func (vfh *VFSFileHandler) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) error {
 	log.Printf("Writing content to file %s", vfh.path)
-	_, err := vfh.readWriteOps.Seek(req.Offset, io.SeekStart)
+	n, err := vfh.readWriteOps.Write(ctx, req.Data, req.Offset)
 	if err != nil {
-
-		return err
-	}
-
-	n, err := vfh.readWriteOps.Write(req.Data)
-	if err != nil {
+		log.Printf("Writing error: %s", err.Error())
 		return err
 	}
 
@@ -119,5 +145,5 @@ func (vfh *VFSFileHandler) Write(ctx context.Context, req *fuse.WriteRequest, re
 
 // Release closes the reader on this file handler
 func (vfh *VFSFileHandler) Release(ctx context.Context, req *fuse.ReleaseRequest) error {
-	return vfh.readWriteOps.Close()
+	return vfh.readWriteOps.Close(ctx)
 }

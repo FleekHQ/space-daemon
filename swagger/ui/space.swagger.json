@@ -1440,6 +1440,10 @@
         "isBackupEnabled": {
           "type": "boolean",
           "format": "boolean"
+        },
+        "itemsCount": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -1758,6 +1762,14 @@
         }
       }
     },
+    "spaceInvitationAccept": {
+      "type": "object",
+      "properties": {
+        "invitationID": {
+          "type": "string"
+        }
+      }
+    },
     "spaceInvitationStatus": {
       "type": "string",
       "enum": [
@@ -1850,6 +1862,10 @@
           "items": {
             "$ref": "#/definitions/spaceFileMember"
           }
+        },
+        "isBackupInProgress": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },
@@ -1882,6 +1898,9 @@
         "usageAlert": {
           "$ref": "#/definitions/spaceUsageAlert"
         },
+        "invitationAccept": {
+          "$ref": "#/definitions/spaceInvitationAccept"
+        },
         "type": {
           "$ref": "#/definitions/spaceNotificationType"
         },
@@ -1906,10 +1925,12 @@
     "spaceNotificationType": {
       "type": "string",
       "enum": [
+        "UNKNOWN",
         "INVITATION",
-        "USAGEALERT"
+        "USAGEALERT",
+        "INVITATION_REPLY"
       ],
-      "default": "INVITATION"
+      "default": "UNKNOWN"
     },
     "spaceOpenFileRequest": {
       "type": "object",
@@ -1918,6 +1939,9 @@
           "type": "string"
         },
         "bucket": {
+          "type": "string"
+        },
+        "dbId": {
           "type": "string"
         }
       }

@@ -24,6 +24,7 @@ const (
 	TextileHubTarget     = "TXL_HUB_TARGET"
 	TextileHubMa         = "TXL_HUB_MA"
 	TextileThreadsTarget = "TXL_THREADS_TARGET"
+	TextileHubGatewayUrl = "TXL_HUB_GATEWAY_URL"
 	TextileUserKey       = "TXL_USER_KEY"
 	TextileUserSecret    = "TXL_USER_SECRET"
 )

@@ -1,8 +1,10 @@
 package services
 
 import (
-	"github.com/FleekHQ/space-daemon/log"
+	"io"
 	"os"
+
+	"github.com/FleekHQ/space-daemon/log"
 )
 
 func PathExists(path string) bool {
@@ -41,4 +43,23 @@ func RemoveDuplicates(elements []string) []string {
 	}
 	// Return the new slice.
 	return result
+}
+
+// Reader that also counts the amount of Bytes read from the wrappeed reader
+type CountingReader struct {
+	reader    io.Reader
+	BytesRead int64
+}
+
+func NewCountingReader(reader io.Reader) *CountingReader {
+	return &CountingReader{
+		reader:    reader,
+		BytesRead: 0,
+	}
+}
+
+func (r *CountingReader) Read(b []byte) (int, error) {
+	n, err := r.reader.Read(b)
+	r.BytesRead += int64(n)
+	return n, err
 }
