@@ -17,7 +17,7 @@ import (
 	tc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
-	"github.com/textileio/textile/api/common"
+	"github.com/textileio/textile/v2/api/common"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -201,7 +201,8 @@ func FindOrCreateDeterministicThreadID(ctx context.Context, variant Deterministi
 		return nil, err
 	}
 
-	if err := threads.NewDB(threadCtx, dbID, db.WithNewManagedThreadKey(managedKey)); err != nil {
+	err = threads.NewDB(threadCtx, dbID, db.WithNewManagedThreadKey(managedKey))
+	if err != nil && err.Error() != "rpc error: code = Unknown desc = db already exists" {
 		return nil, err
 	}
 
