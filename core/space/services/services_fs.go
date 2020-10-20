@@ -298,7 +298,7 @@ func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (do
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
-	if filePath, exists := s.sync.GetOpenFilePath(b.Slug(), path); exists {
+	if filePath, exists := s.sync.GetOpenFilePath(b.Slug(), path, dbID); exists {
 		// sanity check in case file was deleted or moved
 		if PathExists(filePath) {
 			// return file handle

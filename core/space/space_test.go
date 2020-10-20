@@ -323,7 +323,7 @@ func TestService_OpenFile(t *testing.T) {
 		getDir().dir,
 	)
 
-	mockSync.On("GetOpenFilePath", testKey, testPath).Return(
+	mockSync.On("GetOpenFilePath", testKey, testPath, mock.Anything).Return(
 		"",
 		false,
 	)

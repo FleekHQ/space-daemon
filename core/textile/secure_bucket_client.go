@@ -278,7 +278,6 @@ type pullSuccessResponse struct {
 
 func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) error {
 	pullers := []pathPullingFn{s.pullFileFromLocal, s.pullFileFromClient, s.pullFileFromDHT}
-	// pullers := []pathPullingFn{s.pullFileFromLocal}
 
 	pullSuccess := make(chan *pullSuccessResponse)
 	errc := make(chan error)
