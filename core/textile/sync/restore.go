@@ -16,6 +16,11 @@ func (s *synchronizer) restoreBucket(ctx context.Context, bucketSlug string) err
 		return err
 	}
 
+	mirrorBucket, err := s.getMirrorBucket(ctx, bucketSlug)
+	if err != nil {
+		return err
+	}
+
 	dir, err := bucket.ListDirectory(ctx, "")
 	if err != nil {
 		log.Error("Error in ListDir", err)
@@ -34,7 +39,16 @@ func (s *synchronizer) restoreBucket(ctx context.Context, bucketSlug string) err
 	}
 
 	for _, m := range mirrorFiles {
-		if err = s.downloadFileFromRemote(ctx, m.BucketSlug, m.Path); err != nil {
+		exists, err := bucket.FileExists(ctx, m.Path)
+		if err != nil {
+			log.Error("Error checking if file exists", err)
+			return err
+		}
+		if exists {
+			continue
+		}
+
+		if err = s.downloadFile(ctx, mirrorBucket, bucket, m.Path); err != nil {
 			log.Error("Error downloading file", err)
 			return err
 		}

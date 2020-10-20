@@ -312,6 +312,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 	}
 
 	tc.sync.NotifyBucketCreated(schema.Slug, schema.EncryptionKey)
+	tc.sync.NotifyBucketRestore(bucketSlug)
 
 	newB := bucket.New(
 		b.Root,
@@ -423,6 +424,7 @@ func (tc *textileClient) ToggleBucketBackup(ctx context.Context, bucketSlug stri
 
 	if bucketSchema.Backup {
 		tc.sync.NotifyBucketBackupOn(bucketSlug)
+		tc.sync.NotifyBucketRestore(bucketSlug)
 	} else {
 		tc.sync.NotifyBucketBackupOff(bucketSlug)
 	}

@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
 )
@@ -54,16 +55,7 @@ func (s *synchronizer) uploadFileToRemote(ctx context.Context, bucket, path stri
 	return nil
 }
 
-func (s *synchronizer) downloadFileFromRemote(ctx context.Context, bucketSlug, path string) error {
-	mirrorBucket, err := s.getMirrorBucket(ctx, bucketSlug)
-	if err != nil {
-		return err
-	}
-
-	localBucket, err := s.getBucket(ctx, bucketSlug)
-	if err != nil {
-		return err
-	}
+func (s *synchronizer) downloadFile(ctx context.Context, sourceBucket, targetBucket bucket.BucketInterface, path string) error {
 
 	pipeReader, pipeWriter := io.Pipe()
 	defer pipeReader.Close()
@@ -74,14 +66,14 @@ func (s *synchronizer) downloadFileFromRemote(ctx context.Context, bucketSlug, p
 		defer close(errc)
 		defer pipeWriter.Close()
 
-		if err := mirrorBucket.GetFile(ctx, path, pipeWriter); err != nil {
+		if err := sourceBucket.GetFile(ctx, path, pipeWriter); err != nil {
 			errc <- err
 		}
 
 		errc <- nil
 	}()
 
-	if _, _, err := localBucket.DownloadFile(ctx, path, pipeReader); err != nil {
+	if _, _, err := targetBucket.UploadFile(ctx, path, pipeReader); err != nil {
 		return err
 	}
 
@@ -89,7 +81,7 @@ func (s *synchronizer) downloadFileFromRemote(ctx context.Context, bucketSlug, p
 		return err
 	}
 
-	if err := s.addCurrentUserAsFileOwner(ctx, bucketSlug, path); err != nil {
+	if err := s.addCurrentUserAsFileOwner(ctx, targetBucket.Slug(), path); err != nil {
 		// not returning since we dont want to halt the whole process
 		// also acl will still work since they are the owner
 		// of the thread so this is more for showing members view
