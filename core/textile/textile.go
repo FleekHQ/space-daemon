@@ -24,6 +24,7 @@ const (
 	hubTarget                       = "127.0.0.1:3006"
 	threadsTarget                   = "127.0.0.1:3006"
 	defaultPersonalBucketSlug       = "personal"
+	defaultCacheBucketSlug          = "personal_cache"
 	defaultPersonalMirrorBucketSlug = "personal_mirror"
 	defaultPublicShareBucketSlug    = "personal_public"
 )

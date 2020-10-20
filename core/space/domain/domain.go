@@ -64,6 +64,7 @@ type AddWatchFile struct {
 	BucketPath string `json:"bucket_path"`
 	BucketKey  string `json:"bucket_key"`
 	BucketSlug string `json:"bucket_slug"`
+	IsRemote   bool   `json:"isRemote"`
 }
 
 type Identity struct {

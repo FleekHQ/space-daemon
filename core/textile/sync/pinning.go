@@ -31,6 +31,7 @@ func (s *synchronizer) uploadFileToRemote(ctx context.Context, bucket, path stri
 
 		if err := localBucket.GetFile(ctx, path, pipeWriter); err != nil {
 			errc <- err
+			return
 		}
 
 		errc <- nil
