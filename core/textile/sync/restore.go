@@ -48,7 +48,7 @@ func (s *synchronizer) restoreBucket(ctx context.Context, bucketSlug string) err
 			continue
 		}
 
-		if err = s.downloadFile(ctx, mirrorBucket, bucket, m.Path); err != nil {
+		if err = s.uploadFileToRemoteBucket(ctx, mirrorBucket, bucket, m.Path); err != nil {
 			log.Error("Error downloading file", err)
 			return err
 		}

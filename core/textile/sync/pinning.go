@@ -11,7 +11,7 @@ import (
 )
 
 func (s *synchronizer) uploadFileToRemote(ctx context.Context, bucket, path string) error {
-	mirror, err := s.getMirrorBucket(ctx, bucket)
+	mirrorBucket, err := s.getMirrorBucket(ctx, bucket)
 	if err != nil {
 		return err
 	}
@@ -21,41 +21,10 @@ func (s *synchronizer) uploadFileToRemote(ctx context.Context, bucket, path stri
 		return err
 	}
 
-	pipeReader, pipeWriter := io.Pipe()
-	defer pipeReader.Close()
-
-	errc := make(chan error, 1)
-	// go routine for piping
-	go func() {
-		defer close(errc)
-		defer pipeWriter.Close()
-
-		if err := localBucket.GetFile(ctx, path, pipeWriter); err != nil {
-			errc <- err
-		}
-
-		errc <- nil
-	}()
-
-	if _, _, err = mirror.UploadFile(ctx, path, pipeReader); err != nil {
-		return err
-	}
-
-	if err := <-errc; err != nil {
-		return err
-	}
-
-	if err := s.addCurrentUserAsFileOwner(ctx, bucket, path); err != nil {
-		// not returning since we dont want to halt the whole process
-		// also acl will still work since they are the owner
-		// of the thread so this is more for showing members view
-		log.Error("Unable to push path access roles for owner", err)
-	}
-
-	return nil
+	return s.uploadFileToRemoteBucket(ctx, localBucket, mirrorBucket, path)
 }
 
-func (s *synchronizer) downloadFile(ctx context.Context, sourceBucket, targetBucket bucket.BucketInterface, path string) error {
+func (s *synchronizer) uploadFileToRemoteBucket(ctx context.Context, sourceBucket, targetBucket bucket.BucketInterface, path string) error {
 
 	pipeReader, pipeWriter := io.Pipe()
 	defer pipeReader.Close()
