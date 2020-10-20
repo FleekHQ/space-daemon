@@ -19,7 +19,7 @@ import (
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 	nc "github.com/textileio/go-threads/net/api/client"
-	bucketsClient "github.com/textileio/textile/api/buckets/client"
+	bucketsClient "github.com/textileio/textile/v2/api/buckets/client"
 )
 
 type GetMirrorBucketFn func(ctx context.Context, slug string) (bucket.BucketInterface, error)

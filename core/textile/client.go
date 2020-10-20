@@ -20,16 +20,17 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/model"
 	"github.com/FleekHQ/space-daemon/core/textile/notifier"
 	synchronizer "github.com/FleekHQ/space-daemon/core/textile/sync"
+	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/core/util/address"
 	"github.com/FleekHQ/space-daemon/log"
 	ma "github.com/multiformats/go-multiaddr"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	nc "github.com/textileio/go-threads/net/api/client"
-	bucketsClient "github.com/textileio/textile/api/buckets/client"
-	"github.com/textileio/textile/api/common"
-	uc "github.com/textileio/textile/api/users/client"
-	"github.com/textileio/textile/cmd"
-	mail "github.com/textileio/textile/mail/local"
+	bucketsClient "github.com/textileio/textile/v2/api/buckets/client"
+	"github.com/textileio/textile/v2/api/common"
+	uc "github.com/textileio/textile/v2/api/users/client"
+	"github.com/textileio/textile/v2/cmd"
+	mail "github.com/textileio/textile/v2/mail/local"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -491,7 +492,7 @@ func (tc *textileClient) healthcheck(ctx context.Context) {
 	}
 }
 
-func (tc *textileClient) RemoveKeys() error {
+func (tc *textileClient) RemoveKeys(ctx context.Context) error {
 	if err := tc.hubAuth.ClearCache(); err != nil {
 		return err
 	}
@@ -503,6 +504,16 @@ func (tc *textileClient) RemoveKeys() error {
 	tc.isInitialized = false
 	tc.isConnectedToHub = false
 	tc.keypairDeleted <- true
+
+	metathreadID, err := utils.NewDeterministicThreadID(tc.kc, utils.MetathreadThreadVariant)
+	if err != nil {
+		return err
+	}
+
+	err = tc.threads.DeleteDB(ctx, metathreadID)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -3,12 +3,12 @@
 package mocks
 
 import (
-	client "github.com/textileio/textile/api/users/client"
-	cmd "github.com/textileio/textile/cmd"
+	client "github.com/textileio/textile/v2/api/users/client"
+	cmd "github.com/textileio/textile/v2/cmd"
 
 	context "context"
 
-	local "github.com/textileio/textile/mail/local"
+	local "github.com/textileio/textile/v2/mail/local"
 
 	mock "github.com/stretchr/testify/mock"
 

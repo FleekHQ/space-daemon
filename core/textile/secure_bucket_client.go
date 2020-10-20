@@ -26,10 +26,10 @@ import (
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
-	bc "github.com/textileio/textile/api/buckets/client"
-	bucketsClient "github.com/textileio/textile/api/buckets/client"
-	bucketspb "github.com/textileio/textile/api/buckets/pb"
-	"github.com/textileio/textile/buckets"
+	bc "github.com/textileio/textile/v2/api/buckets/client"
+	bucketsClient "github.com/textileio/textile/v2/api/buckets/client"
+	bucketspb "github.com/textileio/textile/v2/api/buckets/pb"
+	"github.com/textileio/textile/v2/buckets"
 )
 
 var textileRelPathRegex = regexp.MustCompile(`/ip[f|n]s/[^/]*(?P<relPath>/.*)`)

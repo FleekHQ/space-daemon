@@ -6,7 +6,7 @@ import (
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/textileio/go-threads/core/thread"
-	"github.com/textileio/textile/cmd"
+	"github.com/textileio/textile/v2/cmd"
 )
 
 // replicate a local thread on the hub

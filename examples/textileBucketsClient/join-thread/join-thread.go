@@ -10,9 +10,9 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	tc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
-	"github.com/textileio/textile/api/common"
-	"github.com/textileio/textile/cmd"
-	"github.com/textileio/textile/core"
+	"github.com/textileio/textile/v2/api/common"
+	"github.com/textileio/textile/v2/cmd"
+	"github.com/textileio/textile/v2/core"
 	"google.golang.org/grpc"
 )
 

@@ -14,8 +14,8 @@ import (
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/textileio/go-threads/db"
 
-	buckets_pb "github.com/textileio/textile/api/buckets/pb"
-	"github.com/textileio/textile/api/users/client"
+	buckets_pb "github.com/textileio/textile/v2/api/buckets/pb"
+	"github.com/textileio/textile/v2/api/users/client"
 
 	threadsClient "github.com/textileio/go-threads/api/client"
 )
@@ -58,7 +58,7 @@ type Client interface {
 	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey, keys [][]byte) error
 	AcceptSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
 	RejectSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
-	RemoveKeys() error
+	RemoveKeys(ctx context.Context) error
 	AttachMailboxNotifier(notif GrpcMailboxNotifier)
 	AttachSynchronizerNotifier(notif sync.EventNotifier)
 	GetReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*domain.SharedDirEntry, string, error)

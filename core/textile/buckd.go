@@ -10,8 +10,8 @@ import (
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/log"
-	"github.com/textileio/textile/cmd"
-	"github.com/textileio/textile/core"
+	"github.com/textileio/textile/v2/cmd"
+	"github.com/textileio/textile/v2/core"
 )
 
 var IpfsAddr string
