@@ -26,7 +26,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/vault"
 	"github.com/FleekHQ/space-daemon/mocks"
 	"github.com/stretchr/testify/assert"
-	buckets_pb "github.com/textileio/textile/api/buckets/pb"
+	buckets_pb "github.com/textileio/textile/v2/api/buckets/pb"
 )
 
 var (
@@ -273,7 +273,7 @@ func TestService_ListDirs(t *testing.T) {
 		nil,
 	)
 
-	res, err := sv.ListDirs(context.Background(), "", "")
+	res, err := sv.ListDirs(context.Background(), "", "", true)
 
 	assert.Nil(t, err)
 	assert.NotEmpty(t, res)

@@ -41,7 +41,9 @@ func (srv *grpcServer) SendTextileEvent(event events.TextileEvent) {
 
 func (srv *grpcServer) ListDirectories(ctx context.Context, request *pb.ListDirectoriesRequest) (*pb.ListDirectoriesResponse, error) {
 	bucketName := request.Bucket
-	entries, err := srv.sv.ListDirs(ctx, "", bucketName)
+	listMembers := !request.OmitMembers
+
+	entries, err := srv.sv.ListDirs(ctx, "", bucketName, listMembers)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +94,9 @@ func (srv *grpcServer) ListDirectory(
 	ctx context.Context,
 	request *pb.ListDirectoryRequest,
 ) (*pb.ListDirectoryResponse, error) {
-	entries, err := srv.sv.ListDir(ctx, request.GetPath(), request.GetBucket())
+	listMembers := !request.OmitMembers
+
+	entries, err := srv.sv.ListDir(ctx, request.GetPath(), request.GetBucket(), listMembers)
 	if err != nil {
 		return nil, err
 	}

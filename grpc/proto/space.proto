@@ -351,6 +351,7 @@ message BucketBackupRestoreResponse {}
 
 message ListDirectoriesRequest {
   string bucket = 1;
+  bool omitMembers = 2;
 }
 
 message FileMember {
@@ -387,6 +388,7 @@ message ListDirectoriesResponse {
 message ListDirectoryRequest {
   string path = 1;
   string bucket = 2;
+  bool omitMembers = 3;
 }
 
 message ListDirectoryResponse {

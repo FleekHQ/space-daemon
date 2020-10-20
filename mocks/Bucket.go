@@ -97,38 +97,6 @@ func (_m *Bucket) DirExists(ctx context.Context, _a1 string) (bool, error) {
 	return r0, r1
 }
 
-// DownloadFile provides a mock function with given fields: ctx, _a1, reader
-func (_m *Bucket) DownloadFile(ctx context.Context, _a1 string, reader io.Reader) (path.Resolved, path.Path, error) {
-	ret := _m.Called(ctx, _a1, reader)
-
-	var r0 path.Resolved
-	if rf, ok := ret.Get(0).(func(context.Context, string, io.Reader) path.Resolved); ok {
-		r0 = rf(ctx, _a1, reader)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(path.Resolved)
-		}
-	}
-
-	var r1 path.Path
-	if rf, ok := ret.Get(1).(func(context.Context, string, io.Reader) path.Path); ok {
-		r1 = rf(ctx, _a1, reader)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(path.Path)
-		}
-	}
-
-	var r2 error
-	if rf, ok := ret.Get(2).(func(context.Context, string, io.Reader) error); ok {
-		r2 = rf(ctx, _a1, reader)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
-}
-
 // FileExists provides a mock function with given fields: ctx, _a1
 func (_m *Bucket) FileExists(ctx context.Context, _a1 string) (bool, error) {
 	ret := _m.Called(ctx, _a1)

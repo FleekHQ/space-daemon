@@ -14,9 +14,9 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/textileio/go-threads/core/thread"
-	"github.com/textileio/textile/api/users/client"
-	"github.com/textileio/textile/cmd"
-	mail "github.com/textileio/textile/mail/local"
+	"github.com/textileio/textile/v2/api/users/client"
+	"github.com/textileio/textile/v2/cmd"
+	mail "github.com/textileio/textile/v2/mail/local"
 )
 
 type GrpcMailboxNotifier interface {

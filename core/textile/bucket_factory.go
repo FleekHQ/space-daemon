@@ -17,10 +17,10 @@ import (
 	"github.com/alecthomas/jsonschema"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
-	bc "github.com/textileio/textile/api/buckets/client"
-	buckets_pb "github.com/textileio/textile/api/buckets/pb"
-	"github.com/textileio/textile/cmd"
-	tdb "github.com/textileio/textile/threaddb"
+	bc "github.com/textileio/textile/v2/api/buckets/client"
+	buckets_pb "github.com/textileio/textile/v2/api/buckets/pb"
+	"github.com/textileio/textile/v2/cmd"
+	tdb "github.com/textileio/textile/v2/threaddb"
 )
 
 func NotFound(slug string) error {

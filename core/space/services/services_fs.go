@@ -167,6 +167,7 @@ func (s *Space) listDirAtPath(
 	b textile.Bucket,
 	path string,
 	listSubfolderContent bool,
+	listMembers bool,
 ) ([]domain.FileInfo, error) {
 	dir, err := b.ListDirectory(ctx, path)
 	if err != nil {
@@ -201,9 +202,13 @@ func (s *Space) listDirAtPath(
 			relPath = item.Path
 		}
 
-		members, err := s.tc.GetPathAccessRoles(ctx, b, item.Path)
-		if err != nil {
-			return nil, err
+		members := []domain.Member{}
+
+		if listMembers {
+			members, err = s.tc.GetPathAccessRoles(ctx, b, item.Path)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		backedup := false
@@ -241,7 +246,7 @@ func (s *Space) listDirAtPath(
 		entries = append(entries, entry)
 
 		if item.IsDir && listSubfolderContent {
-			newEntries, err := s.listDirAtPath(ctx, b, path+"/"+item.Name, true)
+			newEntries, err := s.listDirAtPath(ctx, b, path+"/"+item.Name, true, listMembers)
 			if err != nil {
 				return nil, err
 			}
@@ -253,7 +258,7 @@ func (s *Space) listDirAtPath(
 }
 
 // ListDir returns children entries at path in a bucket
-func (s *Space) ListDir(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error) {
+func (s *Space) ListDir(ctx context.Context, path string, bucketName string, listMembers bool) ([]domain.FileInfo, error) {
 	err := s.waitForTextileInit(ctx)
 	if err != nil {
 		return nil, err
@@ -268,12 +273,12 @@ func (s *Space) ListDir(ctx context.Context, path string, bucketName string) ([]
 		return nil, errors.New("Could not find buckets")
 	}
 
-	return s.listDirAtPath(ctx, b, path, false)
+	return s.listDirAtPath(ctx, b, path, false, listMembers)
 }
 
 // ListDirs lists all children entries at path in a bucket
 // Unlike ListDir, it includes all subfolders children recursively
-func (s *Space) ListDirs(ctx context.Context, path string, bucketName string) ([]domain.FileInfo, error) {
+func (s *Space) ListDirs(ctx context.Context, path string, bucketName string, listMembers bool) ([]domain.FileInfo, error) {
 	err := s.waitForTextileInit(ctx)
 	if err != nil {
 		return nil, err
@@ -284,7 +289,7 @@ func (s *Space) ListDirs(ctx context.Context, path string, bucketName string) ([
 		return nil, err
 	}
 
-	return s.listDirAtPath(ctx, b, path, true)
+	return s.listDirAtPath(ctx, b, path, true, listMembers)
 }
 
 // Copies a file inside a bucket into a temp, unencrypted version of the file in the local file system
