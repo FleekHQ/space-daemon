@@ -27,14 +27,23 @@ type Model interface {
 	BucketBackupToggle(ctx context.Context, bucketSlug string, backup bool) (*BucketSchema, error)
 	FindBucket(ctx context.Context, bucketSlug string) (*BucketSchema, error)
 	ListBuckets(ctx context.Context) ([]*BucketSchema, error)
-	CreateReceivedFile(
+	CreateReceivedFileViaInvitation(
 		ctx context.Context,
 		file domain.FullPath,
 		invitationId string,
 		accepted bool,
 		key []byte,
 	) (*ReceivedFileSchema, error)
+	CreateReceivedFileViaPublicLink(
+		ctx context.Context,
+		ipfsHash string,
+		password string,
+		filename string,
+		filesize string,
+		accepted bool,
+	) (*ReceivedFileSchema, error)
 	FindReceivedFile(ctx context.Context, remoteDbID, bucket, path string) (*ReceivedFileSchema, error)
+	FindPublicLinkReceivedFile(ctx context.Context, ipfsHash string) (*ReceivedFileSchema, error)
 	CreateSharedPublicKey(ctx context.Context, pubKey string) (*SharedPublicKeySchema, error)
 	ListSharedPublicKeys(ctx context.Context) ([]*SharedPublicKeySchema, error)
 	CreateMirrorBucket(ctx context.Context, bucketSlug string, mirrorBucket *MirrorBucketSchema) (*BucketSchema, error)
@@ -42,6 +51,7 @@ type Model interface {
 	CreateMirrorFile(ctx context.Context, mirrorFile *domain.MirrorFile) (*MirrorFileSchema, error)
 	UpdateMirrorFile(ctx context.Context, mirrorFile *MirrorFileSchema) (*MirrorFileSchema, error)
 	ListReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*ReceivedFileSchema, error)
+	ListReceivedPublicFiles(ctx context.Context, cidHash string, accepted bool) ([]*ReceivedFileSchema, error)
 	FindMirrorFileByPaths(ctx context.Context, paths []string) (map[string]*MirrorFileSchema, error)
 	FindReceivedFilesByIds(ctx context.Context, ids []string) ([]*ReceivedFileSchema, error)
 }

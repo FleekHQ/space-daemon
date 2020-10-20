@@ -481,7 +481,7 @@
             "type": "string"
           },
           {
-            "name": "fileKey",
+            "name": "password",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2082,6 +2082,10 @@
         },
         "bucket": {
           "type": "string"
+        },
+        "isPublicLink": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },

@@ -160,8 +160,9 @@ type MirrorFile struct {
 }
 
 type SharedDirEntry struct {
-	DbID   string
-	Bucket string
+	DbID         string
+	Bucket       string
+	IsPublicLink bool
 	FileInfo
 	Members []Member // XXX: it is duplicated from FileInfo
 }
