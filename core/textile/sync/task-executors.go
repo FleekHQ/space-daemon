@@ -137,6 +137,11 @@ func (s *synchronizer) processBucketBackupOn(ctx context.Context, task *Task) er
 		return err
 	}
 
+	// race
+	if bucketModel.Backup == false {
+		return nil
+	}
+
 	dbID, err := utils.ParseDbIDFromString(bucketModel.DbID)
 	if err != nil {
 		return err
@@ -159,6 +164,11 @@ func (s *synchronizer) processBucketBackupOff(ctx context.Context, task *Task) e
 	bucketModel, err := s.model.FindBucket(ctx, bucket)
 	if err != nil {
 		return err
+	}
+
+	// race
+	if bucketModel.Backup == true {
+		return nil
 	}
 
 	dbID, err := utils.ParseDbIDFromString(bucketModel.DbID)
