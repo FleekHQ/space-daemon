@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 
@@ -182,6 +183,9 @@ func TestService_ListDirs(t *testing.T) {
 					IsDir: false,
 					Size:  16,
 					Cid:   "bafkreia4q63he72sgzrn64kpa2uu5it7utmqkdby6t3xck6umy77x7p2a1",
+					Metadata: &buckets_pb.Metadata{
+						UpdatedAt: time.Now().Unix(),
+					},
 				},
 				{
 					Path:  bucketPath + "/somedir",
@@ -189,6 +193,9 @@ func TestService_ListDirs(t *testing.T) {
 					IsDir: true,
 					Size:  0,
 					Cid:   "",
+					Metadata: &buckets_pb.Metadata{
+						UpdatedAt: time.Now().Unix(),
+					},
 				},
 				{
 					Path:  bucketPath + "/example.txt",
@@ -196,6 +203,9 @@ func TestService_ListDirs(t *testing.T) {
 					IsDir: false,
 					Size:  16,
 					Cid:   "bafkreia4q63he72sgzrn64kpa2uu5it7utmqkdby6t3xck6umy77x7p2ae",
+					Metadata: &buckets_pb.Metadata{
+						UpdatedAt: time.Now().Unix(),
+					},
 				},
 			},
 		},
@@ -210,6 +220,9 @@ func TestService_ListDirs(t *testing.T) {
 					IsDir: false,
 					Size:  16,
 					Cid:   "bafkreia4q63he72sgzrn64kpa2uu5it7utmqkdby6t3xck6umy77x7p2ae",
+					Metadata: &buckets_pb.Metadata{
+						UpdatedAt: time.Now().Unix(),
+					},
 				},
 			},
 		},
