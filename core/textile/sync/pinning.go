@@ -37,6 +37,7 @@ func (s *synchronizer) uploadFileToRemoteBucket(ctx context.Context, sourceBucke
 
 		if err := sourceBucket.GetFile(ctx, path, pipeWriter); err != nil {
 			errc <- err
+			return
 		}
 
 		errc <- nil

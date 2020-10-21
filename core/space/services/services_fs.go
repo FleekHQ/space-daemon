@@ -300,10 +300,11 @@ func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (do
 		return domain.OpenFileInfo{}, err
 	}
 
+	isRemote := dbID != ""
 	var filePath string
 	var b textile.Bucket
 	// check if file exists in sync
-	if dbID != "" {
+	if isRemote {
 		b, err = s.getBucketForRemoteFile(ctx, bucketName, dbID, path)
 	} else {
 		b, err = s.getBucketWithFallback(ctx, bucketName)
@@ -311,7 +312,7 @@ func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (do
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
-	if filePath, exists := s.sync.GetOpenFilePath(b.Slug(), path); exists {
+	if filePath, exists := s.sync.GetOpenFilePath(b.Slug(), path, dbID); exists {
 		// sanity check in case file was deleted or moved
 		if PathExists(filePath) {
 			// return file handle
@@ -322,7 +323,7 @@ func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (do
 	}
 
 	// else, open new file on FS
-	filePath, err = s.openFileOnFs(ctx, path, b)
+	filePath, err = s.openFileOnFs(ctx, path, b, isRemote)
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
@@ -333,7 +334,7 @@ func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (do
 	}, nil
 }
 
-func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket) (string, error) {
+func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket, isRemote bool) (string, error) {
 	// write file copy to temp folder
 	tmpFile, err := s.createTempFileForPath(ctx, path, false)
 	if err != nil {
@@ -363,6 +364,7 @@ func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket)
 		BucketPath: path,
 		BucketKey:  b.Key(),
 		BucketSlug: b.Slug(),
+		IsRemote:   isRemote,
 	}
 
 	err = s.sync.AddFileWatch(addWatchFile)
