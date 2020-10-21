@@ -219,9 +219,9 @@ func (s *Space) listDirAtPath(
 				Name:          item.Name,
 				SizeInBytes:   strconv.FormatInt(item.Size, 10),
 				FileExtension: strings.Replace(filepath.Ext(item.Name), ".", "", -1),
-				// TODO: Get these fields from Textile Buckets
-				Created: time.Now().Format(time.RFC3339),
-				Updated: time.Now().Format(time.RFC3339),
+				// FIXME: real created at needed
+				Created: time.Unix(item.Metadata.UpdatedAt, 0).Format(time.RFC3339),
+				Updated: time.Unix(item.Metadata.UpdatedAt, 0).Format(time.RFC3339),
 				Members: members,
 			},
 			IpfsHash:         item.Cid,

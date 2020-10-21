@@ -160,6 +160,7 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 		isDir := false
 		size := f.GetItem().Size
 		ext := strings.Replace(filepath.Ext(name), ".", "", -1)
+		updatedAt := f.GetItem().Metadata.UpdatedAt
 
 		rs, err := sbc.PullPathAccessRoles(ctx, file.BucketKey, file.Path)
 		if err != nil {
@@ -210,7 +211,7 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 					SizeInBytes:   strconv.FormatInt(size, 10),
 					FileExtension: ext,
 					Created:       strconv.FormatInt(time.Unix(0, file.CreatedAt).Unix(), 10),
-					Updated:       strconv.FormatInt(time.Unix(0, file.CreatedAt).Unix(), 10), // NOTE: there is no modified yet so using same as create
+					Updated:       strconv.FormatInt(time.Unix(updatedAt, 0).Unix(), 10),
 				},
 			},
 			Members: members,
