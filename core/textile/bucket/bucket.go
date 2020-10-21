@@ -44,6 +44,7 @@ type BucketInterface interface {
 	GetThreadID(ctx context.Context) (*thread.ID, error)
 	DirExists(ctx context.Context, path string) (bool, error)
 	FileExists(ctx context.Context, path string) (bool, error)
+	UpdatedAt(ctx context.Context, path string) (int64, error)
 	UploadFile(
 		ctx context.Context,
 		path string,

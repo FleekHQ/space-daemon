@@ -29,7 +29,20 @@ func (s *synchronizer) restoreBucket(ctx context.Context, bucketSlug string) err
 		}
 
 		if exists {
-			return nil
+			localUpdatedAt, err := localBucket.UpdatedAt(c, itemPath)
+			if err != nil {
+				return err
+			}
+
+			mirrorUpdatedAt, err := mirrorBucket.UpdatedAt(c, itemPath)
+			if err != nil {
+				return err
+			}
+
+			if localUpdatedAt >= mirrorUpdatedAt {
+				// do not overwrite: mirror is not newer
+				return nil
+			}
 		}
 
 		s.NotifyFileRestore(bucketSlug, itemPath)

@@ -41,9 +41,27 @@ func (b *Bucket) FileExists(ctx context.Context, pth string) (bool, error) {
 	return true, nil
 }
 
+func (b *Bucket) UpdatedAt(ctx context.Context, pth string) (int64, error) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
+	ctx, _, err := b.GetContext(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	response, err := b.bucketsClient.ListPath(ctx, b.GetData().Key, pth)
+	if err != nil {
+		return 0, err
+	}
+
+	return response.Item.Metadata.UpdatedAt, nil
+}
+
 func (b *Bucket) UploadFile(ctx context.Context, path string, reader io.Reader) (result path.Resolved, root path.Path, err error) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
+
 	ctx, _, err = b.GetContext(ctx)
 	if err != nil {
 		return nil, nil, err
