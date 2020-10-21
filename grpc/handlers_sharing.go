@@ -90,6 +90,7 @@ func (srv *grpcServer) GetSharedWithMeFiles(ctx context.Context, request *pb.Get
 				IsLocallyAvailable: e.LocallyAvailable,
 				BackupCount:        int64(backupCount),
 			},
+			IsPublicLink: e.IsPublicLink,
 		}
 		dirEntries = append(dirEntries, dirEntry)
 	}
@@ -115,7 +116,7 @@ func (srv *grpcServer) GeneratePublicFileLink(ctx context.Context, request *pb.G
 }
 
 func (srv *grpcServer) OpenPublicFile(ctx context.Context, request *pb.OpenPublicFileRequest) (*pb.OpenPublicFileResponse, error) {
-	res, err := srv.sv.OpenSharedFile(ctx, request.FileCid, request.FileKey, request.Filename)
+	res, err := srv.sv.OpenSharedFile(ctx, request.FileCid, request.Password, request.Filename)
 	if err != nil {
 		return nil, err
 	}

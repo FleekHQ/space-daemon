@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/FleekHQ/space-daemon/log"
@@ -217,7 +218,7 @@ func (s *Space) GenerateFilesSharingLink(ctx context.Context, encryptionPassword
 }
 
 // OpenSharedFile fetched the ipfs file and decrypts it with the key. Then returns the decrypted
-// files location.
+// files location. NOTE: This only opens public link shared files and not those shared via direct invites.
 func (s *Space) OpenSharedFile(ctx context.Context, hash, password, filename string) (domain.OpenFileInfo, error) {
 	parsedCid, err := cid.Parse(hash)
 	if err != nil {
@@ -227,6 +228,14 @@ func (s *Space) OpenSharedFile(ctx context.Context, hash, password, filename str
 	err = s.waitForTextileHub(ctx)
 	if err != nil {
 		return domain.OpenFileInfo{}, err
+	}
+
+	if password == "" {
+		// try to fetch password from shared files
+		_, password, err = s.tc.GetPublicReceivedFile(ctx, hash, true)
+		if err != nil {
+			return domain.OpenFileInfo{}, errors.Wrap(err, "password is required to open this file")
+		}
 	}
 
 	encryptedFile, err := s.tc.DownloadPublicGatewayItem(ctx, parsedCid)
@@ -247,8 +256,15 @@ func (s *Space) OpenSharedFile(ctx context.Context, hash, password, filename str
 		return domain.OpenFileInfo{}, errors.New("incorrect password")
 	}
 
-	if _, err := io.Copy(decryptedFile, reader); err != nil {
+	decryptedFileSize, err := io.Copy(decryptedFile, reader)
+	if err != nil {
 		return domain.OpenFileInfo{}, errors.Wrap(err, "decryption failed")
+	}
+
+	// Add accessed file to shared with me list
+	_, err = s.tc.AcceptSharedFileLink(ctx, hash, password, filename, strconv.FormatInt(decryptedFileSize, 10))
+	if err != nil {
+		return domain.OpenFileInfo{}, errors.Wrap(err, "accepting shared link failed")
 	}
 
 	return domain.OpenFileInfo{
