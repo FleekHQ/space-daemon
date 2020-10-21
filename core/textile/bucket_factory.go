@@ -409,7 +409,6 @@ func (tc *textileClient) ToggleBucketBackup(ctx context.Context, bucketSlug stri
 
 	if bucketSchema.Backup {
 		tc.sync.NotifyBucketBackupOn(bucketSlug)
-		tc.sync.NotifyBucketRestore(bucketSlug)
 	} else {
 		tc.sync.NotifyBucketBackupOff(bucketSlug)
 	}

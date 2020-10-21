@@ -259,6 +259,8 @@ func (s *synchronizer) executeTask(ctx context.Context, t *Task) error {
 		err = s.processBucketBackupOff(ctx, t)
 	case bucketRestoreTask:
 		err = s.processBucketRestoreTask(ctx, t)
+	case restoreFileTask:
+		err = s.processRestoreFile(ctx, t)
 	default:
 		log.Warn("Unexpected action on Textile sync, executeTask")
 	}

@@ -6,7 +6,7 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 )
 
-// replicate a local thread on the hub
+// restore bucket by downloading all files from the mirror bucket
 func (s *synchronizer) restoreBucket(ctx context.Context, bucket string) error {
 
 	b, err := s.getBucket(ctx, bucket)

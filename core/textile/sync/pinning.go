@@ -21,10 +21,10 @@ func (s *synchronizer) uploadFileToRemote(ctx context.Context, bucket, path stri
 		return err
 	}
 
-	return s.uploadFileToRemoteBucket(ctx, localBucket, mirrorBucket, path)
+	return s.uploadFileToBucket(ctx, localBucket, mirrorBucket, path)
 }
 
-func (s *synchronizer) uploadFileToRemoteBucket(ctx context.Context, sourceBucket, targetBucket bucket.BucketInterface, path string) error {
+func (s *synchronizer) uploadFileToBucket(ctx context.Context, sourceBucket, targetBucket bucket.BucketInterface, path string) error {
 
 	pipeReader, pipeWriter := io.Pipe()
 	defer pipeReader.Close()
