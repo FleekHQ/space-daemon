@@ -149,6 +149,13 @@ func (s *synchronizer) NotifyFileRestore(bucket, path string) {
 	s.notifySyncNeeded()
 }
 
+func (s *synchronizer) NotifyBucketStartup(bucket string) {
+	s.NotifyBucketRestore("personal")
+	s.NotifyBucketBackupOn("personal") // does nothing if !bucket.Backup
+
+	s.notifySyncNeeded()
+}
+
 func (s *synchronizer) notifySyncNeeded() {
 	select {
 	case s.syncNeeded <- true:
