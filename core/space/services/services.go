@@ -10,6 +10,7 @@ import (
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/env"
+	node "github.com/FleekHQ/space-daemon/core/ipfs/node"
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/store"
@@ -26,6 +27,7 @@ type Space struct {
 	keychain keychain.Keychain
 	vault    vault.Vault
 	hub      hub.HubAuth
+	ipfsNode *node.IpfsNode
 }
 
 type Syncer interface {
@@ -58,6 +60,7 @@ func NewSpace(
 	kc keychain.Keychain,
 	v vault.Vault,
 	h hub.HubAuth,
+	i *node.IpfsNode,
 ) *Space {
 	return &Space{
 		store:    st,
@@ -68,6 +71,7 @@ func NewSpace(
 		keychain: kc,
 		vault:    v,
 		hub:      h,
+		ipfsNode: i,
 	}
 }
 

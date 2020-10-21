@@ -338,13 +338,19 @@ func (s *Space) TruncateData(ctx context.Context) error {
 	buckdDir := filepath.Join(usr.HomeDir, ".buckd")
 	os.RemoveAll(buckdDir)
 
-	fleekDir := filepath.Join(usr.HomeDir, ".fleek-space")
-	os.RemoveAll(fleekDir)
+	// just delete textile because store is the only
+	// other piece and that is cleared above
+	textile := filepath.Join(usr.HomeDir, ".fleek-space/textile")
+	os.RemoveAll(textile)
+
+	s.ipfsNode.Stop()
 
 	if s.cfg.GetBool(config.Ipfsnode, false) {
 		ipfsDir := filepath.Join(usr.HomeDir, ".ipfs")
 		os.RemoveAll(ipfsDir)
 	}
+
+	s.ipfsNode.Start(ctx)
 
 	// @todo: remove data from remote storage
 

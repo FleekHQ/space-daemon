@@ -11,6 +11,7 @@ import (
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/env"
+	node "github.com/FleekHQ/space-daemon/core/ipfs/node"
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/space/services"
@@ -78,6 +79,7 @@ func NewService(
 	kc keychain.Keychain,
 	v vault.Vault,
 	h hub.HubAuth,
+	i *node.IpfsNode,
 	opts ...ServiceOption,
 ) (Service, error) {
 	if !store.IsOpen() {
@@ -91,7 +93,7 @@ func NewService(
 		o.env = env.New()
 	}
 
-	sv := services.NewSpace(store, tc, sync, cfg, o.env, kc, v, h)
+	sv := services.NewSpace(store, tc, sync, cfg, o.env, kc, v, h, i)
 
 	return sv, nil
 }
