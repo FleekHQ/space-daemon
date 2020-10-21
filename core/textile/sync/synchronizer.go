@@ -142,6 +142,13 @@ func (s *synchronizer) NotifyBucketRestore(bucket string) {
 	s.notifySyncNeeded()
 }
 
+func (s *synchronizer) NotifyFileRestore(bucket, path string) {
+	t := newTask(restoreFileTask, []string{bucket, path})
+	s.enqueueTask(t, s.taskQueue)
+
+	s.notifySyncNeeded()
+}
+
 func (s *synchronizer) notifySyncNeeded() {
 	select {
 	case s.syncNeeded <- true:

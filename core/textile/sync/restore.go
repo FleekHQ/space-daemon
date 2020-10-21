@@ -3,27 +3,21 @@ package sync
 import (
 	"context"
 
-	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/log"
 )
 
 // replicate a local thread on the hub
-func (s *synchronizer) restoreBucket(ctx context.Context, bucketSlug string) error {
+func (s *synchronizer) restoreBucket(ctx context.Context, bucket string) error {
 
-	bucket, err := s.getBucket(ctx, bucketSlug)
+	b, err := s.getBucket(ctx, bucket)
 	if err != nil {
-		log.Error("Error in ListDir", err)
+		log.Error("Error in getBucket", err)
 		return err
 	}
 
-	mirrorBucket, err := s.getMirrorBucket(ctx, bucketSlug)
+	dir, err := b.ListDirectory(ctx, "")
 	if err != nil {
-		return err
-	}
-
-	dir, err := bucket.ListDirectory(ctx, "")
-	if err != nil {
-		log.Error("Error in ListDir", err)
+		log.Error("Error in ListDirectory", err)
 		return err
 	}
 
@@ -39,23 +33,7 @@ func (s *synchronizer) restoreBucket(ctx context.Context, bucketSlug string) err
 	}
 
 	for _, m := range mirrorFiles {
-		exists, err := bucket.FileExists(ctx, m.Path)
-		if err != nil {
-			log.Error("Error checking if file exists", err)
-			return err
-		}
-		if exists {
-			continue
-		}
-
-		if err = s.uploadFileToRemoteBucket(ctx, mirrorBucket, bucket, m.Path); err != nil {
-			log.Error("Error downloading file", err)
-			return err
-		}
-
-		if s.eventNotifier != nil {
-			s.eventNotifier.SendFileEvent(events.NewFileEvent(m.Path, m.BucketSlug, events.FileRestoring, nil))
-		}
+		s.NotifyFileRestore(bucket, m.Path)
 	}
 
 	return nil

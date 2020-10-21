@@ -81,6 +81,10 @@ func (s *synchronizer) processPinFile(ctx context.Context, task *Task) error {
 	path := task.Args[1]
 
 	err := s.uploadFileToRemote(ctx, bucket, path)
+	if err != nil {
+		return err
+	}
+
 	s.setMirrorFileBackup(ctx, path, bucket, false)
 
 	if s.eventNotifier != nil {
@@ -181,9 +185,36 @@ func (s *synchronizer) processBucketRestoreTask(ctx context.Context, task *Task)
 		return err
 	}
 
-	if s.eventNotifier != nil {
-		s.eventNotifier.SendFileEvent(events.NewFileEvent("", bucket, events.FileRestoreInProgress, nil))
+	return nil
+}
+
+func (s *synchronizer) processRestoreFile(ctx context.Context, task *Task) error {
+	if err := checkTaskType(task, restoreFileTask); err != nil {
+		return err
 	}
 
-	return nil
+	bucket := task.Args[0]
+	path := task.Args[1]
+
+	localBucket, err := s.getBucket(ctx, bucket)
+	if err != nil {
+		return err
+	}
+
+	mirrorBucket, err := s.getMirrorBucket(ctx, bucket)
+	if err != nil {
+		return err
+	}
+
+	// TODO: use timestamp or CID for check
+
+	if err = s.uploadFileToRemoteBucket(ctx, mirrorBucket, localBucket, path); err != nil {
+		return err
+	}
+
+	if s.eventNotifier != nil {
+		s.eventNotifier.SendFileEvent(events.NewFileEvent(path, bucket, events.FileRestored, nil))
+	}
+
+	return err
 }

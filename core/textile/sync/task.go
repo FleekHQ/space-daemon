@@ -15,6 +15,7 @@ const (
 	bucketBackupOnTask  taskType = "TOGGLE_BACKUP_ON"
 	bucketBackupOffTask taskType = "TOGGLE_BACKUP_OFF"
 	bucketRestoreTask   taskType = "BUCKET_RESTORE"
+	restoreFileTask     taskType = "RESTORE_FILE"
 )
 
 type taskState string
