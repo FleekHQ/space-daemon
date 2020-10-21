@@ -64,6 +64,7 @@ type AddWatchFile struct {
 	BucketPath string `json:"bucket_path"`
 	BucketKey  string `json:"bucket_key"`
 	BucketSlug string `json:"bucket_slug"`
+	IsRemote   bool   `json:"isRemote"`
 }
 
 type Identity struct {
@@ -159,8 +160,9 @@ type MirrorFile struct {
 }
 
 type SharedDirEntry struct {
-	DbID   string
-	Bucket string
+	DbID         string
+	Bucket       string
+	IsPublicLink bool
 	FileInfo
 	Members []Member // XXX: it is duplicated from FileInfo
 }

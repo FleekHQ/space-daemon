@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/FleekHQ/space-daemon/core/textile/model"
+
 	"github.com/pkg/errors"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
@@ -42,7 +44,7 @@ func (tc *textileClient) ShareFilesViaPublicKey(ctx context.Context, paths []dom
 			roles[tpk.String()] = buckets.Admin
 		}
 
-		sbc := NewSecureBucketsClient(tc.hb, pth.Bucket)
+		sbc := tc.getSecureBucketsClient(tc.hb)
 
 		err := sbc.PushPathAccessRoles(ctx, pth.BucketKey, pth.Path, roles)
 		if err != nil {
@@ -116,7 +118,7 @@ func (tc *textileClient) createReceivedFiles(
 		if accepted {
 			encryptionKeys = invitation.Keys[i]
 		}
-		_, err := tc.GetModel().CreateReceivedFile(ctx, path, invitation.InvitationID, accepted, encryptionKeys)
+		_, err := tc.GetModel().CreateReceivedFileViaInvitation(ctx, path, invitation.InvitationID, accepted, encryptionKeys)
 
 		// compose each create error
 		if err != nil {
@@ -130,7 +132,46 @@ func (tc *textileClient) createReceivedFiles(
 	return allErr
 }
 
-func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*domain.SharedDirEntry, string, error) {
+func (tc *textileClient) AcceptSharedFileLink(
+	ctx context.Context,
+	cidHash, password, filename, fileSize string,
+) (*domain.SharedDirEntry, error) {
+	receivedFile, err := tc.GetModel().CreateReceivedFileViaPublicLink(ctx, cidHash, password, filename, fileSize, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return tc.buildPublicLinkSharedDirEntry(ctx, receivedFile)
+}
+
+func (tc *textileClient) GetPublicReceivedFile(
+	ctx context.Context,
+	cidHash string,
+	accepted bool,
+) (*domain.SharedDirEntry, string, error) {
+	files, err := tc.GetModel().ListReceivedPublicFiles(ctx, cidHash, accepted)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if len(files) == 0 {
+		return nil, "", errors.New("not found")
+	}
+
+	entry, err := tc.buildPublicLinkSharedDirEntry(ctx, files[0])
+	if err != nil {
+		return nil, "", err
+	}
+
+	return entry, files[0].FilePassword, nil
+}
+
+func (tc *textileClient) GetReceivedFiles(
+	ctx context.Context,
+	accepted bool,
+	seek string,
+	limit int,
+) ([]*domain.SharedDirEntry, string, error) {
 	files, err := tc.GetModel().ListReceivedFiles(ctx, accepted, seek, limit)
 	if err != nil {
 		return nil, "", err
@@ -142,86 +183,132 @@ func (tc *textileClient) GetReceivedFiles(ctx context.Context, accepted bool, se
 		return items, "", nil
 	}
 
+	var res *domain.SharedDirEntry
 	for _, file := range files {
-		ctx, _, err = tc.getBucketContext(ctx, file.DbID, file.Bucket, true, file.EncryptionKey)
+		if file.IsPublicLinkReceived() {
+			res, err = tc.buildPublicLinkSharedDirEntry(ctx, file)
+		} else {
+			res, err = tc.buildInvitationSharedDirEntry(ctx, file)
+		}
+
 		if err != nil {
 			return nil, "", err
 		}
-
-		sbc := NewSecureBucketsClient(tc.hb, file.Bucket)
-
-		f, err := sbc.ListPath(ctx, file.BucketKey, file.Path)
-		if err != nil {
-			return nil, "", err
-		}
-
-		ipfsHash := f.Item.Cid
-		name := f.Item.Name
-		isDir := false
-		size := f.GetItem().Size
-		ext := strings.Replace(filepath.Ext(name), ".", "", -1)
-
-		rs, err := sbc.PullPathAccessRoles(ctx, file.BucketKey, file.Path)
-		if err != nil {
-			// TEMP: returning empty members list until we
-			// fix it on textile side
-			//return nil, "", err
-			rs = make(map[string]buckets.Role)
-		}
-
-		members := make([]domain.Member, 0)
-		for pubk, _ := range rs {
-			key := &thread.Libp2pPubKey{}
-
-			err = key.UnmarshalString(pubk)
-			if err != nil {
-				log.Error(fmt.Sprintf("key.UnmarshalString(pubk=%+v)", pubk), err)
-				return nil, "", err
-			}
-
-			pk := key.PubKey
-
-			b, err := pk.Raw()
-			if err != nil {
-				return nil, "", err
-			}
-
-			members = append(members, domain.Member{
-				Address:   address.DeriveAddress(pk),
-				PublicKey: hex.EncodeToString(b),
-			})
-		}
-
-		res := &domain.SharedDirEntry{
-			Bucket: file.Bucket,
-			DbID:   file.DbID,
-			FileInfo: domain.FileInfo{
-				IpfsHash:         ipfsHash,
-				LocallyAvailable: false,
-				BackedUp:         true,
-
-				// TODO: Reflect correct state when we add local updates syncing to remote
-				BackupInProgress: false,
-
-				DirEntry: domain.DirEntry{
-					Path:          file.Path,
-					IsDir:         isDir,
-					Name:          name,
-					SizeInBytes:   strconv.FormatInt(size, 10),
-					FileExtension: ext,
-					Created:       strconv.FormatInt(time.Unix(0, file.CreatedAt).Unix(), 10),
-					Updated:       strconv.FormatInt(time.Unix(0, file.CreatedAt).Unix(), 10), // NOTE: there is no modified yet so using same as create
-				},
-			},
-			Members: members,
-		}
-
 		items = append(items, res)
 	}
 
 	offset := files[len(files)-1].ID.String()
 
 	return items, offset, nil
+}
+
+func (tc *textileClient) buildPublicLinkSharedDirEntry(
+	ctx context.Context,
+	file *model.ReceivedFileSchema,
+) (*domain.SharedDirEntry, error) {
+	res := &domain.SharedDirEntry{
+		FileInfo: domain.FileInfo{
+			IpfsHash:         file.PublicIpfsHash,
+			LocallyAvailable: false,
+			BackedUp:         true,
+			BackupInProgress: false,
+
+			DirEntry: domain.DirEntry{
+				Path:          "/",
+				IsDir:         false,
+				Name:          file.FileName,
+				SizeInBytes:   file.FileSize,
+				FileExtension: strings.Replace(filepath.Ext(file.FileName), ".", "", -1),
+				Created:       strconv.FormatInt(time.Unix(0, file.CreatedAt).Unix(), 10),
+				Updated:       strconv.FormatInt(time.Unix(0, file.CreatedAt).Unix(), 10),
+			},
+		},
+		Members:      []domain.Member{},
+		IsPublicLink: true,
+	}
+
+	return res, nil
+}
+
+func (tc *textileClient) buildInvitationSharedDirEntry(
+	ctx context.Context,
+	file *model.ReceivedFileSchema,
+) (*domain.SharedDirEntry, error) {
+	ctx, _, err := tc.getBucketContext(ctx, file.DbID, file.Bucket, true, file.EncryptionKey)
+	if err != nil {
+		return nil, err
+	}
+
+	sbc := tc.getSecureBucketsClient(tc.hb)
+
+	f, err := sbc.ListPath(ctx, file.BucketKey, file.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	ipfsHash := f.Item.Cid
+	name := f.Item.Name
+	isDir := false
+	size := f.GetItem().Size
+	ext := strings.Replace(filepath.Ext(name), ".", "", -1)
+	updatedAt := f.GetItem().Metadata.UpdatedAt
+
+	rs, err := sbc.PullPathAccessRoles(ctx, file.BucketKey, file.Path)
+	if err != nil {
+		// TEMP: returning empty members list until we
+		// fix it on textile side
+		//return nil, "", err
+		rs = make(map[string]buckets.Role)
+	}
+
+	members := make([]domain.Member, 0)
+	for pubk, _ := range rs {
+		key := &thread.Libp2pPubKey{}
+
+		err = key.UnmarshalString(pubk)
+		if err != nil {
+			log.Error(fmt.Sprintf("key.UnmarshalString(pubk=%+v)", pubk), err)
+			return nil, err
+		}
+
+		pk := key.PubKey
+
+		b, err := pk.Raw()
+		if err != nil {
+			return nil, err
+		}
+
+		members = append(members, domain.Member{
+			Address:   address.DeriveAddress(pk),
+			PublicKey: hex.EncodeToString(b),
+		})
+	}
+
+	res := &domain.SharedDirEntry{
+		Bucket: file.Bucket,
+		DbID:   file.DbID,
+		FileInfo: domain.FileInfo{
+			IpfsHash:         ipfsHash,
+			LocallyAvailable: false,
+			BackedUp:         true,
+
+			// TODO: Reflect correct state when we add local updates syncing to remote
+			BackupInProgress: false,
+
+			DirEntry: domain.DirEntry{
+				Path:          file.Path,
+				IsDir:         isDir,
+				Name:          name,
+				SizeInBytes:   strconv.FormatInt(size, 10),
+				FileExtension: ext,
+				Created:       strconv.FormatInt(time.Unix(0, file.CreatedAt).Unix(), 10),
+				Updated:       strconv.FormatInt(time.Unix(updatedAt, 0).Unix(), 10),
+			},
+		},
+		Members: members,
+	}
+
+	return res, nil
 }
 
 func (tc *textileClient) GetPathAccessRoles(ctx context.Context, b Bucket, path string) ([]domain.Member, error) {
@@ -242,7 +329,7 @@ func (tc *textileClient) GetPathAccessRoles(ctx context.Context, b Bucket, path 
 		return nil, err
 	}
 
-	sbc := NewSecureBucketsClient(tc.hb, bucketSlug)
+	sbc := tc.getSecureBucketsClient(tc.hb)
 
 	rs, err := sbc.PullPathAccessRoles(hubCtx, bucketKey, path)
 	if err != nil {
@@ -281,7 +368,7 @@ func (tc *textileClient) GetPathAccessRoles(ctx context.Context, b Bucket, path 
 // return true if file was shared
 // XXX: export this func?
 func (tc *textileClient) isSharedFile(ctx context.Context, bucket Bucket, path string) bool {
-	sbc := NewSecureBucketsClient(tc.hb, bucket.Slug())
+	sbc := tc.getSecureBucketsClient(tc.hb)
 
 	roles, err := sbc.PullPathAccessRoles(ctx, bucket.Key(), path)
 	if err != nil {
