@@ -365,10 +365,10 @@ func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket,
 // configured when running the daemon. If inTempDir is true, then it is created relative
 // to the operating systems temp dir.
 func (s *Space) createTempFileForPath(ctx context.Context, path string, inTempDir bool) (*os.File, error) {
-	cfg := s.GetConfig(ctx)
 	_, fileName := filepath.Split(path)
 	prefixPath := ""
 	if !inTempDir {
+		cfg := s.GetConfig(ctx)
 		prefixPath = cfg.AppPath
 	}
 	// NOTE: the pattern of the file ensures that it retains extension. e.g (rand num) + filename/path

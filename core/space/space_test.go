@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -13,6 +15,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/textileio/dcrypto"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 
@@ -888,4 +892,62 @@ func TestService_HandleSharedFilesInvitation_Rejects_Correctly(t *testing.T) {
 	// execute
 	err := sv.HandleSharedFilesInvitation(ctx, invitationId, acceptInvite)
 	assert.NoError(t, err, "HandleSharedFilesInvitation failed")
+}
+
+func TestService_OpenSharedFile_ShouldFail_When_PasswordCannotBeFetched(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	defer tearDown()
+
+	// setup
+	ctx := context.Background()
+	testFilename := "image.jpg"
+	testHash := "bafkreidhby4wyrc3cr6hfsg54x6nequylzdhn254nep7z3g7adfkyddlcy"
+	emptyPassword := ""
+	textileClient.On("IsHealthy").Return(true)
+	textileClient.On("GetPublicReceivedFile", mock.Anything, testHash, true).
+		Return(nil, "", errors.New("not found"))
+
+	// test
+	_, err := sv.OpenSharedFile(ctx, testHash, emptyPassword, testFilename)
+
+	// validate
+	assert.Error(t, err, "OpenSharedFile should fail for non existent password")
+	assert.Contains(t, err.Error(), "password is required to open this file", "OpenSharedFile should fail")
+}
+
+func TestService_OpenSharedFile_Should_AddOpenedFileToSharedWithMeList(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	defer tearDown()
+
+	// setup
+	ctx := context.Background()
+	testFilename := "letter.txt"
+	expectedFileContent := "This is a love letter to the dweb. Be great"
+	testHash := "bafkreidhby4wyrc3cr6hfsg54x6nequylzdhn254nep7z3g7adfkyddlcy"
+	testPassword := "super-secret"
+	emptyPassword := ""
+	textileClient.On("IsHealthy").Return(true)
+	textileClient.On("GetPublicReceivedFile", mock.Anything, testHash, true).
+		Return(&domain.SharedDirEntry{}, testPassword, nil)
+	textileClient.On("DownloadPublicGatewayItem", mock.Anything, mock.Anything).
+		Return(encryptString(expectedFileContent, testPassword), nil)
+	textileClient.On("AcceptSharedFileLink", mock.Anything, testHash, testPassword, testFilename, fmt.Sprintf("%d", len(expectedFileContent))).
+		Return(&domain.SharedDirEntry{}, nil)
+
+	// test (using empty password, so testPassword would be fetch from textileClient)
+	result, err := sv.OpenSharedFile(ctx, testHash, emptyPassword, testFilename)
+
+	// validate
+	assert.NoError(t, err, "OpenSharedFile should not fail")
+	actualFileContent, err := ioutil.ReadFile(result.Location)
+	assert.NoError(t, err, "Failed to read decrypted file")
+	assert.Equal(t, expectedFileContent, string(actualFileContent))
+}
+
+func encryptString(content, password string) io.ReadCloser {
+	reader, err := dcrypto.NewEncrypterWithPassword(strings.NewReader(content), []byte(password))
+	if err != nil {
+		panic(err)
+	}
+	return ioutil.NopCloser(reader)
 }
