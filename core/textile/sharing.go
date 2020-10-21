@@ -302,7 +302,7 @@ func (tc *textileClient) buildInvitationSharedDirEntry(
 				SizeInBytes:   strconv.FormatInt(size, 10),
 				FileExtension: ext,
 				Created:       strconv.FormatInt(time.Unix(0, file.CreatedAt).Unix(), 10),
-				Updated:       strconv.FormatInt(time.Unix(updatedAt, 0).Unix(), 10),
+				Updated:       strconv.FormatInt(time.Unix(0, updatedAt).Unix(), 10),
 			},
 		},
 		Members: members,

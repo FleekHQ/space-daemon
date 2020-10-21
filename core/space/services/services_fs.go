@@ -220,8 +220,8 @@ func (s *Space) listDirAtPath(
 				SizeInBytes:   strconv.FormatInt(item.Size, 10),
 				FileExtension: strings.Replace(filepath.Ext(item.Name), ".", "", -1),
 				// FIXME: real created at needed
-				Created: time.Unix(item.Metadata.UpdatedAt, 0).Format(time.RFC3339),
-				Updated: time.Unix(item.Metadata.UpdatedAt, 0).Format(time.RFC3339),
+				Created: time.Unix(0, item.Metadata.UpdatedAt).Format(time.RFC3339),
+				Updated: time.Unix(0, item.Metadata.UpdatedAt).Format(time.RFC3339),
 				Members: members,
 			},
 			IpfsHash:         item.Cid,
