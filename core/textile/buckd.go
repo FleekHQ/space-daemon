@@ -108,11 +108,16 @@ func (tb *TextileBuckd) WaitForReady() chan bool {
 
 func (tb *TextileBuckd) Stop() error {
 	tb.IsRunning = false
-	tb.textile.Close(false)
-	close(tb.Ready)
+	err := tb.textile.Close(true)
+	if err != nil {
+		return err
+	}
+	tb.Ready <- false
+
 	return nil
 }
 
 func (tb *TextileBuckd) Shutdown() error {
+	close(tb.Ready)
 	return tb.Stop()
 }

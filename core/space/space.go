@@ -8,6 +8,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/vault"
 	crypto "github.com/libp2p/go-libp2p-crypto"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/env"
@@ -60,6 +61,8 @@ type Service interface {
 	SetNotificationsLastSeenAt(timestamp int64) error
 	GetNotificationsLastSeenAt() (int64, error)
 	TruncateData(ctx context.Context) error
+	TurnOffComponents(ctx context.Context) error
+	TurnOnComponents(ctx context.Context) error
 }
 
 type serviceOptions struct {
@@ -80,6 +83,8 @@ func NewService(
 	v vault.Vault,
 	h hub.HubAuth,
 	i *node.IpfsNode,
+	b textile.Buckd,
+	aeg *errgroup.Group,
 	opts ...ServiceOption,
 ) (Service, error) {
 	if !store.IsOpen() {
@@ -93,7 +98,7 @@ func NewService(
 		o.env = env.New()
 	}
 
-	sv := services.NewSpace(store, tc, sync, cfg, o.env, kc, v, h, i)
+	sv := services.NewSpace(store, tc, sync, cfg, o.env, kc, v, h, i, b, aeg)
 
 	return sv, nil
 }

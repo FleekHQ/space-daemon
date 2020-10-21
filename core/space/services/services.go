@@ -7,6 +7,7 @@ import (
 
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/vault"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/env"
@@ -28,6 +29,8 @@ type Space struct {
 	vault    vault.Vault
 	hub      hub.HubAuth
 	ipfsNode *node.IpfsNode
+	buckd    textile.Buckd
+	aeg      *errgroup.Group
 }
 
 type Syncer interface {
@@ -61,6 +64,8 @@ func NewSpace(
 	v vault.Vault,
 	h hub.HubAuth,
 	i *node.IpfsNode,
+	b textile.Buckd,
+	aeg *errgroup.Group,
 ) *Space {
 	return &Space{
 		store:    st,
@@ -72,6 +77,8 @@ func NewSpace(
 		vault:    v,
 		hub:      h,
 		ipfsNode: i,
+		buckd:    b,
+		aeg:      aeg,
 	}
 }
 

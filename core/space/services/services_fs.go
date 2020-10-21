@@ -333,6 +333,7 @@ func (s *Space) TruncateData(ctx context.Context) error {
 	// handled in DeleteKeyPair
 
 	// remove data dirs
+
 	buckdDir := filepath.Join(usr.HomeDir, ".buckd")
 	os.RemoveAll(buckdDir)
 
@@ -341,16 +342,70 @@ func (s *Space) TruncateData(ctx context.Context) error {
 	textile := filepath.Join(usr.HomeDir, ".fleek-space/textile")
 	os.RemoveAll(textile)
 
-	s.ipfsNode.Stop()
-
 	if s.cfg.GetBool(config.Ipfsnode, false) {
 		ipfsDir := filepath.Join(usr.HomeDir, ".ipfs")
 		os.RemoveAll(ipfsDir)
 	}
 
-	s.ipfsNode.Start(ctx)
-
 	// @todo: remove data from remote storage
+
+	return nil
+}
+
+func (s *Space) TurnOffComponents(ctx context.Context) error {
+	err := s.buckd.Stop()
+	if err != nil {
+		return err
+	}
+
+	err = s.ipfsNode.Stop()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Space) TurnOnComponents(ctx context.Context) error {
+	err := s.RunAsync(func() error {
+		return s.ipfsNode.Start(ctx)
+	})
+	if err != nil {
+		return err
+	}
+
+	err = s.RunAsync(func() error {
+		return s.buckd.Start(ctx)
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// todo: shameless copy from app.go, refactor app level so we can call this from there
+func (s *Space) RunAsync(fn func() error) error {
+	if s.aeg == nil {
+		log.Warn("App level errgroup not setup.")
+		return nil
+	}
+
+	errc := make(chan error)
+
+	s.aeg.Go(func() error {
+		err := fn()
+		if err != nil {
+			errc <- err
+		}
+
+		return err
+	})
+
+	select {
+	case err := <-errc:
+		return err
+	}
 
 	return nil
 }
