@@ -113,9 +113,12 @@ func (m *model) findOrCreateMetaThreadID(ctx context.Context) (*thread.ID, error
 	}
 
 	err = m.threads.NewDB(ctx, dbID, db.WithNewManagedThreadKey(managedKey))
-	st := err.Error()
-	if err != nil && st != "rpc error: code = Unknown desc = db already exists" {
-		return nil, err
+	var st string
+	if err != nil {
+		st = err.Error()
+		if st != "rpc error: code = Unknown desc = db already exists" {
+			return nil, err
+		}
 	}
 
 	if err := m.st.Set(storeKey, dbIDInBytes); err != nil {

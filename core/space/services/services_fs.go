@@ -329,7 +329,10 @@ func (s *Space) TruncateData(ctx context.Context) error {
 		return err
 	}
 
-	s.store.Close()
+	err = s.store.DropAll()
+	if err != nil {
+		return err
+	}
 
 	// remove data dirs
 	buckdDir := filepath.Join(usr.HomeDir, ".buckd")
