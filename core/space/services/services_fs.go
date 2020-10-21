@@ -329,10 +329,8 @@ func (s *Space) TruncateData(ctx context.Context) error {
 		return err
 	}
 
-	err = s.store.DropAll()
-	if err != nil {
-		return err
-	}
+	// not doing anything with store because it's
+	// handled in DeleteKeyPair
 
 	// remove data dirs
 	buckdDir := filepath.Join(usr.HomeDir, ".buckd")
