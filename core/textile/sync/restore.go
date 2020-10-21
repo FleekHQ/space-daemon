@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 
+	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/log"
 )
@@ -43,6 +44,10 @@ func (s *synchronizer) restoreBucket(ctx context.Context, bucketSlug string) err
 				// do not overwrite: mirror is not newer
 				return nil
 			}
+		}
+
+		if s.eventNotifier != nil {
+			s.eventNotifier.SendFileEvent(events.NewFileEvent(itemPath, bucketSlug, events.FileRestoring, nil))
 		}
 
 		s.NotifyFileRestore(bucketSlug, itemPath)
