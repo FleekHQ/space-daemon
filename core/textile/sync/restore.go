@@ -3,37 +3,41 @@ package sync
 import (
 	"context"
 
+	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/log"
 )
 
-// restore bucket by downloading all files from the mirror bucket
-func (s *synchronizer) restoreBucket(ctx context.Context, bucket string) error {
+// restore bucket by downloading files to the local from the mirror bucket
+func (s *synchronizer) restoreBucket(ctx context.Context, bucketSlug string) error {
 
-	b, err := s.getBucket(ctx, bucket)
+	localBucket, err := s.getBucket(ctx, bucketSlug)
 	if err != nil {
 		log.Error("Error in getBucket", err)
 		return err
 	}
 
-	dir, err := b.ListDirectory(ctx, "")
+	mirrorBucket, err := s.getMirrorBucket(ctx, bucketSlug)
 	if err != nil {
-		log.Error("Error in ListDirectory", err)
+		log.Error("Error in getMirrorBucket", err)
 		return err
 	}
 
-	dirPaths := make([]string, 0)
-	for _, item := range dir.Item.Items {
-		dirPaths = append(dirPaths, item.Path)
+	iterator := func(c context.Context, b *bucket.Bucket, itemPath string) error {
+		exists, err := localBucket.FileExists(c, itemPath)
+		if err != nil {
+			return err
+		}
+
+		if exists {
+			return nil
+		}
+
+		s.NotifyFileRestore(bucketSlug, itemPath)
+		return nil
 	}
 
-	mirrorFiles, err := s.model.FindMirrorFileByPaths(ctx, dirPaths)
-	if err != nil {
-		log.Error("Error fetching mirror files", err)
+	if _, err = mirrorBucket.Each(ctx, "", iterator, true); err != nil {
 		return err
-	}
-
-	for _, m := range mirrorFiles {
-		s.NotifyFileRestore(bucket, m.Path)
 	}
 
 	return nil

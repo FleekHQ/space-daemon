@@ -91,7 +91,6 @@ func (s *synchronizer) uploadAllFilesInPath(ctx context.Context, bucket, path st
 
 		// If the current item is a file, we add it to the queue so that it both gets pinned and synced
 		s.NotifyItemAdded(bucket, path)
-
 	}
 
 	return nil

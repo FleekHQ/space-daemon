@@ -33,6 +33,8 @@ type BucketsClient interface {
 	PushPathAccessRoles(ctx context.Context, key, path string, roles map[string]buckets.Role) error
 }
 
+type EachFunc = func(ctx context.Context, b *Bucket, path string) error
+
 type BucketInterface interface {
 	Slug() string
 	Key() string
@@ -69,6 +71,12 @@ type BucketInterface interface {
 		path string,
 		withRecursive bool,
 	) (int32, error)
+	Each(
+		ctx context.Context,
+		path string,
+		iterator EachFunc,
+		withRecursive bool,
+	) (int, error)
 }
 
 type Notifier interface {

@@ -115,3 +115,41 @@ func (b *Bucket) ItemsCount(ctx context.Context, path string, withRecursive bool
 
 	return count, nil
 }
+
+// iterate over the bucket
+func (b *Bucket) Each(ctx context.Context, path string, iterator EachFunc, withRecursive bool) (int, error) {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
+
+	var count int
+
+	dir, err := b.ListDirectory(ctx, path)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, item := range dir.Item.Items {
+		if utils.IsMetaFileName(item.Name) {
+			continue
+		}
+
+		var n int
+
+		if withRecursive && item.IsDir {
+			if n, err = b.Each(ctx, item.Path, iterator, withRecursive); err != nil {
+				return 0, err
+			}
+
+			count += n
+			continue
+		}
+
+		if err := iterator(ctx, b, item.Path); err != nil {
+			return 0, err
+		}
+
+		count += n
+	}
+
+	return count, nil
+}
