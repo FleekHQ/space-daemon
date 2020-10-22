@@ -150,8 +150,8 @@ func (s *synchronizer) NotifyFileRestore(bucket, path string) {
 }
 
 func (s *synchronizer) NotifyBucketStartup(bucket string) {
-	s.NotifyBucketRestore("personal")
-	s.NotifyBucketBackupOn("personal") // does nothing if !bucket.Backup
+	s.NotifyBucketRestore(bucket)
+	s.NotifyBucketBackupOn(bucket) // does nothing if !bucket.Backup
 
 	s.notifySyncNeeded()
 }
