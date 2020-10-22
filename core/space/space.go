@@ -61,8 +61,6 @@ type Service interface {
 	SetNotificationsLastSeenAt(timestamp int64) error
 	GetNotificationsLastSeenAt() (int64, error)
 	TruncateData(ctx context.Context) error
-	TurnOffComponents(ctx context.Context) error
-	TurnOnComponents(ctx context.Context) error
 }
 
 type serviceOptions struct {

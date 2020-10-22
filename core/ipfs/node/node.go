@@ -65,19 +65,11 @@ func (node *IpfsNode) WaitForReady() chan bool {
 }
 
 func (node *IpfsNode) Stop() error {
-	node.IsRunning = false
-
-	err := node.stop()
-	if err != nil {
-		return err
-	}
-
-	close(node.Ready)
-
-	return nil
+	return node.stop()
 }
 
 func (node *IpfsNode) Shutdown() error {
+	close(node.Ready)
 	return node.Stop()
 }
 
@@ -167,6 +159,13 @@ func (node *IpfsNode) start() error {
 }
 
 func (node *IpfsNode) stop() error {
+	node.IsRunning = false
+
+	err := node.stop()
+	if err != nil {
+		return err
+	}
+
 	node.cancel()
 
 	return nil
@@ -219,7 +218,7 @@ func setupPlugins(externalPluginsPath string) error {
 	}
 
 	if err := plugins.Inject(); err != nil {
-		return fmt.Errorf("error initializing plugins: %s", err)
+		return fmt.Errorf("error injecting plugins: %s", err)
 	}
 
 	return nil

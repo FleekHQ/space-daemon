@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/user"
 
 	"path/filepath"
 	"regexp"
@@ -16,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/textile"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
@@ -323,87 +321,13 @@ func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (do
 
 // TruncateData removes all data from local machine
 func (s *Space) TruncateData(ctx context.Context) error {
-	usr, err := user.Current()
-
-	if err != nil {
-		return err
-	}
-
 	// not doing anything with store because it's
 	// handled in DeleteKeyPair
 
-	// remove data dirs
-
-	buckdDir := filepath.Join(usr.HomeDir, ".buckd")
-	os.RemoveAll(buckdDir)
-
-	// just delete textile because store is the only
-	// other piece and that is cleared above
-	textile := filepath.Join(usr.HomeDir, ".fleek-space/textile")
-	os.RemoveAll(textile)
-
-	if s.cfg.GetBool(config.Ipfsnode, false) {
-		ipfsDir := filepath.Join(usr.HomeDir, ".ipfs")
-		os.RemoveAll(ipfsDir)
-	}
-
-	// @todo: remove data from remote storage
-
-	return nil
-}
-
-func (s *Space) TurnOffComponents(ctx context.Context) error {
-	err := s.buckd.Stop()
+	// note: this might not clear storage
+	// so need to verify and update later
+	err := s.tc.DeleteBuckets(ctx)
 	if err != nil {
-		return err
-	}
-
-	err = s.ipfsNode.Stop()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Space) TurnOnComponents(ctx context.Context) error {
-	err := s.RunAsync(func() error {
-		return s.ipfsNode.Start(ctx)
-	})
-	if err != nil {
-		return err
-	}
-
-	err = s.RunAsync(func() error {
-		return s.buckd.Start(ctx)
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// todo: shameless copy from app.go, refactor app level so we can call this from there
-func (s *Space) RunAsync(fn func() error) error {
-	if s.aeg == nil {
-		log.Warn("App level errgroup not setup.")
-		return nil
-	}
-
-	errc := make(chan error)
-
-	s.aeg.Go(func() error {
-		err := fn()
-		if err != nil {
-			errc <- err
-		}
-
-		return err
-	})
-
-	select {
-	case err := <-errc:
 		return err
 	}
 

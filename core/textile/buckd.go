@@ -112,8 +112,6 @@ func (tb *TextileBuckd) Stop() error {
 	if err != nil {
 		return err
 	}
-	tb.Ready <- false
-
 	return nil
 }
 

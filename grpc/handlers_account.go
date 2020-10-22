@@ -13,20 +13,12 @@ func (srv *grpcServer) DeleteAccount(ctx context.Context, request *pb.DeleteAcco
 		return nil, errors.Wrap(err, "failed to unmount fuse drive")
 	}
 
-	if err := srv.sv.TurnOffComponents(ctx); err != nil {
-		return nil, errors.Wrap(err, "failed to turn OFF components")
-	}
-
-	if err := srv.sv.DeleteKeypair(ctx); err != nil {
-		return nil, errors.Wrap(err, "failed to remove keypair")
-	}
-
 	if err := srv.sv.TruncateData(ctx); err != nil {
 		return nil, errors.Wrap(err, "error during clean up")
 	}
 
-	if err := srv.sv.TurnOnComponents(ctx); err != nil {
-		return nil, errors.Wrap(err, "failed to turn ON components")
+	if err := srv.sv.DeleteKeypair(ctx); err != nil {
+		return nil, errors.Wrap(err, "failed to remove keypair")
 	}
 
 	return &pb.DeleteAccountResponse{}, nil

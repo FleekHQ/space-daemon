@@ -65,6 +65,7 @@ type Client interface {
 	GetPublicShareBucket(ctx context.Context) (Bucket, error)
 	DownloadPublicGatewayItem(ctx context.Context, cid cid.Cid) (io.ReadCloser, error)
 	GetFailedHealthchecks() int
+	DeleteBuckets(ctx context.Context) error
 }
 
 type Buckd interface {

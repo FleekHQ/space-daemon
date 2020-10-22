@@ -43,6 +43,42 @@ func (tc *textileClient) GetBucket(ctx context.Context, slug string, remoteFile 
 	return tc.getBucket(ctx, slug, remoteFile)
 }
 
+func (tc *textileClient) DeleteBuckets(ctx context.Context) error {
+	if err := tc.requiresRunning(); err != nil {
+		return err
+	}
+
+	// delete local buckets
+	bucks, err := tc.ListBuckets(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, b := range bucks {
+		bs, err := tc.GetModel().FindBucket(ctx, b.Slug())
+		if err != nil {
+			return err
+		}
+		dbid, err := b.GetThreadID(ctx)
+		if err != nil {
+			return err
+		}
+		ctx, _, err = tc.getBucketContext(ctx, utils.CastDbIDToString(*dbid), b.Slug(), false, bs.EncryptionKey)
+		err = tc.bucketsClient.Remove(ctx, b.Key())
+		if err != nil {
+			return err
+		}
+
+		ctx, _, err = tc.getBucketContext(ctx, bs.RemoteDbID, b.Slug(), true, bs.EncryptionKey)
+		err = tc.hb.Remove(ctx, bs.RemoteBucketKey)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Gets a wrapped bucket
 // remoteFile is optional. Include if looking for wrappers for remote buckets (mainly used for received files)
 func (tc *textileClient) getBucket(ctx context.Context, slug string, remoteFile *GetBucketForRemoteFileInput) (Bucket, error) {
