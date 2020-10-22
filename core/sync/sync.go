@@ -57,14 +57,13 @@ type textileHandler struct {
 }
 
 type bucketSynchronizer struct {
-	folderWatcher          watcher.FolderWatcher
-	textileClient          textile.Client
-	fh                     *watcherHandler
-	th                     *textileHandler
-	textileThreadListeners []textile.Listener
-	notifier               GrpcNotifier
-	store                  store.Store
-	ready                  chan bool
+	folderWatcher watcher.FolderWatcher
+	textileClient textile.Client
+	fh            *watcherHandler
+	th            *textileHandler
+	notifier      GrpcNotifier
+	store         store.Store
+	ready         chan bool
 }
 
 // Creates a new bucketSynchronizer instancelistenerEventHandler
@@ -74,17 +73,15 @@ func New(
 	store store.Store,
 	notifier GrpcNotifier,
 ) *bucketSynchronizer {
-	textileThreadListeners := make([]textile.Listener, 0)
 
 	return &bucketSynchronizer{
-		folderWatcher:          folderWatcher,
-		textileClient:          textileClient,
-		fh:                     nil,
-		th:                     nil,
-		textileThreadListeners: textileThreadListeners,
-		notifier:               notifier,
-		store:                  store,
-		ready:                  make(chan bool),
+		folderWatcher: folderWatcher,
+		textileClient: textileClient,
+		fh:            nil,
+		th:            nil,
+		notifier:      notifier,
+		store:         store,
+		ready:         make(chan bool),
 	}
 }
 
@@ -128,52 +125,12 @@ func (bs *bucketSynchronizer) Start(ctx context.Context) error {
 		}
 	}
 
-	if err := bs.startTextileListener(newCtx, g); err != nil {
-		return err
-	}
-
 	bs.ready <- true
 
 	err = g.Wait()
 
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func (bs *bucketSynchronizer) startTextileListener(ctx context.Context, g *errgroup.Group) error {
-	if !bs.textileClient.IsInitialized() {
-		// Wait for initialization
-		select {
-		case <-bs.textileClient.WaitForInitialized():
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
-
-	buckets, err := bs.textileClient.ListBuckets(ctx)
-	if err != nil {
-		return err
-	}
-
-	bs.th = &textileHandler{
-		notifier: bs.notifier,
-		bs:       bs,
-	}
-
-	handlers := []textile.EventHandler{bs.th}
-
-	for _, bucket := range buckets {
-		bs.textileThreadListeners = append(bs.textileThreadListeners, textile.NewListener(bs.textileClient, bucket.Slug(), handlers))
-	}
-
-	for _, listener := range bs.textileThreadListeners {
-		g.Go(func() error {
-			log.Debug("Starting textile thread listener in bucketsync")
-			return listener.Listen(ctx)
-		})
 	}
 
 	return nil
@@ -188,9 +145,6 @@ func (bs *bucketSynchronizer) Shutdown() error {
 	log.Debug("shutting down folder watcher in bucketsync")
 	bs.folderWatcher.Close()
 	log.Debug("shutting down textile thread listener in bucketsync")
-	for _, listener := range bs.textileThreadListeners {
-		listener.Close()
-	}
 
 	close(bs.ready)
 	return nil

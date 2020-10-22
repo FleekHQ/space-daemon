@@ -147,6 +147,13 @@ func (s *synchronizer) createMirrorThread(ctx context.Context, slug string) (*th
 		return nil, err
 	}
 
+	// If dbID is not found, GetDBInfo returns "thread not found" error
+	_, err = s.hubThreads.GetDBInfo(ctx, dbID)
+	if err == nil {
+		log.Debug("createMirrorThread: Db already exists")
+		return &dbID, nil
+	}
+
 	log.Debug("createMirrorThread: Creating Thread DB for bucket at db " + dbID.String())
 	if err := s.hubThreads.NewDB(ctx, dbID, db.WithNewManagedThreadKey(managedKey)); err != nil {
 		return nil, err

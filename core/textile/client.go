@@ -65,6 +65,7 @@ type textileClient struct {
 	sync               synchronizer.Synchronizer
 	notifier           bucket.Notifier
 	ipfsClient         iface.CoreAPI
+	dbListeners        map[string]Listener
 }
 
 // Creates a new Textile Client
@@ -93,6 +94,7 @@ func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth, uc Use
 		failedHealthchecks: 0,
 		sync:               nil,
 		notifier:           nil,
+		dbListeners:        make(map[string]Listener),
 	}
 }
 
@@ -144,7 +146,18 @@ func (tc *textileClient) initializeSync(ctx context.Context) {
 	}
 
 	tc.sync = synchronizer.New(
-		tc.store, tc.GetModel(), tc.kc, tc.hubAuth, tc.hb, tc.ht, tc.netc, tc.cfg, getMirrorBucketFn, getLocalBucketFn, tc.getBucketContext,
+		tc.store,
+		tc.GetModel(),
+		tc.kc,
+		tc.hubAuth,
+		tc.hb,
+		tc.ht,
+		tc.netc,
+		tc.cfg,
+		getMirrorBucketFn,
+		getLocalBucketFn,
+		tc.getBucketContext,
+		tc.addListener,
 	)
 
 	tc.notifier = notifier.New(tc.sync)
@@ -417,6 +430,8 @@ func (tc *textileClient) Shutdown() error {
 	close(tc.keypairDeleted)
 	close(tc.shuttingDown)
 
+	tc.closeListeners()
+
 	if err := tc.bucketsClient.Close(); err != nil {
 		return err
 	}
@@ -460,6 +475,10 @@ func (tc *textileClient) healthcheck(ctx context.Context) {
 	}
 
 	tc.checkHubConnection(ctx)
+
+	if len(tc.dbListeners) == 0 {
+		tc.initializeListeners(ctx)
+	}
 
 	switch {
 	case tc.isInitialized == false:
@@ -540,13 +559,4 @@ func (tc *textileClient) requiresHubConnection() error {
 
 func (tc *textileClient) AttachSynchronizerNotifier(notif synchronizer.EventNotifier) {
 	tc.sync.AttachNotifier(notif)
-}
-
-func (tc *textileClient) Listen(ctx context.Context, dbID string) (<-chan threadsClient.ListenEvent, error) {
-	db, err := utils.ParseDbIDFromString(dbID)
-	if err != nil {
-		return nil, err
-	}
-
-	return tc.threads.Listen(ctx, *db, nil)
 }

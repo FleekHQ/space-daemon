@@ -71,7 +71,7 @@ type Client interface {
 	GetPublicShareBucket(ctx context.Context) (Bucket, error)
 	DownloadPublicGatewayItem(ctx context.Context, cid cid.Cid) (io.ReadCloser, error)
 	GetFailedHealthchecks() int
-	Listen(ctx context.Context, dbID string) (<-chan threadsClient.ListenEvent, error)
+	Listen(ctx context.Context, dbID, threadName string) (<-chan threadsClient.ListenEvent, error)
 }
 
 type Buckd interface {
