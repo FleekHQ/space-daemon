@@ -21,6 +21,7 @@ const (
 	VaultAPIURL          = "VAULT_API_URL"
 	VaultSaltSecret      = "VAULT_SALT_SECRET"
 	ServicesHubAuthURL   = "SERVICES_HUB_AUTH_URL"
+	SpaceStorageSiteUrl  = "SPACE_STORAGE_SITE_URL"
 	TextileHubTarget     = "TXL_HUB_TARGET"
 	TextileHubMa         = "TXL_HUB_MA"
 	TextileThreadsTarget = "TXL_THREADS_TARGET"

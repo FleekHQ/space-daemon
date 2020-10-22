@@ -214,7 +214,7 @@ func (tc *textileClient) buildPublicLinkSharedDirEntry(
 			BackupInProgress: false,
 
 			DirEntry: domain.DirEntry{
-				Path:          "/",
+				Path:          file.FileName,
 				IsDir:         false,
 				Name:          file.FileName,
 				SizeInBytes:   file.FileSize,

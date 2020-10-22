@@ -9,6 +9,7 @@ const (
 	SpaceServerPort          = "space/rpcPort"
 	SpaceProxyServerPort     = "space/rpcProxyPort"
 	SpaceRestProxyServerPort = "space/restProxyPort"
+	SpaceStorageSiteUrl      = "space/storageSiteUrl"
 	SpaceStorePath           = "space/storePath"
 	TextileHubTarget         = "space/textileHubTarget"
 	TextileHubMa             = "space/textileHubMa"
@@ -50,6 +51,7 @@ type Flags struct {
 	Mongorepset          string
 	DevMode              bool
 	ServicesAPIURL       string
+	SpaceStorageSiteUrl  string
 	VaultAPIURL          string
 	VaultSaltSecret      string
 	ServicesHubAuthURL   string

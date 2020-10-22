@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/FleekHQ/space-daemon/config"
+
 	"github.com/FleekHQ/space-daemon/log"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/pkg/errors"
@@ -122,10 +124,14 @@ func (s *Space) uploadSharedFileToIpfs(
 	urlQuery.Add("hash", encryptedFileHash)
 
 	return domain.FileSharingInfo{
-		Bucket:            bucketName,
-		SharedFileCid:     encryptedFileHash,
-		SharedFileKey:     password,
-		SpaceDownloadLink: "https://app.space.storage/files/share?" + urlQuery.Encode(),
+		Bucket:        bucketName,
+		SharedFileCid: encryptedFileHash,
+		SharedFileKey: password,
+		SpaceDownloadLink: fmt.Sprintf(
+			"%s/files/share?%s",
+			s.cfg.GetString(config.SpaceStorageSiteUrl, "https://app.space.storage"),
+			urlQuery.Encode(),
+		),
 	}, nil
 }
 

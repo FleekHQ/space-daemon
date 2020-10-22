@@ -36,6 +36,7 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[SpaceVaultAPIURL] = os.Getenv(env.VaultAPIURL)
 		configStr[SpaceVaultSaltSecret] = os.Getenv(env.VaultSaltSecret)
 		configStr[SpaceServicesHubAuthURL] = os.Getenv(env.ServicesHubAuthURL)
+		configStr[SpaceStorageSiteUrl] = os.Getenv(env.SpaceStorageSiteUrl)
 		configStr[TextileHubTarget] = os.Getenv(env.TextileHubTarget)
 		configStr[TextileHubMa] = os.Getenv(env.TextileHubMa)
 		configStr[TextileThreadsTarget] = os.Getenv(env.TextileThreadsTarget)
@@ -58,6 +59,9 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[SpaceVaultAPIURL] = flags.VaultAPIURL
 		configStr[SpaceVaultSaltSecret] = flags.VaultSaltSecret
 		configStr[SpaceServicesHubAuthURL] = flags.ServicesHubAuthURL
+		if flags.SpaceStorageSiteUrl != "" {
+			configStr[SpaceStorageSiteUrl] = flags.SpaceStorageSiteUrl
+		}
 		configStr[TextileHubTarget] = flags.TextileHubTarget
 		configStr[TextileHubMa] = flags.TextileHubMa
 		configStr[TextileThreadsTarget] = flags.TextileThreadsTarget
