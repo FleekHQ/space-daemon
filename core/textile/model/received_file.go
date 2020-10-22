@@ -106,6 +106,9 @@ func (m *model) CreateReceivedFileViaPublicLink(
 			FileName:       filename,
 			FileSize:       fileSize,
 		},
+		ReceivedFileViaInvitationSchema: ReceivedFileViaInvitationSchema{
+			EncryptionKey: []byte(""),
+		},
 		Accepted:  accepted,
 		CreatedAt: time.Now().UnixNano(),
 	}
