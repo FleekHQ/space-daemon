@@ -25,7 +25,6 @@ import (
 	"github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	threadsClient "github.com/textileio/go-threads/api/client"
-	"github.com/textileio/go-threads/core/thread"
 	bc "github.com/textileio/textile/v2/api/buckets/client"
 	bucketsClient "github.com/textileio/textile/v2/api/buckets/client"
 	bucketspb "github.com/textileio/textile/v2/api/buckets/pb"
@@ -470,17 +469,3 @@ func (s *SecureBucketClient) pullFileFromDHT(ctx context.Context, key, encPath s
 }
 
 const cacheBucketThreadName = "cache_bucket"
-
-func (s *SecureBucketClient) getCacheBucketCtx(ctx context.Context) (context.Context, *thread.ID, error) {
-	dbID, err := utils.FindOrCreateDeterministicThreadID(ctx, utils.CacheBucketVariant, cacheBucketThreadName, s.kc, s.st, s.threads)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	cacheCtx, err := utils.GetThreadContext(ctx, cacheBucketThreadName, *dbID, false, s.kc, nil, s.threads)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return cacheCtx, dbID, nil
-}

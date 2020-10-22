@@ -136,7 +136,10 @@ func (s *synchronizer) createMirrorThread(ctx context.Context, slug string) (*th
 		return nil, err
 	}
 
-	dbID := thread.NewIDV1(thread.Raw, 32)
+	dbID, err := utils.NewDeterministicThreadID(s.kc, utils.MirrorBucketVariantGen(slug))
+	if err != nil {
+		return nil, err
+	}
 
 	managedKey, err := s.kc.GetManagedThreadKey(mirrorThreadKeyName + "_" + slug)
 	if err != nil {

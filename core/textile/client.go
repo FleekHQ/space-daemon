@@ -541,3 +541,12 @@ func (tc *textileClient) requiresHubConnection() error {
 func (tc *textileClient) AttachSynchronizerNotifier(notif synchronizer.EventNotifier) {
 	tc.sync.AttachNotifier(notif)
 }
+
+func (tc *textileClient) Listen(ctx context.Context, dbID string) (<-chan threadsClient.ListenEvent, error) {
+	db, err := utils.ParseDbIDFromString(dbID)
+	if err != nil {
+		return nil, err
+	}
+
+	return tc.threads.Listen(ctx, *db, nil)
+}
