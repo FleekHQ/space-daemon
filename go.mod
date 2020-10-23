@@ -48,6 +48,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/textileio/dcrypto v0.0.1
 	github.com/textileio/go-threads v1.0.0
+	github.com/textileio/textile v1.0.14
 	github.com/textileio/textile/v2 v2.1.0
 	github.com/tyler-smith/go-bip39 v1.0.2
 	go.etcd.io/etcd v3.3.22+incompatible

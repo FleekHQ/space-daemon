@@ -538,7 +538,7 @@ func (tc *textileClient) RemoveKeys(ctx context.Context) error {
 }
 
 func (tc *textileClient) GetModel() model.Model {
-	return model.New(tc.store, tc.kc, tc.threads, tc.hubAuth)
+	return model.New(tc.store, tc.kc, tc.threads, tc.ht, tc.hubAuth, tc.cfg, tc.netc)
 }
 
 func (tc *textileClient) getSecureBucketsClient(baseClient *bucketsClient.Client) *SecureBucketClient {
