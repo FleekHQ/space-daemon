@@ -215,7 +215,6 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.hb = getHubBucketClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 
 	tc.initializeSync(ctx)
-	tc.sync.NotifyBucketStartup("personal")
 
 	tc.isRunning = true
 
@@ -386,6 +385,8 @@ func (tc *textileClient) initialize(ctx context.Context) error {
 			return err
 		}
 	}
+
+	tc.sync.NotifyBucketStartup(defaultPersonalBucketSlug)
 
 	tc.isInitialized = true
 	// Non-blocking channel send in case there are no listeners registered
