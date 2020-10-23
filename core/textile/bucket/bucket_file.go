@@ -42,8 +42,8 @@ func (b *Bucket) FileExists(ctx context.Context, pth string) (bool, error) {
 }
 
 func (b *Bucket) UpdatedAt(ctx context.Context, pth string) (int64, error) {
-	b.lock.Lock()
-	defer b.lock.Unlock()
+	b.lock.RLock()
+	defer b.lock.RUnlock()
 
 	ctx, _, err := b.GetContext(ctx)
 	if err != nil {
