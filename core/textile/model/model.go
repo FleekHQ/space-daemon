@@ -89,15 +89,15 @@ func (m *model) findOrCreateMetaThreadID(ctx context.Context) (*thread.ID, error
 	}
 	hubmaWithThreadID := hubmaStr + "/thread/" + threadID.String()
 
+	// If we are here, then there's no replicated metathread yet
+	if _, err := utils.FindOrCreateDeterministicThreadID(ctx, utils.MetathreadThreadVariant, metaThreadName, m.kc, m.st, m.threads); err != nil {
+		return nil, err
+	}
+
 	// Try to join remote db if it was already replicated
 	err = m.threads.NewDBFromAddr(ctx, cmd.AddrFromStr(hubmaWithThreadID), key)
 	if err == nil || err.Error() == "rpc error: code = Unknown desc = db already exists" {
 		return &threadID, nil
-	}
-
-	// If we are here, then there's no replicated metathread yet
-	if _, err := utils.FindOrCreateDeterministicThreadID(ctx, utils.MetathreadThreadVariant, metaThreadName, m.kc, m.st, m.threads); err != nil {
-		return nil, err
 	}
 
 	if _, err := m.netc.AddReplicator(ctx, threadID, hubma); err != nil {
