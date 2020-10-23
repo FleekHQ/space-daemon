@@ -15,6 +15,9 @@ const (
 	FileBackupInProgress FileEventType = "FileBackupInProgress"
 	FileBackupReady      FileEventType = "FileBackupReady"
 
+	FileRestored  FileEventType = "FileRestored"
+	FileRestoring FileEventType = "FileRestoring"
+
 	FolderAdded   FileEventType = "FolderAdded"
 	FolderDeleted FileEventType = "FolderDeleted"
 	// NOTE: not sure if this needs to be specific to rename or copy

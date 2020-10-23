@@ -32,6 +32,7 @@ var (
 	mongohost            string
 	mongorepset          string
 	spaceapi             string
+	spacestoragesiteurl  string
 	vaultapi             string
 	vaultsaltsecret      string
 	spacehubauth         string
@@ -63,6 +64,7 @@ func main() {
 		Mongohost:            mongohost,
 		Mongorepset:          mongorepset,
 		ServicesAPIURL:       spaceapi,
+		SpaceStorageSiteUrl:  spacestoragesiteurl,
 		VaultAPIURL:          vaultapi,
 		VaultSaltSecret:      vaultsaltsecret,
 		ServicesHubAuthURL:   spacehubauth,
