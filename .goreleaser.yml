@@ -25,6 +25,7 @@ builds:
       - -X main.textilehubgatewayurl={{ .Env.TXL_HUB_GATEWAY_URL }}
       - -X main.textileuserkey={{ .Env.TXL_USER_KEY }}
       - -X main.textileusersecret={{ .Env.TXL_USER_SECRET }}
+      - -X main.spacestoragesiteurl={{ .Env.SPACE_STORAGE_SITE_URL }}
     main: ./cmd/space-daemon/main.go
     binary: space
     goos:
@@ -48,6 +49,7 @@ builds:
       - -X main.textilehubgatewayurl={{ .Env.TXL_HUB_GATEWAY_URL }}
       - -X main.textileuserkey={{ .Env.TXL_USER_KEY }}
       - -X main.textileusersecret={{ .Env.TXL_USER_SECRET }}
+      - -X main.spacestoragesiteurl={{ .Env.SPACE_STORAGE_SITE_URL }}
     main: ./cmd/space-daemon/main.go
     binary: space
     goos:
@@ -73,6 +75,7 @@ builds:
       - -X main.textilehubgatewayurl={{ .Env.TXL_HUB_GATEWAY_URL }}
       - -X main.textileuserkey={{ .Env.TXL_USER_KEY }}
       - -X main.textileusersecret={{ .Env.TXL_USER_SECRET }}
+      - -X main.spacestoragesiteurl={{ .Env.SPACE_STORAGE_SITE_URL }}
     main: ./cmd/space-daemon/main.go
     binary: space
     goos:

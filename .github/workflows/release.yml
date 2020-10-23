@@ -44,6 +44,7 @@ jobs:
           echo "::set-output name=TXL_HUB_GATEWAY_URL::TXL_HUB_GATEWAY_URL_${STAGE}"
           echo "::set-output name=TXL_USER_KEY::TXL_USER_KEY_${STAGE}"
           echo "::set-output name=TXL_USER_SECRET::TXL_USER_SECRET_${STAGE}"
+          echo "::set-output name=SPACE_STORAGE_SITE_URL::SPACE_STORAGE_SITE_URL_${STAGE}"
       - name: Release via goreleaser
         uses: goreleaser/goreleaser-action@master
         with:
@@ -64,3 +65,4 @@ jobs:
           TXL_HUB_GATEWAY_URL: ${{ secrets[steps.secretnames.outputs.TXL_HUB_GATEWAY_URL] }}
           TXL_USER_KEY: ${{ secrets[steps.secretnames.outputs.TXL_USER_KEY] }}
           TXL_USER_SECRET: ${{ secrets[steps.secretnames.outputs.TXL_USER_SECRET] }}
+          SPACE_STORAGE_SITE_URL: ${{ secrets[steps.secretnames.outputs.SPACE_STORAGE_SITE_URL] }}
