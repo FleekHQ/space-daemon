@@ -142,9 +142,6 @@ func (a *App) Start(ctx context.Context) error {
 		kc,
 		v,
 		hubAuth,
-		ipfsNode,
-		buckd,
-		a.eg,
 		space.WithEnv(a.env),
 	)
 	if svErr != nil {

@@ -4,10 +4,11 @@ import (
 	"crypto/ed25519"
 	"crypto/sha512"
 	"encoding/hex"
-	"golang.org/x/crypto/pbkdf2"
 	"os"
 	"path"
 	"strings"
+
+	"golang.org/x/crypto/pbkdf2"
 
 	"errors"
 
@@ -222,7 +223,10 @@ func (kc *keychain) DeleteKeypair() error {
 
 	// Note: currently ignoring error on keychain removal because it's failing randomly.
 	// Use GenerateKeyPair with override option instead.
-	ring.Remove(PrivateKeyStoreKey)
+	err = ring.Remove(PrivateKeyStoreKey)
+	if err != nil {
+		log.Error("Error removing keychaing from keyring", err)
+	}
 
 	err = kc.st.Remove([]byte(PublicKeyStoreKey))
 	if err != nil {
@@ -230,7 +234,6 @@ func (kc *keychain) DeleteKeypair() error {
 	}
 
 	kc.privKey = nil
-
 	return nil
 }
 

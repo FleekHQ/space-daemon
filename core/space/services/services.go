@@ -63,9 +63,6 @@ func NewSpace(
 	kc keychain.Keychain,
 	v vault.Vault,
 	h hub.HubAuth,
-	i *node.IpfsNode,
-	b textile.Buckd,
-	aeg *errgroup.Group,
 ) *Space {
 	return &Space{
 		store:    st,
@@ -76,9 +73,6 @@ func NewSpace(
 		keychain: kc,
 		vault:    v,
 		hub:      h,
-		ipfsNode: i,
-		buckd:    b,
-		aeg:      aeg,
 	}
 }
 
