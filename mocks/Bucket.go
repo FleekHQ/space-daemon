@@ -97,6 +97,27 @@ func (_m *Bucket) DirExists(ctx context.Context, _a1 string) (bool, error) {
 	return r0, r1
 }
 
+// Each provides a mock function with given fields: ctx, _a1, iterator, withRecursive
+func (_m *Bucket) Each(ctx context.Context, _a1 string, iterator func(context.Context, *bucket.Bucket, string) error, withRecursive bool) (int, error) {
+	ret := _m.Called(ctx, _a1, iterator, withRecursive)
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func(context.Context, string, func(context.Context, *bucket.Bucket, string) error, bool) int); ok {
+		r0 = rf(ctx, _a1, iterator, withRecursive)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string, func(context.Context, *bucket.Bucket, string) error, bool) error); ok {
+		r1 = rf(ctx, _a1, iterator, withRecursive)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // FileExists provides a mock function with given fields: ctx, _a1
 func (_m *Bucket) FileExists(ctx context.Context, _a1 string) (bool, error) {
 	ret := _m.Called(ctx, _a1)
@@ -287,6 +308,27 @@ func (_m *Bucket) Slug() string {
 	}
 
 	return r0
+}
+
+// UpdatedAt provides a mock function with given fields: ctx, _a1
+func (_m *Bucket) UpdatedAt(ctx context.Context, _a1 string) (int64, error) {
+	ret := _m.Called(ctx, _a1)
+
+	var r0 int64
+	if rf, ok := ret.Get(0).(func(context.Context, string) int64); ok {
+		r0 = rf(ctx, _a1)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // UploadFile provides a mock function with given fields: ctx, _a1, reader

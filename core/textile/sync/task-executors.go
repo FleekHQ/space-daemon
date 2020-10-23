@@ -137,6 +137,11 @@ func (s *synchronizer) processBucketBackupOn(ctx context.Context, task *Task) er
 		return err
 	}
 
+	// race
+	if bucketModel.Backup == false {
+		return nil
+	}
+
 	dbID, err := utils.ParseDbIDFromString(bucketModel.DbID)
 	if err != nil {
 		return err
@@ -161,6 +166,11 @@ func (s *synchronizer) processBucketBackupOff(ctx context.Context, task *Task) e
 		return err
 	}
 
+	// race
+	if bucketModel.Backup == true {
+		return nil
+	}
+
 	dbID, err := utils.ParseDbIDFromString(bucketModel.DbID)
 	if err != nil {
 		return err
@@ -171,4 +181,49 @@ func (s *synchronizer) processBucketBackupOff(ctx context.Context, task *Task) e
 	}
 
 	return s.deleteAllFilesInPath(ctx, bucket, "")
+}
+
+func (s *synchronizer) processBucketRestoreTask(ctx context.Context, task *Task) error {
+	if err := checkTaskType(task, bucketRestoreTask); err != nil {
+		return err
+	}
+
+	bucket := task.Args[0]
+
+	if err := s.restoreBucket(ctx, bucket); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *synchronizer) processRestoreFile(ctx context.Context, task *Task) error {
+	if err := checkTaskType(task, restoreFileTask); err != nil {
+		return err
+	}
+
+	bucket := task.Args[0]
+	path := task.Args[1]
+
+	localBucket, err := s.getBucket(ctx, bucket)
+	if err != nil {
+		return err
+	}
+
+	mirrorBucket, err := s.getMirrorBucket(ctx, bucket)
+	if err != nil {
+		return err
+	}
+
+	// TODO: use timestamp or CID for check
+
+	if err = s.uploadFileToBucket(ctx, mirrorBucket, localBucket, path); err != nil {
+		return err
+	}
+
+	if s.eventNotifier != nil {
+		s.eventNotifier.SendFileEvent(events.NewFileEvent(path, bucket, events.FileRestored, nil))
+	}
+
+	return err
 }
