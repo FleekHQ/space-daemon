@@ -48,6 +48,7 @@ type Client interface {
 	JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error)
 	CreateBucket(ctx context.Context, bucketSlug string) (Bucket, error)
 	ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) (bool, error)
+	BucketBackupRestore(ctx context.Context, bucketSlug string) error
 	SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error)
 	Shutdown() error
 	WaitForReady() chan bool

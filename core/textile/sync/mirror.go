@@ -63,9 +63,9 @@ func (s *synchronizer) unsetMirrorFileBackup(ctx context.Context, path, bucketSl
 
 	// do not delete the instance because it might be shared
 	mf.Backup = false
+	mf.BackupInProgress = false
 
-	_, err = s.model.UpdateMirrorFile(ctx, mf)
-	if err != nil {
+	if _, err = s.model.UpdateMirrorFile(ctx, mf); err != nil {
 		return err
 	}
 

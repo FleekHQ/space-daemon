@@ -87,6 +87,20 @@ func (_m *Client) AttachSynchronizerNotifier(notif sync.EventNotifier) {
 	_m.Called(notif)
 }
 
+// BucketBackupRestore provides a mock function with given fields: ctx, bucketSlug
+func (_m *Client) BucketBackupRestore(ctx context.Context, bucketSlug string) error {
+	ret := _m.Called(ctx, bucketSlug)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, bucketSlug)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CreateBucket provides a mock function with given fields: ctx, bucketSlug
 func (_m *Client) CreateBucket(ctx context.Context, bucketSlug string) (textile.Bucket, error) {
 	ret := _m.Called(ctx, bucketSlug)
