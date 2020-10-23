@@ -274,6 +274,13 @@ service SpaceApi {
     };
   }
 
+  rpc BucketBackupRestore(BucketBackupRestoreRequest) returns (BucketBackupRestoreResponse) {
+    option (google.api.http) = {
+      post: "/v1/backup/restore"
+      body: "*"
+    };
+  }
+
   rpc GetUsageInfo(GetUsageInfoRequest) returns (GetUsageInfoResponse) {
     option (google.api.http) = {
       get: "/v1/usage"
@@ -336,6 +343,12 @@ message ToggleBucketBackupRequest {
 
 message ToggleBucketBackupResponse {}
 
+message BucketBackupRestoreRequest {
+  string bucket = 1;
+}
+
+message BucketBackupRestoreResponse {}
+
 message ListDirectoriesRequest {
   string bucket = 1;
   bool omitMembers = 2;
@@ -359,12 +372,14 @@ message ListDirectoryEntry {
   int64 backupCount = 10;
   repeated FileMember members = 11;
   bool isBackupInProgress = 12;
+  bool isRestoreInProgress = 13;
 }
 
 message SharedListDirectoryEntry {
   ListDirectoryEntry entry = 1;
   string dbId = 2;
   string bucket = 3;
+  bool isPublicLink = 4;
 }
 
 message ListDirectoriesResponse {
@@ -457,7 +472,7 @@ message OpenFileResponse {
 
 message OpenPublicFileRequest {
   string fileCid = 1;
-  string fileKey = 2;
+  string password = 2;
   string filename = 3;
 }
 

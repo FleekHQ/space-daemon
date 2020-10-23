@@ -49,7 +49,8 @@ type Service interface {
 	CreateLocalKeysBackup(ctx context.Context, pathToKeyBackup string) error
 	RecoverKeysByLocalBackup(ctx context.Context, pathToKeyBackup string) error
 	GetNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error)
-	ToggleBucketBackup(ctx context.Context, bucketName string, bucketBackup bool) error
+	ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) error
+	BucketBackupRestore(ctx context.Context, bucketSlug string) error
 	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error
 	HandleSharedFilesInvitation(ctx context.Context, invitationId string, accept bool) error
 	GetAPISessionTokens(ctx context.Context) (*domain.APISessionTokens, error)

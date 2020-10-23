@@ -7,13 +7,16 @@ import (
 	"encoding/base32"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"path/filepath"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
+	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	tc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
+	"github.com/textileio/go-threads/db"
 	"github.com/textileio/textile/v2/api/common"
 	"golang.org/x/crypto/pbkdf2"
 )
@@ -40,6 +43,7 @@ type DeterministicThreadVariant string
 
 const (
 	MetathreadThreadVariant DeterministicThreadVariant = "metathread"
+	CacheBucketVariant      DeterministicThreadVariant = "cache_bucket"
 )
 
 func NewDeterministicThreadID(kc keychain.Keychain, threadVariant DeterministicThreadVariant) (thread.ID, error) {
@@ -136,4 +140,76 @@ func IsMetaFileName(pathOrName string) bool {
 	}
 
 	return false
+}
+
+const threadIDStoreKey = "thread_id"
+
+// Returns the store key for a thread ID. It uses the keychain to obtain the public key, since the store key depends on it.
+func getDeterministicthreadStoreKey(kc keychain.Keychain, variant DeterministicThreadVariant) ([]byte, error) {
+	pub, err := kc.GetStoredPublicKey()
+	if err != nil {
+		return nil, err
+	}
+
+	pubInBytes, err := pub.Raw()
+	if err != nil {
+		return nil, err
+	}
+
+	result := []byte(threadIDStoreKey + "_" + string(variant))
+	result = append(result, pubInBytes...)
+
+	return result, nil
+}
+
+// Finds or creates a thread ID that's based on the user private key and the specified variant
+// Using the same private key, variant and thread name will always end up generating the same key
+func FindOrCreateDeterministicThreadID(ctx context.Context, variant DeterministicThreadVariant, threadName string, kc keychain.Keychain, st store.Store, threads *tc.Client) (*thread.ID, error) {
+	storeKey, err := getDeterministicthreadStoreKey(kc, variant)
+	if err != nil {
+		return nil, err
+	}
+
+	if val, _ := st.Get(storeKey); val != nil {
+		// Cast the stored dbID from bytes to thread.ID
+		if dbID, err := thread.Cast(val); err != nil {
+			return nil, err
+		} else {
+			return &dbID, nil
+		}
+	}
+
+	// thread id does not exist yet
+
+	// We need to create an ID that's derived deterministically from the user private key
+	// The reason for this is that the user needs to be able to restore the exact ID when moving across devices.
+	// The only consideration is that we must try to avoid dbID collisions with other users.
+	dbID, err := NewDeterministicThreadID(kc, variant)
+	if err != nil {
+		return nil, err
+	}
+
+	dbIDInBytes := dbID.Bytes()
+
+	managedKey, err := kc.GetManagedThreadKey(threadName)
+	if err != nil {
+		return nil, err
+	}
+
+	threadCtx, err := GetThreadContext(ctx, threadName, dbID, false, kc, nil, threads)
+	if err != nil {
+		return nil, err
+	}
+
+	err = threads.NewDB(threadCtx, dbID, db.WithNewManagedThreadKey(managedKey))
+	if err != nil && err.Error() != "rpc error: code = Unknown desc = db already exists" {
+		return nil, err
+	}
+
+	if err := st.Set(storeKey, dbIDInBytes); err != nil {
+		newErr := errors.New("error while storing thread id: check your local space db accessibility")
+		return nil, newErr
+	}
+
+	return &dbID, nil
 }

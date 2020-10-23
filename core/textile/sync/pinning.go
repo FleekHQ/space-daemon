@@ -3,14 +3,14 @@ package sync
 import (
 	"context"
 	"io"
-	"strings"
 
+	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
 )
 
 func (s *synchronizer) uploadFileToRemote(ctx context.Context, bucket, path string) error {
-	mirror, err := s.getMirrorBucket(ctx, bucket)
+	mirrorBucket, err := s.getMirrorBucket(ctx, bucket)
 	if err != nil {
 		return err
 	}
@@ -19,6 +19,11 @@ func (s *synchronizer) uploadFileToRemote(ctx context.Context, bucket, path stri
 	if err != nil {
 		return err
 	}
+
+	return s.uploadFileToBucket(ctx, localBucket, mirrorBucket, path)
+}
+
+func (s *synchronizer) uploadFileToBucket(ctx context.Context, sourceBucket, targetBucket bucket.BucketInterface, path string) error {
 
 	pipeReader, pipeWriter := io.Pipe()
 	defer pipeReader.Close()
@@ -29,15 +34,15 @@ func (s *synchronizer) uploadFileToRemote(ctx context.Context, bucket, path stri
 		defer close(errc)
 		defer pipeWriter.Close()
 
-		if err := localBucket.GetFile(ctx, path, pipeWriter); err != nil {
+		if err := sourceBucket.GetFile(ctx, path, pipeWriter); err != nil {
 			errc <- err
+			return
 		}
 
 		errc <- nil
 	}()
 
-	_, _, err = mirror.UploadFile(ctx, path, pipeReader)
-	if err != nil {
+	if _, _, err := targetBucket.UploadFile(ctx, path, pipeReader); err != nil {
 		return err
 	}
 
@@ -45,7 +50,7 @@ func (s *synchronizer) uploadFileToRemote(ctx context.Context, bucket, path stri
 		return err
 	}
 
-	if err := s.addCurrentUserAsFileOwner(ctx, bucket, path); err != nil {
+	if err := s.addCurrentUserAsFileOwner(ctx, targetBucket.Slug(), path); err != nil {
 		// not returning since we dont want to halt the whole process
 		// also acl will still work since they are the owner
 		// of the thread so this is more for showing members view
@@ -73,9 +78,7 @@ func (s *synchronizer) uploadAllFilesInPath(ctx context.Context, bucket, path st
 		}
 
 		if item.IsDir {
-			p := strings.Join([]string{path, item.Name}, "/")
-
-			err := s.uploadAllFilesInPath(ctx, bucket, p)
+			err := s.uploadAllFilesInPath(ctx, bucket, item.Path)
 			if err != nil {
 				return err
 			}
@@ -84,8 +87,7 @@ func (s *synchronizer) uploadAllFilesInPath(ctx context.Context, bucket, path st
 		}
 
 		// If the current item is a file, we add it to the queue so that it both gets pinned and synced
-		s.NotifyItemAdded(bucket, path)
-
+		s.NotifyItemAdded(bucket, item.Path)
 	}
 
 	return nil
@@ -122,9 +124,7 @@ func (s *synchronizer) deleteAllFilesInPath(ctx context.Context, bucket, path st
 		}
 
 		if item.IsDir {
-			p := strings.Join([]string{path, item.Name}, "/")
-
-			err := s.deleteAllFilesInPath(ctx, bucket, p)
+			err := s.deleteAllFilesInPath(ctx, bucket, item.Path)
 			if err != nil {
 				return err
 			}
@@ -133,7 +133,7 @@ func (s *synchronizer) deleteAllFilesInPath(ctx context.Context, bucket, path st
 		}
 
 		// If the current item is a file, we add it to the queue so that it both gets pinned and synced
-		s.NotifyItemRemoved(bucket, path)
+		s.NotifyItemRemoved(bucket, item.Path)
 	}
 
 	return nil

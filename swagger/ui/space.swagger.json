@@ -65,6 +65,38 @@
         ]
       }
     },
+    "/v1/backup/restore": {
+      "post": {
+        "operationId": "SpaceApi_BucketBackupRestore",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceBucketBackupRestoreResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceBucketBackupRestoreRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/buckets": {
       "get": {
         "operationId": "SpaceApi_ListBuckets",
@@ -481,7 +513,7 @@
             "type": "string"
           },
           {
-            "name": "fileKey",
+            "name": "password",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1461,6 +1493,17 @@
         }
       }
     },
+    "spaceBucketBackupRestoreRequest": {
+      "type": "object",
+      "properties": {
+        "bucket": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceBucketBackupRestoreResponse": {
+      "type": "object"
+    },
     "spaceBucketMember": {
       "type": "object",
       "properties": {
@@ -1880,6 +1923,10 @@
         "isBackupInProgress": {
           "type": "boolean",
           "format": "boolean"
+        },
+        "isRestoreInProgress": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },
@@ -2082,6 +2129,10 @@
         },
         "bucket": {
           "type": "string"
+        },
+        "isPublicLink": {
+          "type": "boolean",
+          "format": "boolean"
         }
       }
     },

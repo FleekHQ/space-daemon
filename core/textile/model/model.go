@@ -2,21 +2,17 @@ package model
 
 import (
 	"context"
-	"errors"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
-	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
-	"github.com/textileio/go-threads/db"
 )
 
 const metaThreadName = "metathreadV1"
-const threadIDStoreKey = "thread_id"
 
 type model struct {
 	st      store.Store
@@ -31,14 +27,23 @@ type Model interface {
 	BucketBackupToggle(ctx context.Context, bucketSlug string, backup bool) (*BucketSchema, error)
 	FindBucket(ctx context.Context, bucketSlug string) (*BucketSchema, error)
 	ListBuckets(ctx context.Context) ([]*BucketSchema, error)
-	CreateReceivedFile(
+	CreateReceivedFileViaInvitation(
 		ctx context.Context,
 		file domain.FullPath,
 		invitationId string,
 		accepted bool,
 		key []byte,
 	) (*ReceivedFileSchema, error)
+	CreateReceivedFileViaPublicLink(
+		ctx context.Context,
+		ipfsHash string,
+		password string,
+		filename string,
+		filesize string,
+		accepted bool,
+	) (*ReceivedFileSchema, error)
 	FindReceivedFile(ctx context.Context, remoteDbID, bucket, path string) (*ReceivedFileSchema, error)
+	FindPublicLinkReceivedFile(ctx context.Context, ipfsHash string) (*ReceivedFileSchema, error)
 	CreateSharedPublicKey(ctx context.Context, pubKey string) (*SharedPublicKeySchema, error)
 	ListSharedPublicKeys(ctx context.Context) ([]*SharedPublicKeySchema, error)
 	CreateMirrorBucket(ctx context.Context, bucketSlug string, mirrorBucket *MirrorBucketSchema) (*BucketSchema, error)
@@ -46,6 +51,7 @@ type Model interface {
 	CreateMirrorFile(ctx context.Context, mirrorFile *domain.MirrorFile) (*MirrorFileSchema, error)
 	UpdateMirrorFile(ctx context.Context, mirrorFile *MirrorFileSchema) (*MirrorFileSchema, error)
 	ListReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*ReceivedFileSchema, error)
+	ListReceivedPublicFiles(ctx context.Context, cidHash string, accepted bool) ([]*ReceivedFileSchema, error)
 	FindMirrorFileByPaths(ctx context.Context, paths []string) (map[string]*MirrorFileSchema, error)
 	FindReceivedFilesByIds(ctx context.Context, ids []string) ([]*ReceivedFileSchema, error)
 }
@@ -59,74 +65,8 @@ func New(st store.Store, kc keychain.Keychain, threads *threadsClient.Client, hu
 	}
 }
 
-// Returns the store key for a thread ID. It uses the keychain to obtain the public key, since the store key depends on it.
-func getMetathreadStoreKey(kc keychain.Keychain) ([]byte, error) {
-	pub, err := kc.GetStoredPublicKey()
-	if err != nil {
-		return nil, err
-	}
-
-	pubInBytes, err := pub.Raw()
-	if err != nil {
-		return nil, err
-	}
-
-	result := []byte(threadIDStoreKey + "_" + metaThreadName)
-	result = append(result, pubInBytes...)
-
-	return result, nil
-}
-
 func (m *model) findOrCreateMetaThreadID(ctx context.Context) (*thread.ID, error) {
-	storeKey, err := getMetathreadStoreKey(m.kc)
-	if err != nil {
-		return nil, err
-	}
-
-	if val, _ := m.st.Get(storeKey); val != nil {
-		// Cast the stored dbID from bytes to thread.ID
-		if dbID, err := thread.Cast(val); err != nil {
-			return nil, err
-		} else {
-			return &dbID, nil
-		}
-	}
-
-	// thread id does not exist yet
-
-	// We need to create an ID that's derived deterministically from the user private key
-	// The reason for this is that the user needs to be able to restore the exact ID when moving across devices.
-	// The only consideration is that we must try to avoid dbID collisions with other users.
-	dbID, err := utils.NewDeterministicThreadID(m.kc, utils.MetathreadThreadVariant)
-	if err != nil {
-		return nil, err
-	}
-
-	dbIDInBytes := dbID.Bytes()
-
-	log.Debug("Model.findOrCreateMetaThreadID: Created meta thread in db " + dbID.String())
-
-	managedKey, err := m.kc.GetManagedThreadKey(metaThreadName)
-	if err != nil {
-		log.Error("error getting managed thread key", err)
-		return nil, err
-	}
-
-	err = m.threads.NewDB(ctx, dbID, db.WithNewManagedThreadKey(managedKey))
-	var st string
-	if err != nil {
-		st = err.Error()
-		if st != "rpc error: code = Unknown desc = db already exists" {
-			return nil, err
-		}
-	}
-
-	if err := m.st.Set(storeKey, dbIDInBytes); err != nil {
-		newErr := errors.New("error while storing thread id: check your local space db accessibility")
-		return nil, newErr
-	}
-
-	return &dbID, nil
+	return utils.FindOrCreateDeterministicThreadID(ctx, utils.MetathreadThreadVariant, metaThreadName, m.kc, m.st, m.threads)
 }
 
 func (m *model) getMetaThreadContext(ctx context.Context) (context.Context, *thread.ID, error) {

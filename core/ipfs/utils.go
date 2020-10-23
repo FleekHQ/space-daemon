@@ -81,5 +81,9 @@ func DownloadIpfsItem(ctx context.Context, gatewayUrl string, cid cid.Cid) (io.R
 		return nil, err
 	}
 
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("failed to fetch item: status_code %d", resp.StatusCode)
+	}
+
 	return resp.Body, nil
 }

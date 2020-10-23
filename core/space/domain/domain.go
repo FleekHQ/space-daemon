@@ -25,10 +25,11 @@ type ThreadInfo struct {
 
 type FileInfo struct {
 	DirEntry
-	IpfsHash         string
-	BackedUp         bool
-	LocallyAvailable bool
-	BackupInProgress bool
+	IpfsHash          string
+	BackedUp          bool
+	LocallyAvailable  bool
+	BackupInProgress  bool
+	RestoreInProgress bool
 }
 
 type OpenFileInfo struct {
@@ -64,6 +65,7 @@ type AddWatchFile struct {
 	BucketPath string `json:"bucket_path"`
 	BucketKey  string `json:"bucket_key"`
 	BucketSlug string `json:"bucket_slug"`
+	IsRemote   bool   `json:"isRemote"`
 }
 
 type Identity struct {
@@ -151,16 +153,18 @@ type APISessionTokens struct {
 }
 
 type MirrorFile struct {
-	Path             string
-	BucketSlug       string
-	Backup           bool
-	Shared           bool
-	BackupInProgress bool
+	Path              string
+	BucketSlug        string
+	Backup            bool
+	Shared            bool
+	BackupInProgress  bool
+	RestoreInProgress bool
 }
 
 type SharedDirEntry struct {
-	DbID   string
-	Bucket string
+	DbID         string
+	Bucket       string
+	IsPublicLink bool
 	FileInfo
 	Members []Member // XXX: it is duplicated from FileInfo
 }

@@ -92,19 +92,30 @@ func (s *Space) JoinBucket(ctx context.Context, slug string, threadinfo *domain.
 	return r, nil
 }
 
-func (s *Space) ToggleBucketBackup(ctx context.Context, bucketName string, bucketBackup bool) error {
+func (s *Space) ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) error {
 	err := s.waitForTextileHub(ctx)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.tc.ToggleBucketBackup(ctx, bucketName, bucketBackup)
+	_, err = s.tc.ToggleBucketBackup(ctx, bucketSlug, bucketBackup)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.tc.GetBucket(ctx, bucketName, nil)
+	_, err = s.tc.GetBucket(ctx, bucketSlug, nil)
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Space) BucketBackupRestore(ctx context.Context, bucketSlug string) error {
+	if err := s.waitForTextileHub(ctx); err != nil {
+		return err
+	}
+	if err := s.tc.BucketBackupRestore(ctx, bucketSlug); err != nil {
 		return err
 	}
 
@@ -202,9 +213,11 @@ func (s *Space) listDirAtPath(
 
 		backedup := false
 		backupInProgress := false
+		restoreInProgress := false
 		if mirror_files[item.Path] != nil {
 			backedup = mirror_files[item.Path].Backup
 			backupInProgress = mirror_files[item.Path].BackupInProgress
+			restoreInProgress = mirror_files[item.Path].RestoreInProgress
 		}
 
 		locallyAvailable := false
@@ -219,15 +232,16 @@ func (s *Space) listDirAtPath(
 				Name:          item.Name,
 				SizeInBytes:   strconv.FormatInt(item.Size, 10),
 				FileExtension: strings.Replace(filepath.Ext(item.Name), ".", "", -1),
-				// TODO: Get these fields from Textile Buckets
-				Created: time.Now().Format(time.RFC3339),
-				Updated: time.Now().Format(time.RFC3339),
+				// FIXME: real created at needed
+				Created: time.Unix(0, item.Metadata.UpdatedAt).Format(time.RFC3339),
+				Updated: time.Unix(0, item.Metadata.UpdatedAt).Format(time.RFC3339),
 				Members: members,
 			},
-			IpfsHash:         item.Cid,
-			BackedUp:         backedup,
-			LocallyAvailable: locallyAvailable,
-			BackupInProgress: backupInProgress,
+			IpfsHash:          item.Cid,
+			BackedUp:          backedup,
+			LocallyAvailable:  locallyAvailable,
+			BackupInProgress:  backupInProgress,
+			RestoreInProgress: restoreInProgress,
 		}
 		entries = append(entries, entry)
 
@@ -286,10 +300,11 @@ func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (do
 		return domain.OpenFileInfo{}, err
 	}
 
+	isRemote := dbID != ""
 	var filePath string
 	var b textile.Bucket
 	// check if file exists in sync
-	if dbID != "" {
+	if isRemote {
 		b, err = s.getBucketForRemoteFile(ctx, bucketName, dbID, path)
 	} else {
 		b, err = s.getBucketWithFallback(ctx, bucketName)
@@ -297,7 +312,7 @@ func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (do
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
-	if filePath, exists := s.sync.GetOpenFilePath(b.Slug(), path); exists {
+	if filePath, exists := s.sync.GetOpenFilePath(b.Slug(), path, dbID); exists {
 		// sanity check in case file was deleted or moved
 		if PathExists(filePath) {
 			// return file handle
@@ -308,7 +323,7 @@ func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (do
 	}
 
 	// else, open new file on FS
-	filePath, err = s.openFileOnFs(ctx, path, b)
+	filePath, err = s.openFileOnFs(ctx, path, b, isRemote)
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
@@ -334,7 +349,7 @@ func (s *Space) TruncateData(ctx context.Context) error {
 	return nil
 }
 
-func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket) (string, error) {
+func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket, isRemote bool) (string, error) {
 	// write file copy to temp folder
 	tmpFile, err := s.createTempFileForPath(ctx, path, false)
 	if err != nil {
@@ -364,6 +379,7 @@ func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket)
 		BucketPath: path,
 		BucketKey:  b.Key(),
 		BucketSlug: b.Slug(),
+		IsRemote:   isRemote,
 	}
 
 	err = s.sync.AddFileWatch(addWatchFile)
@@ -378,10 +394,10 @@ func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket)
 // configured when running the daemon. If inTempDir is true, then it is created relative
 // to the operating systems temp dir.
 func (s *Space) createTempFileForPath(ctx context.Context, path string, inTempDir bool) (*os.File, error) {
-	cfg := s.GetConfig(ctx)
 	_, fileName := filepath.Split(path)
 	prefixPath := ""
 	if !inTempDir {
+		cfg := s.GetConfig(ctx)
 		prefixPath = cfg.AppPath
 	}
 	// NOTE: the pattern of the file ensures that it retains extension. e.g (rand num) + filename/path

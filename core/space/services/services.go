@@ -35,7 +35,7 @@ type Space struct {
 
 type Syncer interface {
 	AddFileWatch(addFileInfo domain.AddWatchFile) error
-	GetOpenFilePath(bucketSlug string, bucketPath string) (string, bool)
+	GetOpenFilePath(bucketSlug string, bucketPath string, dbID string) (string, bool)
 }
 
 type AddFileWatchFunc = func(addFileInfo domain.AddWatchFile) error

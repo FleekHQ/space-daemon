@@ -24,6 +24,7 @@ const (
 	hubTarget                       = "127.0.0.1:3006"
 	threadsTarget                   = "127.0.0.1:3006"
 	defaultPersonalBucketSlug       = "personal"
+	defaultCacheBucketSlug          = "personal_cache"
 	defaultPersonalMirrorBucketSlug = "personal_mirror"
 	defaultPublicShareBucketSlug    = "personal_public"
 )
@@ -47,6 +48,7 @@ type Client interface {
 	JoinBucket(ctx context.Context, slug string, ti *domain.ThreadInfo) (bool, error)
 	CreateBucket(ctx context.Context, bucketSlug string) (Bucket, error)
 	ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) (bool, error)
+	BucketBackupRestore(ctx context.Context, bucketSlug string) error
 	SendMessage(ctx context.Context, recipient crypto.PubKey, body []byte) (*client.Message, error)
 	Shutdown() error
 	WaitForReady() chan bool
@@ -57,10 +59,15 @@ type Client interface {
 	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey, keys [][]byte) error
 	AcceptSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
 	RejectSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
+	AcceptSharedFileLink(
+		ctx context.Context,
+		cidHash, password, filename, fileSize string,
+	) (*domain.SharedDirEntry, error)
 	RemoveKeys(ctx context.Context) error
 	AttachMailboxNotifier(notif GrpcMailboxNotifier)
 	AttachSynchronizerNotifier(notif sync.EventNotifier)
 	GetReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*domain.SharedDirEntry, string, error)
+	GetPublicReceivedFile(ctx context.Context, cidHash string, accepted bool) (*domain.SharedDirEntry, string, error)
 	GetPathAccessRoles(ctx context.Context, b Bucket, path string) ([]domain.Member, error)
 	GetPublicShareBucket(ctx context.Context) (Bucket, error)
 	DownloadPublicGatewayItem(ctx context.Context, cid cid.Cid) (io.ReadCloser, error)

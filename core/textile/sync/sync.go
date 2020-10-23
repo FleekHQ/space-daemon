@@ -16,6 +16,9 @@ type Synchronizer interface {
 	NotifyBucketCreated(bucket string, enckey []byte)
 	NotifyBucketBackupOn(bucket string)
 	NotifyBucketBackupOff(bucket string)
+	NotifyBucketRestore(bucket string)
+	NotifyFileRestore(bucket, path string)
+	NotifyBucketStartup(bucket string)
 	Start(ctx context.Context)
 	RestoreQueue() error
 	Shutdown()
