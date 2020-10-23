@@ -50,6 +50,7 @@ type synchronizer struct {
 	netc              *nc.Client
 	queueWg           *sync.WaitGroup
 	eventNotifier     EventNotifier
+	isRunning         bool
 }
 
 // Creates a new Synchronizer
@@ -100,6 +101,7 @@ func New(
 		cfg:               cfg,
 		netc:              netc,
 		queueWg:           queueWg,
+		isRunning:         false,
 	}
 }
 
@@ -171,6 +173,10 @@ func (s *synchronizer) NotifyIndexItemAdded(bucket, path, dbId string) {
 }
 
 func (s *synchronizer) notifySyncNeeded() {
+	if !s.isRunning {
+		return
+	}
+
 	select {
 	case s.syncNeeded <- true:
 	default:
@@ -180,6 +186,7 @@ func (s *synchronizer) notifySyncNeeded() {
 // Starts the synchronizer, which will constantly be checking if there are syncing tasks pending
 func (s *synchronizer) Start(ctx context.Context) {
 	s.queueWg.Add(2)
+	s.isRunning = true
 	// Sync loop
 	go func() {
 		s.startSyncLoop(ctx, s.taskQueue)
@@ -234,6 +241,7 @@ Loop:
 }
 
 func (s *synchronizer) Shutdown() {
+
 	s.shuttingDownMap[s.taskQueue] <- true
 	s.shuttingDownMap[s.filePinningQueue] <- true
 	s.queueWg.Wait()
@@ -242,6 +250,7 @@ func (s *synchronizer) Shutdown() {
 		log.Error("Error while storing Textile task queue state", err)
 	}
 
+	s.isRunning = false
 	close(s.shuttingDownMap[s.taskQueue])
 	close(s.shuttingDownMap[s.filePinningQueue])
 	close(s.syncNeeded)

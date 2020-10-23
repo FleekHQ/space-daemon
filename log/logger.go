@@ -116,6 +116,14 @@ func Fatal(err error) {
 	log.Fatal(err)
 }
 
+func SetLogLevel(logLevel string) {
+	level, err := logrus.ParseLevel(logLevel)
+	if err != nil {
+		level = logrus.DebugLevel
+	}
+	log.log.SetLevel(level)
+}
+
 func parseFields(tags ...string) logrus.Fields {
 	result := make(logrus.Fields, len(tags))
 

@@ -189,6 +189,10 @@ func (b *bleveFilesSearchEngine) QueryFileData(
 }
 
 func (b *bleveFilesSearchEngine) Shutdown() error {
+	if b.idx == nil {
+		return nil
+	}
+
 	err := b.idx.Close()
 	if err != nil {
 		return err

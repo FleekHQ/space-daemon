@@ -30,6 +30,12 @@ const (
 	Ipfsnodepath             = "space/ipfsNodePath"
 	MinThreadsConnection     = "space/minThreadsConn"
 	MaxThreadsConnection     = "space/maxThreadsConn"
+	BuckdPath                = "space/BuckdPath"
+	BuckdApiMaAddr           = "space/BuckdApiMaAddr"
+	BuckdApiProxyMaAddr      = "space/BuckdApiProxyMaAddr"
+	BuckdThreadsHostMaAddr   = "Space/BuckdThreadsHostMaAddr"
+	BuckdGatewayPort         = "Space/BuckdGatewayPort"
+	LogLevel                 = "Space/LogLevel"
 )
 
 var (
@@ -37,22 +43,32 @@ var (
 )
 
 type Flags struct {
-	Ipfsaddr             string
-	Ipfsnode             bool
-	Ipfsnodeaddr         string
-	Ipfsnodepath         string
-	DevMode              bool
-	ServicesAPIURL       string
-	SpaceStorageSiteUrl  string
-	VaultAPIURL          string
-	VaultSaltSecret      string
-	ServicesHubAuthURL   string
-	TextileHubTarget     string
-	TextileHubMa         string
-	TextileThreadsTarget string
-	TextileHubGatewayUrl string
-	TextileUserKey       string
-	TextileUserSecret    string
+	Ipfsaddr               string
+	Ipfsnode               bool
+	Ipfsnodeaddr           string
+	Ipfsnodepath           string
+	DevMode                bool
+	ServicesAPIURL         string
+	SpaceStorageSiteUrl    string
+	VaultAPIURL            string
+	VaultSaltSecret        string
+	ServicesHubAuthURL     string
+	TextileHubTarget       string
+	TextileHubMa           string
+	TextileThreadsTarget   string
+	TextileHubGatewayUrl   string
+	TextileUserKey         string
+	TextileUserSecret      string
+	SpaceStorePath         string
+	RpcServerPort          int
+	RpcProxyServerPort     int
+	RestProxyServerPort    int
+	BuckdPath              string
+	BuckdApiMaAddr         string
+	BuckdApiProxyMaAddr    string
+	BuckdThreadsHostMaAddr string
+	BuckdGatewayPort       int
+	LogLevel               string
 }
 
 // Config used to fetch config information

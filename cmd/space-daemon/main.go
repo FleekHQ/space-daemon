@@ -1,14 +1,15 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"os/signal"
 	"runtime"
 	"runtime/pprof"
+	"syscall"
 
 	"github.com/FleekHQ/space-daemon/tracing"
 
@@ -99,16 +100,25 @@ func main() {
 	env := env.New()
 
 	// load configs
-	cfg := config.NewMap(env, cf)
-
-	// setup context
-	ctx := context.Background()
+	cfg := config.NewMap(cf)
 
 	rlimit.SetRLimit()
 
 	spaceApp := app.New(cfg, env)
-	// this blocks and returns on exist
-	err := spaceApp.Start(ctx)
+
+	err := spaceApp.Start()
+	if err != nil {
+		log.Error("Application startup failed", err)
+		returnCode = 1
+	}
+
+	// setup to detect interruption
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(interrupt)
+
+	<-interrupt // wait for interrupt and then shutdown app
+	err = spaceApp.Shutdown()
 
 	if *memprofile != "" {
 		cleanupMemProfile := runMemProfiler(*memprofile)
@@ -116,7 +126,7 @@ func main() {
 	}
 
 	if err != nil {
-		log.Error("Application startup failed", err)
+		log.Error("Application shutdown failed", err)
 		returnCode = 1
 	}
 }
