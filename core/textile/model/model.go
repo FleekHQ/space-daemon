@@ -101,8 +101,8 @@ func (m *model) findOrCreateMetaThreadID(ctx context.Context) (*thread.ID, error
 	}
 
 	if _, err := m.netc.AddReplicator(ctx, threadID, hubma); err != nil {
-		log.Error("error when replicating metathread", err)
-		// return nil, err
+		log.Error("error while replicating metathread", err)
+		// Not returning error in case the user is offline (it should still work using local threads)
 	}
 
 	return &threadID, nil
