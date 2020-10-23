@@ -255,7 +255,7 @@ func (m *model) ListReceivedPublicFiles(
 		return nil, err
 	}
 
-	query := db.Where("accepted").Eq(accepted).And("ipfsHash").Eq(cidHash)
+	query := db.Where("accepted").Eq(accepted).And("publicIpfsHash").Eq(cidHash)
 
 	rawFiles, err := m.threads.Find(metaCtx, *dbID, receivedFileModelName, query, &ReceivedFileSchema{})
 	if err != nil {
