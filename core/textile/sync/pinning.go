@@ -3,7 +3,6 @@ package sync
 import (
 	"context"
 	"io"
-	"strings"
 
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
@@ -79,9 +78,7 @@ func (s *synchronizer) uploadAllFilesInPath(ctx context.Context, bucket, path st
 		}
 
 		if item.IsDir {
-			p := strings.Join([]string{path, item.Name}, "/")
-
-			err := s.uploadAllFilesInPath(ctx, bucket, p)
+			err := s.uploadAllFilesInPath(ctx, bucket, item.Path)
 			if err != nil {
 				return err
 			}
@@ -90,7 +87,7 @@ func (s *synchronizer) uploadAllFilesInPath(ctx context.Context, bucket, path st
 		}
 
 		// If the current item is a file, we add it to the queue so that it both gets pinned and synced
-		s.NotifyItemAdded(bucket, path)
+		s.NotifyItemAdded(bucket, item.Path)
 	}
 
 	return nil
@@ -127,9 +124,7 @@ func (s *synchronizer) deleteAllFilesInPath(ctx context.Context, bucket, path st
 		}
 
 		if item.IsDir {
-			p := strings.Join([]string{path, item.Name}, "/")
-
-			err := s.deleteAllFilesInPath(ctx, bucket, p)
+			err := s.deleteAllFilesInPath(ctx, bucket, item.Path)
 			if err != nil {
 				return err
 			}
@@ -138,7 +133,7 @@ func (s *synchronizer) deleteAllFilesInPath(ctx context.Context, bucket, path st
 		}
 
 		// If the current item is a file, we add it to the queue so that it both gets pinned and synced
-		s.NotifyItemRemoved(bucket, path)
+		s.NotifyItemRemoved(bucket, item.Path)
 	}
 
 	return nil
