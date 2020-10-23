@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/pkg/errors"
+
 	"github.com/FleekHQ/space-daemon/core"
 	"github.com/FleekHQ/space-daemon/grpc"
 
@@ -37,11 +39,12 @@ import (
 
 // Shutdown logic follows this example https://gist.github.com/akhenakh/38dbfea70dc36964e23acc19777f3869
 type App struct {
-	eg             *errgroup.Group
-	components     *stack.Stack
-	cfg            config.Config
-	env            env.SpaceEnv
-	isShuttingDown bool
+	eg         *errgroup.Group
+	components *stack.Stack
+	cfg        config.Config
+	env        env.SpaceEnv
+	IsRunning  bool
+	readyChan  chan bool
 }
 
 type componentMap struct {
@@ -51,10 +54,11 @@ type componentMap struct {
 
 func New(cfg config.Config, env env.SpaceEnv) *App {
 	return &App{
-		components:     stack.New(),
-		cfg:            cfg,
-		env:            env,
-		isShuttingDown: false,
+		components: stack.New(),
+		cfg:        cfg,
+		env:        env,
+		IsRunning:  false,
+		readyChan:  make(chan bool, 1),
 	}
 }
 
@@ -197,6 +201,9 @@ func (a *App) Start(ctx context.Context) error {
 
 	log.Info("Daemon ready")
 
+	a.readyChan <- true
+	a.IsRunning = true
+
 	// wait for interruption or done signal
 	select {
 	case <-interrupt:
@@ -253,10 +260,18 @@ func (a *App) RunAsync(name string, component core.AsyncComponent, fn func() err
 	return nil
 }
 
+func (a *App) WaitForReady() <-chan bool {
+	return a.readyChan
+}
+
 // Shutdown would perform a graceful shutdown of all components added through the
 // Run() or RunAsync() functions
 func (a *App) Shutdown() error {
 	log.Info("Daemon shutdown started")
+	if !a.IsRunning {
+		return errors.New("app is not running")
+	}
+
 	for a.components.Len() > 0 {
 		m, ok := a.components.Pop().(*componentMap)
 		if ok {
@@ -269,5 +284,6 @@ func (a *App) Shutdown() error {
 
 	err := a.eg.Wait()
 	log.Info("Shutdown complete")
+	a.IsRunning = false
 	return err
 }

@@ -18,3 +18,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Test
         run: go test -race ./...
+      - name: Unit Test
+        run: go test -race $(go list ./... | grep -v integration_tests)
+      - name: Integration Test
+        run: go test -race -v -p 1 ./integration_tests/...

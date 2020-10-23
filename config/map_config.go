@@ -12,7 +12,7 @@ type mapConfig struct {
 	configBool map[string]bool
 }
 
-func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
+func NewMap(flags *Flags) Config {
 	configStr := make(map[string]string)
 	configInt := make(map[string]int)
 	configBool := make(map[string]bool)

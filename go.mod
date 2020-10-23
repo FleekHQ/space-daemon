@@ -40,6 +40,8 @@ require (
 	github.com/multiformats/go-multihash v0.0.14
 	github.com/odeke-em/go-utils v0.0.0-20170224015737-e8ebaed0777a
 	github.com/odeke-em/go-uuid v0.0.0-20151221120446-b211d769a9aa
+	github.com/onsi/ginkgo v1.14.2
+	github.com/onsi/gomega v1.10.3
 	github.com/pkg/errors v0.9.1
 	github.com/radovskyb/watcher v1.0.7
 	github.com/rakyll/statik v0.1.7
@@ -52,9 +54,9 @@ require (
 	github.com/tyler-smith/go-bip39 v1.0.2
 	go.etcd.io/etcd v3.3.22+incompatible
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.0.0-20200707034311-ab3426394381
+	golang.org/x/net v0.0.0-20201006153459-a7d1128ccaa0
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980
+	golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
 	google.golang.org/genproto v0.0.0-20200702021140-07506425bd67
 	google.golang.org/grpc v1.31.0
 	google.golang.org/protobuf v1.25.0
