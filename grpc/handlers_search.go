@@ -7,7 +7,6 @@ import (
 )
 
 // Search files based on query fields
-// NOTE: This is still a TODO the current implementation just returns a list of files in the base personal bucket
 func (srv *grpcServer) SearchFiles(ctx context.Context, request *pb.SearchFilesRequest) (*pb.SearchFilesResponse, error) {
 	if request.Query == "" {
 		return &pb.SearchFilesResponse{
@@ -16,18 +15,29 @@ func (srv *grpcServer) SearchFiles(ctx context.Context, request *pb.SearchFilesR
 		}, nil
 	}
 
-	entries, err := srv.sv.ListDir(ctx, "", "", false)
+	entries, err := srv.sv.SearchFiles(ctx, request.Query)
 	if err != nil {
 		return nil, err
 	}
 
-	dirEntries := mapFileInfoToDirectoryEntry(entries)
-	searchResponseEntries := make([]*pb.SearchFilesDirectoryEntry, len(dirEntries))
-	for i, e := range dirEntries {
+	searchResponseEntries := make([]*pb.SearchFilesDirectoryEntry, len(entries))
+	for i, e := range entries {
 		searchResponseEntries[i] = &pb.SearchFilesDirectoryEntry{
-			Entry:  e,
-			DbId:   "", // TODO: To be filled
-			Bucket: "", // TODO: To be filled
+			Entry: &pb.ListDirectoryEntry{
+				Path:                e.Path,
+				IsDir:               e.IsDir,
+				Name:                e.Name,
+				SizeInBytes:         e.SizeInBytes,
+				Created:             e.Created,
+				Updated:             e.Updated,
+				FileExtension:       e.FileExtension,
+				IpfsHash:            e.IpfsHash,
+				IsLocallyAvailable:  e.LocallyAvailable,
+				IsBackupInProgress:  e.BackupInProgress,
+				IsRestoreInProgress: e.RestoreInProgress,
+			},
+			DbId:   e.DbID,
+			Bucket: e.Bucket,
 		}
 	}
 

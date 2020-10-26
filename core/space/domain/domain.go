@@ -168,3 +168,9 @@ type SharedDirEntry struct {
 	FileInfo
 	Members []Member // XXX: it is duplicated from FileInfo
 }
+
+type SearchFileEntry struct {
+	FileInfo
+	Bucket string
+	DbID   string
+}
