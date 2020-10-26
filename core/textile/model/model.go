@@ -3,13 +3,17 @@ package model
 import (
 	"context"
 
+	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
+	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
+	nc "github.com/textileio/go-threads/net/api/client"
+	"github.com/textileio/textile/v2/cmd"
 )
 
 const metaThreadName = "metathreadV1"
@@ -19,6 +23,9 @@ type model struct {
 	kc      keychain.Keychain
 	threads *threadsClient.Client
 	hubAuth hub.HubAuth
+	cfg     config.Config
+	netc    *nc.Client
+	ht      *threadsClient.Client
 }
 
 type Model interface {
@@ -56,17 +63,49 @@ type Model interface {
 	FindReceivedFilesByIds(ctx context.Context, ids []string) ([]*ReceivedFileSchema, error)
 }
 
-func New(st store.Store, kc keychain.Keychain, threads *threadsClient.Client, hubAuth hub.HubAuth) *model {
+func New(st store.Store, kc keychain.Keychain, threads *threadsClient.Client, ht *threadsClient.Client, hubAuth hub.HubAuth, cfg config.Config, netc *nc.Client) *model {
 	return &model{
 		st:      st,
 		kc:      kc,
 		threads: threads,
 		hubAuth: hubAuth,
+		cfg:     cfg,
+		netc:    netc,
+		ht:      ht,
 	}
 }
 
 func (m *model) findOrCreateMetaThreadID(ctx context.Context) (*thread.ID, error) {
-	return utils.FindOrCreateDeterministicThreadID(ctx, utils.MetathreadThreadVariant, metaThreadName, m.kc, m.st, m.threads)
+	hubmaStr := m.cfg.GetString(config.TextileHubMa, "")
+	hubma := cmd.AddrFromStr(hubmaStr)
+	key, err := m.kc.GetManagedThreadKey(metaThreadName)
+	if err != nil {
+		return nil, err
+	}
+
+	threadID, err := utils.NewDeterministicThreadID(m.kc, utils.MetathreadThreadVariant)
+	if err != nil {
+		return nil, err
+	}
+	hubmaWithThreadID := hubmaStr + "/thread/" + threadID.String()
+
+	// If we are here, then there's no replicated metathread yet
+	if _, err := utils.FindOrCreateDeterministicThreadID(ctx, utils.MetathreadThreadVariant, metaThreadName, m.kc, m.st, m.threads); err != nil {
+		return nil, err
+	}
+
+	// Try to join remote db if it was already replicated
+	err = m.threads.NewDBFromAddr(ctx, cmd.AddrFromStr(hubmaWithThreadID), key)
+	if err == nil || err.Error() == "rpc error: code = Unknown desc = db already exists" {
+		return &threadID, nil
+	}
+
+	if _, err := m.netc.AddReplicator(ctx, threadID, hubma); err != nil {
+		log.Error("error while replicating metathread", err)
+		// Not returning error in case the user is offline (it should still work using local threads)
+	}
+
+	return &threadID, nil
 }
 
 func (m *model) getMetaThreadContext(ctx context.Context) (context.Context, *thread.ID, error) {

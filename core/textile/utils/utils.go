@@ -43,8 +43,12 @@ type DeterministicThreadVariant string
 
 const (
 	MetathreadThreadVariant DeterministicThreadVariant = "metathread"
-	CacheBucketVariant      DeterministicThreadVariant = "cache_bucket"
+	MirrorBucketVariant     DeterministicThreadVariant = "mirror_bucket"
 )
+
+func MirrorBucketVariantGen(mirrorBucketSlug string) DeterministicThreadVariant {
+	return DeterministicThreadVariant(string(MirrorBucketVariant) + ":" + mirrorBucketSlug)
+}
 
 func NewDeterministicThreadID(kc keychain.Keychain, threadVariant DeterministicThreadVariant) (thread.ID, error) {
 	size := 32
