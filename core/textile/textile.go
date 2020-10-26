@@ -73,9 +73,15 @@ type Client interface {
 	DownloadPublicGatewayItem(ctx context.Context, cid cid.Cid) (io.ReadCloser, error)
 	GetFailedHealthchecks() int
 	DeleteBuckets(ctx context.Context) error
+	Listen(ctx context.Context, dbID, threadName string) (<-chan threadsClient.ListenEvent, error)
 }
 
 type Buckd interface {
 	Stop() error
 	Start(ctx context.Context) error
+}
+
+type Listener interface {
+	Listen(context.Context) error
+	Close()
 }

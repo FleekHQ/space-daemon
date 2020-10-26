@@ -136,12 +136,22 @@ func (s *synchronizer) createMirrorThread(ctx context.Context, slug string) (*th
 		return nil, err
 	}
 
-	dbID := thread.NewIDV1(thread.Raw, 32)
+	dbID, err := utils.NewDeterministicThreadID(s.kc, utils.MirrorBucketVariantGen(slug))
+	if err != nil {
+		return nil, err
+	}
 
 	managedKey, err := s.kc.GetManagedThreadKey(mirrorThreadKeyName + "_" + slug)
 	if err != nil {
 		log.Error("error getting managed thread key", err)
 		return nil, err
+	}
+
+	// If dbID is not found, GetDBInfo returns "thread not found" error
+	_, err = s.hubThreads.GetDBInfo(ctx, dbID)
+	if err == nil {
+		log.Debug("createMirrorThread: Db already exists")
+		return &dbID, nil
 	}
 
 	log.Debug("createMirrorThread: Creating Thread DB for bucket at db " + dbID.String())

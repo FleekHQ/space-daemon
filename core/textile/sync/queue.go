@@ -98,7 +98,13 @@ func (s *synchronizer) restoreQueue() error {
 }
 
 func (s *synchronizer) isTaskEnqueued(task *Task) bool {
-	if s.queueHashMap[task.ID] != nil {
+	existingTask := s.queueHashMap[task.ID]
+	if existingTask == nil {
+		return false
+	}
+
+	isPending := existingTask.State == taskQueued || existingTask.State == taskPending
+	if isPending {
 		return true
 	}
 

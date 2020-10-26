@@ -120,9 +120,16 @@ func (s *synchronizer) processCreateBucket(ctx context.Context, task *Task) erro
 	mirror, err := s.createMirrorBucket(ctx, bucket, enckey)
 	if mirror != nil {
 		_, err = s.model.CreateMirrorBucket(ctx, bucket, mirror)
+		if err != nil {
+			return err
+		}
 	}
 
-	return err
+	if err := s.addBucketListener(ctx, bucket); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *synchronizer) processBucketBackupOn(ctx context.Context, task *Task) error {

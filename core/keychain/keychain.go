@@ -372,6 +372,12 @@ func (kc *keychain) retrieveKeyPair() (privKey []byte, mnemonic string, err erro
 }
 
 func (kc *keychain) GetManagedThreadKey(threadKeyName string) (thread.Key, error) {
+	// Check if there's a key stored before continuing
+	_, err := kc.GetStoredPublicKey()
+	if err != nil {
+		return thread.Key{}, err
+	}
+
 	size := 32
 
 	priv, _, err := kc.GetStoredKeyPairInLibP2PFormat()
