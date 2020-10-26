@@ -47,11 +47,15 @@ func initSync(t *testing.T) sync.Synchronizer {
 		return mockClient.GetBucket(ctx, slug, mockRemoteFile)
 	}
 
+	addListenerFn := func(ctx context.Context, slug string) error {
+		return nil
+	}
+
 	getBucketCtxFn := func(ctx context.Context, sDbID string, bucketSlug string, ishub bool, enckey []byte) (context.Context, *thread.ID, error) {
 		return ctx, nil, nil
 	}
 
-	s := sync.New(mockStore, mockModel, mockKeychain, mockHubAuth, nil, nil, nil, mockCfg, getMirrorBucketFn, getLocalBucketFn, getBucketCtxFn)
+	s := sync.New(mockStore, mockModel, mockKeychain, mockHubAuth, nil, nil, nil, mockCfg, getMirrorBucketFn, getLocalBucketFn, getBucketCtxFn, addListenerFn)
 
 	return s
 }
