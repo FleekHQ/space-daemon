@@ -133,10 +133,15 @@ func (b *Bucket) Each(ctx context.Context, path string, iterator EachFunc, withR
 			continue
 		}
 
+		currItemPath := item.Name
+		if path != "" {
+			currItemPath = path + "/" + currItemPath
+		}
+
 		var n int
 
 		if withRecursive && item.IsDir {
-			if n, err = b.Each(ctx, item.Path, iterator, withRecursive); err != nil {
+			if n, err = b.Each(ctx, currItemPath, iterator, withRecursive); err != nil {
 				return 0, err
 			}
 
@@ -144,7 +149,7 @@ func (b *Bucket) Each(ctx context.Context, path string, iterator EachFunc, withR
 			continue
 		}
 
-		if err := iterator(ctx, b, item.Path); err != nil {
+		if err := iterator(ctx, b, currItemPath); err != nil {
 			return 0, err
 		}
 

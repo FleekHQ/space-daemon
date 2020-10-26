@@ -25,7 +25,8 @@ func (s *synchronizer) restoreBucket(ctx context.Context, bucketSlug string) err
 
 	iterator := func(c context.Context, b *bucket.Bucket, itemPath string) error {
 		exists, err := localBucket.FileExists(c, itemPath)
-		if err != nil {
+		if err != nil && err.Error() != "rpc error: code = DeadlineExceeded desc = context deadline exceeded" {
+			// deadline exceeded can be interpreted as the file not being present
 			return err
 		}
 
