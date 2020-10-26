@@ -93,13 +93,12 @@ func (a *App) Start(ctx context.Context) error {
 	}
 	a.Run("FolderWatcher", watcher)
 
-	var ipfsNode *node.IpfsNode
 	// setup local ipfs node if Ipfsnode is set
 	if a.cfg.GetBool(config.Ipfsnode, true) {
 		// setup local ipfs node
-		ipfsNode = node.NewIpsNode(a.cfg)
-		err = a.RunAsync("IpfsNode", ipfsNode, func() error {
-			return ipfsNode.Start(ctx)
+		node := node.NewIpsNode(a.cfg)
+		err = a.RunAsync("IpfsNode", node, func() error {
+			return node.Start(ctx)
 		})
 		if err != nil {
 			log.Error("Error starting embedded IPFS node", err)

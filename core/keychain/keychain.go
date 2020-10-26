@@ -224,9 +224,6 @@ func (kc *keychain) DeleteKeypair() error {
 	// Note: currently ignoring error on keychain removal because it's failing randomly.
 	// Use GenerateKeyPair with override option instead.
 	err = ring.Remove(PrivateKeyStoreKey)
-	if err != nil {
-		log.Error("Error removing keychaing from keyring", err)
-	}
 
 	err = kc.st.Remove([]byte(PublicKeyStoreKey))
 	if err != nil {
