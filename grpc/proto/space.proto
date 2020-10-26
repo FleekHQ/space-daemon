@@ -308,6 +308,28 @@ service SpaceApi {
       body: "*"
     };
   }
+
+  // Search for files across all users bucket
+  rpc SearchFiles(SearchFilesRequest) returns (SearchFilesResponse) {
+    option (google.api.http) = {
+      get: "/v1/search/files"
+    };
+  }
+}
+
+message SearchFilesRequest {
+  string query = 1;
+}
+
+message SearchFilesResponse {
+  repeated SearchFilesDirectoryEntry entries = 1;
+  string query = 2;
+}
+
+message SearchFilesDirectoryEntry {
+  ListDirectoryEntry entry = 1;
+  string dbId = 2;
+  string bucket = 3;
 }
 
 message SetNotificationsLastSeenAtRequest {

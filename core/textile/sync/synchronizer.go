@@ -123,6 +123,7 @@ func (s *synchronizer) NotifyBucketCreated(bucket string, enckey []byte) {
 
 func (s *synchronizer) NotifyBucketBackupOn(bucket string) {
 	t := newTask(bucketBackupOnTask, []string{bucket})
+	t.Parallelizable = true
 	s.enqueueTask(t, s.taskQueue)
 
 	s.notifySyncNeeded()
