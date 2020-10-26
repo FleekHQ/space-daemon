@@ -2101,13 +2101,27 @@
     "spaceRestoreKeyPairViaMnemonicResponse": {
       "type": "object"
     },
+    "spaceSearchFilesDirectoryEntry": {
+      "type": "object",
+      "properties": {
+        "entry": {
+          "$ref": "#/definitions/spaceListDirectoryEntry"
+        },
+        "dbId": {
+          "type": "string"
+        },
+        "bucket": {
+          "type": "string"
+        }
+      }
+    },
     "spaceSearchFilesResponse": {
       "type": "object",
       "properties": {
         "entries": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/spaceListDirectoryEntry"
+            "$ref": "#/definitions/spaceSearchFilesDirectoryEntry"
           }
         },
         "query": {

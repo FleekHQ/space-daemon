@@ -77,6 +77,44 @@ func (srv *grpcServer) ListDirectory(
 	return res, nil
 }
 
+func mapFileInfoToDirectoryEntry(entries []domain.FileInfo) []*pb.ListDirectoryEntry {
+	dirEntries := make([]*pb.ListDirectoryEntry, 0)
+
+	for _, e := range entries {
+		members := make([]*pb.FileMember, 0)
+
+		for _, m := range e.Members {
+			members = append(members, &pb.FileMember{
+				Address:   m.Address,
+				PublicKey: m.PublicKey,
+			})
+		}
+
+		var backupCount = 0
+		if e.BackedUp {
+			backupCount = 1
+		}
+
+		dirEntry := &pb.ListDirectoryEntry{
+			Path:                e.Path,
+			IsDir:               e.IsDir,
+			Name:                e.Name,
+			SizeInBytes:         e.SizeInBytes,
+			Created:             e.Created,
+			Updated:             e.Updated,
+			FileExtension:       e.FileExtension,
+			IpfsHash:            e.IpfsHash,
+			Members:             members,
+			BackupCount:         int64(backupCount),
+			IsLocallyAvailable:  e.LocallyAvailable,
+			IsBackupInProgress:  e.BackupInProgress,
+			IsRestoreInProgress: e.RestoreInProgress,
+		}
+		dirEntries = append(dirEntries, dirEntry)
+	}
+	return dirEntries
+}
+
 func (srv *grpcServer) Subscribe(empty *empty.Empty, stream pb.SpaceApi_SubscribeServer) error {
 	srv.registerStream(stream)
 	// waits until request is done

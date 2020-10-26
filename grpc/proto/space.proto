@@ -322,8 +322,14 @@ message SearchFilesRequest {
 }
 
 message SearchFilesResponse {
-  repeated ListDirectoryEntry entries = 1;
+  repeated SearchFilesDirectoryEntry entries = 1;
   string query = 2;
+}
+
+message SearchFilesDirectoryEntry {
+  ListDirectoryEntry entry = 1;
+  string dbId = 2;
+  string bucket = 3;
 }
 
 message SetNotificationsLastSeenAtRequest {
