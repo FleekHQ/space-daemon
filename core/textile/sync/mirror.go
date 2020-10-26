@@ -12,6 +12,7 @@ import (
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
 	bucketsClient "github.com/textileio/textile/v2/api/buckets/client"
+	api_buckets_pb "github.com/textileio/textile/v2/api/buckets/pb"
 	"github.com/textileio/textile/v2/buckets"
 )
 
@@ -114,14 +115,33 @@ func (s *synchronizer) createMirrorBucket(ctx context.Context, slug string, enck
 		return nil, err
 	}
 
-	b, err := s.hubBuckets.Create(hubCtx, bucketsClient.WithName(newSlug), bucketsClient.WithPrivate(true))
+	existingBuckets, err := s.hubBuckets.List(hubCtx)
 	if err != nil {
 		return nil, err
 	}
 
+	var root *api_buckets_pb.Root
+
+	for _, b := range existingBuckets.Roots {
+		if b.Name == newSlug {
+			log.Debug("Mirror bucket with slug " + newSlug + " already exists")
+			root = b
+			break
+		}
+	}
+
+	if root == nil {
+		createResp, err := s.hubBuckets.Create(hubCtx, bucketsClient.WithName(newSlug), bucketsClient.WithPrivate(true))
+		if err != nil {
+			return nil, err
+		}
+
+		root = createResp.Root
+	}
+
 	return &model.MirrorBucketSchema{
 		RemoteDbID:       utils.CastDbIDToString(*dbID),
-		RemoteBucketKey:  b.Root.Key,
+		RemoteBucketKey:  root.Key,
 		RemoteBucketSlug: newSlug,
 		HubAddr:          s.cfg.GetString(config.TextileHubTarget, ""),
 	}, nil
@@ -148,9 +168,9 @@ func (s *synchronizer) createMirrorThread(ctx context.Context, slug string) (*th
 	}
 
 	// If dbID is not found, GetDBInfo returns "thread not found" error
-	_, err = s.hubThreads.GetDBInfo(ctx, dbID)
+	info, err := s.hubThreads.GetDBInfo(ctx, dbID)
 	if err == nil {
-		log.Debug("createMirrorThread: Db already exists")
+		log.Debug("createMirrorThread: Db already exists with name " + info.Name)
 		return &dbID, nil
 	}
 
