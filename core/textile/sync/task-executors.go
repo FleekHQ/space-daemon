@@ -224,7 +224,7 @@ func (s *synchronizer) processRestoreFile(ctx context.Context, task *Task) error
 
 	// TODO: use timestamp or CID for check
 
-	if err = s.uploadFileToBucket(ctx, mirrorBucket, localBucket, path); err != nil {
+	if err = s.downloadFile(ctx, mirrorBucket, localBucket, path); err != nil {
 		return err
 	}
 
