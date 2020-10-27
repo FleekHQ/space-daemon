@@ -12,6 +12,7 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
+	"github.com/textileio/go-threads/db"
 	nc "github.com/textileio/go-threads/net/api/client"
 	"github.com/textileio/textile/v2/cmd"
 )
@@ -89,20 +90,36 @@ func (m *model) findOrCreateMetaThreadID(ctx context.Context) (*thread.ID, error
 	}
 	hubmaWithThreadID := hubmaStr + "/thread/" + threadID.String()
 
+	hubctx, err := utils.GetThreadContext(ctx, metaThreadName, threadID, true, m.kc, m.hubAuth, m.ht)
+	if err != nil {
+		return nil, err
+	}
+
+	// Try to join remote db in case it was already replicated
+	hubDbInfo, err := m.ht.GetDBInfo(hubctx, threadID)
+	if err == nil {
+		err = m.threads.NewDBFromAddr(
+			ctx,
+			cmd.AddrFromStr(hubmaWithThreadID),
+			hubDbInfo.Key,
+			db.WithNewManagedBackfillBlock(true),
+			db.WithNewManagedThreadKey(key),
+			db.WithNewManagedName(metaThreadName),
+		)
+
+		if err == nil || err.Error() == "rpc error: code = Unknown desc = db already exists" {
+			return &threadID, nil
+		}
+	}
+
 	// If we are here, then there's no replicated metathread yet
 	if _, err := utils.FindOrCreateDeterministicThreadID(ctx, utils.MetathreadThreadVariant, metaThreadName, m.kc, m.st, m.threads); err != nil {
 		return nil, err
 	}
 
-	// Try to join remote db if it was already replicated
-	err = m.threads.NewDBFromAddr(ctx, cmd.AddrFromStr(hubmaWithThreadID), key)
-	if err == nil || err.Error() == "rpc error: code = Unknown desc = db already exists" {
-		return &threadID, nil
-	}
-
 	if _, err := m.netc.AddReplicator(ctx, threadID, hubma); err != nil {
 		log.Error("error while replicating metathread", err)
-		// Not returning error in case the user is offline (it should still work using local threads)
+		return nil, err
 	}
 
 	return &threadID, nil
