@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"fmt"
 
 	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
+	"github.com/FleekHQ/space-daemon/log"
 )
 
 func checkTaskType(t *Task, tp taskType) error {
@@ -205,6 +207,8 @@ func (s *synchronizer) processBucketRestoreTask(ctx context.Context, task *Task)
 }
 
 func (s *synchronizer) processRestoreFile(ctx context.Context, task *Task) error {
+	log.Debug(fmt.Sprintf("processRestoreFile: 1"))
+
 	if err := checkTaskType(task, restoreFileTask); err != nil {
 		return err
 	}
@@ -222,9 +226,19 @@ func (s *synchronizer) processRestoreFile(ctx context.Context, task *Task) error
 		return err
 	}
 
+	newerBucket, err := s.newerBucketPath(ctx, localBucket, mirrorBucket, path)
+	if err != nil {
+		return err
+	}
+
+	if newerBucket == localBucket {
+		// do not overwrite: mirror is not newer
+		return nil
+	}
+
 	// TODO: use timestamp or CID for check
 
-	if err = s.uploadFileToBucket(ctx, mirrorBucket, localBucket, path); err != nil {
+	if err = s.downloadFile(ctx, mirrorBucket, localBucket, path); err != nil {
 		return err
 	}
 

@@ -60,6 +60,43 @@ func (s *synchronizer) uploadFileToBucket(ctx context.Context, sourceBucket, tar
 	return nil
 }
 
+func (s *synchronizer) downloadFile(ctx context.Context, sourceBucket, targetBucket bucket.BucketInterface, path string) error {
+
+	pipeReader, pipeWriter := io.Pipe()
+	defer pipeReader.Close()
+
+	errc := make(chan error, 1)
+	// go routine for piping
+	go func() {
+		defer close(errc)
+		defer pipeWriter.Close()
+
+		if err := sourceBucket.GetFile(ctx, path, pipeWriter); err != nil {
+			errc <- err
+			return
+		}
+
+		errc <- nil
+	}()
+
+	if _, _, err := targetBucket.DownloadFile(ctx, path, pipeReader); err != nil {
+		return err
+	}
+
+	if err := <-errc; err != nil {
+		return err
+	}
+
+	if err := s.addCurrentUserAsFileOwner(ctx, targetBucket.Slug(), path); err != nil {
+		// not returning since we dont want to halt the whole process
+		// also acl will still work since they are the owner
+		// of the thread so this is more for showing members view
+		log.Error("Unable to push path access roles for owner", err)
+	}
+
+	return nil
+}
+
 // backup all files in a bucket
 func (s *synchronizer) uploadAllFilesInPath(ctx context.Context, bucket, path string) error {
 	localBucket, err := s.getBucket(ctx, bucket)

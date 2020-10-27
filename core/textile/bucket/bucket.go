@@ -50,6 +50,11 @@ type BucketInterface interface {
 		path string,
 		reader io.Reader,
 	) (result path.Resolved, root path.Path, err error)
+	DownloadFile(
+		ctx context.Context,
+		path string,
+		reader io.Reader,
+	) (result path.Resolved, root path.Path, err error)
 	GetFile(
 		ctx context.Context,
 		path string,
