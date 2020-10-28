@@ -341,7 +341,7 @@ func (s *Space) TruncateData(ctx context.Context) error {
 
 	// note: this might not clear storage
 	// so need to verify and update later
-	err := s.tc.DeleteBuckets(ctx)
+	err := s.tc.DeleteAccount(ctx)
 	if err != nil {
 		return err
 	}

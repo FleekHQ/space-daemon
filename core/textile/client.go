@@ -227,8 +227,6 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.ht = getHubThreadsClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 	tc.hb = getHubBucketClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 
-	tc.initializeSync(ctx)
-
 	tc.isRunning = true
 
 	tc.healthcheck(ctx)
@@ -474,6 +472,7 @@ func (tc *textileClient) healthcheck(ctx context.Context) {
 	if tc.isInitialized == false {
 		// NOTE: Initialize does not need a hub connection as remote syncing is done in a background process
 		tc.initialize(ctx)
+		tc.initializeSync(ctx)
 	}
 
 	tc.checkHubConnection(ctx)
