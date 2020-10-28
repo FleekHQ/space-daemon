@@ -124,8 +124,8 @@ func (_m *Client) CreateBucket(ctx context.Context, bucketSlug string) (textile.
 	return r0, r1
 }
 
-// DeleteBuckets provides a mock function with given fields: ctx
-func (_m *Client) DeleteBuckets(ctx context.Context) error {
+// DeleteAccount provides a mock function with given fields: ctx
+func (_m *Client) DeleteAccount(ctx context.Context) error {
 	ret := _m.Called(ctx)
 
 	var r0 error
