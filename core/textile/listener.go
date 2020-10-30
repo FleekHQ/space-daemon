@@ -43,6 +43,12 @@ func (tc *textileClient) addListener(ctx context.Context, bucketSlug string) err
 	return nil
 }
 
+func (tc *textileClient) DeleteListeners(ctx context.Context) {
+	for k, _ := range tc.dbListeners {
+		delete(tc.dbListeners, k)
+	}
+}
+
 func (tc *textileClient) initializeListeners(ctx context.Context) error {
 	if err := tc.requiresHubConnection(); err != nil {
 		return err
