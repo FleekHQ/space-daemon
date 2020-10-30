@@ -161,7 +161,7 @@ func (node *IpfsNode) start() error {
 func (node *IpfsNode) stop() error {
 	node.IsRunning = false
 
-	err := node.stop()
+	err := node.coreNode.Close()
 	if err != nil {
 		return err
 	}
