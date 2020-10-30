@@ -18,6 +18,7 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/textileio/go-threads/core/thread"
+	sym "github.com/textileio/go-threads/crypto/symmetric"
 )
 
 const PrivateKeyStoreKey = "key"
@@ -124,6 +125,11 @@ func (kc *keychain) GenerateKeyPair() ([]byte, []byte, error) {
 func (kc *keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.PubKey, error) {
 	var priv []byte
 	var err error
+
+	_, err = kc.GetStoredPublicKey()
+	if err != nil {
+		return nil, nil, err
+	}
 
 	if kc.privKey != nil {
 		return *kc.privKey, (*kc.privKey).GetPublic(), nil
@@ -396,7 +402,9 @@ func (kc *keychain) GetManagedThreadKey(threadKeyName string) (thread.Key, error
 		return thread.Key{}, err
 	}
 
-	managedKey, err := thread.KeyFromBytes(num)
+	truncated := num[:sym.KeyBytes*2]
+
+	managedKey, err := thread.KeyFromBytes(truncated)
 	if err != nil {
 		return thread.Key{}, err
 	}

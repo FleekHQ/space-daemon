@@ -124,7 +124,8 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 		if err != nil {
 			return nil, nil, err
 		}
-
+		// Create thread in case the metathread was restored but the bucket thread was not created yet
+		tc.threads.NewDB(ctx, *dbID)
 		return ctx, dbID, err
 	}
 
@@ -248,7 +249,6 @@ func (tc *textileClient) getBucketRootFromSlug(ctx context.Context, slug string)
 	}
 
 	bucketListReply, err := tc.bucketsClient.List(ctx)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -258,6 +258,20 @@ func (tc *textileClient) getBucketRootFromSlug(ctx context.Context, slug string)
 			return ctx, root, nil
 		}
 	}
+
+	// Create bucket in case the threads were restored but the bucket not created yet
+	tc.bucketsClient.Create(ctx, bc.WithName(slug), bc.WithPrivate(true))
+	bucketListReply, err = tc.bucketsClient.List(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, root := range bucketListReply.Roots {
+		if root.Name == slug {
+			return ctx, root, nil
+		}
+	}
+
 	return nil, nil, NotFound(slug)
 }
 

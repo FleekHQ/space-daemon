@@ -10,14 +10,18 @@ import (
 	"errors"
 	"path/filepath"
 
+	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
+	"github.com/FleekHQ/space-daemon/log"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	tc "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
+	nc "github.com/textileio/go-threads/net/api/client"
 	"github.com/textileio/textile/v2/api/common"
+	"github.com/textileio/textile/v2/cmd"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -166,10 +170,29 @@ func getDeterministicthreadStoreKey(kc keychain.Keychain, variant DeterministicT
 	return result, nil
 }
 
-// Finds or creates a thread ID that's based on the user private key and the specified variant
+// Finds or creates a thread that's based on the user private key and the specified variant
 // Using the same private key, variant and thread name will always end up generating the same key
-func FindOrCreateDeterministicThreadID(ctx context.Context, variant DeterministicThreadVariant, threadName string, kc keychain.Keychain, st store.Store, threads *tc.Client) (*thread.ID, error) {
+func FindOrCreateDeterministicThread(
+	ctx context.Context,
+	variant DeterministicThreadVariant,
+	threadName string,
+	kc keychain.Keychain,
+	st store.Store,
+	threads *tc.Client,
+	ht *tc.Client,
+	cfg config.Config,
+	netc *nc.Client,
+	hnetc *nc.Client,
+	hubAuth hub.HubAuth,
+	shouldForceRestore bool,
+	dbCollectionConfigs []db.CollectionConfig,
+) (*thread.ID, error) {
 	storeKey, err := getDeterministicthreadStoreKey(kc, variant)
+	if err != nil {
+		return nil, err
+	}
+
+	pk, _, err := kc.GetStoredKeyPairInLibP2PFormat()
 	if err != nil {
 		return nil, err
 	}
@@ -205,15 +228,63 @@ func FindOrCreateDeterministicThreadID(ctx context.Context, variant Deterministi
 		return nil, err
 	}
 
-	err = threads.NewDB(threadCtx, dbID, db.WithNewManagedThreadKey(managedKey))
+	hubmaStr := cfg.GetString(config.TextileHubMa, "")
+	hubma := cmd.AddrFromStr(hubmaStr)
+
+	hubmaWithThreadID := hubmaStr + "/thread/" + dbID.String()
+
+	hubCtx, err := hubAuth.GetHubContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// i, err := netc.GetThread(ctx, dbID)
+	_, err = hnetc.GetThread(hubCtx, dbID)
+	replThreadExists := err == nil
+	if !replThreadExists && shouldForceRestore {
+		return nil, err
+	}
+	if replThreadExists {
+		// Try to join remote db in case it was already replicated
+		err = threads.NewDBFromAddr(
+			threadCtx,
+			cmd.AddrFromStr(hubmaWithThreadID),
+			managedKey,
+			db.WithNewManagedBackfillBlock(true),
+			db.WithNewManagedThreadKey(managedKey),
+			db.WithNewManagedName(threadName),
+			db.WithNewManagedLogKey(pk),
+			db.WithNewManagedCollections(
+				dbCollectionConfigs...,
+			),
+		)
+		if err == nil || err.Error() == "rpc error: code = Unknown desc = db already exists" || err.Error() == "rpc error: code = Unknown desc = log already exists" {
+			return successfulThreadCreation(st, &dbID, dbIDInBytes, storeKey)
+		} else if shouldForceRestore == true {
+			log.Error("Textile threads require forced restore but there was a restoration issue", err)
+			return nil, err
+		}
+	}
+
+	err = threads.NewDB(threadCtx, dbID, db.WithNewManagedLogKey(pk), db.WithNewManagedThreadKey(managedKey), db.WithNewManagedName(threadName))
 	if err != nil && err.Error() != "rpc error: code = Unknown desc = db already exists" {
 		return nil, err
 	}
 
+	if _, err := netc.AddReplicator(threadCtx, dbID, hubma); err == nil {
+		return successfulThreadCreation(st, &dbID, dbIDInBytes, storeKey)
+	} else {
+		log.Error("error while replicating metathread", err)
+	}
+
+	return &dbID, nil
+}
+
+func successfulThreadCreation(st store.Store, dbID *thread.ID, dbIDInBytes, storeKey []byte) (*thread.ID, error) {
 	if err := st.Set(storeKey, dbIDInBytes); err != nil {
 		newErr := errors.New("error while storing thread id: check your local space db accessibility")
 		return nil, newErr
 	}
 
-	return &dbID, nil
+	return dbID, nil
 }

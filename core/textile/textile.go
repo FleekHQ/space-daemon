@@ -73,6 +73,7 @@ type Client interface {
 	DownloadPublicGatewayItem(ctx context.Context, cid cid.Cid) (io.ReadCloser, error)
 	GetFailedHealthchecks() int
 	Listen(ctx context.Context, dbID, threadName string) (<-chan threadsClient.ListenEvent, error)
+	RestoreDB(ctx context.Context) error
 }
 
 type Buckd interface {

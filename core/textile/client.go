@@ -57,6 +57,7 @@ type textileClient struct {
 	cfg                config.Config
 	isConnectedToHub   bool
 	netc               *nc.Client
+	hnetc              *nc.Client
 	uc                 UsersClient
 	mailEvents         chan mail.MailboxEvent
 	hubAuth            hub.HubAuth
@@ -66,6 +67,8 @@ type textileClient struct {
 	notifier           bucket.Notifier
 	ipfsClient         iface.CoreAPI
 	dbListeners        map[string]Listener
+	shouldForceRestore bool
+	healthcheckMutex   *sync.Mutex
 }
 
 // Creates a new Textile Client
@@ -77,6 +80,7 @@ func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth, uc Use
 		bucketsClient:      nil,
 		mb:                 mb,
 		netc:               nil,
+		hnetc:              nil,
 		uc:                 uc,
 		ht:                 nil,
 		hb:                 nil,
@@ -95,6 +99,8 @@ func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth, uc Use
 		sync:               nil,
 		notifier:           nil,
 		dbListeners:        make(map[string]Listener),
+		shouldForceRestore: false,
+		healthcheckMutex:   &sync.Mutex{},
 	}
 }
 
@@ -226,6 +232,7 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.netc = netc
 	tc.ht = getHubThreadsClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 	tc.hb = getHubBucketClient(tc.cfg.GetString(config.TextileHubTarget, ""))
+	tc.hnetc = getHubNetworkClient(tc.cfg.GetString(config.TextileHubTarget, ""))
 
 	tc.initializeSync(ctx)
 
@@ -236,9 +243,7 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	tc.Ready <- true
 
 	// Repeating healthcheck
-	healthcheckMutex := &sync.Mutex{}
 	for {
-		healthcheckMutex.Lock()
 		timeAfterNextCheck := 60 * time.Second
 		// Do more frequent checks if the client is not initialized/running
 		if tc.isConnectedToHub == false || tc.isInitialized == false {
@@ -260,13 +265,10 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 
 		// If it's trying to shutdown we return right away
 		case <-ctx.Done():
-			healthcheckMutex.Unlock()
 			return nil
 		case <-tc.shuttingDown:
-			healthcheckMutex.Unlock()
 			return nil
 		}
-		healthcheckMutex.Unlock()
 	}
 }
 
@@ -309,12 +311,11 @@ func (tc *textileClient) checkHubConnection(ctx context.Context) error {
 	return nil
 }
 
-func CreateUserClient(host string) UsersClient {
-	hubTarget := host
+func getHubTargetOpts(host string) []grpc.DialOption {
 	auth := common.Credentials{}
 	var opts []grpc.DialOption
 
-	if strings.Contains(hubTarget, "443") {
+	if strings.Contains(host, "443") {
 		creds := credentials.NewTLS(&tls.Config{})
 		opts = append(opts, grpc.WithTransportCredentials(creds))
 		auth.Secure = true
@@ -323,7 +324,13 @@ func CreateUserClient(host string) UsersClient {
 	}
 	opts = append(opts, grpc.WithPerRPCCredentials(auth))
 
-	users, err := uc.NewClient(hubTarget, opts...)
+	return opts
+}
+
+func CreateUserClient(host string) UsersClient {
+	opts := getHubTargetOpts(host)
+
+	users, err := uc.NewClient(host, opts...)
 	if err != nil {
 		cmd.Fatal(err)
 	}
@@ -331,41 +338,30 @@ func CreateUserClient(host string) UsersClient {
 }
 
 func getHubThreadsClient(host string) *threadsClient.Client {
-	hubTarget := host
-	auth := common.Credentials{}
-	var opts []grpc.DialOption
+	opts := getHubTargetOpts(host)
 
-	if strings.Contains(hubTarget, "443") {
-		creds := credentials.NewTLS(&tls.Config{})
-		opts = append(opts, grpc.WithTransportCredentials(creds))
-		auth.Secure = true
-	} else {
-		opts = append(opts, grpc.WithInsecure())
-	}
-	opts = append(opts, grpc.WithPerRPCCredentials(auth))
-
-	tc, err := threadsClient.NewClient(hubTarget, opts...)
+	tc, err := threadsClient.NewClient(host, opts...)
 	if err != nil {
 		cmd.Fatal(err)
 	}
 	return tc
 }
 
-func getHubBucketClient(host string) *bucketsClient.Client {
-	hubTarget := host
-	auth := common.Credentials{}
-	var opts []grpc.DialOption
+func getHubNetworkClient(host string) *nc.Client {
+	opts := getHubTargetOpts(host)
 
-	if strings.Contains(hubTarget, "443") {
-		creds := credentials.NewTLS(&tls.Config{})
-		opts = append(opts, grpc.WithTransportCredentials(creds))
-		auth.Secure = true
-	} else {
-		opts = append(opts, grpc.WithInsecure())
+	n, err := nc.NewClient(host, opts...)
+	if err != nil {
+		cmd.Fatal(err)
 	}
-	opts = append(opts, grpc.WithPerRPCCredentials(auth))
 
-	tc, err := bucketsClient.NewClient(hubTarget, opts...)
+	return n
+}
+
+func getHubBucketClient(host string) *bucketsClient.Client {
+	opts := getHubTargetOpts(host)
+
+	tc, err := bucketsClient.NewClient(host, opts...)
 	if err != nil {
 		cmd.Fatal(err)
 	}
@@ -424,6 +420,7 @@ func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
 func (tc *textileClient) Shutdown() error {
 	tc.shuttingDown <- true
 	tc.isRunning = false
+	tc.shouldForceRestore = false
 
 	// Close channels
 	close(tc.mailEvents)
@@ -469,6 +466,9 @@ func (tc *textileClient) GetFailedHealthchecks() int {
 
 // Checks for connection and initialization needs.
 func (tc *textileClient) healthcheck(ctx context.Context) {
+	tc.healthcheckMutex.Lock()
+	defer tc.healthcheckMutex.Unlock()
+
 	log.Debug("Textile Client healthcheck... Start.")
 
 	if tc.isInitialized == false {
@@ -540,7 +540,7 @@ func (tc *textileClient) RemoveKeys(ctx context.Context) error {
 }
 
 func (tc *textileClient) GetModel() model.Model {
-	return model.New(tc.store, tc.kc, tc.threads, tc.ht, tc.hubAuth, tc.cfg, tc.netc)
+	return model.New(tc.store, tc.kc, tc.threads, tc.ht, tc.hubAuth, tc.cfg, tc.netc, tc.hnetc, tc.shouldForceRestore)
 }
 
 func (tc *textileClient) getSecureBucketsClient(baseClient *bucketsClient.Client) *SecureBucketClient {
@@ -561,4 +561,14 @@ func (tc *textileClient) requiresHubConnection() error {
 
 func (tc *textileClient) AttachSynchronizerNotifier(notif synchronizer.EventNotifier) {
 	tc.sync.AttachNotifier(notif)
+}
+
+// Initializes dbs from a backup. Returns error if it can't initialize
+func (tc *textileClient) RestoreDB(ctx context.Context) error {
+	tc.healthcheckMutex.Lock()
+	defer tc.healthcheckMutex.Unlock()
+	tc.shouldForceRestore = true
+	err := tc.initialize(ctx)
+	tc.shouldForceRestore = false
+	return err
 }

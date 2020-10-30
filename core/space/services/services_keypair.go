@@ -30,6 +30,11 @@ func (s *Space) RestoreKeyPairFromMnemonic(ctx context.Context, mnemonic string)
 		return err
 	}
 
+	if err := s.tc.RestoreDB(ctx); err != nil {
+		s.keychain.DeleteKeypair()
+		return err
+	}
+
 	return nil
 }
 
