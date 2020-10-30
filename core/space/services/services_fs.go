@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -14,10 +15,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/textile"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
-
-	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/log"
 )
 
@@ -332,6 +332,21 @@ func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (do
 	return domain.OpenFileInfo{
 		Location: filePath,
 	}, nil
+}
+
+// TruncateData removes all data from local machine
+func (s *Space) TruncateData(ctx context.Context) error {
+	// not doing anything with store because it's
+	// handled in DeleteKeyPair
+
+	// note: this might not clear storage
+	// so need to verify and update later
+	err := s.tc.DeleteAccount(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket, isRemote bool) (string, error) {
