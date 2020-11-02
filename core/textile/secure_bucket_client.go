@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -116,7 +117,8 @@ func (s *SecureBucketClient) PullPath(ctx context.Context, key, path string, wri
 		return err
 	}
 
-	encryptedPath, _, err := s.encryptPathData(ctx, encryptionKey, path, nil)
+	_, filename := filepath.Split(path)
+	encryptedPath, _, err := s.encryptPathData(ctx, encryptionKey, filename, nil)
 	if err != nil {
 		return err
 	}
@@ -288,6 +290,7 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 
 	for _, fn := range pullers {
 		f, err := ioutil.TempFile("", "*-"+encPath)
+
 		if err != nil {
 			cancelPulls()
 			return err
