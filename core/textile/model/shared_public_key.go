@@ -92,7 +92,7 @@ func (m *model) FindSharedPublicKey(ctx context.Context, pubKey string) (*Shared
 }
 
 func (m *model) initSharedPublicKey(ctx context.Context) (context.Context, *thread.ID, error) {
-	metaCtx, dbID, err := m.getMetaThreadContext(ctx)
+	metaCtx, dbID, err := m.GetMetaThreadContext(ctx)
 	if err != nil {
 		return nil, nil, err
 	}

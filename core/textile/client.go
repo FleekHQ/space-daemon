@@ -49,6 +49,7 @@ type textileClient struct {
 	hb                 *bucketsClient.Client
 	isRunning          bool
 	isInitialized      bool
+	isSyncInitialized  bool
 	Ready              chan bool
 	keypairDeleted     chan bool
 	shuttingDown       chan bool
@@ -86,6 +87,7 @@ func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth, uc Use
 		hb:                 nil,
 		isRunning:          false,
 		isInitialized:      false,
+		isSyncInitialized:  false,
 		Ready:              make(chan bool),
 		keypairDeleted:     make(chan bool),
 		shuttingDown:       make(chan bool),
@@ -172,6 +174,7 @@ func (tc *textileClient) initializeSync(ctx context.Context) {
 		log.Warn("Could not restore Textile synchronizer queue. Queue will start fresh.")
 	}
 
+	tc.isSyncInitialized = true
 	tc.sync.Start(ctx)
 }
 
@@ -367,6 +370,11 @@ func getHubBucketClient(host string) *bucketsClient.Client {
 }
 
 func (tc *textileClient) initialize(ctx context.Context) error {
+	err := tc.restoreBuckets(ctx)
+	if err != nil {
+		return err
+	}
+
 	buckets, err := tc.listBuckets(ctx)
 	if err != nil {
 		return err
@@ -418,6 +426,8 @@ func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
 func (tc *textileClient) Shutdown() error {
 	tc.shuttingDown <- true
 	tc.isRunning = false
+	tc.isInitialized = false
+	tc.isSyncInitialized = false
 	tc.shouldForceRestore = false
 
 	// Close channels
@@ -469,10 +479,13 @@ func (tc *textileClient) healthcheck(ctx context.Context) {
 
 	log.Debug("Textile Client healthcheck... Start.")
 
+	if tc.isSyncInitialized == false {
+		tc.initializeSync(ctx)
+	}
+
 	if tc.isInitialized == false {
 		// NOTE: Initialize does not need a hub connection as remote syncing is done in a background process
 		tc.initialize(ctx)
-		tc.initializeSync(ctx)
 	}
 
 	tc.checkHubConnection(ctx)
@@ -566,8 +579,13 @@ func (tc *textileClient) AttachSynchronizerNotifier(notif synchronizer.EventNoti
 func (tc *textileClient) RestoreDB(ctx context.Context) error {
 	tc.healthcheckMutex.Lock()
 	defer tc.healthcheckMutex.Unlock()
+
 	tc.shouldForceRestore = true
 	err := tc.initialize(ctx)
 	tc.shouldForceRestore = false
-	return err
+	if err != nil {
+		tc.kc.DeleteKeypair()
+		return err
+	}
+	return nil
 }

@@ -124,8 +124,6 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 		if err != nil {
 			return nil, nil, err
 		}
-		// Create thread in case the metathread was restored but the bucket thread was not created yet
-		tc.threads.NewDB(ctx, *dbID)
 		return ctx, dbID, err
 	}
 
@@ -134,12 +132,22 @@ func (tc *textileClient) getOrCreateBucketContext(ctx context.Context, bucketSlu
 	dbID := thread.NewIDV1(thread.Raw, 32)
 
 	log.Debug("getOrCreateBucketContext: Creating Thread DB for bucket " + bucketSlug + " at db " + dbID.String())
-	if err := tc.threads.NewDB(ctx, dbID); err != nil {
+
+	managedKey, err := tc.kc.GetManagedThreadKey(getBucketThreadManagedKey(bucketSlug))
+	if err != nil {
+		return nil, nil, err
+	}
+	pk, _, err := tc.kc.GetStoredKeyPairInLibP2PFormat()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err := tc.threads.NewDB(ctx, dbID, db.WithNewManagedThreadKey(managedKey), db.WithNewManagedLogKey(pk)); err != nil {
 		return nil, nil, err
 	}
 
 	log.Debug("getOrCreateBucketContext: Thread DB Created")
-	bucketSchema, err := m.CreateBucket(ctx, bucketSlug, utils.CastDbIDToString(dbID))
+	bucketSchema, err = m.CreateBucket(ctx, bucketSlug, utils.CastDbIDToString(dbID))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -259,19 +267,6 @@ func (tc *textileClient) getBucketRootFromSlug(ctx context.Context, slug string)
 		}
 	}
 
-	// Create bucket in case the threads were restored but the bucket not created yet
-	tc.bucketsClient.Create(ctx, bc.WithName(slug), bc.WithPrivate(true))
-	bucketListReply, err = tc.bucketsClient.List(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	for _, root := range bucketListReply.Roots {
-		if root.Name == slug {
-			return ctx, root, nil
-		}
-	}
-
 	return nil, nil, NotFound(slug)
 }
 
@@ -349,7 +344,7 @@ func (tc *textileClient) ShareBucket(ctx context.Context, bucketSlug string) (*d
 	return &b, err
 }
 
-func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address string, key thread.Key, bucketSlug string) error {
+func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address string, key thread.Key, bucketSlug string, opts ...db.NewManagedOption) error {
 	multiaddress, err := ma.NewMultiaddr(address)
 	if err != nil {
 		log.Error("Unable to parse multiaddr", err)
@@ -365,19 +360,37 @@ func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address strin
 
 	reflector := jsonschema.Reflector{ExpandedStruct: true}
 	schema = reflector.Reflect(&tdb.Bucket{})
-	err = tc.threads.NewDBFromAddr(ctx, multiaddress, key, db.WithNewManagedCollections(db.CollectionConfig{
+
+	newDbOpts := []db.NewManagedOption{db.WithNewManagedCollections(db.CollectionConfig{
 		Name:    "buckets",
 		Schema:  schema,
 		Indexes: indexes,
-	}))
+	})}
+	newDbOpts = append(newDbOpts, opts...)
+
+	err = tc.threads.NewDBFromAddr(ctx, multiaddress, key, newDbOpts...)
 	if err != nil {
 		log.Error("Unable to join addr", err)
 		return err
 	}
 
 	dbID, err := thread.FromAddr(multiaddress)
+	if err != nil {
+		return err
+	}
 
-	tc.GetModel().UpsertBucket(ctx, bucketSlug, utils.CastDbIDToString(dbID))
+	newBucket, err := tc.GetModel().UpsertBucket(ctx, bucketSlug, utils.CastDbIDToString(dbID))
+	if err != nil {
+		return err
+	}
+
+	newBucketCtx, _, err := tc.getBucketContext(ctx, utils.CastDbIDToString(dbID), bucketSlug, false, newBucket.EncryptionKey)
+	if err != nil {
+		return err
+	}
+
+	// Create bucket in buckets client in case it's not already there
+	tc.bucketsClient.Create(newBucketCtx, bc.WithName(bucketSlug), bc.WithPrivate(true))
 
 	return nil
 }
@@ -451,4 +464,94 @@ func GetDefaultBucketSlug() string {
 
 func GetDefaultMirrorBucketSlug() string {
 	return defaultPersonalMirrorBucketSlug
+}
+
+// Attempts to restore buckets from a hub replication
+// Returns nil if there's nothing to restore or the restoration succeeded
+func (tc *textileClient) restoreBuckets(ctx context.Context) error {
+	bucketList, err := tc.GetModel().ListBuckets(ctx)
+	if err != nil {
+		return err
+	}
+
+	if len(bucketList) == 0 && tc.shouldForceRestore {
+		return errors.New("No buckets ready for restore")
+	}
+
+	dbs, err := tc.threads.ListDBs(ctx)
+	if err != nil {
+		return err
+	}
+
+	threadsInitialized := true
+	for _, b := range bucketList {
+		dbID, err := utils.ParseDbIDFromString(b.DbID)
+		if err != nil {
+			return err
+		}
+
+		if _, ok := dbs[*dbID]; !ok {
+			threadsInitialized = false
+		}
+	}
+
+	// Buckets already initialized
+	if threadsInitialized {
+		return nil
+	}
+
+	hubCtx, err := tc.getHubCtx(ctx)
+	if err != nil {
+		return err
+	}
+
+	hubmaStr := tc.cfg.GetString(config.TextileHubMa, "")
+
+	pk, _, err := tc.kc.GetStoredKeyPairInLibP2PFormat()
+	if err != nil {
+		return err
+	}
+
+	// Check if there's a bucket replicated on the hub
+	for _, b := range bucketList {
+		dbID, err := utils.ParseDbIDFromString(b.DbID)
+		if err != nil {
+			return err
+		}
+
+		_, err = tc.hnetc.GetThread(hubCtx, *dbID)
+		replThreadExists := err == nil
+
+		if replThreadExists {
+			hubmaWithThreadID := hubmaStr + "/thread/" + dbID.String()
+
+			managedKey, err := tc.kc.GetManagedThreadKey(getBucketThreadManagedKey(b.Slug))
+			if err != nil {
+				return err
+			}
+
+			err = tc.joinBucketViaAddress(
+				ctx,
+				hubmaWithThreadID,
+				managedKey,
+				b.Slug,
+				db.WithNewManagedBackfillBlock(true),
+				db.WithNewManagedLogKey(pk),
+				db.WithNewManagedThreadKey(managedKey),
+			)
+			if err != nil {
+				log.Error("could not join replicated bucket", err)
+			}
+
+			if err != nil && tc.shouldForceRestore {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func getBucketThreadManagedKey(bucketSlug string) string {
+	return "bucketKey_" + bucketSlug
 }

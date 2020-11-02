@@ -179,7 +179,6 @@ func FindOrCreateDeterministicThread(
 	kc keychain.Keychain,
 	st store.Store,
 	threads *tc.Client,
-	ht *tc.Client,
 	cfg config.Config,
 	netc *nc.Client,
 	hnetc *nc.Client,
@@ -238,7 +237,6 @@ func FindOrCreateDeterministicThread(
 		return nil, err
 	}
 
-	// i, err := netc.GetThread(ctx, dbID)
 	_, err = hnetc.GetThread(hubCtx, dbID)
 	replThreadExists := err == nil
 	if !replThreadExists && shouldForceRestore {

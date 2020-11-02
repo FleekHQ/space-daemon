@@ -271,7 +271,7 @@ func (m *model) ListReceivedPublicFiles(
 }
 
 func (m *model) initReceivedFileModel(ctx context.Context) (context.Context, *thread.ID, error) {
-	metaCtx, dbID, err := m.getMetaThreadContext(ctx)
+	metaCtx, dbID, err := m.GetMetaThreadContext(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
