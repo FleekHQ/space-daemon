@@ -131,13 +131,13 @@ func (_m *Model) CreateReceivedFileViaInvitation(ctx context.Context, file domai
 	return r0, r1
 }
 
-// CreateReceivedFileViaPublicLink provides a mock function with given fields: ctx, ipfsHash, fileKey, filename, filesize, accepted
-func (_m *Model) CreateReceivedFileViaPublicLink(ctx context.Context, ipfsHash string, fileKey string, filename string, filesize string, accepted bool) (*model.ReceivedFileSchema, error) {
-	ret := _m.Called(ctx, ipfsHash, fileKey, filename, filesize, accepted)
+// CreateReceivedFileViaPublicLink provides a mock function with given fields: ctx, ipfsHash, password, filename, filesize, accepted
+func (_m *Model) CreateReceivedFileViaPublicLink(ctx context.Context, ipfsHash string, password string, filename string, filesize string, accepted bool) (*model.ReceivedFileSchema, error) {
+	ret := _m.Called(ctx, ipfsHash, password, filename, filesize, accepted)
 
 	var r0 *model.ReceivedFileSchema
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, bool) *model.ReceivedFileSchema); ok {
-		r0 = rf(ctx, ipfsHash, fileKey, filename, filesize, accepted)
+		r0 = rf(ctx, ipfsHash, password, filename, filesize, accepted)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.ReceivedFileSchema)
@@ -146,7 +146,7 @@ func (_m *Model) CreateReceivedFileViaPublicLink(ctx context.Context, ipfsHash s
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string, bool) error); ok {
-		r1 = rf(ctx, ipfsHash, fileKey, filename, filesize, accepted)
+		r1 = rf(ctx, ipfsHash, password, filename, filesize, accepted)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -175,6 +175,20 @@ func (_m *Model) CreateSharedPublicKey(ctx context.Context, pubKey string) (*mod
 	}
 
 	return r0, r1
+}
+
+// DeleteSearchIndexRecord provides a mock function with given fields: ctx, name, path, bucketSlug, dbId
+func (_m *Model) DeleteSearchIndexRecord(ctx context.Context, name string, path string, bucketSlug string, dbId string) error {
+	ret := _m.Called(ctx, name, path, bucketSlug, dbId)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) error); ok {
+		r0 = rf(ctx, name, path, bucketSlug, dbId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // FindBucket provides a mock function with given fields: ctx, bucketSlug
@@ -315,6 +329,20 @@ func (_m *Model) FindReceivedFilesByIds(ctx context.Context, ids []string) ([]*m
 	return r0, r1
 }
 
+// InitSearchIndexCollection provides a mock function with given fields: ctx
+func (_m *Model) InitSearchIndexCollection(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ListBuckets provides a mock function with given fields: ctx
 func (_m *Model) ListBuckets(ctx context.Context) ([]*model.BucketSchema, error) {
 	ret := _m.Called(ctx)
@@ -407,6 +435,29 @@ func (_m *Model) ListSharedPublicKeys(ctx context.Context) ([]*model.SharedPubli
 	return r0, r1
 }
 
+// QuerySearchIndex provides a mock function with given fields: ctx, query
+func (_m *Model) QuerySearchIndex(ctx context.Context, query string) ([]*model.SearchIndexRecord, error) {
+	ret := _m.Called(ctx, query)
+
+	var r0 []*model.SearchIndexRecord
+	if rf, ok := ret.Get(0).(func(context.Context, string) []*model.SearchIndexRecord); ok {
+		r0 = rf(ctx, query)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*model.SearchIndexRecord)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, query)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateMirrorFile provides a mock function with given fields: ctx, mirrorFile
 func (_m *Model) UpdateMirrorFile(ctx context.Context, mirrorFile *model.MirrorFileSchema) (*model.MirrorFileSchema, error) {
 	ret := _m.Called(ctx, mirrorFile)
@@ -423,6 +474,29 @@ func (_m *Model) UpdateMirrorFile(ctx context.Context, mirrorFile *model.MirrorF
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *model.MirrorFileSchema) error); ok {
 		r1 = rf(ctx, mirrorFile)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateSearchIndexRecord provides a mock function with given fields: ctx, name, path, itemType, bucketSlug, dbId
+func (_m *Model) UpdateSearchIndexRecord(ctx context.Context, name string, path string, itemType model.SearchItemType, bucketSlug string, dbId string) (*model.SearchIndexRecord, error) {
+	ret := _m.Called(ctx, name, path, itemType, bucketSlug, dbId)
+
+	var r0 *model.SearchIndexRecord
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, model.SearchItemType, string, string) *model.SearchIndexRecord); ok {
+		r0 = rf(ctx, name, path, itemType, bucketSlug, dbId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.SearchIndexRecord)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, model.SearchItemType, string, string) error); ok {
+		r1 = rf(ctx, name, path, itemType, bucketSlug, dbId)
 	} else {
 		r1 = ret.Error(1)
 	}
