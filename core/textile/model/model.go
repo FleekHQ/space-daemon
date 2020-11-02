@@ -80,7 +80,20 @@ func New(st store.Store, kc keychain.Keychain, threads *threadsClient.Client, ht
 }
 
 func (m *model) findOrCreateMetaThreadID(ctx context.Context) (*thread.ID, error) {
-	return utils.FindOrCreateDeterministicThread(ctx, utils.MetathreadThreadVariant, metaThreadName, m.kc, m.st, m.threads, m.cfg, m.netc, m.hnetc, m.hubAuth, m.shouldForceRestore, GetAllCollectionConfigs())
+	return utils.FindOrCreateDeterministicThread(
+		ctx,
+		utils.MetathreadThreadVariant,
+		metaThreadName,
+		m.kc,
+		m.st,
+		m.threads,
+		m.cfg,
+		m.netc,
+		m.hnetc,
+		m.hubAuth,
+		m.shouldForceRestore,
+		GetAllCollectionConfigs(),
+	)
 }
 
 func (m *model) GetMetaThreadContext(ctx context.Context) (context.Context, *thread.ID, error) {
