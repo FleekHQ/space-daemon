@@ -2,6 +2,8 @@ package textile
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -275,6 +277,11 @@ type pullSuccessResponse struct {
 	shouldCache bool
 }
 
+func getTempFileName(encPath string) string {
+	tempFilePath := sha256.Sum256([]byte(encPath))
+	return hex.EncodeToString(tempFilePath[:])
+}
+
 func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) error {
 	pullers := []pathPullingFn{s.pullFileFromLocal, s.pullFileFromClient, s.pullFileFromDHT}
 
@@ -287,7 +294,8 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 	erroredFns := 0
 
 	for _, fn := range pullers {
-		f, err := ioutil.TempFile("", "*-"+encPath)
+		f, err := ioutil.TempFile("", "*-"+getTempFileName(encPath))
+
 		if err != nil {
 			cancelPulls()
 			return err
