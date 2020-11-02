@@ -2,7 +2,9 @@ package services
 
 import (
 	"context"
-	"path"
+	"fmt"
+	"os"
+	"strings"
 
 	"github.com/FleekHQ/space-daemon/core/textile/model"
 
@@ -21,10 +23,10 @@ func (s *Space) SearchFiles(ctx context.Context, query string) ([]domain.SearchF
 		resultEntries[i] = domain.SearchFileEntry{
 			FileInfo: domain.FileInfo{
 				DirEntry: domain.DirEntry{
-					Path:          result.ItemPath,
+					Path:          strings.TrimPrefix(result.ItemPath, fmt.Sprintf("%c", os.PathSeparator)),
 					IsDir:         result.ItemType == string(model.DirectoryItem),
 					Name:          result.ItemName,
-					FileExtension: path.Ext(result.ItemName),
+					FileExtension: result.ItemExtension,
 				},
 			},
 			Bucket: result.BucketSlug,
