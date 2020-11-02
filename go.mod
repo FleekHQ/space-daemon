@@ -62,5 +62,8 @@ require (
 	google.golang.org/grpc v1.31.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.3.0 // indirect
+	gorm.io/driver/sqlite v1.1.3
+	gorm.io/gorm v1.20.5
+	gotest.tools v2.2.0+incompatible
 	grpc.go4.org v0.0.0-20170609214715-11d0a25b4919
 )
