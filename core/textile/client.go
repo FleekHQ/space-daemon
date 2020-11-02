@@ -401,7 +401,14 @@ func (tc *textileClient) initialize(ctx context.Context) error {
 		}
 	}
 
-	tc.sync.NotifyBucketStartup(defaultPersonalBucketSlug)
+	if err = tc.initSearchIndex(ctx); err != nil {
+		log.Error("Error initializing users search index", err)
+		return err
+	}
+
+	if tc.sync != nil {
+		tc.sync.NotifyBucketStartup(defaultPersonalBucketSlug)
+	}
 
 	tc.isInitialized = true
 	// Non-blocking channel send in case there are no listeners registered

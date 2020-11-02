@@ -161,6 +161,14 @@ func (s *synchronizer) NotifyBucketStartup(bucket string) {
 	s.notifySyncNeeded()
 }
 
+func (s *synchronizer) NotifyIndexItemAdded(bucket, path, dbId string) {
+	t := newTask(addIndexItemTask, []string{bucket, path, dbId})
+	t.Parallelizable = true
+	s.enqueueTask(t, s.taskQueue)
+
+	s.notifySyncNeeded()
+}
+
 func (s *synchronizer) notifySyncNeeded() {
 	select {
 	case s.syncNeeded <- true:
@@ -273,6 +281,10 @@ func (s *synchronizer) executeTask(ctx context.Context, t *Task) error {
 		err = s.processBucketRestoreTask(ctx, t)
 	case restoreFileTask:
 		err = s.processRestoreFile(ctx, t)
+	case addIndexItemTask:
+		err = s.processAddIndexItemTask(ctx, t)
+	case removeIndexItemTask:
+		err = s.processRemoveIndexItemTask(ctx, t)
 	default:
 		log.Warn("Unexpected action on Textile sync, executeTask")
 	}

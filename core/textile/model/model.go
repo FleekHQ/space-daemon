@@ -62,6 +62,15 @@ type Model interface {
 	ListReceivedPublicFiles(ctx context.Context, cidHash string, accepted bool) ([]*ReceivedFileSchema, error)
 	FindMirrorFileByPaths(ctx context.Context, paths []string) (map[string]*MirrorFileSchema, error)
 	FindReceivedFilesByIds(ctx context.Context, ids []string) ([]*ReceivedFileSchema, error)
+	InitSearchIndexCollection(ctx context.Context) error
+	UpdateSearchIndexRecord(
+		ctx context.Context,
+		name, path string,
+		itemType SearchItemType,
+		bucketSlug, dbId string,
+	) (*SearchIndexRecord, error)
+	QuerySearchIndex(ctx context.Context, query string) ([]*SearchIndexRecord, error)
+	DeleteSearchIndexRecord(ctx context.Context, name, path, bucketSlug, dbId string) error
 }
 
 func New(st store.Store, kc keychain.Keychain, threads *threadsClient.Client, ht *threadsClient.Client, hubAuth hub.HubAuth, cfg config.Config, netc *nc.Client, hnetc *nc.Client, shouldForceRestore bool) *model {
