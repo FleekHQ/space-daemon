@@ -60,6 +60,7 @@ type Service interface {
 	SetNotificationsLastSeenAt(timestamp int64) error
 	GetNotificationsLastSeenAt() (int64, error)
 	TruncateData(ctx context.Context) error
+	SearchFiles(ctx context.Context, query string) ([]domain.SearchFileEntry, error)
 }
 
 type serviceOptions struct {

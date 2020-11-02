@@ -397,6 +397,11 @@ func (tc *textileClient) initialize(ctx context.Context) error {
 		}
 	}
 
+	if err = tc.initSearchIndex(ctx); err != nil {
+		log.Error("Error initializing users search index", err)
+		return err
+	}
+
 	tc.sync.NotifyBucketStartup(defaultPersonalBucketSlug)
 
 	tc.isInitialized = true
