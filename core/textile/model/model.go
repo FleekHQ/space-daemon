@@ -30,7 +30,6 @@ type model struct {
 }
 
 type Model interface {
-	GetMetaThreadContext(ctx context.Context) (context.Context, *thread.ID, error)
 	CreateBucket(ctx context.Context, bucketSlug, dbID string) (*BucketSchema, error)
 	UpsertBucket(ctx context.Context, bucketSlug, dbID string) (*BucketSchema, error)
 	BucketBackupToggle(ctx context.Context, bucketSlug string, backup bool) (*BucketSchema, error)
@@ -96,7 +95,7 @@ func (m *model) findOrCreateMetaThreadID(ctx context.Context) (*thread.ID, error
 	)
 }
 
-func (m *model) GetMetaThreadContext(ctx context.Context) (context.Context, *thread.ID, error) {
+func (m *model) getMetaThreadContext(ctx context.Context) (context.Context, *thread.ID, error) {
 	var err error
 
 	var dbID *thread.ID

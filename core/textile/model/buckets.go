@@ -162,7 +162,7 @@ func (m *model) ListBuckets(ctx context.Context) ([]*BucketSchema, error) {
 }
 
 func (m *model) initBucketModel(ctx context.Context) (context.Context, *thread.ID, error) {
-	metaCtx, dbID, err := m.GetMetaThreadContext(ctx)
+	metaCtx, dbID, err := m.getMetaThreadContext(ctx)
 	if err != nil {
 		return nil, nil, err
 	}

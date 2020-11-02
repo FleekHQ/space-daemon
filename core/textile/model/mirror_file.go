@@ -198,7 +198,7 @@ func (m *model) UpdateMirrorFile(ctx context.Context, mirrorFile *MirrorFileSche
 }
 
 func (m *model) initMirrorFileModel(ctx context.Context) (context.Context, *thread.ID, error) {
-	metaCtx, dbID, err := m.GetMetaThreadContext(ctx)
+	metaCtx, dbID, err := m.getMetaThreadContext(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
