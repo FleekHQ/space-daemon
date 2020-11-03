@@ -312,7 +312,13 @@ func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (do
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
-	if filePath, exists := s.sync.GetOpenFilePath(b.Slug(), path, dbID); exists {
+	listdir, err := b.ListDirectory(ctx, path)
+	cid := listdir.Item.Cid
+	if err != nil {
+		return domain.OpenFileInfo{}, err
+	}
+
+	if filePath, exists := s.sync.GetOpenFilePath(b.Slug(), path, dbID, cid); exists {
 		// sanity check in case file was deleted or moved
 		if PathExists(filePath) {
 			// return file handle
@@ -323,7 +329,7 @@ func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (do
 	}
 
 	// else, open new file on FS
-	filePath, err = s.openFileOnFs(ctx, path, b, isRemote)
+	filePath, err = s.openFileOnFs(ctx, path, b, isRemote, dbID, cid)
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
@@ -349,7 +355,7 @@ func (s *Space) TruncateData(ctx context.Context) error {
 	return nil
 }
 
-func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket, isRemote bool) (string, error) {
+func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket, isRemote bool, dbID, cid string) (string, error) {
 	// write file copy to temp folder
 	tmpFile, err := s.createTempFileForPath(ctx, path, false)
 	if err != nil {
@@ -364,14 +370,6 @@ func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket,
 		return "", err
 	}
 
-	threadID, err := b.GetThreadID(ctx)
-	if err != nil {
-		log.Error(fmt.Sprintf("error getting thread id for bucket %s", b.Key()), err)
-		return "", err
-	}
-
-	dbID := utils.CastDbIDToString(*threadID)
-
 	// register temp file in watcher
 	addWatchFile := domain.AddWatchFile{
 		DbId:       dbID,
@@ -380,6 +378,7 @@ func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket,
 		BucketKey:  b.Key(),
 		BucketSlug: b.Slug(),
 		IsRemote:   isRemote,
+		Cid:        cid,
 	}
 
 	err = s.sync.AddFileWatch(addWatchFile)

@@ -392,8 +392,15 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 			return
 		}
 
+		bucketPath, err := s.client.ListPath(ctx, key, encPath)
+		if err != nil {
+			cacheErrc <- err
+			return
+		}
+		encCid := bucketPath.Item.Cid
+
 		cidBinary := p.Cid().Bytes()
-		err = s.st.Set(getFileCacheKey(encPath), cidBinary)
+		err = s.st.Set(getFileCacheKey(encCid), cidBinary)
 
 		cacheErrc <- err
 	}()
@@ -409,10 +416,10 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 	return nil
 }
 
-const fileCachePrefix = "file_cache"
+const FileCachePrefix = "file_cache"
 
-func getFileCacheKey(encPath string) []byte {
-	return []byte(fileCachePrefix + ":" + encPath)
+func getFileCacheKey(encCid string) []byte {
+	return []byte(FileCachePrefix + ":" + encCid)
 }
 
 func (s *SecureBucketClient) pullFileFromClient(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) (shouldCache bool, err error) {
@@ -433,7 +440,13 @@ var errNoLocalClient = errors.New("No cache client available")
 func (s *SecureBucketClient) pullFileFromLocal(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) (shouldCache bool, err error) {
 	shouldCache = false
 
-	cidBinary, err := s.st.Get(getFileCacheKey(encPath))
+	bucketPath, err := s.client.ListPath(ctx, key, encPath)
+	if err != nil {
+		return false, err
+	}
+	encCid := bucketPath.Item.Cid
+
+	cidBinary, err := s.st.Get(getFileCacheKey(encCid))
 	if cidBinary == nil || err != nil {
 		return false, errors.New("CID not stored in local cache")
 	}

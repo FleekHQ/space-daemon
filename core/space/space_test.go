@@ -340,7 +340,7 @@ func TestService_OpenFile(t *testing.T) {
 		getDir().dir,
 	)
 
-	mockSync.On("GetOpenFilePath", testKey, testPath, mock.Anything).Return(
+	mockSync.On("GetOpenFilePath", testKey, testPath, mock.Anything, mock.Anything).Return(
 		"",
 		false,
 	)
@@ -365,6 +365,14 @@ func TestService_OpenFile(t *testing.T) {
 	mockBucket.On(
 		"Slug",
 	).Return(testKey)
+
+	mockBucket.On(
+		"ListDirectory", mock.Anything, mock.Anything,
+	).Return(&bucket.DirEntries{
+		Item: &buckets_pb.PathItem{
+			Cid: "",
+		},
+	}, nil)
 
 	testThreadID, err := utils.ParseDbIDFromString("AFKRGLCIX5CQWA2244J3GBH4ERF2MLNPJWVU72BPU2BGB5OOZH5PR7Q=")
 	if err != nil {
