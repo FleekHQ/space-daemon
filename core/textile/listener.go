@@ -27,7 +27,7 @@ func (tc *textileClient) addListener(ctx context.Context, bucketSlug string) err
 	if err := tc.requiresHubConnection(); err != nil {
 		return err
 	}
-	handler := newRestorerListenerHandler(tc.sync)
+	handler := newRestorerListenerHandler(tc.sync, tc.store, tc.ipfsClient)
 	handlers := []EventHandler{handler}
 	listener := NewListener(tc, bucketSlug, handlers)
 	tc.dbListeners[bucketSlug] = listener

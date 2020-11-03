@@ -1,9 +1,11 @@
 package textile
 
 import (
+	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/core/textile/sync"
 	"github.com/FleekHQ/space-daemon/log"
+	iface "github.com/ipfs/interface-go-ipfs-core"
 	tc "github.com/textileio/go-threads/api/client"
 )
 
@@ -31,11 +33,15 @@ func (h *defaultListenerHandler) OnSave(bucketData *bucket.BucketData, listenEve
 
 type restorerListenerHandler struct {
 	synchronizer sync.Synchronizer
+	st           store.Store
+	ipfsClient   iface.CoreAPI
 }
 
-func newRestorerListenerHandler(synchronizer sync.Synchronizer) *restorerListenerHandler {
+func newRestorerListenerHandler(synchronizer sync.Synchronizer, st store.Store, ipfsClient iface.CoreAPI) *restorerListenerHandler {
 	return &restorerListenerHandler{
 		synchronizer: synchronizer,
+		st:           st,
+		ipfsClient:   ipfsClient,
 	}
 }
 
