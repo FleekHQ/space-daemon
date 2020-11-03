@@ -134,14 +134,6 @@ service SpaceApi {
     };
   }
 
-  // Adds item stream to be uploaded to the bucket.
-  rpc AddItemStream(AddItemStreamRequest) returns (stream AddItemStreamResponse) {
-    option (google.api.http) = {
-      post: "/v1/fileStream"
-      body: "*"
-    };
-  }
-
   // Creates a folder/directory at the specified path
   rpc CreateFolder(CreateFolderRequest) returns (CreateFolderResponse) {
     option (google.api.http) = {
@@ -531,18 +523,6 @@ message AddItemsResponse {
   int64 totalBytes = 3;
   int64 completedFiles = 4;
   int64 completedBytes = 5;
-}
-
-message AddItemStreamRequest {
-  bytes data = 1;
-  string fileName = 2;
-  string targetPath = 3;
-  string bucket = 4;
-}
-
-message AddItemStreamResponse {
-  string result = 1;
-  int64 totalBytes = 2;
 }
 
 message CreateFolderRequest {
