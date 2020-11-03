@@ -73,6 +73,18 @@ service SpaceApi {
     };
   }
 
+  rpc ImportIdentity(ImportIdentityRequest) returns (ImportIdentityResponse) {
+    option (google.api.http) = {
+      post: "/v1/identities"
+    };
+  }
+
+  rpc EncryptKeyPairWithIdentity(EncryptKeyPairWithIdentityRequest) returns (EncryptKeyPairWithIdentityResponse) {
+    option (google.api.http) = {
+      get: "/v1/identities/encryptKeyPair"
+    };
+  }
+
   // Subscribe to file events. This streams responses to the caller
   rpc Subscribe(google.protobuf.Empty) returns (stream FileEventResponse) {
     option (google.api.http) = {
@@ -730,4 +742,23 @@ message GetRecentlySharedWithRequest {}
 
 message GetRecentlySharedWithResponse {
  repeated FileMember members = 1;
+}
+
+message ImportIdentityRequest {
+  string ID = 1;
+  // Private key encoded in hex
+  string privateKey = 2;
+}
+
+message ImportIdentityResponse {
+  // Public key encoded in hex
+  string publicKey = 1;
+}
+
+message EncryptKeyPairWithIdentityRequest {
+  string ID = 1;
+}
+
+message EncryptKeyPairWithIdentityResponse {
+  string encryptedPrivateKey = 1;
 }

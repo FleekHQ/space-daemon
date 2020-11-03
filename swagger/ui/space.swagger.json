@@ -660,6 +660,58 @@
         ]
       }
     },
+    "/v1/identities": {
+      "post": {
+        "operationId": "SpaceApi_ImportIdentity",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceImportIdentityResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/identities/encryptKeyPair": {
+      "get": {
+        "operationId": "SpaceApi_EncryptKeyPairWithIdentity",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceEncryptKeyPairWithIdentityResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ID",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/keypairs/delete": {
       "post": {
         "operationId": "SpaceApi_DeleteKeyPair",
@@ -1611,6 +1663,14 @@
     "spaceDeleteKeyPairResponse": {
       "type": "object"
     },
+    "spaceEncryptKeyPairWithIdentityResponse": {
+      "type": "object",
+      "properties": {
+        "encryptedPrivateKey": {
+          "type": "string"
+        }
+      }
+    },
     "spaceEventType": {
       "type": "string",
       "enum": [
@@ -1829,6 +1889,15 @@
     },
     "spaceHandleFilesInvitationResponse": {
       "type": "object"
+    },
+    "spaceImportIdentityResponse": {
+      "type": "object",
+      "properties": {
+        "publicKey": {
+          "type": "string",
+          "title": "Public key encoded in hex"
+        }
+      }
     },
     "spaceInvitation": {
       "type": "object",
