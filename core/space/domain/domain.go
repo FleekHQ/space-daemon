@@ -54,6 +54,12 @@ type AddItemsResponse struct {
 	Error      error
 }
 
+type AddItemStreamResponse struct {
+	Result     string
+	TotalBytes int64
+	Error      error
+}
+
 type Member struct {
 	Address   string `json:"address"`
 	PublicKey string `json:"publicKey"`

@@ -13,9 +13,9 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
-	github.com/golang/protobuf v1.4.2
-	github.com/google/uuid v1.1.1
-	github.com/grpc-ecosystem/grpc-gateway v1.14.6
+	github.com/golang/protobuf v1.4.3
+	github.com/google/uuid v1.1.2
+	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/improbable-eng/grpc-web v0.13.0
 	github.com/ipfs/go-cid v0.0.7
 	github.com/ipfs/go-ipfs v0.6.1-0.20200817102359-90a573354af2
@@ -53,11 +53,11 @@ require (
 	github.com/tyler-smith/go-bip39 v1.0.2
 	go.etcd.io/etcd v3.3.22+incompatible
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.0.0-20200707034311-ab3426394381
+	golang.org/x/net v0.0.0-20200822124328-c89045814202
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980
-	google.golang.org/genproto v0.0.0-20200702021140-07506425bd67
-	google.golang.org/grpc v1.31.0
+	google.golang.org/genproto v0.0.0-20201103154000-415bd0cd5df6
+	google.golang.org/grpc v1.33.1
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 	grpc.go4.org v0.0.0-20170609214715-11d0a25b4919
