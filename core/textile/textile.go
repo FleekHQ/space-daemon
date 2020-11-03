@@ -74,6 +74,7 @@ type Client interface {
 	GetFailedHealthchecks() int
 	DeleteAccount(ctx context.Context) error
 	Listen(ctx context.Context, dbID, threadName string) (<-chan threadsClient.ListenEvent, error)
+	RestoreDB(ctx context.Context) error
 }
 
 type Buckd interface {

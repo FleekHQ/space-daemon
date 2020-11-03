@@ -45,6 +45,7 @@ func TestKeychain_GenerateAndRestore(t *testing.T) {
 
 	mockStore.On("Get", []byte(keychain.PublicKeyStoreKey)).Return(pub, nil)
 	mockKeyRing.On("Get", keychain.PrivateKeyStoreKey).Return(privKeyItem, nil)
+	mockKeyRing.On("GetMetadata", mock.Anything).Return(keyring.Metadata{}, nil)
 
 	libp2pPriv, _, _ := kc.GetStoredKeyPairInLibP2PFormat()
 

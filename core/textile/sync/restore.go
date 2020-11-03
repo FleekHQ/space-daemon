@@ -10,14 +10,15 @@ import (
 
 // return the targetBucket if path is newer there, srcBucket otherwise
 func (s *synchronizer) newerBucketPath(ctx context.Context, srcBucket, targetBucket bucket.BucketInterface, path string) (bucket.BucketInterface, error) {
-	srcUpdatedAt, err := srcBucket.UpdatedAt(ctx, path)
+	targetUpdatedAt, err := targetBucket.UpdatedAt(ctx, path)
 	if err != nil {
 		return nil, err
 	}
 
-	targetUpdatedAt, err := targetBucket.UpdatedAt(ctx, path)
+	srcUpdatedAt, err := srcBucket.UpdatedAt(ctx, path)
 	if err != nil {
-		return nil, err
+		// Path might not exist in src bucket
+		return targetBucket, nil
 	}
 
 	if srcUpdatedAt >= targetUpdatedAt {
@@ -43,11 +44,7 @@ func (s *synchronizer) restoreBucket(ctx context.Context, bucketSlug string) err
 	}
 
 	iterator := func(c context.Context, b *bucket.Bucket, itemPath string) error {
-		exists, err := localBucket.FileExists(c, itemPath)
-		if err != nil && err.Error() != "rpc error: code = DeadlineExceeded desc = context deadline exceeded" {
-			// deadline exceeded can be interpreted as the file not being present
-			return err
-		}
+		exists, _ := localBucket.FileExists(c, itemPath)
 
 		if exists {
 			newerBucket, err := s.newerBucketPath(c, localBucket, mirrorBucket, itemPath)

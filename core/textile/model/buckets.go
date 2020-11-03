@@ -92,7 +92,10 @@ func (m *model) UpsertBucket(ctx context.Context, bucketSlug, dbID string) (*Buc
 	}
 
 	if existingBucket, err := m.FindBucket(ctx, bucketSlug); err == nil {
-		m.threads.Delete(metaCtx, *metaDbID, bucketModelName, []string{existingBucket.ID.String()})
+		existingBucket.DbID = dbID
+		instances := client.Instances{existingBucket}
+		m.threads.Save(metaCtx, *metaDbID, bucketModelName, instances)
+		return existingBucket, nil
 	}
 
 	return m.CreateBucket(ctx, bucketSlug, dbID)
@@ -164,15 +167,18 @@ func (m *model) initBucketModel(ctx context.Context) (context.Context, *thread.I
 		return nil, nil, err
 	}
 
-	m.threads.NewDB(metaCtx, *dbID)
-	m.threads.NewCollection(metaCtx, *dbID, db.CollectionConfig{
+	m.threads.NewCollection(metaCtx, *dbID, GetBucketCollectionConfig())
+
+	return metaCtx, dbID, nil
+}
+
+func GetBucketCollectionConfig() db.CollectionConfig {
+	return db.CollectionConfig{
 		Name:   bucketModelName,
 		Schema: util.SchemaFromInstance(&BucketSchema{}, false),
 		Indexes: []db.Index{{
 			Path:   "slug",
 			Unique: true,
 		}},
-	})
-
-	return metaCtx, dbID, nil
+	}
 }

@@ -9,23 +9,24 @@ import (
 	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
-	"github.com/FleekHQ/space-daemon/log"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
+	"github.com/textileio/go-threads/db"
 	nc "github.com/textileio/go-threads/net/api/client"
-	"github.com/textileio/textile/v2/cmd"
 )
 
 const metaThreadName = "metathreadV1"
 
 type model struct {
-	st      store.Store
-	kc      keychain.Keychain
-	threads *threadsClient.Client
-	hubAuth hub.HubAuth
-	cfg     config.Config
-	netc    *nc.Client
-	ht      *threadsClient.Client
+	st                 store.Store
+	kc                 keychain.Keychain
+	threads            *threadsClient.Client
+	hubAuth            hub.HubAuth
+	cfg                config.Config
+	netc               *nc.Client
+	hnetc              *nc.Client
+	ht                 *threadsClient.Client
+	shouldForceRestore bool
 }
 
 type Model interface {
@@ -72,49 +73,35 @@ type Model interface {
 	DeleteSearchIndexRecord(ctx context.Context, name, path, bucketSlug, dbId string) error
 }
 
-func New(st store.Store, kc keychain.Keychain, threads *threadsClient.Client, ht *threadsClient.Client, hubAuth hub.HubAuth, cfg config.Config, netc *nc.Client) *model {
+func New(st store.Store, kc keychain.Keychain, threads *threadsClient.Client, ht *threadsClient.Client, hubAuth hub.HubAuth, cfg config.Config, netc *nc.Client, hnetc *nc.Client, shouldForceRestore bool) *model {
 	return &model{
-		st:      st,
-		kc:      kc,
-		threads: threads,
-		hubAuth: hubAuth,
-		cfg:     cfg,
-		netc:    netc,
-		ht:      ht,
+		st:                 st,
+		kc:                 kc,
+		threads:            threads,
+		hubAuth:            hubAuth,
+		cfg:                cfg,
+		netc:               netc,
+		hnetc:              hnetc,
+		ht:                 ht,
+		shouldForceRestore: shouldForceRestore,
 	}
 }
 
 func (m *model) findOrCreateMetaThreadID(ctx context.Context) (*thread.ID, error) {
-	hubmaStr := m.cfg.GetString(config.TextileHubMa, "")
-	hubma := cmd.AddrFromStr(hubmaStr)
-	key, err := m.kc.GetManagedThreadKey(metaThreadName)
-	if err != nil {
-		return nil, err
-	}
-
-	threadID, err := utils.NewDeterministicThreadID(m.kc, utils.MetathreadThreadVariant)
-	if err != nil {
-		return nil, err
-	}
-	hubmaWithThreadID := hubmaStr + "/thread/" + threadID.String()
-
-	// If we are here, then there's no replicated metathread yet
-	if _, err := utils.FindOrCreateDeterministicThreadID(ctx, utils.MetathreadThreadVariant, metaThreadName, m.kc, m.st, m.threads); err != nil {
-		return nil, err
-	}
-
-	// Try to join remote db if it was already replicated
-	err = m.threads.NewDBFromAddr(ctx, cmd.AddrFromStr(hubmaWithThreadID), key)
-	if err == nil || err.Error() == "rpc error: code = Unknown desc = db already exists" {
-		return &threadID, nil
-	}
-
-	if _, err := m.netc.AddReplicator(ctx, threadID, hubma); err != nil {
-		log.Error("error while replicating metathread", err)
-		// Not returning error in case the user is offline (it should still work using local threads)
-	}
-
-	return &threadID, nil
+	return utils.FindOrCreateDeterministicThread(
+		ctx,
+		utils.MetathreadThreadVariant,
+		metaThreadName,
+		m.kc,
+		m.st,
+		m.threads,
+		m.cfg,
+		m.netc,
+		m.hnetc,
+		m.hubAuth,
+		m.shouldForceRestore,
+		GetAllCollectionConfigs(),
+	)
 }
 
 func (m *model) getMetaThreadContext(ctx context.Context) (context.Context, *thread.ID, error) {
@@ -131,4 +118,13 @@ func (m *model) getMetaThreadContext(ctx context.Context) (context.Context, *thr
 	}
 
 	return metathreadCtx, dbID, nil
+}
+
+func GetAllCollectionConfigs() []db.CollectionConfig {
+	return []db.CollectionConfig{
+		GetBucketCollectionConfig(),
+		GetMirrorFileCollectionConfig(),
+		GetReceivedFileCollectionConfig(),
+		GetSharedPublicKeyCollectionConfig(),
+	}
 }

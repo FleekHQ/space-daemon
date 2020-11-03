@@ -2,6 +2,8 @@ module github.com/FleekHQ/space-daemon
 
 go 1.14
 
+replace github.com/textileio/go-threads => github.com/FleekHQ/go-threads v1.0.1-0.20201028195307-d9371c20fe66
+
 require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
 	github.com/99designs/keyring v1.1.5
