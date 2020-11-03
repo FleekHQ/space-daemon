@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"path"
+	"strings"
 
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/util"
@@ -108,7 +109,7 @@ func (m *model) UpdateSearchIndexRecord(
 	newInstance := &SearchIndexRecord{
 		ID:            "",
 		ItemName:      name,
-		ItemExtension: path.Ext(name),
+		ItemExtension: strings.Replace(path.Ext(name), ".", "", -1),
 		ItemPath:      itemPath,
 		ItemType:      string(itemType),
 		DbId:          dbId,

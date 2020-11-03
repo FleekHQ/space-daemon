@@ -412,6 +412,48 @@
         ]
       }
     },
+    "/v1/fileStream": {
+      "post": {
+        "summary": "Adds item stream to be uploaded to the bucket.",
+        "operationId": "SpaceApi_AddItemStream",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/spaceAddItemStreamResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/runtimeStreamError"
+                }
+              },
+              "title": "Stream result of spaceAddItemStreamResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceAddItemStreamRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/files": {
       "post": {
         "summary": "Adds items (files/folders) to be uploaded to the bucket.",
@@ -1475,6 +1517,36 @@
         },
         "error": {
           "type": "string"
+        }
+      }
+    },
+    "spaceAddItemStreamRequest": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "string",
+          "format": "byte"
+        },
+        "fileName": {
+          "type": "string"
+        },
+        "targetPath": {
+          "type": "string"
+        },
+        "bucket": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceAddItemStreamResponse": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "type": "string"
+        },
+        "totalBytes": {
+          "type": "string",
+          "format": "int64"
         }
       }
     },

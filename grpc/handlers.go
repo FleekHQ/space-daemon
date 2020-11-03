@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"errors"
+	"io/ioutil"
 
 	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
@@ -238,6 +239,25 @@ func (srv *grpcServer) AddItems(request *pb.AddItemsRequest, stream pb.SpaceApi_
 	<-done
 	log.Printf("closing stream for addFiles")
 
+	return nil
+}
+
+func (srv *grpcServer) AddItemStream(request *pb.AddItemStreamRequest, stream pb.SpaceApi_AddItemStreamServer) error {
+	ctx := stream.Context()
+
+	byteArray := request.Data
+	err := ioutil.WriteFile(request.FileName, byteArray, 0644) // filename also contain the file-extension
+	if err != nil {
+		// handle error
+		return err
+	}
+	result, err := srv.sv.AddItemStream(ctx, request.FileName, request.TargetPath, request.Bucket)
+	var r *pb.AddItemStreamResponse
+	r = &pb.AddItemStreamResponse{
+		TotalBytes: result.TotalBytes,
+		Result:     result.Result,
+	}
+	stream.Send(r)
 	return nil
 }
 
