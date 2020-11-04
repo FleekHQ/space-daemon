@@ -1116,6 +1116,37 @@
         ]
       }
     },
+    "/v1/search/files": {
+      "get": {
+        "summary": "Search for files across all users bucket",
+        "operationId": "SpaceApi_SearchFiles",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceSearchFilesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/shareFilesViaPublicKey": {
       "post": {
         "summary": "Share bucket via public key using Textile Hub inboxing",
@@ -2069,6 +2100,34 @@
     },
     "spaceRestoreKeyPairViaMnemonicResponse": {
       "type": "object"
+    },
+    "spaceSearchFilesDirectoryEntry": {
+      "type": "object",
+      "properties": {
+        "entry": {
+          "$ref": "#/definitions/spaceListDirectoryEntry"
+        },
+        "dbId": {
+          "type": "string"
+        },
+        "bucket": {
+          "type": "string"
+        }
+      }
+    },
+    "spaceSearchFilesResponse": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/spaceSearchFilesDirectoryEntry"
+          }
+        },
+        "query": {
+          "type": "string"
+        }
+      }
     },
     "spaceSetNotificationsLastSeenAtRequest": {
       "type": "object",

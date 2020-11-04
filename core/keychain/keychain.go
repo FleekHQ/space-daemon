@@ -4,10 +4,11 @@ import (
 	"crypto/ed25519"
 	"crypto/sha512"
 	"encoding/hex"
-	"golang.org/x/crypto/pbkdf2"
 	"os"
 	"path"
 	"strings"
+
+	"golang.org/x/crypto/pbkdf2"
 
 	"errors"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/textileio/go-threads/core/thread"
+	sym "github.com/textileio/go-threads/crypto/symmetric"
 )
 
 const PrivateKeyStoreKey = "key"
@@ -124,6 +126,11 @@ func (kc *keychain) GetStoredKeyPairInLibP2PFormat() (crypto.PrivKey, crypto.Pub
 	var priv []byte
 	var err error
 
+	_, err = kc.GetStoredPublicKey()
+	if err != nil {
+		return nil, nil, err
+	}
+
 	if kc.privKey != nil {
 		return *kc.privKey, (*kc.privKey).GetPublic(), nil
 	}
@@ -222,7 +229,7 @@ func (kc *keychain) DeleteKeypair() error {
 
 	// Note: currently ignoring error on keychain removal because it's failing randomly.
 	// Use GenerateKeyPair with override option instead.
-	ring.Remove(PrivateKeyStoreKey)
+	err = ring.Remove(PrivateKeyStoreKey)
 
 	err = kc.st.Remove([]byte(PublicKeyStoreKey))
 	if err != nil {
@@ -230,7 +237,6 @@ func (kc *keychain) DeleteKeypair() error {
 	}
 
 	kc.privKey = nil
-
 	return nil
 }
 
@@ -372,6 +378,12 @@ func (kc *keychain) retrieveKeyPair() (privKey []byte, mnemonic string, err erro
 }
 
 func (kc *keychain) GetManagedThreadKey(threadKeyName string) (thread.Key, error) {
+	// Check if there's a key stored before continuing
+	_, err := kc.GetStoredPublicKey()
+	if err != nil {
+		return thread.Key{}, err
+	}
+
 	size := 32
 
 	priv, _, err := kc.GetStoredKeyPairInLibP2PFormat()
@@ -389,7 +401,9 @@ func (kc *keychain) GetManagedThreadKey(threadKeyName string) (thread.Key, error
 		return thread.Key{}, err
 	}
 
-	managedKey, err := thread.KeyFromBytes(num)
+	truncated := num[:sym.KeyBytes*2]
+
+	managedKey, err := thread.KeyFromBytes(truncated)
 	if err != nil {
 		return thread.Key{}, err
 	}

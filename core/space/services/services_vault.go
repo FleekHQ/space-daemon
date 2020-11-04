@@ -59,6 +59,10 @@ func (s *Space) RecoverKeysByLocalBackup(ctx context.Context, path string) error
 		return err
 	}
 
+	if err := s.tc.RestoreDB(ctx); err != nil {
+		s.keychain.DeleteKeypair()
+		return err
+	}
 	return nil
 }
 
@@ -89,6 +93,10 @@ func (s *Space) RecoverKeysByPassphrase(ctx context.Context, uuid string, pass s
 		return err
 	}
 
+	if err := s.tc.RestoreDB(ctx); err != nil {
+		s.keychain.DeleteKeypair()
+		return err
+	}
 	return nil
 }
 

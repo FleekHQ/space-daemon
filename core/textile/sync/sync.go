@@ -19,6 +19,7 @@ type Synchronizer interface {
 	NotifyBucketRestore(bucket string)
 	NotifyFileRestore(bucket, path string)
 	NotifyBucketStartup(bucket string)
+	NotifyIndexItemAdded(bucket, path, dbId string)
 	Start(ctx context.Context)
 	RestoreQueue() error
 	Shutdown()

@@ -2,6 +2,8 @@ package textile
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -25,7 +27,6 @@ import (
 	"github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	threadsClient "github.com/textileio/go-threads/api/client"
-	"github.com/textileio/go-threads/core/thread"
 	bc "github.com/textileio/textile/v2/api/buckets/client"
 	bucketsClient "github.com/textileio/textile/v2/api/buckets/client"
 	bucketspb "github.com/textileio/textile/v2/api/buckets/pb"
@@ -276,6 +277,11 @@ type pullSuccessResponse struct {
 	shouldCache bool
 }
 
+func getTempFileName(encPath string) string {
+	tempFilePath := sha256.Sum256([]byte(encPath))
+	return hex.EncodeToString(tempFilePath[:])
+}
+
 func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) error {
 	pullers := []pathPullingFn{s.pullFileFromLocal, s.pullFileFromClient, s.pullFileFromDHT}
 
@@ -288,7 +294,8 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 	erroredFns := 0
 
 	for _, fn := range pullers {
-		f, err := ioutil.TempFile("", "*-"+encPath)
+		f, err := ioutil.TempFile("", "*-"+getTempFileName(encPath))
+
 		if err != nil {
 			cancelPulls()
 			return err
@@ -393,8 +400,15 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 			return
 		}
 
+		bucketPath, err := s.client.ListPath(ctx, key, encPath)
+		if err != nil {
+			cacheErrc <- err
+			return
+		}
+		encCid := bucketPath.Item.Cid
+
 		cidBinary := p.Cid().Bytes()
-		err = s.st.Set(getFileCacheKey(encPath), cidBinary)
+		err = s.st.Set(getFileCacheKey(encCid), cidBinary)
 
 		cacheErrc <- err
 	}()
@@ -410,10 +424,10 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 	return nil
 }
 
-const fileCachePrefix = "file_cache"
+const FileCachePrefix = "file_cache"
 
-func getFileCacheKey(encPath string) []byte {
-	return []byte(fileCachePrefix + ":" + encPath)
+func getFileCacheKey(encCid string) []byte {
+	return []byte(FileCachePrefix + ":" + encCid)
 }
 
 func (s *SecureBucketClient) pullFileFromClient(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) (shouldCache bool, err error) {
@@ -434,7 +448,13 @@ var errNoLocalClient = errors.New("No cache client available")
 func (s *SecureBucketClient) pullFileFromLocal(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) (shouldCache bool, err error) {
 	shouldCache = false
 
-	cidBinary, err := s.st.Get(getFileCacheKey(encPath))
+	bucketPath, err := s.client.ListPath(ctx, key, encPath)
+	if err != nil {
+		return false, err
+	}
+	encCid := bucketPath.Item.Cid
+
+	cidBinary, err := s.st.Get(getFileCacheKey(encCid))
 	if cidBinary == nil || err != nil {
 		return false, errors.New("CID not stored in local cache")
 	}
@@ -470,17 +490,3 @@ func (s *SecureBucketClient) pullFileFromDHT(ctx context.Context, key, encPath s
 }
 
 const cacheBucketThreadName = "cache_bucket"
-
-func (s *SecureBucketClient) getCacheBucketCtx(ctx context.Context) (context.Context, *thread.ID, error) {
-	dbID, err := utils.FindOrCreateDeterministicThreadID(ctx, utils.CacheBucketVariant, cacheBucketThreadName, s.kc, s.st, s.threads)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	cacheCtx, err := utils.GetThreadContext(ctx, cacheBucketThreadName, *dbID, false, s.kc, nil, s.threads)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return cacheCtx, dbID, nil
-}

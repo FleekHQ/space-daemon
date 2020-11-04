@@ -179,17 +179,18 @@ func (a *App) Start(ctx context.Context) error {
 
 	textileClient.AttachMailboxNotifier(srv)
 	textileClient.AttachSynchronizerNotifier(srv)
-	err = a.RunAsync("BucketSync", bucketSync, func() error {
-		bucketSync.RegisterNotifier(srv)
-		return bucketSync.Start(ctx)
+
+	// start the gRPC server
+	err = a.RunAsync("gRPCServer", srv, func() error {
+		return srv.Start(ctx)
 	})
 	if err != nil {
 		return err
 	}
 
-	// start the gRPC server
-	err = a.RunAsync("gRPCServer", srv, func() error {
-		return srv.Start(ctx)
+	err = a.RunAsync("BucketSync", bucketSync, func() error {
+		bucketSync.RegisterNotifier(srv)
+		return bucketSync.Start(ctx)
 	})
 	if err != nil {
 		return err

@@ -7,9 +7,11 @@ import (
 
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/vault"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/env"
+	node "github.com/FleekHQ/space-daemon/core/ipfs/node"
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/store"
@@ -26,11 +28,14 @@ type Space struct {
 	keychain keychain.Keychain
 	vault    vault.Vault
 	hub      hub.HubAuth
+	ipfsNode *node.IpfsNode
+	buckd    textile.Buckd
+	aeg      *errgroup.Group
 }
 
 type Syncer interface {
 	AddFileWatch(addFileInfo domain.AddWatchFile) error
-	GetOpenFilePath(bucketSlug string, bucketPath string, dbID string) (string, bool)
+	GetOpenFilePath(bucketSlug, bucketPath, dbID, cid string) (string, bool)
 }
 
 type AddFileWatchFunc = func(addFileInfo domain.AddWatchFile) error

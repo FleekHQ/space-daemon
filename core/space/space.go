@@ -59,6 +59,8 @@ type Service interface {
 	GetSharedWithMeFiles(ctx context.Context, seek string, limit int) ([]*domain.SharedDirEntry, string, error)
 	SetNotificationsLastSeenAt(timestamp int64) error
 	GetNotificationsLastSeenAt() (int64, error)
+	TruncateData(ctx context.Context) error
+	SearchFiles(ctx context.Context, query string) ([]domain.SearchFileEntry, error)
 }
 
 type serviceOptions struct {

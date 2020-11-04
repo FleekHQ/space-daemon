@@ -5,6 +5,15 @@ import (
 	"encoding/hex"
 	"errors"
 
+	"fmt"
+	"path"
+
+	"golang.org/x/sync/errgroup"
+
+	"github.com/FleekHQ/space-daemon/core/textile/model"
+
+	"github.com/FleekHQ/space-daemon/log"
+
 	"github.com/FleekHQ/space-daemon/core/events"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
 )
@@ -45,6 +54,10 @@ func (s *synchronizer) processAddItem(ctx context.Context, task *Task) error {
 	pft := newTask(pinFileTask, []string{bucket, path})
 	s.enqueueTask(pft, s.filePinningQueue)
 
+	indexTask := newTask(addIndexItemTask, []string{bucket, path, ""})
+	indexTask.Parallelizable = true
+	s.enqueueTask(indexTask, s.taskQueue)
+
 	s.notifySyncNeeded()
 
 	return nil
@@ -60,6 +73,9 @@ func (s *synchronizer) processRemoveItem(ctx context.Context, task *Task) error 
 
 	uft := newTask(unpinFileTask, []string{bucket, path})
 	s.enqueueTask(uft, s.filePinningQueue)
+
+	rIndexTask := newTask(removeIndexItemTask, []string{bucket, path, ""})
+	s.enqueueTask(rIndexTask, s.taskQueue)
 
 	s.notifySyncNeeded()
 
@@ -120,9 +136,16 @@ func (s *synchronizer) processCreateBucket(ctx context.Context, task *Task) erro
 	mirror, err := s.createMirrorBucket(ctx, bucket, enckey)
 	if mirror != nil {
 		_, err = s.model.CreateMirrorBucket(ctx, bucket, mirror)
+		if err != nil {
+			return err
+		}
 	}
 
-	return err
+	if err := s.addBucketListener(ctx, bucket); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *synchronizer) processBucketBackupOn(ctx context.Context, task *Task) error {
@@ -198,6 +221,8 @@ func (s *synchronizer) processBucketRestoreTask(ctx context.Context, task *Task)
 }
 
 func (s *synchronizer) processRestoreFile(ctx context.Context, task *Task) error {
+	log.Debug(fmt.Sprintf("processRestoreFile: 1"))
+
 	if err := checkTaskType(task, restoreFileTask); err != nil {
 		return err
 	}
@@ -215,9 +240,19 @@ func (s *synchronizer) processRestoreFile(ctx context.Context, task *Task) error
 		return err
 	}
 
+	newerBucket, err := s.newerBucketPath(ctx, localBucket, mirrorBucket, path)
+	if err != nil {
+		return err
+	}
+
+	if newerBucket == localBucket {
+		// do not overwrite: mirror is not newer
+		return nil
+	}
+
 	// TODO: use timestamp or CID for check
 
-	if err = s.uploadFileToBucket(ctx, mirrorBucket, localBucket, path); err != nil {
+	if err = s.downloadFile(ctx, mirrorBucket, localBucket, path); err != nil {
 		return err
 	}
 
@@ -226,4 +261,92 @@ func (s *synchronizer) processRestoreFile(ctx context.Context, task *Task) error
 	}
 
 	return err
+}
+
+func (s *synchronizer) processAddIndexItemTask(ctx context.Context, task *Task) error {
+	if err := checkTaskType(task, addIndexItemTask); err != nil {
+		return err
+	}
+
+	bucket := task.Args[0]
+	itemPath := task.Args[1]
+	dbId := task.Args[2]
+
+	if dbId != "" {
+		// handle shared file instances
+		file, err := s.model.FindReceivedFile(ctx, dbId, itemPath, bucket)
+		if err != nil {
+			log.Error(
+				"ProcessIndexItemTask: unable to find shared file",
+				err,
+				"dbId:"+dbId, "itemPath:"+itemPath, "bucket:"+bucket,
+			)
+			return err
+		}
+
+		_, err = s.model.UpdateSearchIndexRecord(ctx, file.FileName, file.Path, model.FileItem, file.Bucket, dbId)
+		if err != nil {
+			log.Error(
+				"ProcessIndexItemTask: failed to index shared file",
+				err,
+			)
+			return err
+		}
+	} else {
+		erg, ctx := errgroup.WithContext(ctx)
+		// index file
+		erg.Go(func() error {
+			fileName := path.Base(itemPath)
+			_, err := s.model.UpdateSearchIndexRecord(ctx, fileName, itemPath, model.FileItem, bucket, "")
+			if err != nil {
+				log.Error(
+					"ProcessIndexItemTask: failed to index file",
+					err,
+				)
+				return err
+			}
+
+			return nil
+		})
+
+		// index parent dir
+		erg.Go(func() error {
+			parentPath := path.Dir(itemPath)
+			if parentPath == "/" {
+				return nil
+			}
+
+			dirName := path.Base(parentPath)
+			_, err := s.model.UpdateSearchIndexRecord(ctx, dirName, parentPath, model.DirectoryItem, bucket, "")
+			if err != nil {
+				log.Error(
+					"ProcessIndexItemTask: failed to index directory",
+					err,
+				)
+				return err
+			}
+
+			return nil
+		})
+
+		err := erg.Wait()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *synchronizer) processRemoveIndexItemTask(ctx context.Context, task *Task) error {
+	if err := checkTaskType(task, removeIndexItemTask); err != nil {
+		return err
+	}
+
+	bucket := task.Args[0]
+	itemPath := task.Args[1]
+	dbId := task.Args[2]
+	fileName := path.Base(itemPath)
+
+	return s.model.DeleteSearchIndexRecord(ctx, fileName, itemPath, bucket, dbId)
 }

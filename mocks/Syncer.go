@@ -26,20 +26,20 @@ func (_m *Syncer) AddFileWatch(addFileInfo domain.AddWatchFile) error {
 	return r0
 }
 
-// GetOpenFilePath provides a mock function with given fields: bucketSlug, bucketPath, dbID
-func (_m *Syncer) GetOpenFilePath(bucketSlug string, bucketPath string, dbID string) (string, bool) {
-	ret := _m.Called(bucketSlug, bucketPath, dbID)
+// GetOpenFilePath provides a mock function with given fields: bucketSlug, bucketPath, dbID, cid
+func (_m *Syncer) GetOpenFilePath(bucketSlug string, bucketPath string, dbID string, cid string) (string, bool) {
+	ret := _m.Called(bucketSlug, bucketPath, dbID, cid)
 
 	var r0 string
-	if rf, ok := ret.Get(0).(func(string, string, string) string); ok {
-		r0 = rf(bucketSlug, bucketPath, dbID)
+	if rf, ok := ret.Get(0).(func(string, string, string, string) string); ok {
+		r0 = rf(bucketSlug, bucketPath, dbID, cid)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	var r1 bool
-	if rf, ok := ret.Get(1).(func(string, string, string) bool); ok {
-		r1 = rf(bucketSlug, bucketPath, dbID)
+	if rf, ok := ret.Get(1).(func(string, string, string, string) bool); ok {
+		r1 = rf(bucketSlug, bucketPath, dbID, cid)
 	} else {
 		r1 = ret.Get(1).(bool)
 	}

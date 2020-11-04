@@ -106,10 +106,7 @@ func (m *model) initSharedPublicKey(ctx context.Context) (context.Context, *thre
 	if err = m.threads.NewDB(metaCtx, *dbID, db.WithNewManagedThreadKey(managedKey)); err != nil {
 		log.Debug("initSharedPublicKey: db already exists")
 	}
-	if err := m.threads.NewCollection(metaCtx, *dbID, db.CollectionConfig{
-		Name:   sharedPublicKeyModel,
-		Schema: util.SchemaFromInstance(&SharedPublicKeySchema{}, false),
-	}); err != nil {
+	if err := m.threads.NewCollection(metaCtx, *dbID, GetSharedPublicKeyCollectionConfig()); err != nil {
 		log.Debug("initSharedPublicKey: collection already exists")
 	}
 
@@ -135,4 +132,11 @@ func (m *model) ListSharedPublicKeys(ctx context.Context) ([]*SharedPublicKeySch
 	}
 	keys := rawKeys.([]*SharedPublicKeySchema)
 	return keys, nil
+}
+
+func GetSharedPublicKeyCollectionConfig() db.CollectionConfig {
+	return db.CollectionConfig{
+		Name:   sharedPublicKeyModel,
+		Schema: util.SchemaFromInstance(&SharedPublicKeySchema{}, false),
+	}
 }

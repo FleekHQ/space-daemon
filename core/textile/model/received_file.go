@@ -276,15 +276,16 @@ func (m *model) initReceivedFileModel(ctx context.Context) (context.Context, *th
 		return nil, nil, err
 	}
 
-	if err = m.threads.NewDB(metaCtx, *dbID); err != nil {
-		log.Debug("initReceivedFileModel: db already exists")
-	}
-	if err := m.threads.NewCollection(metaCtx, *dbID, db.CollectionConfig{
-		Name:   receivedFileModelName,
-		Schema: util.SchemaFromInstance(&ReceivedFileSchema{}, false),
-	}); err != nil {
+	if err := m.threads.NewCollection(metaCtx, *dbID, GetReceivedFileCollectionConfig()); err != nil {
 		log.Debug("initReceivedFileModel: collection already exists")
 	}
 
 	return metaCtx, dbID, nil
+}
+
+func GetReceivedFileCollectionConfig() db.CollectionConfig {
+	return db.CollectionConfig{
+		Name:   receivedFileModelName,
+		Schema: util.SchemaFromInstance(&ReceivedFileSchema{}, false),
+	}
 }

@@ -8,6 +8,26 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 )
 
+// return the targetBucket if path is newer there, srcBucket otherwise
+func (s *synchronizer) newerBucketPath(ctx context.Context, srcBucket, targetBucket bucket.BucketInterface, path string) (bucket.BucketInterface, error) {
+	targetUpdatedAt, err := targetBucket.UpdatedAt(ctx, path)
+	if err != nil {
+		return nil, err
+	}
+
+	srcUpdatedAt, err := srcBucket.UpdatedAt(ctx, path)
+	if err != nil {
+		// Path might not exist in src bucket
+		return targetBucket, nil
+	}
+
+	if srcUpdatedAt >= targetUpdatedAt {
+		return srcBucket, nil
+	}
+
+	return targetBucket, nil
+}
+
 // restore bucket by downloading files to the local from the mirror bucket
 func (s *synchronizer) restoreBucket(ctx context.Context, bucketSlug string) error {
 
@@ -24,23 +44,15 @@ func (s *synchronizer) restoreBucket(ctx context.Context, bucketSlug string) err
 	}
 
 	iterator := func(c context.Context, b *bucket.Bucket, itemPath string) error {
-		exists, err := localBucket.FileExists(c, itemPath)
-		if err != nil {
-			return err
-		}
+		exists, _ := localBucket.FileExists(c, itemPath)
 
 		if exists {
-			localUpdatedAt, err := localBucket.UpdatedAt(c, itemPath)
+			newerBucket, err := s.newerBucketPath(c, localBucket, mirrorBucket, itemPath)
 			if err != nil {
 				return err
 			}
 
-			mirrorUpdatedAt, err := mirrorBucket.UpdatedAt(c, itemPath)
-			if err != nil {
-				return err
-			}
-
-			if localUpdatedAt >= mirrorUpdatedAt {
+			if newerBucket == localBucket {
 				// do not overwrite: mirror is not newer
 				return nil
 			}

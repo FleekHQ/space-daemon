@@ -203,16 +203,7 @@ func (m *model) initMirrorFileModel(ctx context.Context) (context.Context, *thre
 		return nil, nil, err
 	}
 
-	m.threads.NewDB(metaCtx, *dbID)
-
-	m.threads.NewCollection(metaCtx, *dbID, db.CollectionConfig{
-		Name:   mirrorFileModelName,
-		Schema: util.SchemaFromInstance(&MirrorFileSchema{}, false),
-		Indexes: []db.Index{{
-			Path:   "path",
-			Unique: true, // TODO: multicolumn index
-		}},
-	})
+	m.threads.NewCollection(metaCtx, *dbID, GetMirrorFileCollectionConfig())
 
 	// Migrates db by adding new fields between old version of the daemon and a new one
 	m.threads.UpdateCollection(metaCtx, *dbID, db.CollectionConfig{
@@ -221,4 +212,15 @@ func (m *model) initMirrorFileModel(ctx context.Context) (context.Context, *thre
 	})
 
 	return metaCtx, dbID, nil
+}
+
+func GetMirrorFileCollectionConfig() db.CollectionConfig {
+	return db.CollectionConfig{
+		Name:   mirrorFileModelName,
+		Schema: util.SchemaFromInstance(&MirrorFileSchema{}, false),
+		Indexes: []db.Index{{
+			Path:   "path",
+			Unique: true, // TODO: multicolumn index
+		}},
+	}
 }

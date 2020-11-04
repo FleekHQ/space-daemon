@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 
+	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/store"
@@ -10,15 +11,22 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	threadsClient "github.com/textileio/go-threads/api/client"
 	"github.com/textileio/go-threads/core/thread"
+	"github.com/textileio/go-threads/db"
+	nc "github.com/textileio/go-threads/net/api/client"
 )
 
 const metaThreadName = "metathreadV1"
 
 type model struct {
-	st      store.Store
-	kc      keychain.Keychain
-	threads *threadsClient.Client
-	hubAuth hub.HubAuth
+	st                 store.Store
+	kc                 keychain.Keychain
+	threads            *threadsClient.Client
+	hubAuth            hub.HubAuth
+	cfg                config.Config
+	netc               *nc.Client
+	hnetc              *nc.Client
+	ht                 *threadsClient.Client
+	shouldForceRestore bool
 }
 
 type Model interface {
@@ -54,19 +62,46 @@ type Model interface {
 	ListReceivedPublicFiles(ctx context.Context, cidHash string, accepted bool) ([]*ReceivedFileSchema, error)
 	FindMirrorFileByPaths(ctx context.Context, paths []string) (map[string]*MirrorFileSchema, error)
 	FindReceivedFilesByIds(ctx context.Context, ids []string) ([]*ReceivedFileSchema, error)
+	InitSearchIndexCollection(ctx context.Context) error
+	UpdateSearchIndexRecord(
+		ctx context.Context,
+		name, path string,
+		itemType SearchItemType,
+		bucketSlug, dbId string,
+	) (*SearchIndexRecord, error)
+	QuerySearchIndex(ctx context.Context, query string) ([]*SearchIndexRecord, error)
+	DeleteSearchIndexRecord(ctx context.Context, name, path, bucketSlug, dbId string) error
 }
 
-func New(st store.Store, kc keychain.Keychain, threads *threadsClient.Client, hubAuth hub.HubAuth) *model {
+func New(st store.Store, kc keychain.Keychain, threads *threadsClient.Client, ht *threadsClient.Client, hubAuth hub.HubAuth, cfg config.Config, netc *nc.Client, hnetc *nc.Client, shouldForceRestore bool) *model {
 	return &model{
-		st:      st,
-		kc:      kc,
-		threads: threads,
-		hubAuth: hubAuth,
+		st:                 st,
+		kc:                 kc,
+		threads:            threads,
+		hubAuth:            hubAuth,
+		cfg:                cfg,
+		netc:               netc,
+		hnetc:              hnetc,
+		ht:                 ht,
+		shouldForceRestore: shouldForceRestore,
 	}
 }
 
 func (m *model) findOrCreateMetaThreadID(ctx context.Context) (*thread.ID, error) {
-	return utils.FindOrCreateDeterministicThreadID(ctx, utils.MetathreadThreadVariant, metaThreadName, m.kc, m.st, m.threads)
+	return utils.FindOrCreateDeterministicThread(
+		ctx,
+		utils.MetathreadThreadVariant,
+		metaThreadName,
+		m.kc,
+		m.st,
+		m.threads,
+		m.cfg,
+		m.netc,
+		m.hnetc,
+		m.hubAuth,
+		m.shouldForceRestore,
+		GetAllCollectionConfigs(),
+	)
 }
 
 func (m *model) getMetaThreadContext(ctx context.Context) (context.Context, *thread.ID, error) {
@@ -83,4 +118,13 @@ func (m *model) getMetaThreadContext(ctx context.Context) (context.Context, *thr
 	}
 
 	return metathreadCtx, dbID, nil
+}
+
+func GetAllCollectionConfigs() []db.CollectionConfig {
+	return []db.CollectionConfig{
+		GetBucketCollectionConfig(),
+		GetMirrorFileCollectionConfig(),
+		GetReceivedFileCollectionConfig(),
+		GetSharedPublicKeyCollectionConfig(),
+	}
 }

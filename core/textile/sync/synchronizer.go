@@ -25,29 +25,31 @@ import (
 type GetMirrorBucketFn func(ctx context.Context, slug string) (bucket.BucketInterface, error)
 type GetBucketFn func(ctx context.Context, slug string) (bucket.BucketInterface, error)
 type GetBucketCtxFn func(ctx context.Context, sDbID string, bucketSlug string, ishub bool, enckey []byte) (context.Context, *thread.ID, error)
+type AddBucketListenerFn func(ctx context.Context, bucketSlug string) error
 
 const maxParallelTasks = 16
 
 type synchronizer struct {
-	taskQueue        *list.List
-	filePinningQueue *list.List
-	queueHashMap     map[string]*Task
-	st               store.Store
-	model            model.Model
-	syncNeeded       chan (bool)
-	shuttingDownMap  map[*list.List]chan (bool)
-	queueMutexMap    map[*list.List]*sync.Mutex
-	getMirrorBucket  GetMirrorBucketFn
-	getBucket        GetBucketFn
-	getBucketCtx     GetBucketCtxFn
-	kc               keychain.Keychain
-	hubAuth          hub.HubAuth
-	hubBuckets       *bucketsClient.Client
-	hubThreads       *threadsClient.Client
-	cfg              config.Config
-	netc             *nc.Client
-	queueWg          *sync.WaitGroup
-	eventNotifier    EventNotifier
+	taskQueue         *list.List
+	filePinningQueue  *list.List
+	queueHashMap      map[string]*Task
+	st                store.Store
+	model             model.Model
+	syncNeeded        chan (bool)
+	shuttingDownMap   map[*list.List]chan (bool)
+	queueMutexMap     map[*list.List]*sync.Mutex
+	getMirrorBucket   GetMirrorBucketFn
+	getBucket         GetBucketFn
+	getBucketCtx      GetBucketCtxFn
+	addBucketListener AddBucketListenerFn
+	kc                keychain.Keychain
+	hubAuth           hub.HubAuth
+	hubBuckets        *bucketsClient.Client
+	hubThreads        *threadsClient.Client
+	cfg               config.Config
+	netc              *nc.Client
+	queueWg           *sync.WaitGroup
+	eventNotifier     EventNotifier
 }
 
 // Creates a new Synchronizer
@@ -63,6 +65,7 @@ func New(
 	getMirrorBucket GetMirrorBucketFn,
 	getBucket GetBucketFn,
 	getBucketCtx GetBucketCtxFn,
+	addBucketListenerFn AddBucketListenerFn,
 ) *synchronizer {
 	taskQueue := list.New()
 	filePinningQueue := list.New()
@@ -78,24 +81,25 @@ func New(
 	queueWg := &sync.WaitGroup{}
 
 	return &synchronizer{
-		taskQueue:        taskQueue,
-		filePinningQueue: filePinningQueue,
-		queueHashMap:     make(map[string]*Task),
-		st:               st,
-		model:            model,
-		syncNeeded:       make(chan bool),
-		shuttingDownMap:  shuttingDownMap,
-		queueMutexMap:    queueMutexMap,
-		getMirrorBucket:  getMirrorBucket,
-		getBucket:        getBucket,
-		getBucketCtx:     getBucketCtx,
-		kc:               kc,
-		hubAuth:          hubAuth,
-		hubBuckets:       hb,
-		hubThreads:       ht,
-		cfg:              cfg,
-		netc:             netc,
-		queueWg:          queueWg,
+		taskQueue:         taskQueue,
+		filePinningQueue:  filePinningQueue,
+		queueHashMap:      make(map[string]*Task),
+		st:                st,
+		model:             model,
+		syncNeeded:        make(chan bool),
+		shuttingDownMap:   shuttingDownMap,
+		queueMutexMap:     queueMutexMap,
+		getMirrorBucket:   getMirrorBucket,
+		getBucket:         getBucket,
+		getBucketCtx:      getBucketCtx,
+		addBucketListener: addBucketListenerFn,
+		kc:                kc,
+		hubAuth:           hubAuth,
+		hubBuckets:        hb,
+		hubThreads:        ht,
+		cfg:               cfg,
+		netc:              netc,
+		queueWg:           queueWg,
 	}
 }
 
@@ -123,6 +127,7 @@ func (s *synchronizer) NotifyBucketCreated(bucket string, enckey []byte) {
 
 func (s *synchronizer) NotifyBucketBackupOn(bucket string) {
 	t := newTask(bucketBackupOnTask, []string{bucket})
+	t.Parallelizable = true
 	s.enqueueTask(t, s.taskQueue)
 
 	s.notifySyncNeeded()
@@ -152,6 +157,14 @@ func (s *synchronizer) NotifyFileRestore(bucket, path string) {
 func (s *synchronizer) NotifyBucketStartup(bucket string) {
 	s.NotifyBucketRestore(bucket)
 	s.NotifyBucketBackupOn(bucket) // does nothing if !bucket.Backup
+
+	s.notifySyncNeeded()
+}
+
+func (s *synchronizer) NotifyIndexItemAdded(bucket, path, dbId string) {
+	t := newTask(addIndexItemTask, []string{bucket, path, dbId})
+	t.Parallelizable = true
+	s.enqueueTask(t, s.taskQueue)
 
 	s.notifySyncNeeded()
 }
@@ -268,6 +281,10 @@ func (s *synchronizer) executeTask(ctx context.Context, t *Task) error {
 		err = s.processBucketRestoreTask(ctx, t)
 	case restoreFileTask:
 		err = s.processRestoreFile(ctx, t)
+	case addIndexItemTask:
+		err = s.processAddIndexItemTask(ctx, t)
+	case removeIndexItemTask:
+		err = s.processRemoveIndexItemTask(ctx, t)
 	default:
 		log.Warn("Unexpected action on Textile sync, executeTask")
 	}

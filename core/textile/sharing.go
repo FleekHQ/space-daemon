@@ -118,7 +118,7 @@ func (tc *textileClient) createReceivedFiles(
 		if accepted {
 			encryptionKeys = invitation.Keys[i]
 		}
-		_, err := tc.GetModel().CreateReceivedFileViaInvitation(ctx, path, invitation.InvitationID, accepted, encryptionKeys)
+		receivedFile, err := tc.GetModel().CreateReceivedFileViaInvitation(ctx, path, invitation.InvitationID, accepted, encryptionKeys)
 
 		// compose each create error
 		if err != nil {
@@ -126,6 +126,10 @@ func (tc *textileClient) createReceivedFiles(
 				allErr = errors.Wrap(err, "Failed to accept some invitations")
 			}
 			allErr = errors.Wrap(err, allErr.Error())
+		} else {
+			if accepted {
+				tc.sync.NotifyIndexItemAdded(receivedFile.Bucket, receivedFile.Path, receivedFile.DbID)
+			}
 		}
 	}
 

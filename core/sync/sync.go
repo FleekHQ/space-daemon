@@ -37,7 +37,7 @@ type BucketSynchronizer interface {
 	Shutdown() error
 	RegisterNotifier(notifier GrpcNotifier)
 	AddFileWatch(addFileInfo domain.AddWatchFile) error
-	GetOpenFilePath(bucketSlug string, bucketPath string, dbID string) (string, bool)
+	GetOpenFilePath(bucketSlug, bucketPath, dbID, cid string) (string, bool)
 }
 
 type TextileNotifier interface {
@@ -61,10 +61,9 @@ type bucketSynchronizer struct {
 	textileClient textile.Client
 	fh            *watcherHandler
 	th            *textileHandler
-	// textileThreadListeners []textile.ThreadListener
-	notifier GrpcNotifier
-	store    store.Store
-	ready    chan bool
+	notifier      GrpcNotifier
+	store         store.Store
+	ready         chan bool
 }
 
 // Creates a new bucketSynchronizer instancelistenerEventHandler
@@ -74,28 +73,20 @@ func New(
 	store store.Store,
 	notifier GrpcNotifier,
 ) *bucketSynchronizer {
-	// textileThreadListeners := make([]textile.ThreadListener, 0)
 
 	return &bucketSynchronizer{
 		folderWatcher: folderWatcher,
 		textileClient: textileClient,
 		fh:            nil,
 		th:            nil,
-		// textileThreadListeners: textileThreadListeners,
-		notifier: notifier,
-		store:    store,
-		ready:    make(chan bool),
+		notifier:      notifier,
+		store:         store,
+		ready:         make(chan bool),
 	}
 }
 
 // Starts the folder watcher and the textile watcher.
 func (bs *bucketSynchronizer) Start(ctx context.Context) error {
-	// Disabling this temporarily due to errors
-	//buckets, err := bs.textileClient.ListBuckets(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-
 	if bs.notifier == nil {
 		log.Printf("using default notifier to start bucket sync")
 		bs.notifier = &defaultNotifier{}
@@ -106,23 +97,7 @@ func (bs *bucketSynchronizer) Start(ctx context.Context) error {
 		bs:     bs,
 	}
 
-	bs.th = &textileHandler{
-		notifier: bs.notifier,
-		bs:       bs,
-	}
-
-	// handlers := make([]textile.EventHandler, 0)
-	// handlers = append(handlers, bs.th)
-
-	// Disabling this temporarily due to errors
-	//for range buckets {
-	// bs.textileThreadListeners = append(bs.textileThreadListeners, textile.NewListener(bs.textileClient, bucket.Slug(), handlers))
-	//}
-
 	bs.folderWatcher.RegisterHandler(bs.fh)
-
-	// TODO: bs.textileThreadListener.RegisterHandler(bs.th)
-	// (Needs implementation of bs.th)
 
 	g, newCtx := errgroup.WithContext(ctx)
 
@@ -130,13 +105,6 @@ func (bs *bucketSynchronizer) Start(ctx context.Context) error {
 		log.Debug("Starting watcher in bucketsync")
 		return bs.folderWatcher.Watch(newCtx)
 	})
-
-	// for _, listener := range bs.textileThreadListeners {
-	// 	g.Go(func() error {
-	// 		log.Debug("Starting textile thread listener in bucketsync")
-	// 		return listener.Listen(newCtx)
-	// 	})
-	// }
 
 	// add open files to watcher
 	keys, err := bs.store.KeysWithPrefix(OpenFilesKeyPrefix)
@@ -157,9 +125,7 @@ func (bs *bucketSynchronizer) Start(ctx context.Context) error {
 		}
 	}
 
-	//go func() {
 	bs.ready <- true
-	//}()
 
 	err = g.Wait()
 
@@ -179,9 +145,6 @@ func (bs *bucketSynchronizer) Shutdown() error {
 	log.Debug("shutting down folder watcher in bucketsync")
 	bs.folderWatcher.Close()
 	log.Debug("shutting down textile thread listener in bucketsync")
-	// for _, listener := range bs.textileThreadListeners {
-	// 	listener.Close()
-	// }
 
 	close(bs.ready)
 	return nil
@@ -218,10 +181,10 @@ func (bs *bucketSynchronizer) AddFileWatch(addFileInfo domain.AddWatchFile) erro
 	return nil
 }
 
-func (bs *bucketSynchronizer) GetOpenFilePath(bucketSlug, bucketPath, dbID string) (string, bool) {
+func (bs *bucketSynchronizer) GetOpenFilePath(bucketSlug, bucketPath, dbID, cid string) (string, bool) {
 	var fi domain.AddWatchFile
 	var err error
-	reversKey := getOpenFileReverseKey(bucketSlug, bucketPath, dbID)
+	reversKey := getOpenFileReverseKey(bucketSlug, bucketPath, dbID, cid)
 
 	if fi, err = bs.getOpenFileInfo(reversKey); err != nil {
 		return "", false
@@ -238,8 +201,8 @@ func getOpenFileKey(localPath string) string {
 	return OpenFilesKeyPrefix + localPath
 }
 
-func getOpenFileReverseKey(bucketSlug, bucketPath, dbID string) string {
-	return ReverseOpenFilesKeyPrefix + bucketSlug + ":" + bucketPath + ":" + dbID
+func getOpenFileReverseKey(bucketSlug, bucketPath, dbID, cid string) string {
+	return ReverseOpenFilesKeyPrefix + bucketSlug + ":" + bucketPath + ":" + dbID + ":" + cid
 }
 
 func (bs *bucketSynchronizer) getOpenFileBucketSlugAndPath(localPath string) (domain.AddWatchFile, bool) {
@@ -265,7 +228,7 @@ func (bs *bucketSynchronizer) addFileInfoToStore(addFileInfo domain.AddWatchFile
 	if err := bs.store.SetString(getOpenFileKey(addFileInfo.LocalPath), string(out)); err != nil {
 		return err
 	}
-	reverseKey := getOpenFileReverseKey(addFileInfo.BucketSlug, addFileInfo.BucketPath, addFileInfo.DbId)
+	reverseKey := getOpenFileReverseKey(addFileInfo.BucketSlug, addFileInfo.BucketPath, addFileInfo.DbId, addFileInfo.Cid)
 	if err := bs.store.SetString(reverseKey, string(out)); err != nil {
 		return err
 	}
@@ -277,7 +240,7 @@ func (bs *bucketSynchronizer) removeFileInfo(addFileInfo domain.AddWatchFile) er
 	if err := bs.store.Remove([]byte(getOpenFileKey(addFileInfo.LocalPath))); err != nil {
 		return err
 	}
-	reverseKey := getOpenFileReverseKey(addFileInfo.BucketSlug, addFileInfo.BucketPath, addFileInfo.DbId)
+	reverseKey := getOpenFileReverseKey(addFileInfo.BucketSlug, addFileInfo.BucketPath, addFileInfo.DbId, addFileInfo.Cid)
 	if err := bs.store.Remove([]byte(reverseKey)); err != nil {
 		return err
 	}
