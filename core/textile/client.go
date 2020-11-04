@@ -429,6 +429,12 @@ func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
 	return tc.start(ctx, cfg)
 }
 
+// Used by delete account so we can disable it so it gets
+// enabled again during startup
+func (tc *textileClient) DisableSync() {
+	tc.isSyncInitialized = false
+}
+
 // Closes connection to Textile
 func (tc *textileClient) Shutdown() error {
 	tc.shuttingDown <- true
