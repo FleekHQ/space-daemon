@@ -57,7 +57,6 @@ type AddItemsResponse struct {
 type AddItemStreamResponse struct {
 	Result     string
 	TotalBytes int64
-	Error      error
 }
 
 type Member struct {

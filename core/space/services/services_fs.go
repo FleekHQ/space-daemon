@@ -489,9 +489,9 @@ func (s *Space) AddItemStream(ctx context.Context, fileName string, targetPath s
 	if err != nil {
 		return domain.AddItemStreamResponse{}, err
 	}
-	_, _, err2 := b.UploadFile(ctx, targetPathBucket, f)
-	if err2 != nil {
-		log.Error(fmt.Sprintf("error creating targetPath %s in bucket %s", targetPathBucket, b.Key()), err2)
+	_, _, err = b.UploadFile(ctx, targetPathBucket, f)
+	if err != nil {
+		log.Error(fmt.Sprintf("error creating targetPath %s in bucket %s", targetPathBucket, b.Key()), err)
 		return domain.AddItemStreamResponse{}, err
 	}
 	fi, err := f.Stat()
@@ -506,11 +506,9 @@ func (s *Space) AddItemStream(ctx context.Context, fileName string, targetPath s
 }
 
 func closeFile(f *os.File, fileLocalPath string) {
-	fmt.Println("closing")
 	err := f.Close()
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	} else {
 		e := os.Remove(fileLocalPath)
