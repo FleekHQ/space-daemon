@@ -464,6 +464,59 @@ func (s *Space) AddItems(ctx context.Context, sourcePaths []string, targetPath s
 	return results, totalsRes, nil
 }
 
+func (s *Space) AddItemStream(ctx context.Context, fileName string, targetPath string, bucketName string) (domain.AddItemStreamResponse, error) {
+	err := s.waitForTextileInit(ctx)
+	if err != nil {
+		return domain.AddItemStreamResponse{}, err
+	}
+	path, err := os.Getwd()
+	fileLocalPath := filepath.Join(path, fileName)
+	f, err := os.Open(fileLocalPath)
+	if err != nil {
+		log.Error(fmt.Sprintf("error opening path %s", fileLocalPath), err)
+		return domain.AddItemStreamResponse{}, err
+	}
+	defer closeFile(f, fileLocalPath)
+
+	var targetPathBucket string
+	if targetPath == "" || targetPath == "/" {
+		targetPathBucket = fileName
+	} else {
+		targetPathBucket = targetPath + "/" + fileName
+	}
+	b, err := s.getBucketWithFallback(ctx, bucketName)
+	if err != nil {
+		return domain.AddItemStreamResponse{}, err
+	}
+	_, _, err = b.UploadFile(ctx, targetPathBucket, f)
+	if err != nil {
+		log.Error(fmt.Sprintf("error creating targetPath %s in bucket %s", targetPathBucket, b.Key()), err)
+		return domain.AddItemStreamResponse{}, err
+	}
+	fi, err := f.Stat()
+	var fileSize int64 = 0
+	if err == nil {
+		fileSize = fi.Size()
+	}
+	return domain.AddItemStreamResponse{
+		Result:     "File Added",
+		TotalBytes: fileSize,
+	}, err
+}
+
+func closeFile(f *os.File, fileLocalPath string) {
+	err := f.Close()
+
+	if err != nil {
+		os.Exit(1)
+	} else {
+		e := os.Remove(fileLocalPath)
+		if e != nil {
+			log.Error(fmt.Sprintf("File remove error: "), e)
+		}
+	}
+}
+
 // AddItemWithReader uploads content of the reader to the targetPath on the bucket specified
 //
 // Note: the AddItemResult returns an empty SourcePath

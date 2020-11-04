@@ -565,6 +565,50 @@ func TestService_AddItems_OnError(t *testing.T) {
 	mockBucket.AssertNumberOfCalls(t, "UploadFile", len(getTempDir().fileNames))
 }
 
+func TestService_AddItemStream(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+
+	// setup tests
+	testKey := "bucketKey"
+	bucketPath := "/tests"
+
+	textileClient.On("GetDefaultBucket", mock.Anything).Return(mockBucket, nil)
+	textileClient.On("IsInitialized").Return(true)
+
+	mockBucket.On(
+		"Key",
+	).Return(testKey)
+
+	mockBucket.On(
+		"Slug",
+	).Return("personal")
+
+	mockPath.On("String").Return("hash")
+
+	fileName := "textFile.txt"
+	tmpFile, err := os.Create(fileName)
+
+	defer closeAndDelete(tmpFile)
+
+	defer tearDown()
+	mockBucket.On(
+		"UploadFile",
+		mock.Anything,
+		bucketPath+"/"+fileName,
+		mock.Anything,
+	).Return(nil, mockPath, nil)
+
+	res, err := sv.AddItemStream(context.Background(), fileName, bucketPath, "")
+
+	assert.Nil(t, err)
+	assert.NotEmpty(t, res)
+	assert.Equal(t, "File Added", res.Result)
+
+	// assert mocks
+	textileClient.AssertExpectations(t)
+	mockBucket.AssertNumberOfCalls(t, "UploadFile", 1)
+}
+
 func TestService_CreateIdentity(t *testing.T) {
 	sv, _, tearDown := initTestService(t)
 	defer tearDown()
