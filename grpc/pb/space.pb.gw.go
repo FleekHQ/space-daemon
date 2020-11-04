@@ -1448,6 +1448,7 @@ func local_request_SpaceApi_SearchFiles_0(ctx context.Context, marshaler runtime
 // RegisterSpaceApiHandlerServer registers the http handlers for service SpaceApi to "mux".
 // UnaryRPC     :call SpaceApiServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
+// Note that using this registration option will cause many gRPC library features (such as grpc.SendHeader, etc) to stop working. Consider using RegisterSpaceApiHandlerFromEndpoint instead.
 func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, server SpaceApiServer) error {
 
 	mux.Handle("GET", pattern_SpaceApi_ListDirectories_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {

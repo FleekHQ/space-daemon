@@ -9,9 +9,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/keychain"
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/log"
@@ -20,6 +24,7 @@ import (
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
 	nc "github.com/textileio/go-threads/net/api/client"
+	bucketsproto "github.com/textileio/textile/v2/api/buckets/pb"
 	"github.com/textileio/textile/v2/api/common"
 	"github.com/textileio/textile/v2/cmd"
 	"golang.org/x/crypto/pbkdf2"
@@ -285,4 +290,28 @@ func successfulThreadCreation(st store.Store, dbID *thread.ID, dbIDInBytes, stor
 	}
 
 	return dbID, nil
+}
+
+func MapDirEntryToFileInfo(entry bucketsproto.ListPathResponse, itemPath string) domain.FileInfo {
+	item := entry.Item
+	info := domain.FileInfo{
+		DirEntry: domain.DirEntry{
+			Path:          itemPath,
+			IsDir:         item.IsDir,
+			Name:          item.Name,
+			SizeInBytes:   strconv.FormatInt(item.Size, 10),
+			FileExtension: strings.Replace(filepath.Ext(item.Name), ".", "", -1),
+			// FIXME: real created at needed
+			Created: time.Unix(0, item.Metadata.UpdatedAt).Format(time.RFC3339),
+			Updated: time.Unix(0, item.Metadata.UpdatedAt).Format(time.RFC3339),
+			Members: []domain.Member{},
+		},
+		IpfsHash:          item.Cid,
+		BackedUp:          false,
+		LocallyAvailable:  false,
+		BackupInProgress:  false,
+		RestoreInProgress: false,
+	}
+
+	return info
 }
