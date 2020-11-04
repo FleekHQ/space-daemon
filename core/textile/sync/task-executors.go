@@ -11,6 +11,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/FleekHQ/space-daemon/core/textile/model"
+	api_buckets_pb "github.com/textileio/textile/v2/api/buckets/pb"
 
 	"github.com/FleekHQ/space-daemon/log"
 
@@ -47,8 +48,17 @@ func (s *synchronizer) processAddItem(ctx context.Context, task *Task) error {
 		}
 	}
 
-	if s.eventNotifier != nil {
-		s.eventNotifier.SendFileEvent(events.NewFileEvent(path, bucket, events.FileBackupInProgress, nil))
+	localBucket, err := s.getBucket(ctx, bucket)
+	if err != nil {
+		return err
+	}
+
+	item, err := localBucket.ListDirectory(ctx, path)
+	if s.eventNotifier != nil && err == nil {
+		info := utils.MapDirEntryToFileInfo(api_buckets_pb.ListPathResponse(*item), path)
+		info.LocallyAvailable = true
+		info.BackupInProgress = true
+		s.eventNotifier.SendFileEvent(events.NewFileEvent(info, events.FileBackupInProgress))
 	}
 
 	pft := newTask(pinFileTask, []string{bucket, path})
@@ -102,8 +112,17 @@ func (s *synchronizer) processPinFile(ctx context.Context, task *Task) error {
 
 	s.setMirrorFileBackup(ctx, path, bucket, false)
 
-	if s.eventNotifier != nil {
-		s.eventNotifier.SendFileEvent(events.NewFileEvent(path, bucket, events.FileBackupReady, nil))
+	localBucket, err := s.getBucket(ctx, bucket)
+	if err != nil {
+		return err
+	}
+
+	item, err := localBucket.ListDirectory(ctx, path)
+	if s.eventNotifier != nil && err == nil {
+		info := utils.MapDirEntryToFileInfo(api_buckets_pb.ListPathResponse(*item), path)
+		info.LocallyAvailable = true
+		info.BackedUp = true
+		s.eventNotifier.SendFileEvent(events.NewFileEvent(info, events.FileBackupReady))
 	}
 
 	return nil
@@ -256,8 +275,12 @@ func (s *synchronizer) processRestoreFile(ctx context.Context, task *Task) error
 		return err
 	}
 
-	if s.eventNotifier != nil {
-		s.eventNotifier.SendFileEvent(events.NewFileEvent(path, bucket, events.FileRestored, nil))
+	item, err := mirrorBucket.ListDirectory(ctx, path)
+	if s.eventNotifier != nil && err == nil {
+		info := utils.MapDirEntryToFileInfo(api_buckets_pb.ListPathResponse(*item), path)
+		info.LocallyAvailable = true
+		info.BackedUp = true
+		s.eventNotifier.SendFileEvent(events.NewFileEvent(info, events.FileRestored))
 	}
 
 	return err

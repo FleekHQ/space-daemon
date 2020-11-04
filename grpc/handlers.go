@@ -21,9 +21,42 @@ func (srv *grpcServer) sendFileEvent(event *pb.FileEventResponse) {
 }
 
 func (srv *grpcServer) SendFileEvent(event events.FileEvent) {
-	pe := &pb.FileEventResponse{}
+	dirEntries := mapFileInfoToDirectoryEntry([]domain.FileInfo{event.Info})
+	entry := dirEntries[0]
+
+	pe := &pb.FileEventResponse{
+		Type:  mapFileEventToPb(event.Type),
+		Entry: entry,
+	}
 
 	srv.sendFileEvent(pe)
+}
+
+func mapFileEventToPb(eventType events.FileEventType) pb.EventType {
+	switch eventType {
+	case events.FileAdded:
+		return pb.EventType_ENTRY_ADDED
+	case events.FileDeleted:
+		return pb.EventType_ENTRY_DELETED
+	case events.FileUpdated:
+		return pb.EventType_ENTRY_UPDATED
+	case events.FileBackupInProgress:
+		return pb.EventType_ENTRY_BACKUP_IN_PROGRESS
+	case events.FileBackupReady:
+		return pb.EventType_ENTRY_BACKUP_READY
+	case events.FileRestoring:
+		return pb.EventType_ENTRY_RESTORE_IN_PROGRESS
+	case events.FileRestored:
+		return pb.EventType_ENTRY_RESTORE_READY
+	case events.FolderAdded:
+		return pb.EventType_FOLDER_ADDED
+	case events.FolderDeleted:
+		return pb.EventType_FOLDER_DELETED
+	case events.FolderUpdated:
+		return pb.EventType_FOLDER_UPDATED
+	default:
+		return pb.EventType_ENTRY_ADDED
+	}
 }
 
 func (srv *grpcServer) sendTextileEvent(event *pb.TextileEventResponse) {

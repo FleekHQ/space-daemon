@@ -1616,7 +1616,14 @@
       "enum": [
         "ENTRY_ADDED",
         "ENTRY_DELETED",
-        "ENTRY_UPDATED"
+        "ENTRY_UPDATED",
+        "ENTRY_BACKUP_IN_PROGRESS",
+        "ENTRY_BACKUP_READY",
+        "ENTRY_RESTORE_IN_PROGRESS",
+        "ENTRY_RESTORE_READY",
+        "FOLDER_ADDED",
+        "FOLDER_DELETED",
+        "FOLDER_UPDATED"
       ],
       "default": "ENTRY_ADDED"
     },
