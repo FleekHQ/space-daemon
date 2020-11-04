@@ -471,8 +471,8 @@ func (s *Space) AddItemStream(ctx context.Context, fileName string, targetPath s
 		return domain.AddItemStreamResponse{}, err
 	}
 	path, err := os.Getwd()
-	fileLocalPath := path + "\\" + fileName
-	f, err := os.Open(path + "\\" + fileName)
+	fileLocalPath := filepath.Join(path, fileName)
+	f, err := os.Open(fileLocalPath)
 	if err != nil {
 		log.Error(fmt.Sprintf("error opening path %s", fileLocalPath), err)
 		return domain.AddItemStreamResponse{}, err
