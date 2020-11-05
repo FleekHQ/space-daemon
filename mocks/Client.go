@@ -138,6 +138,11 @@ func (_m *Client) DeleteAccount(ctx context.Context) error {
 	return r0
 }
 
+// DisableSync provides a mock function with given fields:
+func (_m *Client) DisableSync() {
+	_m.Called()
+}
+
 // DownloadPublicGatewayItem provides a mock function with given fields: ctx, _a1
 func (_m *Client) DownloadPublicGatewayItem(ctx context.Context, _a1 cid.Cid) (io.ReadCloser, error) {
 	ret := _m.Called(ctx, _a1)
