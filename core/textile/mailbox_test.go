@@ -18,6 +18,7 @@ var (
 	mockPrivKey crypto.PrivKey
 	mockMb      *mocks.Mailbox
 	mockHubAuth *mocks.HubAuth
+	mockSearch  *mocks.FilesSearchEngine
 )
 
 type TearDown func()
@@ -28,7 +29,8 @@ func initTestMailbox(t *testing.T) (tc.Client, TearDown) {
 	mockHubAuth = new(mocks.HubAuth)
 	mockUc = new(mocks.UsersClient)
 	mockMb = new(mocks.Mailbox)
-	client := tc.NewClient(st, mockKc, mockHubAuth, mockUc, mockMb)
+	mockSearch = new(mocks.FilesSearchEngine)
+	client := tc.NewClient(st, mockKc, mockHubAuth, mockUc, mockMb, mockSearch)
 
 	mockPubKeyHex := "67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"
 	mockPrivKeyHex := "dd55f8921f90fdf31c6ef9ad86bd90605602fd7d32dc8ea66ab72deb6a82821c67730a6678566ead5911d71304854daddb1fe98a396551a4be01de65da01f3a9"

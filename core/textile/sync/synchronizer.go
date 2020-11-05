@@ -164,6 +164,7 @@ func (s *synchronizer) NotifyBucketStartup(bucket string) {
 func (s *synchronizer) NotifyIndexItemAdded(bucket, path, dbId string) {
 	t := newTask(addIndexItemTask, []string{bucket, path, dbId})
 	t.Parallelizable = true
+	t.MaxRetries = 2
 	s.enqueueTask(t, s.taskQueue)
 
 	s.notifySyncNeeded()
