@@ -51,6 +51,7 @@ func NewSearchEngine(opts ...Option) *sqliteFilesSearchEngine {
 
 func (s *sqliteFilesSearchEngine) Start() error {
 	dsn := filepath.Join(s.opts.dbPath, DbFileName)
+
 	if db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(s.opts.logLevel),
 	}); err != nil {
