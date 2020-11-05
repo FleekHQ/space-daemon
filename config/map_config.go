@@ -2,6 +2,8 @@ package config
 
 import (
 	"os"
+	"os/user"
+	"path/filepath"
 
 	"github.com/FleekHQ/space-daemon/core/env"
 )
@@ -17,8 +19,10 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 	configInt := make(map[string]int)
 	configBool := make(map[string]bool)
 
+	usr, _ := user.Current()
+
 	// default values
-	configStr[SpaceStorePath] = "~/.fleek-space"
+	configStr[SpaceStorePath] = filepath.Join(usr.HomeDir, ".fleek-space")
 	configStr[MountFuseDrive] = "false"
 	configStr[FuseDriveName] = "Space"
 	configInt[SpaceServerPort] = 9999

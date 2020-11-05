@@ -2,8 +2,8 @@ package sqlite
 
 import (
 	"context"
-	"fmt"
-	"os"
+	"os/user"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -33,8 +33,10 @@ type sqliteFilesSearchEngine struct {
 
 // Creates a new SQLite backed search engine for files and folders
 func NewSearchEngine(opts ...Option) *sqliteFilesSearchEngine {
+	usr, _ := user.Current()
+
 	searchOptions := sqliteSearchOption{
-		dbPath: fmt.Sprintf("~%c.fleek-space", os.PathSeparator),
+		dbPath: filepath.Join(usr.HomeDir, ".fleek-space"),
 	}
 
 	for _, opt := range opts {
@@ -48,7 +50,8 @@ func NewSearchEngine(opts ...Option) *sqliteFilesSearchEngine {
 }
 
 func (s *sqliteFilesSearchEngine) Start() error {
-	dsn := fmt.Sprintf("%s%c%s", s.opts.dbPath, os.PathSeparator, DbFileName)
+	dsn := filepath.Join(s.opts.dbPath, DbFileName)
+
 	if db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(s.opts.logLevel),
 	}); err != nil {
