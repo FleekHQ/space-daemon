@@ -23,14 +23,18 @@ const (
 )
 
 type FileEvent struct {
-	Info domain.FileInfo
-	Type FileEventType
+	Info   domain.FileInfo
+	Type   FileEventType
+	Bucket string
+	DbID   string
 }
 
-func NewFileEvent(info domain.FileInfo, eventType FileEventType) FileEvent {
+func NewFileEvent(info domain.FileInfo, eventType FileEventType, bucket, dbID string) FileEvent {
 	return FileEvent{
-		Info: info,
-		Type: eventType,
+		Info:   info,
+		Type:   eventType,
+		Bucket: bucket,
+		DbID:   dbID,
 	}
 }
 
