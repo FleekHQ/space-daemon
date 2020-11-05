@@ -25,8 +25,10 @@ func (srv *grpcServer) SendFileEvent(event events.FileEvent) {
 	entry := dirEntries[0]
 
 	pe := &pb.FileEventResponse{
-		Type:  mapFileEventToPb(event.Type),
-		Entry: entry,
+		Type:   mapFileEventToPb(event.Type),
+		Entry:  entry,
+		Bucket: event.Bucket,
+		DbId:   event.DbID,
 	}
 
 	srv.sendFileEvent(pe)
@@ -176,23 +178,6 @@ func (srv *grpcServer) TxlSubscribe(empty *empty.Empty, stream pb.SpaceApi_TxlSu
 	srv.registerTxlStream(nil)
 	log.Info("closing stream")
 	return nil
-}
-
-func (srv *grpcServer) FileInfoSubscribe(empty *empty.Empty, stream pb.SpaceApi_FileInfoSubscribeServer) error {
-	srv.registerFileInfoStream(stream)
-	// waits until request is done
-	select {
-	case <-stream.Context().Done():
-		break
-	}
-	// clean up stream
-	srv.registerFileInfoStream(nil)
-	log.Info("closing stream")
-	return nil
-}
-
-func (srv *grpcServer) registerFileInfoStream(stream pb.SpaceApi_FileInfoSubscribeServer) {
-	srv.fileInfoStream = stream
 }
 
 func (srv *grpcServer) registerTxlStream(stream pb.SpaceApi_TxlSubscribeServer) {

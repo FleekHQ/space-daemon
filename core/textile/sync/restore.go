@@ -60,13 +60,18 @@ func (s *synchronizer) restoreBucket(ctx context.Context, bucketSlug string) err
 			}
 		}
 
+		bucketModel, err := s.model.FindBucket(ctx, bucketSlug)
+		if err != nil {
+			return err
+		}
+
 		item, err := mirrorBucket.ListDirectory(ctx, itemPath)
 		if s.eventNotifier != nil && err == nil {
 			info := utils.MapDirEntryToFileInfo(api_buckets_pb.ListPathResponse(*item), itemPath)
 			info.BackedUp = true
 			info.LocallyAvailable = exists
 			info.RestoreInProgress = true
-			s.eventNotifier.SendFileEvent(events.NewFileEvent(info, events.FileRestoring))
+			s.eventNotifier.SendFileEvent(events.NewFileEvent(info, events.FileRestoring, bucketSlug, bucketModel.DbID))
 		}
 
 		s.NotifyFileRestore(bucketSlug, itemPath)
