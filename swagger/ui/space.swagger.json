@@ -33,6 +33,72 @@
         ]
       }
     },
+    "/v1/appTokens": {
+      "post": {
+        "summary": "Generates an app token with scoped access.",
+        "operationId": "SpaceApi_GenerateAppToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceGenerateAppTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceGenerateAppTokenRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
+    "/v1/appTokens/master": {
+      "post": {
+        "summary": "Initialize master app token\nApp tokens are used to authorize scoped access to a range of methods\nMaster token can only be generated once and has access to all methods",
+        "operationId": "SpaceApi_InitializeMasterAppToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceInitializeMasterAppTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceInitializeMasterAppTokenRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/backup": {
       "post": {
         "operationId": "SpaceApi_ToggleBucketBackup",
@@ -1438,6 +1504,14 @@
         }
       }
     },
+    "spaceAllowedMethod": {
+      "type": "object",
+      "properties": {
+        "methodName": {
+          "type": "string"
+        }
+      }
+    },
     "spaceBackupKeysByPassphraseRequest": {
       "type": "object",
       "properties": {
@@ -1646,6 +1720,25 @@
         }
       }
     },
+    "spaceGenerateAppTokenRequest": {
+      "type": "object",
+      "properties": {
+        "allowedMethods": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/spaceAllowedMethod"
+          }
+        }
+      }
+    },
+    "spaceGenerateAppTokenResponse": {
+      "type": "object",
+      "properties": {
+        "appKey": {
+          "type": "string"
+        }
+      }
+    },
     "spaceGenerateKeyPairRequest": {
       "type": "object"
     },
@@ -1802,6 +1895,17 @@
     },
     "spaceHandleFilesInvitationResponse": {
       "type": "object"
+    },
+    "spaceInitializeMasterAppTokenRequest": {
+      "type": "object"
+    },
+    "spaceInitializeMasterAppTokenResponse": {
+      "type": "object",
+      "properties": {
+        "appToken": {
+          "type": "string"
+        }
+      }
     },
     "spaceInvitation": {
       "type": "object",

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/FleekHQ/space-daemon/core/permissions"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/vault"
 	crypto "github.com/libp2p/go-libp2p-crypto"
@@ -61,6 +62,7 @@ type Service interface {
 	GetNotificationsLastSeenAt() (int64, error)
 	TruncateData(ctx context.Context) error
 	SearchFiles(ctx context.Context, query string) ([]domain.SearchFileEntry, error)
+	InitializeMasterAppToken(ctx context.Context) (*permissions.AppToken, error)
 }
 
 type serviceOptions struct {
