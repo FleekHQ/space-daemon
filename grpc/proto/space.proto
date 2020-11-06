@@ -533,9 +533,15 @@ message CreateFolderRequest {
 message CreateFolderResponse {
 }
 
+enum KeyBackupType {
+  PASSWORD = 0;
+  ETH = 1;
+}
+
 message BackupKeysByPassphraseRequest {
   string uuid = 1;
   string passphrase = 2;
+  KeyBackupType type = 3;
 }
 
 message BackupKeysByPassphraseResponse {}

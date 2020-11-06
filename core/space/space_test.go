@@ -761,6 +761,7 @@ func TestService_VaultBackup(t *testing.T) {
 
 	pass := "strawberry123"
 	uuid := "c907e7ef-7b36-4ab1-8a56-f788d7526a2c"
+	backupType := "password"
 	ctx := context.Background()
 	mnemonic := "clog chalk blame black uncover frame before decide tuition maple crowd uncle"
 
@@ -770,7 +771,7 @@ func TestService_VaultBackup(t *testing.T) {
 
 	mockKeychain.On("GetStoredMnemonic").Return(mnemonic, nil)
 
-	mockVault.On("Store", uuid, pass, mock.Anything, mock.Anything).Return(nil, nil)
+	mockVault.On("Store", uuid, pass, backupType, mock.Anything, mock.Anything).Return(nil, nil)
 
 	mockHub.On("GetTokensWithCache", mock.Anything).Return(&hub.AuthTokens{
 		AppToken: "",
@@ -780,9 +781,9 @@ func TestService_VaultBackup(t *testing.T) {
 		Sig:      "",
 	}, nil)
 
-	err := sv.BackupKeysByPassphrase(ctx, uuid, pass)
+	err := sv.BackupKeysByPassphrase(ctx, uuid, pass, backupType)
 	assert.Nil(t, err)
-	mockVault.AssertCalled(t, "Store", uuid, pass, mock.Anything, mock.Anything)
+	mockVault.AssertCalled(t, "Store", uuid, pass, backupType, mock.Anything, mock.Anything)
 }
 
 func TestService_VaultRestore(t *testing.T) {
