@@ -3,12 +3,13 @@ package grpc
 import (
 	"context"
 
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/grpc/pb"
 )
 
 func (srv *grpcServer) BackupKeysByPassphrase(ctx context.Context, request *pb.BackupKeysByPassphraseRequest) (*pb.BackupKeysByPassphraseResponse, error) {
 	resp := &pb.BackupKeysByPassphraseResponse{}
-	err := srv.sv.BackupKeysByPassphrase(ctx, request.Uuid, request.Passphrase)
+	err := srv.sv.BackupKeysByPassphrase(ctx, request.Uuid, request.Passphrase, domain.KeyBackupType(request.Type).String())
 
 	return resp, err
 }

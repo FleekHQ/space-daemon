@@ -101,7 +101,7 @@ func (s *Space) RecoverKeysByPassphrase(ctx context.Context, uuid string, pass s
 }
 
 // Uses the vault service to securely store the current keypair
-func (s *Space) BackupKeysByPassphrase(ctx context.Context, uuid string, pass string) error {
+func (s *Space) BackupKeysByPassphrase(ctx context.Context, uuid string, pass string, backupType string) error {
 	tokens, err := s.GetAPISessionTokens(ctx)
 	if err != nil {
 		return err
@@ -130,7 +130,7 @@ func (s *Space) BackupKeysByPassphrase(ctx context.Context, uuid string, pass st
 
 	items := []vault.VaultItem{item}
 
-	if _, err := s.vault.Store(uuid, pass, tokens.ServicesToken, items); err != nil {
+	if _, err := s.vault.Store(uuid, pass, backupType, tokens.ServicesToken, items); err != nil {
 		return err
 	}
 

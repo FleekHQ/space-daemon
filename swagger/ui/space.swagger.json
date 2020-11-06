@@ -1446,6 +1446,9 @@
         },
         "passphrase": {
           "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/spaceKeyBackupType"
         }
       }
     },
@@ -1859,6 +1862,14 @@
           "format": "boolean"
         }
       }
+    },
+    "spaceKeyBackupType": {
+      "type": "string",
+      "enum": [
+        "PASSWORD",
+        "ETH"
+      ],
+      "default": "PASSWORD"
     },
     "spaceListBucketsResponse": {
       "type": "object",
