@@ -1235,38 +1235,6 @@
         ]
       }
     },
-    "/v1/subscriptions/fileinfo": {
-      "get": {
-        "summary": "Subscribe to file info events. This streams responses to the caller",
-        "operationId": "SpaceApi_FileInfoSubscribe",
-        "responses": {
-          "200": {
-            "description": "A successful response.(streaming responses)",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "result": {
-                  "$ref": "#/definitions/spaceFileInfoEventResponse"
-                },
-                "error": {
-                  "$ref": "#/definitions/runtimeStreamError"
-                }
-              },
-              "title": "Stream result of spaceFileInfoEventResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response",
-            "schema": {
-              "$ref": "#/definitions/runtimeError"
-            }
-          }
-        },
-        "tags": [
-          "SpaceApi"
-        ]
-      }
-    },
     "/v1/subscriptions/notification": {
       "get": {
         "operationId": "SpaceApi_NotificationSubscribe",
@@ -1616,7 +1584,14 @@
       "enum": [
         "ENTRY_ADDED",
         "ENTRY_DELETED",
-        "ENTRY_UPDATED"
+        "ENTRY_UPDATED",
+        "ENTRY_BACKUP_IN_PROGRESS",
+        "ENTRY_BACKUP_READY",
+        "ENTRY_RESTORE_IN_PROGRESS",
+        "ENTRY_RESTORE_READY",
+        "FOLDER_ADDED",
+        "FOLDER_DELETED",
+        "FOLDER_UPDATED"
       ],
       "default": "ENTRY_ADDED"
     },
@@ -1628,14 +1603,12 @@
         },
         "entry": {
           "$ref": "#/definitions/spaceListDirectoryEntry"
-        }
-      }
-    },
-    "spaceFileInfoEventResponse": {
-      "type": "object",
-      "properties": {
-        "file": {
-          "$ref": "#/definitions/spaceListDirectoryEntry"
+        },
+        "bucket": {
+          "type": "string"
+        },
+        "dbId": {
+          "type": "string"
         }
       }
     },

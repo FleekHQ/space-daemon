@@ -3,6 +3,8 @@ package model
 import (
 	"context"
 
+	"github.com/FleekHQ/space-daemon/core/search"
+
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/space/domain"
@@ -27,6 +29,7 @@ type model struct {
 	hnetc              *nc.Client
 	ht                 *threadsClient.Client
 	shouldForceRestore bool
+	fsearch            search.FilesSearchEngine
 }
 
 type Model interface {
@@ -73,7 +76,18 @@ type Model interface {
 	DeleteSearchIndexRecord(ctx context.Context, name, path, bucketSlug, dbId string) error
 }
 
-func New(st store.Store, kc keychain.Keychain, threads *threadsClient.Client, ht *threadsClient.Client, hubAuth hub.HubAuth, cfg config.Config, netc *nc.Client, hnetc *nc.Client, shouldForceRestore bool) *model {
+func New(
+	st store.Store,
+	kc keychain.Keychain,
+	threads *threadsClient.Client,
+	ht *threadsClient.Client,
+	hubAuth hub.HubAuth,
+	cfg config.Config,
+	netc *nc.Client,
+	hnetc *nc.Client,
+	shouldForceRestore bool,
+	search search.FilesSearchEngine,
+) *model {
 	return &model{
 		st:                 st,
 		kc:                 kc,
@@ -84,6 +98,7 @@ func New(st store.Store, kc keychain.Keychain, threads *threadsClient.Client, ht
 		hnetc:              hnetc,
 		ht:                 ht,
 		shouldForceRestore: shouldForceRestore,
+		fsearch:            search,
 	}
 }
 

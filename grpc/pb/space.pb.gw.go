@@ -309,23 +309,6 @@ func request_SpaceApi_Subscribe_0(ctx context.Context, marshaler runtime.Marshal
 
 }
 
-func request_SpaceApi_FileInfoSubscribe_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (SpaceApi_FileInfoSubscribeClient, runtime.ServerMetadata, error) {
-	var protoReq empty.Empty
-	var metadata runtime.ServerMetadata
-
-	stream, err := client.FileInfoSubscribe(ctx, &protoReq)
-	if err != nil {
-		return nil, metadata, err
-	}
-	header, err := stream.Header()
-	if err != nil {
-		return nil, metadata, err
-	}
-	metadata.HeaderMD = header
-	return stream, metadata, nil
-
-}
-
 func request_SpaceApi_TxlSubscribe_0(ctx context.Context, marshaler runtime.Marshaler, client SpaceApiClient, req *http.Request, pathParams map[string]string) (SpaceApi_TxlSubscribeClient, runtime.ServerMetadata, error) {
 	var protoReq empty.Empty
 	var metadata runtime.ServerMetadata
@@ -1448,6 +1431,7 @@ func local_request_SpaceApi_SearchFiles_0(ctx context.Context, marshaler runtime
 // RegisterSpaceApiHandlerServer registers the http handlers for service SpaceApi to "mux".
 // UnaryRPC     :call SpaceApiServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
+// Note that using this registration option will cause many gRPC library features (such as grpc.SendHeader, etc) to stop working. Consider using RegisterSpaceApiHandlerFromEndpoint instead.
 func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, server SpaceApiServer) error {
 
 	mux.Handle("GET", pattern_SpaceApi_ListDirectories_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -1611,13 +1595,6 @@ func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 	})
 
 	mux.Handle("GET", pattern_SpaceApi_Subscribe_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
-		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-		return
-	})
-
-	mux.Handle("GET", pattern_SpaceApi_FileInfoSubscribe_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
 		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -2426,26 +2403,6 @@ func RegisterSpaceApiHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 
 	})
 
-	mux.Handle("GET", pattern_SpaceApi_FileInfoSubscribe_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_SpaceApi_FileInfoSubscribe_0(rctx, inboundMarshaler, client, req, pathParams)
-		ctx = runtime.NewServerMetadataContext(ctx, md)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_SpaceApi_FileInfoSubscribe_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
-
-	})
-
 	mux.Handle("GET", pattern_SpaceApi_TxlSubscribe_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -3088,8 +3045,6 @@ var (
 
 	pattern_SpaceApi_Subscribe_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "subscriptions", "file"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_SpaceApi_FileInfoSubscribe_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "subscriptions", "fileinfo"}, "", runtime.AssumeColonVerbOpt(true)))
-
 	pattern_SpaceApi_TxlSubscribe_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "subscriptions", "textile"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_SpaceApi_OpenFile_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "files", "open"}, "", runtime.AssumeColonVerbOpt(true)))
@@ -3171,8 +3126,6 @@ var (
 	forward_SpaceApi_GetPublicKey_0 = runtime.ForwardResponseMessage
 
 	forward_SpaceApi_Subscribe_0 = runtime.ForwardResponseStream
-
-	forward_SpaceApi_FileInfoSubscribe_0 = runtime.ForwardResponseStream
 
 	forward_SpaceApi_TxlSubscribe_0 = runtime.ForwardResponseStream
 

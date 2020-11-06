@@ -80,13 +80,6 @@ service SpaceApi {
     };
   }
 
-  // Subscribe to file info events. This streams responses to the caller
-  rpc FileInfoSubscribe(google.protobuf.Empty) returns (stream FileInfoEventResponse) {
-    option (google.api.http) = {
-      get: "/v1/subscriptions/fileinfo"
-    };
-  }
-
   // Subscribe to textile events. This streams responses to the caller
   rpc TxlSubscribe(google.protobuf.Empty) returns (stream TextileEventResponse) {
     option (google.api.http) = {
@@ -467,15 +460,20 @@ enum EventType {
   ENTRY_ADDED = 0;
   ENTRY_DELETED = 1;
   ENTRY_UPDATED = 2;
+  ENTRY_BACKUP_IN_PROGRESS = 3;
+  ENTRY_BACKUP_READY = 4;
+  ENTRY_RESTORE_IN_PROGRESS = 5;
+  ENTRY_RESTORE_READY = 6;
+  FOLDER_ADDED = 7;
+  FOLDER_DELETED = 8;
+  FOLDER_UPDATED = 9;
 }
 
 message FileEventResponse {
   EventType type = 1;
   ListDirectoryEntry entry = 2;
-}
-
-message FileInfoEventResponse {
-  ListDirectoryEntry file = 1;
+  string bucket = 3;
+  string dbId = 4;
 }
 
 message TextileEventResponse {

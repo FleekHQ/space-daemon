@@ -1,8 +1,6 @@
 package events
 
-import (
-	"os"
-)
+import "github.com/FleekHQ/space-daemon/core/space/domain"
 
 // These file defines events that daemon can propagate through all layers
 
@@ -25,18 +23,18 @@ const (
 )
 
 type FileEvent struct {
-	Path   string
-	Bucket string
-	Info   os.FileInfo
+	Info   domain.FileInfo
 	Type   FileEventType
+	Bucket string
+	DbID   string
 }
 
-func NewFileEvent(path, bucket string, eventType FileEventType, info os.FileInfo) FileEvent {
+func NewFileEvent(info domain.FileInfo, eventType FileEventType, bucket, dbID string) FileEvent {
 	return FileEvent{
-		Path:   path,
-		Bucket: bucket,
-		Type:   eventType,
 		Info:   info,
+		Type:   eventType,
+		Bucket: bucket,
+		DbID:   dbID,
 	}
 }
 
