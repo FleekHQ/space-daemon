@@ -103,9 +103,9 @@ func (s *sqliteFilesSearchEngine) DeleteFileData(ctx context.Context, data *sear
 func (s *sqliteFilesSearchEngine) QueryFileData(ctx context.Context, query string, limit int) ([]*search.IndexRecord, error) {
 	var records []*SearchIndexRecord
 	result := s.db.Where(
-		"item_name LIKE ? OR item_extension = ?",
-		"%"+query+"%",
-		query,
+		"LOWER(item_name) LIKE ? OR LOWER(item_extension) = ?",
+		"%"+strings.ToLower(query)+"%",
+		strings.ToLower(query),
 	).Limit(limit).Find(&records)
 
 	if result.Error != nil {
