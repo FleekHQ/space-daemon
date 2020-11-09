@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/FleekHQ/space-daemon/core/search/sqlite"
+	"github.com/FleekHQ/space-daemon/core/search/bleve"
 
 	"github.com/FleekHQ/space-daemon/core"
 	"github.com/FleekHQ/space-daemon/grpc"
@@ -122,8 +122,8 @@ func (a *App) Start(ctx context.Context) error {
 	hubAuth := hub.New(appStore, kc, a.cfg)
 
 	// setup files search engine
-	searchEngine := sqlite.NewSearchEngine(sqlite.WithDBPath(a.cfg.GetString(config.SpaceStorePath, "")))
-	a.Run("SqliteSearchEngine", searchEngine)
+	searchEngine := bleve.NewSearchEngine(bleve.WithDBPath(a.cfg.GetString(config.SpaceStorePath, "")))
+	a.Run("FilesSearchEngine", searchEngine)
 
 	// setup textile client
 	uc := textile.CreateUserClient(a.cfg.GetString(config.TextileHubTarget, ""))

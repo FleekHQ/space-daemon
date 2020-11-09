@@ -1,6 +1,7 @@
 package util
 
 import (
+	"os"
 	s "strings"
 
 	"github.com/mitchellh/go-homedir"
@@ -18,4 +19,14 @@ func ResolvePath(path string) (string, error) {
 	}
 
 	return fullPath, nil
+}
+
+// DirEntryExists check if the file or directory with the given path exits.
+func DirEntryExists(filename string) bool {
+	fi, err := os.Lstat(filename)
+	if fi != nil || (err != nil && !os.IsNotExist(err)) {
+		return true
+	}
+
+	return false
 }
