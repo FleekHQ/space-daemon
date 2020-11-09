@@ -31,7 +31,7 @@ type Service interface {
 	GetMnemonic(ctx context.Context) (mnemonic string, err error)
 	RestoreKeyPairFromMnemonic(ctx context.Context, mnemonic string) error
 	RecoverKeysByPassphrase(ctx context.Context, uuid string, pass string) error
-	BackupKeysByPassphrase(ctx context.Context, uuid string, pass string) error
+	BackupKeysByPassphrase(ctx context.Context, uuid string, pass string, backupType string) error
 	TestPassphrase(ctx context.Context, uuid string, pass string) error
 	GetPublicKey(ctx context.Context) (string, error)
 	GetHubAuthToken(ctx context.Context) (string, error)

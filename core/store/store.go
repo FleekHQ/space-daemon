@@ -7,12 +7,13 @@ import (
 	"runtime"
 	s "strings"
 
+	"github.com/FleekHQ/space-daemon/core/util"
+
 	"github.com/FleekHQ/space-daemon/core"
 
 	"github.com/FleekHQ/space-daemon/log"
 
 	badger "github.com/dgraph-io/badger"
-	homedir "github.com/mitchellh/go-homedir"
 )
 
 const DefaultRootDir = "~/.fleek-space"
@@ -72,12 +73,8 @@ func (store *store) Open() error {
 		return nil
 	}
 
-	rootDir := s.Join([]string{store.rootDir, BadgerFileName}, "/")
-
-	if home, err := homedir.Dir(); err == nil {
-		// If the root directory contains ~, we replace it with the actual home directory
-		rootDir = s.Replace(rootDir, "~", home, -1)
-	} else {
+	rootDir, err := util.ResolvePath(s.Join([]string{store.rootDir, BadgerFileName}, "/"))
+	if err != nil {
 		return err
 	}
 

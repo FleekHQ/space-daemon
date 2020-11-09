@@ -1520,6 +1520,9 @@
         },
         "passphrase": {
           "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/spaceKeyBackupType"
         }
       }
     },
@@ -1734,7 +1737,7 @@
     "spaceGenerateAppTokenResponse": {
       "type": "object",
       "properties": {
-        "appKey": {
+        "appToken": {
           "type": "string"
         }
       }
@@ -1963,6 +1966,14 @@
           "format": "boolean"
         }
       }
+    },
+    "spaceKeyBackupType": {
+      "type": "string",
+      "enum": [
+        "PASSWORD",
+        "ETH"
+      ],
+      "default": "PASSWORD"
     },
     "spaceListBucketsResponse": {
       "type": "object",

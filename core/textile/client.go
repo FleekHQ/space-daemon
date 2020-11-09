@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/FleekHQ/space-daemon/core/search"
+
 	"github.com/FleekHQ/space-daemon/config"
 	httpapi "github.com/ipfs/go-ipfs-http-client"
 	iface "github.com/ipfs/interface-go-ipfs-core"
@@ -47,6 +49,7 @@ type textileClient struct {
 	bucketsClient      *bucketsClient.Client
 	mb                 Mailbox
 	hb                 *bucketsClient.Client
+	filesSearchEngine  search.FilesSearchEngine
 	isRunning          bool
 	isInitialized      bool
 	isSyncInitialized  bool
@@ -73,7 +76,14 @@ type textileClient struct {
 }
 
 // Creates a new Textile Client
-func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth, uc UsersClient, mb Mailbox) *textileClient {
+func NewClient(
+	store db.Store,
+	kc keychain.Keychain,
+	hubAuth hub.HubAuth,
+	uc UsersClient,
+	mb Mailbox,
+	search search.FilesSearchEngine,
+) *textileClient {
 	return &textileClient{
 		store:              store,
 		kc:                 kc,
@@ -103,6 +113,7 @@ func NewClient(store db.Store, kc keychain.Keychain, hubAuth hub.HubAuth, uc Use
 		dbListeners:        make(map[string]Listener),
 		shouldForceRestore: false,
 		healthcheckMutex:   &sync.Mutex{},
+		filesSearchEngine:  search,
 	}
 }
 
@@ -402,7 +413,7 @@ func (tc *textileClient) initialize(ctx context.Context) error {
 	}
 
 	if err = tc.initSearchIndex(ctx); err != nil {
-		log.Error("Error initializing users search index", err)
+		log.Error("Error initializing files search index", err)
 		return err
 	}
 
@@ -559,7 +570,18 @@ func (tc *textileClient) RemoveKeys(ctx context.Context) error {
 }
 
 func (tc *textileClient) GetModel() model.Model {
-	return model.New(tc.store, tc.kc, tc.threads, tc.ht, tc.hubAuth, tc.cfg, tc.netc, tc.hnetc, tc.shouldForceRestore)
+	return model.New(
+		tc.store,
+		tc.kc,
+		tc.threads,
+		tc.ht,
+		tc.hubAuth,
+		tc.cfg,
+		tc.netc,
+		tc.hnetc,
+		tc.shouldForceRestore,
+		tc.filesSearchEngine,
+	)
 }
 
 func (tc *textileClient) getSecureBucketsClient(baseClient *bucketsClient.Client) *SecureBucketClient {

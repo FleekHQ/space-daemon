@@ -8,6 +8,9 @@ import (
 )
 
 const appTokenStoreKey = "appToken"
+const masterAppTokenStoreKey = "masterAppToken"
+
+var keyAlreadyExistsErr = errors.New("master key already exists")
 
 func (kc *keychain) StoreAppToken(tok *permissions.AppToken) error {
 	ring, err := kc.getKeyRing()
@@ -16,13 +19,19 @@ func (kc *keychain) StoreAppToken(tok *permissions.AppToken) error {
 	}
 
 	// Prevent overriding existing master key
-	key, _ := kc.st.Get(getMasterTokenStKey())
+	key, _ := kc.st.Get([]byte(getMasterTokenStKey()))
 	if key != nil && tok.IsMaster {
-		return errors.New("master key already exists")
+		return keyAlreadyExistsErr
+	}
+
+	// Prevents overriding even if user logged out and logged back in (which clears the store)
+	_, err = ring.Get(getMasterTokenStKey())
+	if err == nil && tok.IsMaster {
+		return keyAlreadyExistsErr
 	}
 
 	err = ring.Set(keyring.Item{
-		Key:   tok.Key,
+		Key:   appTokenStoreKey + "_" + tok.Key,
 		Data:  []byte(permissions.MarshalFullToken(tok)),
 		Label: "Space App - App Token",
 	})
@@ -31,7 +40,15 @@ func (kc *keychain) StoreAppToken(tok *permissions.AppToken) error {
 	}
 
 	if tok.IsMaster {
-		if err := kc.st.Set(getMasterTokenStKey(), []byte(tok.Key)); err != nil {
+		if err := kc.st.Set([]byte(getMasterTokenStKey()), []byte(tok.Key)); err != nil {
+			return err
+		}
+
+		if err := ring.Set(keyring.Item{
+			Key:   getMasterTokenStKey(),
+			Data:  []byte(permissions.MarshalFullToken(tok)),
+			Label: "Space App - Master App Token",
+		}); err != nil {
 			return err
 		}
 	}
@@ -53,6 +70,6 @@ func (kc *keychain) GetAppToken(key string) (*permissions.AppToken, error) {
 	return permissions.UnmarshalFullToken(string(token.Data))
 }
 
-func getMasterTokenStKey() []byte {
-	return []byte(appTokenStoreKey + "_master")
+func getMasterTokenStKey() string {
+	return appTokenStoreKey + "_" + masterAppTokenStoreKey
 }

@@ -62,12 +62,9 @@ func (s *synchronizer) processAddItem(ctx context.Context, task *Task) error {
 
 	pft := newTask(pinFileTask, []string{bucket, path})
 	s.enqueueTask(pft, s.filePinningQueue)
-
-	indexTask := newTask(addIndexItemTask, []string{bucket, path, ""})
-	indexTask.Parallelizable = true
-	s.enqueueTask(indexTask, s.taskQueue)
-
 	s.notifySyncNeeded()
+
+	s.NotifyIndexItemAdded(bucket, path, "")
 
 	return nil
 }
