@@ -49,7 +49,13 @@ func MarshalFullToken(tok *AppToken) string {
 		isMaster = "true"
 	}
 
-	return strings.Join([]string{tok.Key, tok.Secret, isMaster, strings.Join(tok.Permissions, "_")}, ".")
+	permsStr := strings.Join(tok.Permissions, "_")
+	if len(tok.Permissions) > 0 {
+		return strings.Join([]string{tok.Key, tok.Secret, isMaster, permsStr}, ".")
+	}
+
+	return strings.Join([]string{tok.Key, tok.Secret, isMaster}, ".")
+
 }
 
 func GenerateRandomToken(isMaster bool, permissions []string) (*AppToken, error) {

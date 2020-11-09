@@ -7,10 +7,10 @@ import (
 	"github.com/FleekHQ/space-daemon/core/permissions"
 )
 
-const appTokenStoreKey = "appToken"
-const masterAppTokenStoreKey = "masterAppToken"
+const AppTokenStoreKey = "appToken"
+const MasterAppTokenStoreKey = "masterAppToken"
 
-var keyAlreadyExistsErr = errors.New("master key already exists")
+var ErrMasterTokenAlreadyExists = errors.New("master app token already exists")
 
 func (kc *keychain) StoreAppToken(tok *permissions.AppToken) error {
 	ring, err := kc.getKeyRing()
@@ -21,17 +21,17 @@ func (kc *keychain) StoreAppToken(tok *permissions.AppToken) error {
 	// Prevent overriding existing master key
 	key, _ := kc.st.Get([]byte(getMasterTokenStKey()))
 	if key != nil && tok.IsMaster {
-		return keyAlreadyExistsErr
+		return ErrMasterTokenAlreadyExists
 	}
 
 	// Prevents overriding even if user logged out and logged back in (which clears the store)
 	_, err = ring.Get(getMasterTokenStKey())
 	if err == nil && tok.IsMaster {
-		return keyAlreadyExistsErr
+		return ErrMasterTokenAlreadyExists
 	}
 
 	err = ring.Set(keyring.Item{
-		Key:   appTokenStoreKey + "_" + tok.Key,
+		Key:   AppTokenStoreKey + "_" + tok.Key,
 		Data:  []byte(permissions.MarshalFullToken(tok)),
 		Label: "Space App - App Token",
 	})
@@ -62,7 +62,7 @@ func (kc *keychain) GetAppToken(key string) (*permissions.AppToken, error) {
 		return nil, err
 	}
 
-	token, err := ring.Get(appTokenStoreKey + "_" + key)
+	token, err := ring.Get(AppTokenStoreKey + "_" + key)
 	if err != nil {
 		return nil, err
 	}
@@ -71,5 +71,5 @@ func (kc *keychain) GetAppToken(key string) (*permissions.AppToken, error) {
 }
 
 func getMasterTokenStKey() string {
-	return appTokenStoreKey + "_" + masterAppTokenStoreKey
+	return AppTokenStoreKey + "_" + MasterAppTokenStoreKey
 }
