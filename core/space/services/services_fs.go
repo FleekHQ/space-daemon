@@ -221,7 +221,9 @@ func (s *Space) listDirAtPath(
 		}
 
 		locallyAvailable := false
-		if e, _ := b.FileExists(ctx, item.Path); e == true {
+		if item.IsDir {
+			locallyAvailable = true
+		} else if e, _ := b.FileExists(ctx, item.Path); e == true {
 			locallyAvailable = true
 		}
 
