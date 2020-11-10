@@ -362,6 +362,7 @@ func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket,
 		log.Error("cannot create temp file while executing OpenFile", err)
 		return "", err
 	}
+	defer tmpFile.Close()
 
 	// look for path in textile
 	err = b.GetFile(ctx, path, tmpFile)
