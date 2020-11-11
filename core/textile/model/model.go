@@ -148,6 +148,7 @@ func GetAllCollectionConfigs() []db.CollectionConfig {
 		GetBucketCollectionConfig(),
 		GetMirrorFileCollectionConfig(),
 		GetReceivedFileCollectionConfig(),
+		GetSentFileCollectionConfig(),
 		GetSharedPublicKeyCollectionConfig(),
 	}
 }
