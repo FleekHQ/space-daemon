@@ -121,7 +121,7 @@ func (m *model) ListSentFiles(ctx context.Context, seek string, limit int) ([]*S
 		return nil, err
 	}
 
-	query := db.OrderByID().LimitTo(limit)
+	query := db.OrderByIDDesc().LimitTo(limit)
 
 	if seek != "" {
 		query = query.SeekID(core.InstanceID(seek))
