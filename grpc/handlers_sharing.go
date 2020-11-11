@@ -103,6 +103,58 @@ func (srv *grpcServer) GetSharedWithMeFiles(ctx context.Context, request *pb.Get
 	return res, nil
 }
 
+func (srv *grpcServer) GetSharedByMeFiles(ctx context.Context, request *pb.GetSharedByMeFilesRequest) (*pb.GetSharedByMeFilesResponse, error) {
+	entries, offset, err := srv.sv.GetSharedByMeFiles(ctx, request.Seek, int(request.Limit))
+	if err != nil {
+		return nil, err
+	}
+
+	dirEntries := make([]*pb.SharedListDirectoryEntry, 0)
+
+	for _, e := range entries {
+		members := make([]*pb.FileMember, 0)
+
+		for _, m := range e.Members {
+			members = append(members, &pb.FileMember{
+				PublicKey: m.PublicKey,
+				Address:   m.Address,
+			})
+		}
+
+		var backupCount = 0
+		if e.BackedUp {
+			backupCount = 1
+		}
+
+		dirEntry := &pb.SharedListDirectoryEntry{
+			DbId:   e.DbID,
+			Bucket: e.Bucket,
+			Entry: &pb.ListDirectoryEntry{
+				Path:               e.Path,
+				IsDir:              e.IsDir,
+				Name:               e.Name,
+				SizeInBytes:        e.SizeInBytes,
+				Created:            e.Created,
+				Updated:            e.Updated,
+				FileExtension:      e.FileExtension,
+				IpfsHash:           e.IpfsHash,
+				Members:            members,
+				IsLocallyAvailable: e.LocallyAvailable,
+				BackupCount:        int64(backupCount),
+			},
+			IsPublicLink: e.IsPublicLink,
+		}
+		dirEntries = append(dirEntries, dirEntry)
+	}
+
+	res := &pb.GetSharedByMeFilesResponse{
+		Items:      dirEntries,
+		NextOffset: offset,
+	}
+
+	return res, nil
+}
+
 func (srv *grpcServer) GeneratePublicFileLink(ctx context.Context, request *pb.GeneratePublicFileLinkRequest) (*pb.GeneratePublicFileLinkResponse, error) {
 	res, err := srv.sv.GenerateFilesSharingLink(ctx, request.Password, request.ItemPaths, request.Bucket, request.DbId)
 	if err != nil {

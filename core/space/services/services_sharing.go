@@ -334,6 +334,11 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 			enckeys[i] = r.EncryptionKey
 		}
 
+		_, err = m.CreateSentFileViaInvitation(ctx, ep, "", enckeys[i])
+		if err != nil {
+			return err
+		}
+
 		enhancedPaths[i] = ep
 	}
 
@@ -514,6 +519,18 @@ func (s *Space) GetSharedWithMeFiles(ctx context.Context, seek string, limit int
 	}
 
 	items, offset, err := s.tc.GetReceivedFiles(ctx, true, seek, limit)
+
+	return items, offset, err
+}
+
+// Returns a list of shared files the user has shared
+func (s *Space) GetSharedByMeFiles(ctx context.Context, seek string, limit int) ([]*domain.SharedDirEntry, string, error) {
+	err := s.waitForTextileInit(ctx)
+	if err != nil {
+		return nil, "", err
+	}
+
+	items, offset, err := s.tc.GetSentFiles(ctx, seek, limit)
 
 	return items, offset, err
 }
