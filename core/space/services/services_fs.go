@@ -221,7 +221,9 @@ func (s *Space) listDirAtPath(
 		}
 
 		locallyAvailable := false
-		if e, _ := b.FileExists(ctx, item.Path); e == true {
+		if item.IsDir {
+			locallyAvailable = true
+		} else if e, _ := b.FileExists(ctx, item.Path); e == true {
 			locallyAvailable = true
 		}
 
@@ -362,6 +364,7 @@ func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket,
 		log.Error("cannot create temp file while executing OpenFile", err)
 		return "", err
 	}
+	defer tmpFile.Close()
 
 	// look for path in textile
 	err = b.GetFile(ctx, path, tmpFile)

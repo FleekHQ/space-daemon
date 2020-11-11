@@ -530,6 +530,44 @@
         ]
       }
     },
+    "/v1/files/sharedByMe": {
+      "get": {
+        "summary": "Gets the files that are shared by the sender",
+        "operationId": "SpaceApi_GetSharedByMeFiles",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceGetSharedByMeFilesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "seek",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/files/sharedWithMe": {
       "get": {
         "summary": "Gets the files that are shared with this recipient",
@@ -1446,6 +1484,9 @@
         },
         "passphrase": {
           "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/spaceKeyBackupType"
         }
       }
     },
@@ -1741,6 +1782,20 @@
         }
       }
     },
+    "spaceGetSharedByMeFilesResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/spaceSharedListDirectoryEntry"
+          }
+        },
+        "nextOffset": {
+          "type": "string"
+        }
+      }
+    },
     "spaceGetSharedWithMeFilesResponse": {
       "type": "object",
       "properties": {
@@ -1859,6 +1914,14 @@
           "format": "boolean"
         }
       }
+    },
+    "spaceKeyBackupType": {
+      "type": "string",
+      "enum": [
+        "PASSWORD",
+        "ETH"
+      ],
+      "default": "PASSWORD"
     },
     "spaceListBucketsResponse": {
       "type": "object",

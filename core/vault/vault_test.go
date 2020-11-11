@@ -26,6 +26,8 @@ func TestVault_StoreAndRetrieve(t *testing.T) {
 		_, _ = w.Write([]byte(`{}`))
 	}
 
+	testBackupType := "password"
+
 	serverMock := func() *httptest.Server {
 		handler := http.NewServeMux()
 		handler.HandleFunc("/vaults", storeVaultMock)
@@ -43,7 +45,7 @@ func TestVault_StoreAndRetrieve(t *testing.T) {
 		testSaltSecret,
 	)
 
-	storeRequest, err := v.Store(testUuid, testPassphrase, testAPIToken, testVaultItems)
+	storeRequest, err := v.Store(testUuid, testPassphrase, testBackupType, testAPIToken, testVaultItems)
 
 	assert.Nil(t, err)
 	if err != nil {
@@ -96,6 +98,8 @@ func TestVault_StoreServerError(t *testing.T) {
 		},
 	}
 
+	testBackupType := "password"
+
 	storeVaultMock := func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte(`{ "message": "Unauthorized Error: Authorization token is invalid."}`))
@@ -118,7 +122,7 @@ func TestVault_StoreServerError(t *testing.T) {
 		testSaltSecret,
 	)
 
-	storeRequest, err := v.Store(testUuid, testPassphrase, testAPIToken, testVaultItems)
+	storeRequest, err := v.Store(testUuid, testPassphrase, testBackupType, testAPIToken, testVaultItems)
 
 	assert.NotNil(t, err)
 	assert.Nil(t, storeRequest)

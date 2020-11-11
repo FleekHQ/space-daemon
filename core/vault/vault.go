@@ -46,6 +46,7 @@ type VaultItem struct {
 type storeVaultRequest struct {
 	Vault string `json:"vault"`
 	Vsk   string `json:"vsk"`
+	Type  string `json:"type"`
 }
 
 type StoredVault struct {
@@ -62,7 +63,7 @@ type retrieveVaultResponse struct {
 }
 
 type Vault interface {
-	Store(uuid string, passphrase string, apiToken string, items []VaultItem) (*StoredVault, error)
+	Store(uuid string, passphrase string, backupType string, apiToken string, items []VaultItem) (*StoredVault, error)
 	Retrieve(uuid string, passphrase string) ([]VaultItem, error)
 }
 
@@ -73,7 +74,7 @@ func New(vaultAPIURL string, vaultSaltSecret string) *vault {
 	}
 }
 
-func (v *vault) Store(uuid string, passphrase string, apiToken string, items []VaultItem) (*StoredVault, error) {
+func (v *vault) Store(uuid string, passphrase string, backupType string, apiToken string, items []VaultItem) (*StoredVault, error) {
 	// Generate vault file
 	vf, err := json.Marshal(items)
 	if err != nil {
@@ -96,6 +97,7 @@ func (v *vault) Store(uuid string, passphrase string, apiToken string, items []V
 	storeRequest := &storeVaultRequest{
 		Vault: base64.RawStdEncoding.EncodeToString(encVf),
 		Vsk:   base64.RawStdEncoding.EncodeToString(vsk),
+		Type:  backupType,
 	}
 	reqJSON, err := json.Marshal(storeRequest)
 	if err != nil {

@@ -68,6 +68,7 @@ type Client interface {
 	AttachSynchronizerNotifier(notif sync.EventNotifier)
 	GetReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*domain.SharedDirEntry, string, error)
 	GetPublicReceivedFile(ctx context.Context, cidHash string, accepted bool) (*domain.SharedDirEntry, string, error)
+	GetSentFiles(ctx context.Context, seek string, limit int) ([]*domain.SharedDirEntry, string, error)
 	GetPathAccessRoles(ctx context.Context, b Bucket, path string) ([]domain.Member, error)
 	GetPublicShareBucket(ctx context.Context) (Bucket, error)
 	DownloadPublicGatewayItem(ctx context.Context, cid cid.Cid) (io.ReadCloser, error)
@@ -75,6 +76,7 @@ type Client interface {
 	DeleteAccount(ctx context.Context) error
 	Listen(ctx context.Context, dbID, threadName string) (<-chan threadsClient.ListenEvent, error)
 	RestoreDB(ctx context.Context) error
+	DisableSync()
 }
 
 type Buckd interface {

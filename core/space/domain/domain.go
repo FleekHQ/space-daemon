@@ -1,5 +1,7 @@
 package domain
 
+import "fmt"
+
 type AppConfig struct {
 	Port                 int
 	AppPath              string
@@ -174,4 +176,22 @@ type SearchFileEntry struct {
 	FileInfo
 	Bucket string
 	DbID   string
+}
+
+type KeyBackupType int
+
+const (
+	PASSWORD KeyBackupType = 0
+	ETH      KeyBackupType = 1
+)
+
+func (b KeyBackupType) String() string {
+	switch b {
+	case 0:
+		return "password"
+	case 1:
+		return "eth"
+	default:
+		return fmt.Sprintf("%d", int(b))
+	}
 }

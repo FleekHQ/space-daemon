@@ -111,6 +111,13 @@ service SpaceApi {
     };
   }
 
+  // Gets the files that are shared by the sender
+  rpc GetSharedByMeFiles(GetSharedByMeFilesRequest) returns (GetSharedByMeFilesResponse) {
+    option (google.api.http) = {
+      get: "/v1/files/sharedByMe"
+    };
+  }
+
   // Open an encrypted public shared file in the daemon.
   // This requires the decryption key and file hash/cid to work
   rpc OpenPublicFile(OpenPublicFileRequest) returns (OpenPublicFileResponse) {
@@ -341,6 +348,16 @@ message GetSharedWithMeFilesResponse {
   string nextOffset = 2;
 }
 
+message GetSharedByMeFilesRequest {
+  string seek = 1;
+  int64 limit = 2;
+}
+
+message GetSharedByMeFilesResponse {
+  repeated SharedListDirectoryEntry items = 1;
+  string nextOffset = 2;
+}
+
 message GetUsageInfoRequest {}
 
 message GetUsageInfoResponse {
@@ -533,9 +550,15 @@ message CreateFolderRequest {
 message CreateFolderResponse {
 }
 
+enum KeyBackupType {
+  PASSWORD = 0;
+  ETH = 1;
+}
+
 message BackupKeysByPassphraseRequest {
   string uuid = 1;
   string passphrase = 2;
+  KeyBackupType type = 3;
 }
 
 message BackupKeysByPassphraseResponse {}
