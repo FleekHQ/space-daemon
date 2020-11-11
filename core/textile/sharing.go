@@ -206,6 +206,37 @@ func (tc *textileClient) GetReceivedFiles(
 	return items, offset, nil
 }
 
+func (tc *textileClient) GetSentFiles(
+	ctx context.Context,
+	seek string,
+	limit int,
+) ([]*domain.SharedDirEntry, string, error) {
+	files, err := tc.GetModel().ListSentFiles(ctx, seek, limit)
+	if err != nil {
+		return nil, "", err
+	}
+
+	items := []*domain.SharedDirEntry{}
+
+	if len(files) == 0 {
+		return items, "", nil
+	}
+
+	var res *domain.SharedDirEntry
+	for _, file := range files {
+		res, err = tc.buildInvitationSharedDirEntry(ctx, file.ReceivedFileSchema())
+
+		if err != nil {
+			return nil, "", err
+		}
+		items = append(items, res)
+	}
+
+	offset := files[len(files)-1].ID.String()
+
+	return items, offset, nil
+}
+
 func (tc *textileClient) buildPublicLinkSharedDirEntry(
 	ctx context.Context,
 	file *model.ReceivedFileSchema,
