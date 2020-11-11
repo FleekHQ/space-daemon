@@ -130,6 +130,60 @@ func TestFilesSearchEngine_Delete_And_Query(t *testing.T) {
 	assert.Equal(t, "second-content.txt", queryResult[0].ItemName, "search query result incorrect")
 }
 
+func TestPrefixFileSearchWorks(t *testing.T) {
+	engine, ctx := setupEngine(t)
+
+	insertRecord(t, ctx, engine, &search.InsertIndexRecord{
+		ItemName:      "hello1.txt",
+		ItemExtension: "txt",
+		ItemPath:      "/",
+		ItemType:      "FILE",
+		BucketSlug:    "personal",
+		DbId:          "",
+	})
+
+	insertRecord(t, ctx, engine, &search.InsertIndexRecord{
+		ItemName:      "hello2.txt",
+		ItemExtension: "txt",
+		ItemPath:      "/",
+		ItemType:      "FILE",
+		BucketSlug:    "personal",
+		DbId:          "",
+	})
+
+	queryResult, err := engine.QueryFileData(ctx, "he", 20)
+	assert.NilError(t, err, "failed to query file data")
+	assert.Equal(t, 2, len(queryResult), "query result not expected length")
+
+}
+
+func TestInfixFileSearchWorks(t *testing.T) {
+	engine, ctx := setupEngine(t)
+
+	insertRecord(t, ctx, engine, &search.InsertIndexRecord{
+		ItemName:      "hello1.txt",
+		ItemExtension: "txt",
+		ItemPath:      "/",
+		ItemType:      "FILE",
+		BucketSlug:    "personal",
+		DbId:          "",
+	})
+
+	insertRecord(t, ctx, engine, &search.InsertIndexRecord{
+		ItemName:      "hello2.txt",
+		ItemExtension: "txt",
+		ItemPath:      "/",
+		ItemType:      "FILE",
+		BucketSlug:    "personal",
+		DbId:          "",
+	})
+
+	queryResult, err := engine.QueryFileData(ctx, "el", 20)
+	assert.NilError(t, err, "failed to query file data")
+	assert.Equal(t, 2, len(queryResult), "query result not expected length")
+
+}
+
 func insertRecord(
 	t *testing.T,
 	ctx context.Context,
