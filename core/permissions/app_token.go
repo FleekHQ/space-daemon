@@ -3,6 +3,7 @@ package permissions
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"strings"
 )
@@ -13,48 +14,29 @@ const tokenKeyLength = 20
 const tokenSecretLength = 30
 
 type AppToken struct {
-	Key         string
-	Secret      string
-	IsMaster    bool
-	Permissions []string
+	Key         string   `json:"key"`
+	Secret      string   `json:"secret"`
+	IsMaster    bool     `json:"isMaster"`
+	Permissions []string `json:"permissions"`
 }
 
-// Token structure is [KEY].[SECRET].[IS_ADMIN].[PERMISSION1]_[PERMISSION2]...
-func UnmarshalFullToken(fullTok string) (*AppToken, error) {
-	parsed := strings.Split(fullTok, ".")
-	if len(parsed) < 3 {
-		return nil, invalidAppTokenErr
+func UnmarshalToken(marshalledToken []byte) (*AppToken, error) {
+	var result AppToken
+	err := json.Unmarshal(marshalledToken, &result)
+	if err != nil {
+		return nil, err
 	}
 
-	isMaster := parsed[2] == "true"
-
-	permissions := make([]string, 0)
-
-	if len(parsed) >= 4 {
-		permissions = strings.Split(parsed[3], "_")
-	}
-
-	return &AppToken{
-		Key:         parsed[0],
-		Secret:      parsed[1],
-		IsMaster:    isMaster,
-		Permissions: permissions,
-	}, nil
+	return &result, nil
 }
 
-func MarshalFullToken(tok *AppToken) string {
-	isMaster := "false"
-
-	if tok.IsMaster {
-		isMaster = "true"
+func MarshalToken(tok *AppToken) ([]byte, error) {
+	jsonData, err := json.Marshal(tok)
+	if err != nil {
+		return nil, err
 	}
 
-	permsStr := strings.Join(tok.Permissions, "_")
-	if len(tok.Permissions) > 0 {
-		return strings.Join([]string{tok.Key, tok.Secret, isMaster, permsStr}, ".")
-	}
-
-	return strings.Join([]string{tok.Key, tok.Secret, isMaster}, ".")
+	return jsonData, nil
 
 }
 

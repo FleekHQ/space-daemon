@@ -14,8 +14,6 @@ import (
 	"github.com/textileio/go-threads/util"
 )
 
-type ReceivedFileType int
-
 type ReceivedFileViaPublicLinkSchema struct {
 	PublicIpfsHash string `json:"publicIpfsHash"`
 	FilePassword   string `json:"filePassword"`

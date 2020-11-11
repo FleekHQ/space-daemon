@@ -30,9 +30,14 @@ func (kc *keychain) StoreAppToken(tok *permissions.AppToken) error {
 		return ErrMasterTokenAlreadyExists
 	}
 
+	marshalled, err := permissions.MarshalToken(tok)
+	if err != nil {
+		return err
+	}
+
 	err = ring.Set(keyring.Item{
 		Key:   AppTokenStoreKey + "_" + tok.Key,
-		Data:  []byte(permissions.MarshalFullToken(tok)),
+		Data:  marshalled,
 		Label: "Space App - App Token",
 	})
 	if err != nil {
@@ -46,7 +51,7 @@ func (kc *keychain) StoreAppToken(tok *permissions.AppToken) error {
 
 		if err := ring.Set(keyring.Item{
 			Key:   getMasterTokenStKey(),
-			Data:  []byte(permissions.MarshalFullToken(tok)),
+			Data:  marshalled,
 			Label: "Space App - Master App Token",
 		}); err != nil {
 			return err
@@ -67,7 +72,7 @@ func (kc *keychain) GetAppToken(key string) (*permissions.AppToken, error) {
 		return nil, err
 	}
 
-	return permissions.UnmarshalFullToken(string(token.Data))
+	return permissions.UnmarshalToken(token.Data)
 }
 
 func getMasterTokenStKey() string {

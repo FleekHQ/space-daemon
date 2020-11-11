@@ -421,6 +421,11 @@ func (tc *textileClient) initialize(ctx context.Context) error {
 		tc.sync.NotifyBucketStartup(defaultPersonalBucketSlug)
 	}
 
+	_, err = tc.createDefaultPublicBucket(ctx)
+	if err != nil {
+		log.Warn("Failed to create default public bucket", "err:"+err.Error())
+	}
+
 	tc.isInitialized = true
 	// Non-blocking channel send in case there are no listeners registered
 	select {
@@ -438,6 +443,12 @@ func (tc *textileClient) initialize(ctx context.Context) error {
 func (tc *textileClient) Start(ctx context.Context, cfg config.Config) error {
 	// Start Textile Client
 	return tc.start(ctx, cfg)
+}
+
+// Used by delete account so we can disable it so it gets
+// enabled again during startup
+func (tc *textileClient) DisableSync() {
+	tc.isSyncInitialized = false
 }
 
 // Closes connection to Textile

@@ -217,15 +217,18 @@ func TestKeychain_AppToken_StoreMaster(t *testing.T) {
 	err = kc.StoreAppToken(tok)
 	assert.NoError(t, err)
 
+	marshalled, err := permissions.MarshalToken(tok)
+	assert.NoError(t, err)
+
 	mockKeyRing.AssertCalled(t, "Set", keyring.Item{
 		Key:   keychain.AppTokenStoreKey + "_" + tok.Key,
-		Data:  []byte(permissions.MarshalFullToken(tok)),
+		Data:  marshalled,
 		Label: "Space App - App Token",
 	})
 
 	mockKeyRing.AssertCalled(t, "Set", keyring.Item{
 		Key:   keychain.AppTokenStoreKey + "_" + keychain.MasterAppTokenStoreKey,
-		Data:  []byte(permissions.MarshalFullToken(tok)),
+		Data:  marshalled,
 		Label: "Space App - Master App Token",
 	})
 
@@ -245,15 +248,18 @@ func TestKeychain_AppToken_StoreNonMaster(t *testing.T) {
 	err = kc.StoreAppToken(tok)
 	assert.NoError(t, err)
 
+	marshalled, err := permissions.MarshalToken(tok)
+	assert.NoError(t, err)
+
 	mockKeyRing.AssertCalled(t, "Set", keyring.Item{
 		Key:   keychain.AppTokenStoreKey + "_" + tok.Key,
-		Data:  []byte(permissions.MarshalFullToken(tok)),
+		Data:  marshalled,
 		Label: "Space App - App Token",
 	})
 
 	mockKeyRing.AssertNotCalled(t, "Set", keyring.Item{
 		Key:   keychain.AppTokenStoreKey + "_" + keychain.MasterAppTokenStoreKey,
-		Data:  []byte(permissions.MarshalFullToken(tok)),
+		Data:  marshalled,
 		Label: "Space App - Master App Token",
 	})
 }
@@ -289,9 +295,12 @@ func TestKeychain_AppToken_Get(t *testing.T) {
 	tok, err := permissions.GenerateRandomToken(false, []string{})
 	assert.NoError(t, err)
 
+	marshalled, err := permissions.MarshalToken(tok)
+	assert.NoError(t, err)
+
 	mockKeyRing.On("Get", keychain.AppTokenStoreKey+"_"+tok.Key).Return(keyring.Item{
 		Key:   keychain.AppTokenStoreKey + "_" + tok.Key,
-		Data:  []byte(permissions.MarshalFullToken(tok)),
+		Data:  marshalled,
 		Label: "Space App - App Token",
 	}, nil)
 

@@ -39,6 +39,9 @@ func (tc *textileClient) DeleteAccount(ctx context.Context) error {
 		}
 	}
 
+	// disable sync
+	tc.DisableSync()
+
 	// stop backgroundjobs
 	tc.sync.Shutdown()
 
