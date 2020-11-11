@@ -49,6 +49,7 @@ require (
 	github.com/multiformats/go-multihash v0.0.14
 	github.com/odeke-em/go-utils v0.0.0-20170224015737-e8ebaed0777a
 	github.com/odeke-em/go-uuid v0.0.0-20151221120446-b211d769a9aa // indirect
+	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/radovskyb/watcher v1.0.7
 	github.com/rakyll/statik v0.1.7
@@ -63,6 +64,7 @@ require (
 	github.com/textileio/textile v1.0.14 // indirect
 	github.com/textileio/textile/v2 v2.1.0
 	github.com/tyler-smith/go-bip39 v1.0.2
+	github.com/uber/jaeger-client-go v2.23.1+incompatible
 	go.etcd.io/etcd v3.3.22+incompatible // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381

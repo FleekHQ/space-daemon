@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 
+	"github.com/opentracing/opentracing-go"
+
 	"github.com/FleekHQ/space-daemon/config"
 
 	"github.com/FleekHQ/space-daemon/core/ipfs"
@@ -23,11 +25,34 @@ import (
 // Get a public bucket on hub. Public bucket has no encryption and its content should be accessible directly via ipfs/ipns
 // Only use this bucket for items that is okay to be publicly shared
 func (tc *textileClient) GetPublicShareBucket(ctx context.Context) (Bucket, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "TextileClient.GetPublicShareBucket")
+	defer span.Finish()
+
 	if err := tc.requiresRunning(); err != nil {
 		return nil, err
 	}
 
 	return tc.getOrCreatePublicBucket(ctx, defaultPublicShareBucketSlug)
+}
+
+func (tc *textileClient) createDefaultPublicBucket(ctx context.Context) (Bucket, error) {
+	ctx, dbId, err := tc.getPublicShareBucketContext(ctx, defaultPublicShareBucketSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	bucketRoot, err := tc.createPublicBucket(ctx, *dbId, defaultPublicShareBucketSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	newB := bucket.New(
+		bucketRoot,
+		tc.getPublicShareBucketContext,
+		tc.hb,
+	)
+
+	return newB, nil
 }
 
 func (tc *textileClient) getOrCreatePublicBucket(ctx context.Context, bucketSlug string) (Bucket, error) {

@@ -10,6 +10,10 @@ import (
 	"runtime"
 	"runtime/pprof"
 
+	"github.com/FleekHQ/space-daemon/tracing"
+
+	"github.com/opentracing/opentracing-go"
+
 	"github.com/FleekHQ/space-daemon/log"
 
 	"github.com/FleekHQ/space-daemon/app"
@@ -22,6 +26,7 @@ var (
 	cpuprofile           = flag.String("cpuprofile", "", "write cpu profile to `file`")
 	memprofile           = flag.String("memprofile", "", "write memory profile to `file`")
 	debugMode            = flag.Bool("debug", true, "run daemon with debug mode for profiling")
+	enableTracing        = flag.Bool("trace", false, "run tracing on daemon rpc")
 	devMode              = flag.Bool("dev", false, "run daemon in dev mode to use .env file")
 	ipfsaddr             = flag.String("ipfsaddr", "/ip4/127.0.0.1/tcp/5001", "IPFS multiaddress to connect to (defaults to local node)")
 	ipfsnode             = flag.Bool("ipfsnode", true, "run IPFS embedded into the daemon (defaults to true)")
@@ -83,6 +88,14 @@ func main() {
 		go func() {
 			fmt.Println(http.ListenAndServe("localhost:6060", nil))
 		}()
+	}
+
+	// initialize tracing
+	if *enableTracing {
+		log.Debug("Enabling Tracing on the Daemon")
+		tracer, closer := tracing.MustInit("space-daemon")
+		defer closer.Close()
+		opentracing.SetGlobalTracer(tracer)
 	}
 
 	if *cpuprofile != "" {

@@ -8,6 +8,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/util/address"
 	"github.com/FleekHQ/space-daemon/grpc/pb"
 	crypto "github.com/libp2p/go-libp2p-crypto"
+	"github.com/opentracing/opentracing-go"
 )
 
 func (srv *grpcServer) ShareFilesViaPublicKey(ctx context.Context, request *pb.ShareFilesViaPublicKeyRequest) (*pb.ShareFilesViaPublicKeyResponse, error) {
@@ -156,6 +157,9 @@ func (srv *grpcServer) GetSharedByMeFiles(ctx context.Context, request *pb.GetSh
 }
 
 func (srv *grpcServer) GeneratePublicFileLink(ctx context.Context, request *pb.GeneratePublicFileLinkRequest) (*pb.GeneratePublicFileLinkResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "GeneratePublicFileLink")
+	defer span.Finish()
+
 	res, err := srv.sv.GenerateFilesSharingLink(ctx, request.Password, request.ItemPaths, request.Bucket, request.DbId)
 	if err != nil {
 		return nil, err

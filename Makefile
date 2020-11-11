@@ -36,3 +36,12 @@ gen_rest_swagger:
 		&& statik -src=swagger/ui -f -dest=swagger -p=bin_ui
 
 gen_all: proto_gen gen_rest gen_rest_swagger
+
+## runs jaeger tracing server, should be used when trace is enabled on daemon
+jaegar:
+	docker run \
+		--rm \
+		--name jaeger \
+		-p 6831:6831/udp \
+		-p 16686:16686 \
+		jaegertracing/all-in-one:latest

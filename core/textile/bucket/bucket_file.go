@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
+
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 )
@@ -58,7 +60,14 @@ func (b *Bucket) UpdatedAt(ctx context.Context, pth string) (int64, error) {
 	return response.Item.Metadata.UpdatedAt, nil
 }
 
-func (b *Bucket) UploadFile(ctx context.Context, path string, reader io.Reader) (result path.Resolved, root path.Path, err error) {
+func (b *Bucket) UploadFile(
+	ctx context.Context,
+	path string,
+	reader io.Reader,
+) (result path.Resolved, root path.Path, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Bucket.UploadFile")
+	defer span.Finish()
+
 	b.lock.Lock()
 	defer b.lock.Unlock()
 
