@@ -82,6 +82,37 @@ func (b *bleveFilesSearchEngine) Start() error {
 func getSearchIndexMapping() (*mapping.IndexMappingImpl, error) {
 	indexMapping := bleve.NewIndexMapping()
 	indexMapping.DefaultAnalyzer = CustomerAnalyzerName
+
+	filesMapping := bleve.NewDocumentMapping()
+
+	// index the following fields
+	nameFm := bleve.NewTextFieldMapping()
+	filesMapping.AddFieldMappingsAt("ItemName", nameFm)
+	extFm := bleve.NewTextFieldMapping()
+	filesMapping.AddFieldMappingsAt("ItemExtension", extFm)
+	pathFm := bleve.NewTextFieldMapping()
+	filesMapping.AddFieldMappingsAt("ItemPath", pathFm)
+
+	// ignore indexing the following fields of IndexRecord
+	idFm := bleve.NewTextFieldMapping()
+	idFm.Index = false
+	filesMapping.AddFieldMappingsAt("Id", idFm)
+
+	bucketFm := bleve.NewTextFieldMapping()
+	bucketFm.Index = false
+	filesMapping.AddFieldMappingsAt("BucketSlug", bucketFm)
+
+	dbIdFm := bleve.NewTextFieldMapping()
+	dbIdFm.Index = false
+	filesMapping.AddFieldMappingsAt("DbId", dbIdFm)
+
+	itemTypeFm := bleve.NewTextFieldMapping()
+	itemTypeFm.Index = false
+	filesMapping.AddFieldMappingsAt("ItemType", itemTypeFm)
+
+	indexMapping.AddDocumentMapping("files", filesMapping)
+	indexMapping.DefaultType = "files"
+
 	return indexMapping, nil
 }
 
@@ -122,7 +153,12 @@ func (b *bleveFilesSearchEngine) QueryFileData(
 ) ([]*search.IndexRecord, error) {
 	matchQuery := bleve.NewMatchQuery(query)
 	matchQuery.Fuzziness = 2
-	searchRequest := bleve.NewSearchRequest(matchQuery)
+
+	prefixQuery := bleve.NewPrefixQuery(query)
+	infixRegexQuery := bleve.NewRegexpQuery(fmt.Sprintf(".*%s.*", query)) // TODO: think of escaping invalid regex in query
+
+	searchQuery := bleve.NewDisjunctionQuery(matchQuery, prefixQuery, infixRegexQuery)
+	searchRequest := bleve.NewSearchRequest(searchQuery)
 	searchRequest.Size = limit
 	searchRequest.Fields = []string{"*"}
 
