@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
+
 	"github.com/FleekHQ/space-daemon/config"
 
 	"github.com/FleekHQ/space-daemon/log"
@@ -32,6 +34,9 @@ func (s *Space) GenerateFileSharingLink(
 	bucketName string,
 	dbID string,
 ) (domain.FileSharingInfo, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Space.GenerateFileSharingLink")
+	defer span.Finish()
+
 	_, fileName := filepath.Split(path)
 
 	var bucket t.Bucket
@@ -46,38 +51,7 @@ func (s *Space) GenerateFileSharingLink(
 		return domain.FileSharingInfo{}, err
 	}
 
-	// tempFile is written from textile before encryption
-	tempFile, err := s.createTempFileForPath(ctx, path, true)
-	if err != nil {
-		return domain.FileSharingInfo{}, err
-	}
-	defer func() {
-		tempFile.Close()
-		_ = os.Remove(tempFile.Name())
-	}()
-
-	// encrypted file is the final encrypted file
-	encryptedFile, err := s.createTempFileForPath(ctx, path, true)
-	if err != nil {
-		return domain.FileSharingInfo{}, err
-	}
-	defer encryptedFile.Close()
-
-	err = bucket.GetFile(ctx, path, tempFile)
-	if err != nil {
-		return EmptyFileSharingInfo, errors.Wrap(err, "file encryption failed")
-	}
-	_, err = tempFile.Seek(0, 0)
-	if err != nil {
-		return EmptyFileSharingInfo, errors.Wrap(err, "file encryption failed")
-	}
-	encryptedReader, err := dcrypto.NewEncrypterWithPassword(tempFile, []byte(encryptionPassword))
-	if err != nil {
-		return EmptyFileSharingInfo, errors.Wrap(err, "file encryption failed")
-	}
-
-	log.Printf("Copying encrypted file to disk")
-	_, err = io.Copy(encryptedFile, encryptedReader)
+	encryptedFile, err := s.encryptBucketFile(ctx, encryptionPassword, path, bucket)
 	if err != nil {
 		return EmptyFileSharingInfo, errors.Wrap(err, "file encryption failed")
 	}
@@ -98,6 +72,49 @@ func (s *Space) GenerateFileSharingLink(
 	)
 }
 
+func (s *Space) encryptBucketFile(
+	ctx context.Context,
+	password string,
+	bucketPath string,
+	bucket t.Bucket,
+) (*os.File, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Space.encryptBucketFile")
+	defer span.Finish()
+
+	// tempFile is written from textile before encryption
+	tempFile, err := s.createTempFileForPath(ctx, bucketPath, true)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		tempFile.Close()
+		_ = os.Remove(tempFile.Name())
+	}()
+
+	// encrypted file is the final encrypted file
+	encryptedFile, err := s.createTempFileForPath(ctx, bucketPath, true)
+	if err != nil {
+		return nil, err
+	}
+
+	err = bucket.GetFile(ctx, bucketPath, tempFile)
+	if err != nil {
+		return nil, errors.Wrap(err, "file encryption failed")
+	}
+	_, err = tempFile.Seek(0, 0)
+	if err != nil {
+		return nil, errors.Wrap(err, "file encryption failed")
+	}
+	encryptedReader, err := dcrypto.NewEncrypterWithPassword(tempFile, []byte(password))
+	if err != nil {
+		return nil, errors.Wrap(err, "file encryption failed")
+	}
+
+	log.Printf("Copying encrypted file to disk")
+	_, err = io.Copy(encryptedFile, encryptedReader)
+	return encryptedFile, err
+}
+
 // uploads the shared file to ipfs through users public bucket in hub
 func (s *Space) uploadSharedFileToIpfs(
 	ctx context.Context,
@@ -106,6 +123,9 @@ func (s *Space) uploadSharedFileToIpfs(
 	fileName string,
 	bucketName string,
 ) (domain.FileSharingInfo, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Space.uploadSharedFileToIpfs")
+	defer span.Finish()
+
 	b, err := s.tc.GetPublicShareBucket(ctx)
 	if err != nil {
 		return EmptyFileSharingInfo, errors.Wrap(err, "failed to get public files bucket")
@@ -136,7 +156,15 @@ func (s *Space) uploadSharedFileToIpfs(
 }
 
 // GenerateFilesSharingLink zips multiple files together
-func (s *Space) GenerateFilesSharingLink(ctx context.Context, encryptionPassword string, paths []string, bucketName, dbID string) (domain.FileSharingInfo, error) {
+func (s *Space) GenerateFilesSharingLink(
+	ctx context.Context,
+	encryptionPassword string,
+	paths []string,
+	bucketName, dbID string,
+) (domain.FileSharingInfo, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Space.GenerateFilesSharingLink")
+	defer span.Finish()
+
 	if len(paths) == 0 {
 		return EmptyFileSharingInfo, errors.New("no file passed to share link")
 	}

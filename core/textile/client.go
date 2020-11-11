@@ -421,6 +421,11 @@ func (tc *textileClient) initialize(ctx context.Context) error {
 		tc.sync.NotifyBucketStartup(defaultPersonalBucketSlug)
 	}
 
+	_, err = tc.createDefaultPublicBucket(ctx)
+	if err != nil {
+		log.Warn("Failed to create default public bucket", "err:"+err.Error())
+	}
+
 	tc.isInitialized = true
 	// Non-blocking channel send in case there are no listeners registered
 	select {

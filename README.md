@@ -175,7 +175,7 @@ ensure everything is up to date **
 NOTE: See here for instructions on Reverse Proxy:
 https://github.com/grpc-ecosystem/grpc-gateway
 
-### Debugging and Profiling
+### Debugging, Profiling and Tracing
 
 The following flags can be run with the binary to output profiling files for debugging.
 Flags support a full path to a file.
@@ -186,6 +186,10 @@ server in localhost:6060. See docs how to interact with pprof server here: https
 
 To disable debug mode add this flag to binary arguments
 `-debug=false`
+
+To enable trace in the daemon, pass `-trace` to the binary arguments. The daemon uses [jaegar](https://www.jaegertracing.io/) 
+for collecting trace information. Run `make jaegar` to quickly start a jaeger agent that collects the daemons trace information.
+You can `http://localhost:16686/` to explore the web ui for traces collected.
 
 ### CI Secrets
 
