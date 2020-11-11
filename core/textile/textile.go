@@ -75,6 +75,7 @@ type Client interface {
 	DeleteAccount(ctx context.Context) error
 	Listen(ctx context.Context, dbID, threadName string) (<-chan threadsClient.ListenEvent, error)
 	RestoreDB(ctx context.Context) error
+	DisableSync()
 }
 
 type Buckd interface {
