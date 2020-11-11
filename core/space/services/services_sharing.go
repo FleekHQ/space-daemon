@@ -56,13 +56,12 @@ func (s *Space) GenerateFileSharingLink(
 		return EmptyFileSharingInfo, errors.Wrap(err, "file encryption failed")
 	}
 
-	log.Printf("Copy successful")
 	_, err = encryptedFile.Seek(0, 0)
 	if err != nil {
 		return EmptyFileSharingInfo, errors.Wrap(err, "file encryption failed")
 	}
 
-	log.Printf("Uploading shared file")
+	log.Debug("Uploading shared file")
 	return s.uploadSharedFileToIpfs(
 		ctx,
 		encryptionPassword,
@@ -110,7 +109,7 @@ func (s *Space) encryptBucketFile(
 		return nil, errors.Wrap(err, "file encryption failed")
 	}
 
-	log.Printf("Copying encrypted file to disk")
+	log.Debug("Copying encrypted file to disk")
 	_, err = io.Copy(encryptedFile, encryptedReader)
 	return encryptedFile, err
 }
