@@ -192,7 +192,7 @@ func (tc *textileClient) GetReceivedFiles(
 		if file.IsPublicLinkReceived() {
 			res, err = tc.buildPublicLinkSharedDirEntry(ctx, file)
 		} else {
-			res, err = tc.buildInvitationSharedDirEntry(ctx, file)
+			res, err = tc.buildInvitationSharedDirEntry(ctx, file, false)
 		}
 
 		if err != nil {
@@ -224,7 +224,7 @@ func (tc *textileClient) GetSentFiles(
 
 	var res *domain.SharedDirEntry
 	for _, file := range files {
-		res, err = tc.buildInvitationSharedDirEntry(ctx, file.ReceivedFileSchema())
+		res, err = tc.buildInvitationSharedDirEntry(ctx, file.ReceivedFileSchema(), true)
 
 		if err != nil {
 			return nil, "", err
@@ -247,7 +247,6 @@ func (tc *textileClient) buildPublicLinkSharedDirEntry(
 			LocallyAvailable: false,
 			BackedUp:         true,
 			BackupInProgress: false,
-
 			DirEntry: domain.DirEntry{
 				Path:          file.FileName,
 				IsDir:         false,
@@ -268,6 +267,7 @@ func (tc *textileClient) buildPublicLinkSharedDirEntry(
 func (tc *textileClient) buildInvitationSharedDirEntry(
 	ctx context.Context,
 	file *model.ReceivedFileSchema,
+	isSentFiles bool,
 ) (*domain.SharedDirEntry, error) {
 	ctx, _, err := tc.getBucketContext(ctx, file.DbID, file.Bucket, true, file.EncryptionKey)
 	if err != nil {
@@ -324,7 +324,7 @@ func (tc *textileClient) buildInvitationSharedDirEntry(
 		DbID:   file.DbID,
 		FileInfo: domain.FileInfo{
 			IpfsHash:         ipfsHash,
-			LocallyAvailable: false,
+			LocallyAvailable: isSentFiles,
 			BackedUp:         true,
 
 			// TODO: Reflect correct state when we add local updates syncing to remote
