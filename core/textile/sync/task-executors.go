@@ -233,6 +233,17 @@ func (s *synchronizer) processBucketRestoreTask(ctx context.Context, task *Task)
 
 	bucket := task.Args[0]
 
+	bucketSchema, err := s.model.FindBucket(ctx, bucket)
+	if err != nil {
+		return err
+	}
+
+	if bucketSchema.RemoteDbID == "" {
+		t := newTask(createBucketTask, []string{bucket, hex.EncodeToString(bucketSchema.EncryptionKey)})
+		s.enqueueTaskAtFront(t, s.taskQueue)
+		return errors.New("trying to restore a bucket that has not been replicated. Recreating mirror bucket.")
+	}
+
 	if err := s.restoreBucket(ctx, bucket); err != nil {
 		return err
 	}

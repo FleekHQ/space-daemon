@@ -49,6 +49,11 @@ func NewSearchEngine(opts ...Option) *bleveFilesSearchEngine {
 }
 
 func (b *bleveFilesSearchEngine) Start() error {
+	if b.idx != nil {
+		log.Warn("Trying to open already opened search index")
+		return nil
+	}
+
 	path := filepath.Join(b.opts.dbPath, DbFileName)
 
 	var (
@@ -184,7 +189,13 @@ func (b *bleveFilesSearchEngine) QueryFileData(
 }
 
 func (b *bleveFilesSearchEngine) Shutdown() error {
-	return b.idx.Close()
+	err := b.idx.Close()
+	if err != nil {
+		return err
+	}
+
+	b.idx = nil
+	return nil
 }
 
 func generateIndexId(name, path, bucketSlug, dbId string) string {
