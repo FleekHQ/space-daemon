@@ -20,6 +20,13 @@ func (s *synchronizer) enqueueTask(task *Task, queue *list.List) {
 	}
 }
 
+func (s *synchronizer) enqueueTaskAtFront(task *Task, queue *list.List) {
+	if s.isTaskEnqueued(task) == false {
+		queue.PushFront(task)
+		s.queueHashMap[task.ID] = task
+	}
+}
+
 func (s *synchronizer) dequeueTask(queue *list.List) *Task {
 	queueItem := queue.Front()
 	s.taskQueue.Remove(queueItem)
