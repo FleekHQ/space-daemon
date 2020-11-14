@@ -14,6 +14,7 @@ import (
 
 	"github.com/99designs/keyring"
 	ri "github.com/FleekHQ/space-daemon/core/keychain/keyring"
+	"github.com/FleekHQ/space-daemon/core/permissions"
 	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/libp2p/go-libp2p-core/crypto"
@@ -48,6 +49,8 @@ type Keychain interface {
 	Sign([]byte) ([]byte, error)
 	ImportExistingKeyPair(priv crypto.PrivKey, mnemonic string) error
 	DeleteKeypair() error
+	StoreAppToken(tok *permissions.AppToken) error
+	GetAppToken(key string) (*permissions.AppToken, error)
 }
 
 type keychainOptions struct {

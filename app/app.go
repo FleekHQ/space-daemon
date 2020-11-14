@@ -178,6 +178,7 @@ func (a *App) Start(ctx context.Context) error {
 	srv := grpc.New(
 		sv,
 		fuseController,
+		kc,
 		grpc.WithPort(a.cfg.GetInt(config.SpaceServerPort, 0)),
 		grpc.WithProxyPort(a.cfg.GetInt(config.SpaceProxyServerPort, 0)),
 		grpc.WithRestProxyPort(a.cfg.GetInt(config.SpaceRestProxyServerPort, 0)),
