@@ -145,14 +145,18 @@ func RandBytes(size int) ([]byte, error) {
 	return b, err
 }
 
+var metaFileNames = map[string]bool{
+	".textileseed": true,
+	".textile":     true,
+	".DS_Store":    true,
+	".Trashes":     true,
+	".localized":   true,
+}
+
 func IsMetaFileName(pathOrName string) bool {
 	_, name := filepath.Split(pathOrName)
 
-	if name == ".textileseed" || name == ".textile" {
-		return true
-	}
-
-	return false
+	return metaFileNames[name]
 }
 
 const threadIDStoreKey = "thread_id"
