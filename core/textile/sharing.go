@@ -319,9 +319,17 @@ func (tc *textileClient) buildInvitationSharedDirEntry(
 		})
 	}
 
+	fileBucket := file.Bucket
+	fileDbID := file.DbID
+
+	if isSentFiles {
+		fileBucket = defaultPersonalBucketSlug
+		fileDbID = ""
+	}
+
 	res := &domain.SharedDirEntry{
-		Bucket: file.Bucket,
-		DbID:   file.DbID,
+		Bucket: fileBucket,
+		DbID:   fileDbID,
 		FileInfo: domain.FileInfo{
 			IpfsHash:         ipfsHash,
 			LocallyAvailable: isSentFiles,
