@@ -25,11 +25,11 @@ jobs:
           brew install mitchellh/gon/gon
       - name: Set stage to prd for all
         run: |
-          echo "::set-env name=STAGE::PRD"
+          echo "STAGE=PRD" >> $GITHUB_ENV
       - name: Set stage to dev if tagged develop
         if: endsWith(github.ref, '-dev')
         run: |
-          echo "::set-env name=STAGE::DEV"
+          echo "STAGE=DEV" >> $GITHUB_ENV
       - name: Set secret names
         id: secretnames
         run: |

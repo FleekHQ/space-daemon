@@ -13,6 +13,7 @@ import (
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 
+	"github.com/FleekHQ/space-daemon/core/keychain"
 	fuse "github.com/FleekHQ/space-daemon/core/space/fuse"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 
@@ -20,6 +21,8 @@ import (
 
 	_ "github.com/FleekHQ/space-daemon/swagger/bin_ui" // required by statik/fs
 
+	"github.com/FleekHQ/space-daemon/grpc/auth/app_token_auth"
+	grpc_auth "github.com/FleekHQ/space-daemon/grpc/auth/middleware"
 	"github.com/FleekHQ/space-daemon/grpc/pb"
 	"github.com/FleekHQ/space-daemon/log"
 	"google.golang.org/grpc"
@@ -46,6 +49,7 @@ type grpcServer struct {
 	restServer *http.Server
 	sv         space.Service
 	fc         *fuse.Controller
+	kc         keychain.Keychain
 	// TODO: see if we need to clean this up by gc or handle an array
 	fileEventStream         pb.SpaceApi_SubscribeServer
 	txlEventStream          pb.SpaceApi_TxlSubscribeServer
@@ -59,7 +63,7 @@ type grpcServer struct {
 type ServerOption func(o *serverOptions)
 
 // gRPC server uses Service from core to handle requests
-func New(sv space.Service, fc *fuse.Controller, opts ...ServerOption) *grpcServer {
+func New(sv space.Service, fc *fuse.Controller, kc keychain.Keychain, opts ...ServerOption) *grpcServer {
 	o := defaultServerOptions
 	for _, opt := range opts {
 		opt(&o)
@@ -68,6 +72,7 @@ func New(sv space.Service, fc *fuse.Controller, opts ...ServerOption) *grpcServe
 		opts:    &o,
 		sv:      sv,
 		fc:      fc,
+		kc:      kc,
 		readyCh: make(chan bool, 1),
 	}
 
@@ -84,7 +89,12 @@ func (srv *grpcServer) Start(ctx context.Context) error {
 
 	log.Info(fmt.Sprintf("listening on address %s", lis.Addr().String()))
 
-	srv.s = grpc.NewServer()
+	appTokenAuth := app_token_auth.New(srv.kc)
+
+	srv.s = grpc.NewServer(
+		grpc.StreamInterceptor(grpc_auth.StreamServerInterceptor(appTokenAuth.Authorize)),
+		grpc.UnaryInterceptor(grpc_auth.UnaryServerInterceptor(appTokenAuth.Authorize)),
+	)
 	pb.RegisterSpaceApiServer(srv.s, srv)
 
 	if err = srv.startRestProxy(ctx, lis); err != nil {

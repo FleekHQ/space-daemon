@@ -8,6 +8,7 @@ import (
 
 	"github.com/99designs/keyring"
 	"github.com/FleekHQ/space-daemon/core/keychain"
+	"github.com/FleekHQ/space-daemon/core/permissions"
 	"github.com/FleekHQ/space-daemon/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -200,4 +201,111 @@ func TestKeychain_GetStoredMnemonic(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, mnemonic, mnemonic2)
+}
+
+func TestKeychain_AppToken_StoreMaster(t *testing.T) {
+	kc := initTestKeychain(t)
+
+	mockStore.On("Get", []byte(keychain.AppTokenStoreKey+"_"+keychain.MasterAppTokenStoreKey)).Return(nil, nil)
+	mockKeyRing.On("Get", keychain.AppTokenStoreKey+"_"+keychain.MasterAppTokenStoreKey).Return(keyring.Item{}, keyring.ErrKeyNotFound)
+	mockKeyRing.On("Set", mock.Anything).Return(nil)
+	mockStore.On("Set", mock.Anything, mock.Anything).Return(nil)
+
+	tok, err := permissions.GenerateRandomToken(true, []string{})
+	assert.NoError(t, err)
+
+	err = kc.StoreAppToken(tok)
+	assert.NoError(t, err)
+
+	marshalled, err := permissions.MarshalToken(tok)
+	assert.NoError(t, err)
+
+	mockKeyRing.AssertCalled(t, "Set", keyring.Item{
+		Key:   keychain.AppTokenStoreKey + "_" + tok.Key,
+		Data:  marshalled,
+		Label: "Space App - App Token",
+	})
+
+	mockKeyRing.AssertCalled(t, "Set", keyring.Item{
+		Key:   keychain.AppTokenStoreKey + "_" + keychain.MasterAppTokenStoreKey,
+		Data:  marshalled,
+		Label: "Space App - Master App Token",
+	})
+
+	mockStore.AssertCalled(t, "Set", []byte(keychain.AppTokenStoreKey+"_"+keychain.MasterAppTokenStoreKey), []byte(tok.Key))
+}
+
+func TestKeychain_AppToken_StoreNonMaster(t *testing.T) {
+	kc := initTestKeychain(t)
+
+	mockStore.On("Get", []byte(keychain.AppTokenStoreKey+"_"+keychain.MasterAppTokenStoreKey)).Return(nil, nil)
+	mockKeyRing.On("Get", keychain.AppTokenStoreKey+"_"+keychain.MasterAppTokenStoreKey).Return(keyring.Item{}, keyring.ErrKeyNotFound)
+	mockKeyRing.On("Set", mock.Anything).Once().Return(nil)
+
+	tok, err := permissions.GenerateRandomToken(false, []string{})
+	assert.NoError(t, err)
+
+	err = kc.StoreAppToken(tok)
+	assert.NoError(t, err)
+
+	marshalled, err := permissions.MarshalToken(tok)
+	assert.NoError(t, err)
+
+	mockKeyRing.AssertCalled(t, "Set", keyring.Item{
+		Key:   keychain.AppTokenStoreKey + "_" + tok.Key,
+		Data:  marshalled,
+		Label: "Space App - App Token",
+	})
+
+	mockKeyRing.AssertNotCalled(t, "Set", keyring.Item{
+		Key:   keychain.AppTokenStoreKey + "_" + keychain.MasterAppTokenStoreKey,
+		Data:  marshalled,
+		Label: "Space App - Master App Token",
+	})
+}
+
+func TestKeychain_AppToken_StoreMasterOverride1(t *testing.T) {
+	kc := initTestKeychain(t)
+
+	tok, err := permissions.GenerateRandomToken(true, []string{})
+	assert.NoError(t, err)
+
+	mockStore.On("Get", []byte(keychain.AppTokenStoreKey+"_"+keychain.MasterAppTokenStoreKey)).Return([]byte(tok.Key), nil)
+
+	err = kc.StoreAppToken(tok)
+	assert.Error(t, err)
+}
+
+func TestKeychain_AppToken_StoreMasterOverride2(t *testing.T) {
+	kc := initTestKeychain(t)
+
+	tok, err := permissions.GenerateRandomToken(true, []string{})
+	assert.NoError(t, err)
+
+	mockStore.On("Get", []byte(keychain.AppTokenStoreKey+"_"+keychain.MasterAppTokenStoreKey)).Return(nil, nil)
+	mockKeyRing.On("Get", keychain.AppTokenStoreKey+"_"+keychain.MasterAppTokenStoreKey).Return(keyring.Item{}, nil)
+
+	err = kc.StoreAppToken(tok)
+	assert.Error(t, err)
+}
+
+func TestKeychain_AppToken_Get(t *testing.T) {
+	kc := initTestKeychain(t)
+
+	tok, err := permissions.GenerateRandomToken(false, []string{})
+	assert.NoError(t, err)
+
+	marshalled, err := permissions.MarshalToken(tok)
+	assert.NoError(t, err)
+
+	mockKeyRing.On("Get", keychain.AppTokenStoreKey+"_"+tok.Key).Return(keyring.Item{
+		Key:   keychain.AppTokenStoreKey + "_" + tok.Key,
+		Data:  marshalled,
+		Label: "Space App - App Token",
+	}, nil)
+
+	tok2, err := kc.GetAppToken(tok.Key)
+	assert.NoError(t, err)
+
+	assert.Equal(t, tok, tok2)
 }

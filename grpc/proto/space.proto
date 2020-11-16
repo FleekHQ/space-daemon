@@ -315,6 +315,24 @@ service SpaceApi {
       get: "/v1/search/files"
     };
   }
+
+  // Initialize master app token
+  // App tokens are used to authorize scoped access to a range of methods
+  // Master token can only be generated once and has access to all methods
+  rpc InitializeMasterAppToken(InitializeMasterAppTokenRequest) returns (InitializeMasterAppTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/appTokens/master"
+      body: "*"
+    };
+  }
+
+  // Generates an app token with scoped access.
+  rpc GenerateAppToken(GenerateAppTokenRequest) returns (GenerateAppTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/appTokens"
+      body: "*"
+    };
+  }
 }
 
 message SearchFilesRequest {
@@ -751,4 +769,22 @@ message GetRecentlySharedWithRequest {}
 
 message GetRecentlySharedWithResponse {
  repeated FileMember members = 1;
+}
+
+message InitializeMasterAppTokenRequest {}
+
+message InitializeMasterAppTokenResponse {
+  string appToken = 1;
+}
+
+message AllowedMethod {
+  string methodName = 1;
+}
+
+message GenerateAppTokenRequest {
+  repeated AllowedMethod allowedMethods = 1;
+}
+
+message GenerateAppTokenResponse {
+  string appToken = 1;
 }
