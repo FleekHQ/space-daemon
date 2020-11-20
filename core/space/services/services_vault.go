@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/FleekHQ/space-daemon/core/backup"
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/vault"
 	"github.com/libp2p/go-libp2p-core/crypto"
 )
@@ -67,8 +68,8 @@ func (s *Space) RecoverKeysByLocalBackup(ctx context.Context, path string) error
 }
 
 // Uses vault service to fetch and decrypt a keypair set
-func (s *Space) RecoverKeysByPassphrase(ctx context.Context, uuid string, pass string) error {
-	items, err := s.vault.Retrieve(uuid, pass)
+func (s *Space) RecoverKeysByPassphrase(ctx context.Context, uuid string, pass string, backupType domain.KeyBackupType) error {
+	items, err := s.vault.Retrieve(uuid, pass, backupType)
 	if err != nil {
 		return err
 	}
@@ -101,7 +102,7 @@ func (s *Space) RecoverKeysByPassphrase(ctx context.Context, uuid string, pass s
 }
 
 // Uses the vault service to securely store the current keypair
-func (s *Space) BackupKeysByPassphrase(ctx context.Context, uuid string, pass string, backupType string) error {
+func (s *Space) BackupKeysByPassphrase(ctx context.Context, uuid string, pass string, backupType domain.KeyBackupType) error {
 	tokens, err := s.GetAPISessionTokens(ctx)
 	if err != nil {
 		return err
@@ -139,7 +140,7 @@ func (s *Space) BackupKeysByPassphrase(ctx context.Context, uuid string, pass st
 
 // Tests a passphrase without storing anything to check if the passphrase is correct
 func (s *Space) TestPassphrase(ctx context.Context, uuid string, pass string) error {
-	items, err := s.vault.Retrieve(uuid, pass)
+	items, err := s.vault.Retrieve(uuid, pass, domain.PASSWORD)
 	if err != nil {
 		return err
 	}

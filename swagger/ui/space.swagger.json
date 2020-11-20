@@ -2224,6 +2224,9 @@
         },
         "passphrase": {
           "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/spaceKeyBackupType"
         }
       }
     },

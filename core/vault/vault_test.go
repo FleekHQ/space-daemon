@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/vault"
 	"github.com/stretchr/testify/assert"
 )
@@ -26,7 +27,7 @@ func TestVault_StoreAndRetrieve(t *testing.T) {
 		_, _ = w.Write([]byte(`{}`))
 	}
 
-	testBackupType := "password"
+	testBackupType := domain.PASSWORD
 
 	serverMock := func() *httptest.Server {
 		handler := http.NewServeMux()
@@ -78,7 +79,7 @@ func TestVault_StoreAndRetrieve(t *testing.T) {
 		testSaltSecret,
 	)
 
-	retrievedItems, err := v2.Retrieve(testUuid, testPassphrase)
+	retrievedItems, err := v2.Retrieve(testUuid, testPassphrase, domain.PASSWORD)
 	assert.Nil(t, err)
 	if err != nil {
 		return
@@ -98,7 +99,7 @@ func TestVault_StoreServerError(t *testing.T) {
 		},
 	}
 
-	testBackupType := "password"
+	testBackupType := domain.PASSWORD
 
 	storeVaultMock := func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -151,7 +152,7 @@ func TestVault_RetrieveServerError(t *testing.T) {
 		testSaltSecret,
 	)
 
-	retrievedItems, err := v.Retrieve(testUuid, testPassphrase)
+	retrievedItems, err := v.Retrieve(testUuid, testPassphrase, domain.PASSWORD)
 
 	assert.NotNil(t, err)
 	assert.Nil(t, retrievedItems)

@@ -584,6 +584,7 @@ message BackupKeysByPassphraseResponse {}
 message RecoverKeysByPassphraseRequest {
   string uuid = 1;
   string passphrase = 2;
+  KeyBackupType type = 3;
 }
 
 message RecoverKeysByPassphraseResponse {}
