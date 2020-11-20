@@ -40,7 +40,7 @@ func (vfile *VFSFile) Attr(ctx context.Context, attr *fuse.Attr) error {
 	log.Printf("Getting File Attr %s", path)
 	fileAttribute, err := vfile.fileOps.Attribute()
 	if err != nil {
-		log.Printf("Error Getting Open File Attr %s", err.Error())
+		log.Printf("ERROR Getting Open File Attr %s", err.Error())
 		return err
 	}
 

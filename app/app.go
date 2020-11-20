@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/FleekHQ/space-daemon/core/space/fuse/installer"
+
 	"github.com/FleekHQ/space-daemon/core/search/bleve"
 
 	"github.com/FleekHQ/space-daemon/core"
@@ -103,7 +105,7 @@ func (a *App) Start(ctx context.Context) error {
 			return node.Start(ctx)
 		})
 		if err != nil {
-			log.Error("Error starting embedded IPFS node", err)
+			log.Error("error starting embedded IPFS node", err)
 			return err
 		}
 	} else {
@@ -154,16 +156,13 @@ func (a *App) Start(ctx context.Context) error {
 	}
 
 	// setup FUSE FS Handler
-	sfs, err := spacefs.New(fsds.NewSpaceFSDataSource(
+	sfs := spacefs.New(fsds.NewSpaceFSDataSource(
 		sv,
 		fsds.WithFilesDataSources(sv),
 		fsds.WithSharedWithMeDataSources(sv),
 	))
-	if err != nil {
-		log.Error("Failed to create space FUSE data source", err)
-		return err
-	}
-	fuseController := fuse.NewController(ctx, a.cfg, appStore, sfs)
+	fuseInstaller := installer.NewFuseInstaller()
+	fuseController := fuse.NewController(ctx, a.cfg, appStore, sfs, fuseInstaller)
 	if fuseController.ShouldMount() {
 		log.Info("Mounting FUSE Drive")
 		if err := fuseController.Mount(); err != nil {
@@ -270,7 +269,7 @@ func (a *App) Shutdown() error {
 		if ok {
 			log.Debug("Shutting down Component", fmt.Sprintf("name:%s", m.name))
 			if err := m.component.Shutdown(); err != nil {
-				log.Error(fmt.Sprintf("Error shutting down %s", m.name), err)
+				log.Error(fmt.Sprintf("error shutting down %s", m.name), err)
 			}
 		}
 	}

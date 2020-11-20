@@ -1535,7 +1535,6 @@ func local_request_SpaceApi_GenerateAppToken_0(ctx context.Context, marshaler ru
 // RegisterSpaceApiHandlerServer registers the http handlers for service SpaceApi to "mux".
 // UnaryRPC     :call SpaceApiServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features (such as grpc.SendHeader, etc) to stop working. Consider using RegisterSpaceApiHandlerFromEndpoint instead.
 func RegisterSpaceApiHandlerServer(ctx context.Context, mux *runtime.ServeMux, server SpaceApiServer) error {
 
 	mux.Handle("GET", pattern_SpaceApi_ListDirectories_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -3285,7 +3284,7 @@ var (
 
 	pattern_SpaceApi_CreateFolder_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "directories"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_SpaceApi_ToggleFuseDrive_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "fuse"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_SpaceApi_ToggleFuseDrive_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "toggleFuse"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_SpaceApi_GetFuseDriveStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "fuse"}, "", runtime.AssumeColonVerbOpt(true)))
 

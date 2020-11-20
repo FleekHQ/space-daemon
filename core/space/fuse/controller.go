@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/FleekHQ/space-daemon/core/space/fuse/installer"
+
 	"github.com/FleekHQ/space-daemon/core/spacefs"
 
 	"github.com/FleekHQ/space-daemon/config"
@@ -18,6 +20,7 @@ type Controller struct {
 	cfg       config.Config
 	vfs       VFS
 	store     store.Store
+	install   installer.FuseInstaller
 	isServed  bool
 	mountLock sync.RWMutex
 	mountPath string
@@ -30,6 +33,7 @@ func NewController(
 	cfg config.Config,
 	store store.Store,
 	sfs *spacefs.SpaceFS,
+	install installer.FuseInstaller,
 ) *Controller {
 	vfs := initVFS(ctx, sfs)
 
@@ -37,6 +41,7 @@ func NewController(
 		cfg:       cfg,
 		store:     store,
 		vfs:       vfs,
+		install:   install,
 		isServed:  false,
 		mountLock: sync.RWMutex{},
 	}
@@ -136,7 +141,7 @@ func (s *Controller) Unmount() error {
 	// remove mounted path directory
 	//if err == nil && s.mountPath != "" {
 	//	_ = os.RemoveAll(s.mountPath)
-	//	//log.Error("Failed to delete mount directory on unmount", err)
+	//	//log.ERROR("Failed to delete mount directory on unmount", err)
 	//}
 
 	return err

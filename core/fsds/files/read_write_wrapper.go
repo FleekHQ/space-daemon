@@ -5,23 +5,27 @@ import (
 	"io"
 	"os"
 
-	"github.com/FleekHQ/space-daemon/log"
+	"github.com/FleekHQ/space-daemon/core/space/domain"
 
-	"github.com/FleekHQ/space-daemon/core/space"
+	"github.com/FleekHQ/space-daemon/log"
 )
 
 // Wrapper around space files read and write logic.
 // On close, it pushes changes to space.Service
 type SpaceFilesHandler struct {
-	service    space.Service
+	service    SyncService
 	localFile  *os.File
 	remotePath string
 	bucketName string
 	editted    bool
 }
 
+type SyncService interface {
+	AddItemWithReader(ctx context.Context, reader io.Reader, targetPath, bucketName string) (domain.AddItemResult, error)
+}
+
 func OpenSpaceFilesHandler(
-	service space.Service,
+	service SyncService,
 	localFilePath,
 	remoteFilePath,
 	bucketName string,
