@@ -2023,7 +2023,9 @@
       "type": "string",
       "enum": [
         "PASSWORD",
-        "ETH"
+        "GOOGLE",
+        "TWITTER",
+        "EMAIL"
       ],
       "default": "PASSWORD"
     },
