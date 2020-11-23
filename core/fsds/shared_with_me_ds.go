@@ -8,8 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/FleekHQ/space-daemon/core/fsds/files"
-
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 
 	"github.com/FleekHQ/space-daemon/core/space"
@@ -108,13 +106,23 @@ func (f *sharedWithMeDataSource) Open(ctx context.Context, path string) (FileRea
 		return nil, err
 	}
 
-	return files.OpenSpaceFilesHandler(f.service, openFileInfo.Location, path, entry.bucket)
+	return OpenSpaceFilesHandler(f.service, openFileInfo.Location, path, entry.bucket), nil
 }
 
 // CreateEntry is not supported for shared with me files.
 func (f *sharedWithMeDataSource) CreateEntry(ctx context.Context, path string, mode os.FileMode) (*DirEntry, error) {
 	// not allowed so just return error
-	return nil, syscall.EACCES
+	return nil, syscall.ENOTSUP
+}
+
+func (f *sharedWithMeDataSource) RenameEntry(ctx context.Context, oldPath, newPath string) error {
+	// Renaming items in the shared directory is not supported
+	return syscall.ENOTSUP
+}
+
+func (f *sharedWithMeDataSource) DeleteEntry(ctx context.Context, path string) error {
+	// Deleting items in the shared directory is not supported
+	return syscall.ENOTSUP
 }
 
 func (f *sharedWithMeDataSource) cacheResults(items []*domain.SharedDirEntry) {

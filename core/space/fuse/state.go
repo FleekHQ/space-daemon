@@ -44,7 +44,3 @@ func (s *Controller) GetFuseState(ctx context.Context) (State, error) {
 
 	return UNMOUNTED, nil
 }
-
-func isFuseInstalled(ctx context.Context) (bool, error) {
-	return true, nil
-}

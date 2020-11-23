@@ -39,6 +39,20 @@ func (_m *FSDataSource) CreateEntry(ctx context.Context, path string, mode os.Fi
 	return r0, r1
 }
 
+// DeleteEntry provides a mock function with given fields: ctx, path
+func (_m *FSDataSource) DeleteEntry(ctx context.Context, path string) error {
+	ret := _m.Called(ctx, path)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, path)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Get provides a mock function with given fields: ctx, path
 func (_m *FSDataSource) Get(ctx context.Context, path string) (*fsds.DirEntry, error) {
 	ret := _m.Called(ctx, path)
@@ -106,4 +120,18 @@ func (_m *FSDataSource) Open(ctx context.Context, path string) (fsds.FileReadWri
 	}
 
 	return r0, r1
+}
+
+// RenameEntry provides a mock function with given fields: ctx, oldPath, newPath
+func (_m *FSDataSource) RenameEntry(ctx context.Context, oldPath string, newPath string) error {
+	ret := _m.Called(ctx, oldPath, newPath)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, oldPath, newPath)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }

@@ -18,8 +18,8 @@ type DirEntryAttribute interface {
 	Name() string       // base name of the file
 	Size() uint64       // length in bytes for files; can be anything for directories
 	Mode() os.FileMode  // file mode bits
-	Uid() string        // user id of owner of entry
-	Gid() string        // group id of owner of entry
+	Uid() uint32        // user id of owner of entry
+	Gid() uint32        // group id of owner of entry
 	Ctime() time.Time   // creation time
 	ModTime() time.Time // modification time
 	IsDir() bool
@@ -33,7 +33,7 @@ type DirEntryOps interface {
 	// Directory path's should end in `/`
 	Path() string
 	// Attribute should return the metadata information for the file
-	Attribute() (DirEntryAttribute, error)
+	Attribute(ctx context.Context) (DirEntryAttribute, error)
 }
 
 // DirOps are the list of actions that can be done on a directory
@@ -54,11 +54,17 @@ type FileHandler interface {
 type FileOps interface {
 	DirEntryOps
 	Open(ctx context.Context, mode FileHandlerMode) (FileHandler, error)
+	Truncate(ctx context.Context, size uint64) error
 }
 
 type CreateDirEntry struct {
 	Path string
 	Mode os.FileMode
+}
+
+type RenameDirEntry struct {
+	OldPath string
+	NewPath string
 }
 
 // FSOps represents the filesystem operations
@@ -72,4 +78,8 @@ type FSOps interface {
 	// CreateEntry should create an directory entry and return either a FileOps or DirOps entry
 	// depending on the mode
 	CreateEntry(ctx context.Context, req CreateDirEntry) (DirEntryOps, error)
+	// RenameEntry should rename the directory entry from old to new
+	RenameEntry(ctx context.Context, req RenameDirEntry) error
+	// DeleteEntry should delete the item at the path
+	DeleteEntry(ctx context.Context, path string) error
 }
