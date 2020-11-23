@@ -54,7 +54,6 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/radovskyb/watcher v1.0.7
-	github.com/rakyll/statik v0.1.7
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/rs/cors v1.7.0
 	github.com/sirupsen/logrus v1.6.0
