@@ -7,8 +7,8 @@ import (
 
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/textileio/go-threads/core/thread"
-	bucketsClient "github.com/textileio/textile/v2/api/buckets/client"
-	bucketsproto "github.com/textileio/textile/v2/api/buckets/pb"
+	bucketsClient "github.com/textileio/textile/v2/api/bucketsd/client"
+	bucketsproto "github.com/textileio/textile/v2/api/bucketsd/pb"
 	"github.com/textileio/textile/v2/buckets"
 )
 
