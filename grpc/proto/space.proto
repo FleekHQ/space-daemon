@@ -96,6 +96,13 @@ service SpaceApi {
     };
   }
 
+  // Removes a file or dir from a bucket
+  rpc RemoveDirOrFile(RemoveDirOrFileRequest) returns (RemoveDirOrFileResponse) {
+    option (google.api.http) = {
+      delete: "/v1/files"
+    };
+  }
+
   // Generates a copy of the file that's accessible through IPFS gateways
   rpc GeneratePublicFileLink(GeneratePublicFileLinkRequest) returns (GeneratePublicFileLinkResponse) {
     option (google.api.http) = {
@@ -795,3 +802,10 @@ message GenerateAppTokenRequest {
 message GenerateAppTokenResponse {
   string appToken = 1;
 }
+
+message RemoveDirOrFileRequest {
+  string path = 1;
+  string bucket = 2;
+}
+
+message RemoveDirOrFileResponse {}

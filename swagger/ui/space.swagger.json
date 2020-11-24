@@ -479,6 +479,41 @@
       }
     },
     "/v1/files": {
+      "delete": {
+        "summary": "Removes a file or dir from a bucket",
+        "operationId": "SpaceApi_RemoveDirOrFile",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceRemoveDirOrFileResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "bucket",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      },
       "post": {
         "summary": "Adds items (files/folders) to be uploaded to the bucket.",
         "operationId": "SpaceApi_AddItems",
@@ -2239,6 +2274,9 @@
       }
     },
     "spaceRecoverKeysByPassphraseResponse": {
+      "type": "object"
+    },
+    "spaceRemoveDirOrFileResponse": {
       "type": "object"
     },
     "spaceRestoreKeyPairViaMnemonicRequest": {

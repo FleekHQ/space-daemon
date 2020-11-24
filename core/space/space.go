@@ -64,6 +64,7 @@ type Service interface {
 	TruncateData(ctx context.Context) error
 	SearchFiles(ctx context.Context, query string) ([]domain.SearchFileEntry, error)
 	InitializeMasterAppToken(ctx context.Context) (*permissions.AppToken, error)
+	RemoveDirOrFile(ctx context.Context, path, bucketName string) error
 }
 
 type serviceOptions struct {

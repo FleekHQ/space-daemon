@@ -267,3 +267,12 @@ func (srv *grpcServer) CreateFolder(ctx context.Context, request *pb.CreateFolde
 
 	return &pb.CreateFolderResponse{}, nil
 }
+
+func (srv *grpcServer) RemoveDirOrFile(ctx context.Context, request *pb.RemoveDirOrFileRequest) (*pb.RemoveDirOrFileResponse, error) {
+	err := srv.sv.RemoveDirOrFile(ctx, request.Path, request.Bucket)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.RemoveDirOrFileResponse{}, nil
+}

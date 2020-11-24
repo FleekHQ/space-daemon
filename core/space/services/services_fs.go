@@ -703,3 +703,24 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 		Bytes:      fileSize,
 	}, err
 }
+
+// Removes a file or directory from a bucket
+// Note: If removing a file a user has been shared, it should remove themselves as a member instead of removing the actual file.
+func (s *Space) RemoveDirOrFile(ctx context.Context, path, bucketName string) error {
+	err := s.waitForTextileInit(ctx)
+	if err != nil {
+		return err
+	}
+
+	b, err := s.getBucketWithFallback(ctx, bucketName)
+	if err != nil {
+		return err
+	}
+
+	_, err = b.DeleteDirOrFile(ctx, path)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
