@@ -11,8 +11,8 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
-	bucketsClient "github.com/textileio/textile/v2/api/buckets/client"
-	api_buckets_pb "github.com/textileio/textile/v2/api/buckets/pb"
+	bucketsClient "github.com/textileio/textile/v2/api/bucketsd/client"
+	api_buckets_pb "github.com/textileio/textile/v2/api/bucketsd/pb"
 	"github.com/textileio/textile/v2/buckets"
 )
 

@@ -17,8 +17,8 @@ import (
 	"github.com/alecthomas/jsonschema"
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
-	bc "github.com/textileio/textile/v2/api/buckets/client"
-	buckets_pb "github.com/textileio/textile/v2/api/buckets/pb"
+	bc "github.com/textileio/textile/v2/api/bucketsd/client"
+	buckets_pb "github.com/textileio/textile/v2/api/bucketsd/pb"
 	"github.com/textileio/textile/v2/cmd"
 	tdb "github.com/textileio/textile/v2/threaddb"
 )

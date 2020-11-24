@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	client "github.com/textileio/textile/v2/api/users/client"
+	client "github.com/textileio/textile/v2/api/usersd/client"
 	cmd "github.com/textileio/textile/v2/cmd"
 
 	context "context"

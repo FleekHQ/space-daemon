@@ -7,7 +7,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
-	api_buckets_pb "github.com/textileio/textile/v2/api/buckets/pb"
+	api_buckets_pb "github.com/textileio/textile/v2/api/bucketsd/pb"
 )
 
 // return the targetBucket if path is newer there, srcBucket otherwise

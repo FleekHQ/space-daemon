@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	client "github.com/textileio/textile/v2/api/users/client"
+	client "github.com/textileio/textile/v2/api/usersd/client"
 
 	mock "github.com/stretchr/testify/mock"
 
