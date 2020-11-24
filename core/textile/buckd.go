@@ -68,13 +68,14 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 	}
 
 	textile, err := core.NewTextile(ctx, core.Config{
-		RepoPath:        usr.HomeDir + "/.buckd/repo",
-		AddrAPI:         addrAPI,
-		AddrAPIProxy:    addrAPIProxy,
-		AddrThreadsHost: addrThreadsHost,
-		AddrIPFSAPI:     addrIpfsAPI,
-		AddrGatewayHost: addrGatewayHost,
-		AddrGatewayURL:  addrGatewayURL,
+		RepoPath:           usr.HomeDir + "/.buckd/repo",
+		CollectionRepoPath: usr.HomeDir + "/.buckd/collections",
+		AddrAPI:            addrAPI,
+		AddrAPIProxy:       addrAPIProxy,
+		AddrThreadsHost:    addrThreadsHost,
+		AddrIPFSAPI:        addrIpfsAPI,
+		AddrGatewayHost:    addrGatewayHost,
+		AddrGatewayURL:     addrGatewayURL,
 		//AddrPowergateAPI: addrPowergateApi,
 		AddrMongoURI: addrMongoURI,
 		//UseSubdomains:    config.Viper.GetBool("gateway.subdomains"),

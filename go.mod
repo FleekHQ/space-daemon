@@ -3,6 +3,7 @@ module github.com/FleekHQ/space-daemon
 go 1.14
 
 replace github.com/textileio/go-threads => github.com/FleekHQ/go-threads v1.0.1-0.20201028195307-d9371c20fe66
+replace github.com/textileio/textile/v2 => github.com/FleekHQ/textile/v2 v2.0.0-20201116173414-db43a5d7591f
 
 require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc

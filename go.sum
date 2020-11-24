@@ -61,6 +61,9 @@ github.com/FleekHQ/go-threads v1.0.1-0.20201019173032-43cf56e94181 h1:A6v9Sbh/1s
 github.com/FleekHQ/go-threads v1.0.1-0.20201019173032-43cf56e94181/go.mod h1:secctVT6GgkKoQPUz/Eg/FK05e3eiRdyhkkJMA1cuQg=
 github.com/FleekHQ/go-threads v1.0.1-0.20201028195307-d9371c20fe66 h1:JppBUaU4v56XxHj8fOMK4jjYCKCdiEMOrhXibu/Jbs8=
 github.com/FleekHQ/go-threads v1.0.1-0.20201028195307-d9371c20fe66/go.mod h1:mQgVlEzC++pJ0+EyrhW19y5ZHa8xogdYQq/8pLUvOm4=
+github.com/FleekHQ/space-daemon v0.0.33/go.mod h1:dpCcfU+b6FP+whLdnPwaSAbcmVGQwYcNedsbEumE/Mc=
+github.com/FleekHQ/textile/v2 v2.0.0-20201116173414-db43a5d7591f h1:Phw2fWt6eJ2SAVXJNZaGXqQyT3I5HDOxibM5ocqVLvM=
+github.com/FleekHQ/textile/v2 v2.0.0-20201116173414-db43a5d7591f/go.mod h1:BXhNUwvl7dR0fvNi7xaKTSUEent09vJ7bhNYkMNzQ7c=
 github.com/GeertJohan/go.incremental v1.0.0/go.mod h1:6fAjUhbVuX1KcMD3c8TEgVUqmo4seqhv0i0kdATSkM0=
 github.com/GeertJohan/go.rice v1.0.0 h1:KkI6O9uMaQU3VEKaj01ulavtF7o1fWT7+pk/4voiMLQ=
 github.com/GeertJohan/go.rice v1.0.0/go.mod h1:eH6gbSOAUv07dQuZVnBmoDP8mgsM1rtixis4Tib9if0=
