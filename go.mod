@@ -4,13 +4,15 @@ go 1.14
 
 replace github.com/textileio/go-threads => github.com/FleekHQ/go-threads v1.0.1-0.20201028195307-d9371c20fe66
 
-replace github.com/libp2p/go-libp2p-kad-dht => github.com/libp2p/go-libp2p-kad-dht v0.8.3
+replace github.com/libp2p/go-libp2p-kad-dht => github.com/libp2p/go-libp2p-kad-dht v0.9.0
 
 replace github.com/libp2p/go-libp2p-core => github.com/libp2p/go-libp2p-core v0.6.1
 
 replace github.com/libp2p/go-libp2p => github.com/libp2p/go-libp2p v0.10.3
 
 replace github.com/libp2p/go-libp2p-swarm => github.com/libp2p/go-libp2p-swarm v0.2.8
+
+replace github.com/libp2p/go-libp2p-pubsub =>  github.com/libp2p/go-libp2p-pubsub v0.3.2
 
 require (
 	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc
@@ -20,27 +22,33 @@ require (
 	github.com/alecthomas/jsonschema v0.0.0-20191017121752-4bb6e3fae4f2
 	github.com/blevesearch/bleve v1.0.12
 	github.com/blevesearch/cld2 v0.0.0-20200327141045-8b5f551d37f5 // indirect
+	github.com/coreos/go-systemd/v22 v22.1.0 // indirect
 	github.com/creamdog/gonfig v0.0.0-20160810132730-80d86bfb5a37
 	github.com/cznic/b v0.0.0-20181122101859-a26611c4d92d // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/cznic/strutil v0.0.0-20181122101858-275e90344537 // indirect
-	github.com/dgraph-io/badger v1.6.1
+	github.com/dgraph-io/badger v1.6.2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/color v1.9.0 // indirect
+	github.com/gabriel-vasile/mimetype v1.1.1 // indirect
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/protobuf v1.4.3
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/grpc-gateway v1.14.6
+	github.com/hsanjuan/ipfs-lite v1.1.17 // indirect
 	github.com/ikawaha/kagome.ipadic v1.1.2 // indirect
 	github.com/improbable-eng/grpc-web v0.13.0
 	github.com/ipfs/go-cid v0.0.7
+	github.com/ipfs/go-ds-flatfs v0.4.5 // indirect
 	github.com/ipfs/go-ipfs v0.7.0
 	github.com/ipfs/go-ipfs-chunker v0.0.5
-	github.com/ipfs/go-ipfs-config v0.9.0
+	github.com/ipfs/go-ipfs-cmds v0.4.0 // indirect
+	github.com/ipfs/go-ipfs-config v0.10.0
 	github.com/ipfs/go-ipfs-files v0.0.8
 	github.com/ipfs/go-ipfs-http-client v0.1.0
 	github.com/ipfs/go-ipld-format v0.2.0
 	github.com/ipfs/go-merkledag v0.3.2
+	github.com/ipfs/go-path v0.0.8 // indirect
 	github.com/ipfs/go-unixfs v0.2.4
 	github.com/ipfs/interface-go-ipfs-core v0.4.0
 	github.com/jbenet/goprocess v0.1.4 // indirect
@@ -50,6 +58,8 @@ require (
 	github.com/libp2p/go-libp2p-connmgr v0.2.4
 	github.com/libp2p/go-libp2p-core v0.7.0
 	github.com/libp2p/go-libp2p-crypto v0.1.0
+	github.com/libp2p/go-libp2p-pubsub-router v0.3.2 // indirect
+	github.com/libp2p/go-tcp-transport v0.2.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/multiformats/go-base32 v0.0.3 // indirect
 	github.com/multiformats/go-multiaddr v0.3.1
@@ -59,6 +69,7 @@ require (
 	github.com/odeke-em/go-uuid v0.0.0-20151221120446-b211d769a9aa // indirect
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/client_golang v1.7.1 // indirect
 	github.com/radovskyb/watcher v1.0.7
 	github.com/rakyll/statik v0.1.7
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
@@ -73,7 +84,9 @@ require (
 	github.com/textileio/textile/v2 v2.1.7
 	github.com/tyler-smith/go-bip39 v1.0.2
 	github.com/uber/jaeger-client-go v2.23.1+incompatible
+	github.com/wangjia184/sortedset v0.0.0-20160527075905-f5d03557ba30 // indirect
 	go.etcd.io/etcd v3.3.22+incompatible // indirect
+	go.uber.org/fx v1.13.1 // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
