@@ -5,8 +5,11 @@ go 1.14
 replace github.com/textileio/go-threads => github.com/FleekHQ/go-threads v1.0.1-0.20201028195307-d9371c20fe66
 
 replace github.com/libp2p/go-libp2p-kad-dht => github.com/libp2p/go-libp2p-kad-dht v0.8.3
+
 replace github.com/libp2p/go-libp2p-core => github.com/libp2p/go-libp2p-core v0.6.1
+
 replace github.com/libp2p/go-libp2p => github.com/libp2p/go-libp2p v0.10.3
+
 replace github.com/libp2p/go-libp2p-swarm => github.com/libp2p/go-libp2p-swarm v0.2.8
 
 require (
@@ -31,7 +34,7 @@ require (
 	github.com/ikawaha/kagome.ipadic v1.1.2 // indirect
 	github.com/improbable-eng/grpc-web v0.13.0
 	github.com/ipfs/go-cid v0.0.7
-	github.com/ipfs/go-ipfs v0.6.1-0.20200817102359-90a573354af2
+	github.com/ipfs/go-ipfs v0.7.0
 	github.com/ipfs/go-ipfs-chunker v0.0.5
 	github.com/ipfs/go-ipfs-config v0.9.0
 	github.com/ipfs/go-ipfs-files v0.0.8
@@ -47,7 +50,6 @@ require (
 	github.com/libp2p/go-libp2p-connmgr v0.2.4
 	github.com/libp2p/go-libp2p-core v0.7.0
 	github.com/libp2p/go-libp2p-crypto v0.1.0
-	github.com/libp2p/go-libp2p-peerstore v0.2.6
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/multiformats/go-base32 v0.0.3 // indirect
 	github.com/multiformats/go-multiaddr v0.3.1

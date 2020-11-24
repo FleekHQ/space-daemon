@@ -12,7 +12,7 @@ import (
 	"sync"
 
 	icore "github.com/ipfs/interface-go-ipfs-core"
-	peerstore "github.com/libp2p/go-libp2p-peerstore"
+	peerstore "github.com/libp2p/go-libp2p-core/peerstore"
 	ma "github.com/multiformats/go-multiaddr"
 
 	ipfsconfig "github.com/ipfs/go-ipfs-config"
