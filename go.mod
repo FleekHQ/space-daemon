@@ -20,9 +20,8 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
-	github.com/golang/protobuf v1.4.2
-	github.com/grpc-ecosystem/go-grpc-middleware v1.2.1
-	github.com/google/uuid v1.1.1 // indirect
+	github.com/golang/protobuf v1.4.3
+	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/grpc-gateway v1.14.6
 	github.com/ikawaha/kagome.ipadic v1.1.2 // indirect
 	github.com/improbable-eng/grpc-web v0.13.0
@@ -39,8 +38,9 @@ require (
 	github.com/jbenet/goprocess v0.1.4 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
 	github.com/joho/godotenv v1.3.0
+	github.com/kyokomi/emoji v2.2.4+incompatible // indirect
 	github.com/libp2p/go-libp2p-connmgr v0.2.4
-	github.com/libp2p/go-libp2p-core v0.6.1
+	github.com/libp2p/go-libp2p-core v0.7.0
 	github.com/libp2p/go-libp2p-crypto v0.1.0
 	github.com/libp2p/go-libp2p-peerstore v0.2.6
 	github.com/mitchellh/go-homedir v1.1.0
@@ -56,23 +56,23 @@ require (
 	github.com/rakyll/statik v0.1.7
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/rs/cors v1.7.0
-	github.com/sirupsen/logrus v1.6.0
+	github.com/sirupsen/logrus v1.7.0
 	github.com/stretchr/testify v1.6.1
 	github.com/tebeka/snowball v0.4.2 // indirect
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
 	github.com/textileio/dcrypto v0.0.1
-	github.com/textileio/go-threads v1.0.0
+	github.com/textileio/go-threads v1.0.1
 	github.com/textileio/textile v1.0.14 // indirect
-	github.com/textileio/textile/v2 v2.1.0
+	github.com/textileio/textile/v2 v2.1.7
 	github.com/tyler-smith/go-bip39 v1.0.2
 	github.com/uber/jaeger-client-go v2.23.1+incompatible
 	go.etcd.io/etcd v3.3.22+incompatible // indirect
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980
+	golang.org/x/sys v0.0.0-20201113135734-0a15ea8d9b02
 	google.golang.org/genproto v0.0.0-20200702021140-07506425bd67
-	google.golang.org/grpc v1.31.0
+	google.golang.org/grpc v1.33.1
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 	gorm.io/driver/sqlite v1.1.3

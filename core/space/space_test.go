@@ -31,7 +31,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/vault"
 	"github.com/FleekHQ/space-daemon/mocks"
 	"github.com/stretchr/testify/assert"
-	buckets_pb "github.com/textileio/textile/v2/api/buckets/pb"
+	buckets_pb "github.com/textileio/textile/v2/api/bucketsd/pb"
 )
 
 var (
