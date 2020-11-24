@@ -27,9 +27,9 @@ import (
 	"github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/ipfs/interface-go-ipfs-core/path"
 	threadsClient "github.com/textileio/go-threads/api/client"
-	bc "github.com/textileio/textile/v2/api/buckets/client"
-	bucketsClient "github.com/textileio/textile/v2/api/buckets/client"
-	bucketspb "github.com/textileio/textile/v2/api/buckets/pb"
+	bc "github.com/textileio/textile/v2/api/bucketsd/client"
+	bucketsClient "github.com/textileio/textile/v2/api/bucketsd/client"
+	bucketspb "github.com/textileio/textile/v2/api/bucketsd/pb"
 	"github.com/textileio/textile/v2/buckets"
 )
 
