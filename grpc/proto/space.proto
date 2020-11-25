@@ -145,7 +145,7 @@ service SpaceApi {
   // Toggle FUSE drive to be mounted or unmounted
   rpc ToggleFuseDrive(ToggleFuseRequest) returns (FuseDriveResponse) {
     option (google.api.http) = {
-      post: "/v1/fuse"
+      post: "/v1/toggleFuse"
       body: "*"
     };
   }
@@ -651,8 +651,15 @@ message ToggleFuseRequest {
   bool mountDrive = 1;
 }
 
+enum FuseState {
+  UNSUPPORTED = 0;
+  NOT_INSTALLED = 1;
+  UNMOUNTED = 2;
+  MOUNTED = 3;
+}
+
 message FuseDriveResponse {
-  bool fuseDriveMounted = 1;
+  FuseState state = 1;
 }
 
 message ListBucketsRequest {}

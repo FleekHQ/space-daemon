@@ -12,14 +12,14 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/pkg/errors"
-	api_buckets_pb "github.com/textileio/textile/v2/api/buckets/pb"
+	api_buckets_pb "github.com/textileio/textile/v2/api/bucketsd/pb"
 
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 
 	"github.com/FleekHQ/space-daemon/core/textile/utils"
 	"github.com/FleekHQ/space-daemon/log"
 	"github.com/textileio/go-threads/core/thread"
-	bc "github.com/textileio/textile/v2/api/buckets/client"
+	bc "github.com/textileio/textile/v2/api/bucketsd/client"
 )
 
 // Get a public bucket on hub. Public bucket has no encryption and its content should be accessible directly via ipfs/ipns

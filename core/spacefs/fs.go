@@ -17,10 +17,10 @@ type SpaceFS struct {
 var _ = FSOps(&SpaceFS{})
 
 // New initializes a SpaceFS instance using store as it source of informatioin
-func New(store fsds.FSDataSource) (*SpaceFS, error) {
+func New(store fsds.FSDataSource) *SpaceFS {
 	return &SpaceFS{
 		store: store,
-	}, nil
+	}
 }
 
 // Root implements the FSOps Root function

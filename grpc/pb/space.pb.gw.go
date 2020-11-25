@@ -3285,7 +3285,7 @@ var (
 
 	pattern_SpaceApi_CreateFolder_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "directories"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_SpaceApi_ToggleFuseDrive_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "fuse"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_SpaceApi_ToggleFuseDrive_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "toggleFuse"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_SpaceApi_GetFuseDriveStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "fuse"}, "", runtime.AssumeColonVerbOpt(true)))
 
