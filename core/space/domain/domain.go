@@ -182,7 +182,9 @@ type KeyBackupType int
 
 const (
 	PASSWORD KeyBackupType = 0
-	ETH      KeyBackupType = 1
+	GOOGLE   KeyBackupType = 1
+	TWITTER  KeyBackupType = 2
+	EMAIL    KeyBackupType = 3
 )
 
 func (b KeyBackupType) String() string {
@@ -190,7 +192,11 @@ func (b KeyBackupType) String() string {
 	case 0:
 		return "password"
 	case 1:
-		return "eth"
+		return "google"
+	case 2:
+		return "twitter"
+	case 3:
+		return "email"
 	default:
 		return fmt.Sprintf("%d", int(b))
 	}

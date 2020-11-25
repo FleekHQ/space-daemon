@@ -570,7 +570,9 @@ message CreateFolderResponse {
 
 enum KeyBackupType {
   PASSWORD = 0;
-  ETH = 1;
+  GOOGLE = 1;
+  TWITTER = 2;
+  EMAIL = 3;
 }
 
 message BackupKeysByPassphraseRequest {
@@ -584,6 +586,7 @@ message BackupKeysByPassphraseResponse {}
 message RecoverKeysByPassphraseRequest {
   string uuid = 1;
   string passphrase = 2;
+  KeyBackupType type = 3;
 }
 
 message RecoverKeysByPassphraseResponse {}
