@@ -31,7 +31,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/vault"
 	"github.com/FleekHQ/space-daemon/mocks"
 	"github.com/stretchr/testify/assert"
-	buckets_pb "github.com/textileio/textile/v2/api/buckets/pb"
+	buckets_pb "github.com/textileio/textile/v2/api/bucketsd/pb"
 )
 
 var (
@@ -761,7 +761,7 @@ func TestService_VaultBackup(t *testing.T) {
 
 	pass := "strawberry123"
 	uuid := "c907e7ef-7b36-4ab1-8a56-f788d7526a2c"
-	backupType := "password"
+	backupType := domain.PASSWORD
 	ctx := context.Background()
 	mnemonic := "clog chalk blame black uncover frame before decide tuition maple crowd uncle"
 
@@ -802,13 +802,13 @@ func TestService_VaultRestore(t *testing.T) {
 
 	mockItems := []vault.VaultItem{mockItem}
 
-	mockVault.On("Retrieve", uuid, pass).Return(mockItems, nil)
+	mockVault.On("Retrieve", uuid, pass, domain.PASSWORD).Return(mockItems, nil)
 
 	mockKeychain.On("ImportExistingKeyPair", mock.Anything, mock.Anything).Return(nil)
 
 	textileClient.On("RestoreDB", mock.Anything).Return(nil)
 
-	err := sv.RecoverKeysByPassphrase(ctx, uuid, pass)
+	err := sv.RecoverKeysByPassphrase(ctx, uuid, pass, domain.PASSWORD)
 	assert.Nil(t, err)
 	mockKeychain.AssertCalled(t, "ImportExistingKeyPair", mockPrivKey, mnemonic)
 }

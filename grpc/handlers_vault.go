@@ -9,14 +9,14 @@ import (
 
 func (srv *grpcServer) BackupKeysByPassphrase(ctx context.Context, request *pb.BackupKeysByPassphraseRequest) (*pb.BackupKeysByPassphraseResponse, error) {
 	resp := &pb.BackupKeysByPassphraseResponse{}
-	err := srv.sv.BackupKeysByPassphrase(ctx, request.Uuid, request.Passphrase, domain.KeyBackupType(request.Type).String())
+	err := srv.sv.BackupKeysByPassphrase(ctx, request.Uuid, request.Passphrase, domain.KeyBackupType(request.Type))
 
 	return resp, err
 }
 
 func (srv *grpcServer) RecoverKeysByPassphrase(ctx context.Context, request *pb.RecoverKeysByPassphraseRequest) (*pb.RecoverKeysByPassphraseResponse, error) {
 	resp := &pb.RecoverKeysByPassphraseResponse{}
-	err := srv.sv.RecoverKeysByPassphrase(ctx, request.Uuid, request.Passphrase)
+	err := srv.sv.RecoverKeysByPassphrase(ctx, request.Uuid, request.Passphrase, domain.KeyBackupType(request.Type))
 
 	return resp, err
 }

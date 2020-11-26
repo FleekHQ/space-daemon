@@ -5,21 +5,17 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strings"
 	"time"
 
-	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 
 	"github.com/FleekHQ/space-daemon/core/keychain"
-	fuse "github.com/FleekHQ/space-daemon/core/space/fuse"
+	"github.com/FleekHQ/space-daemon/core/space/fuse"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 
 	"github.com/FleekHQ/space-daemon/core/space"
-
-	_ "github.com/FleekHQ/space-daemon/swagger/bin_ui" // required by statik/fs
 
 	"github.com/FleekHQ/space-daemon/grpc/auth/app_token_auth"
 	grpc_auth "github.com/FleekHQ/space-daemon/grpc/auth/middleware"
@@ -117,14 +113,6 @@ func (srv *grpcServer) startRestProxy(ctx context.Context, lis net.Listener) err
 		return err
 	}
 
-	swaggerPrefix := "/swaggerui/"
-	swaggerHandler, err := srv.getSwaggerHandler(swaggerPrefix)
-	if err != nil {
-		// QQ: Should we fail launch if error in mounting swagger docs?
-		// For now, just log a warning
-		log.Warn("Swagger UI failed to load", "err:"+err.Error())
-	}
-
 	srv.restServer = &http.Server{
 		Addr:    fmt.Sprintf(":%d", srv.opts.restProxyPort),
 		Handler: mux,
@@ -132,12 +120,7 @@ func (srv *grpcServer) startRestProxy(ctx context.Context, lis net.Listener) err
 
 	srv.restServer.Handler = cors.AllowAll().Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Debug("Incoming REST Proxy Request", "path:"+r.URL.Path, "method:"+r.Method)
-		if swaggerHandler != nil && strings.HasPrefix(r.URL.Path, swaggerPrefix) && r.Method == "GET" {
-			log.Debug("Serving swagger ui")
-			swaggerHandler.ServeHTTP(w, r)
-		} else {
-			mux.ServeHTTP(w, r)
-		}
+		mux.ServeHTTP(w, r)
 	}))
 
 	log.Info("REST server is starting", fmt.Sprintf("port:%v", srv.opts.restProxyPort))
@@ -148,18 +131,6 @@ func (srv *grpcServer) startRestProxy(ctx context.Context, lis net.Listener) err
 	}()
 
 	return nil
-}
-
-func (srv *grpcServer) getSwaggerHandler(prefix string) (http.Handler, error) {
-	var swaggerHandler http.Handler
-
-	statikFS, err := fs.New()
-	if err != nil {
-		return nil, err
-	}
-
-	swaggerHandler = http.StripPrefix(prefix, http.FileServer(statikFS))
-	return swaggerHandler, nil
 }
 
 func (srv *grpcServer) startGrpcWebProxy() {

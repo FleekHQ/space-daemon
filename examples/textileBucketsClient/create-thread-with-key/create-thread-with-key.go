@@ -61,7 +61,7 @@ func main() {
 		AddrGatewayHost: addrGatewayHost,
 		AddrGatewayURL:  addrGatewayURL,
 		AddrMongoURI:    addrMongoURI,
-		MongoName:       "buckets",
+		AddrMongoName:   "buckets",
 		Debug:           false,
 	})
 	if err != nil {

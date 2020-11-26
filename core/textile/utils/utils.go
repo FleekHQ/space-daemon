@@ -24,7 +24,7 @@ import (
 	"github.com/textileio/go-threads/core/thread"
 	"github.com/textileio/go-threads/db"
 	nc "github.com/textileio/go-threads/net/api/client"
-	bucketsproto "github.com/textileio/textile/v2/api/buckets/pb"
+	bucketsproto "github.com/textileio/textile/v2/api/bucketsd/pb"
 	"github.com/textileio/textile/v2/api/common"
 	"github.com/textileio/textile/v2/cmd"
 	"golang.org/x/crypto/pbkdf2"
