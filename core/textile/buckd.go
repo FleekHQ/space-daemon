@@ -15,10 +15,6 @@ import (
 )
 
 var IpfsAddr string
-var MongoUsr string
-var MongoPw string
-var MongoHost string
-var MongoRepSet string
 var MaxThreadsConn int
 var MinThreadsConn int
 
@@ -38,10 +34,6 @@ func NewBuckd(cfg config.Config) *TextileBuckd {
 
 func (tb *TextileBuckd) Start(ctx context.Context) error {
 	IpfsAddr = tb.cfg.GetString(config.Ipfsaddr, "/ip4/127.0.0.1/tcp/5001")
-	MongoUsr = tb.cfg.GetString(config.Mongousr, "")
-	MongoPw = tb.cfg.GetString(config.Mongopw, "")
-	MongoHost = tb.cfg.GetString(config.Mongohost, "")
-	MongoRepSet = tb.cfg.GetString(config.Mongorepset, "")
 	MinThreadsConn = tb.cfg.GetInt(config.MinThreadsConnection, 50)
 	MaxThreadsConn = tb.cfg.GetInt(config.MaxThreadsConnection, 100)
 
@@ -55,12 +47,6 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 	addrGatewayURL := "http://127.0.0.1:8006"
 
 	// PLACEHOLDER: filecoin settings
-
-	// TODO: replace with embedded store
-	// addrMongoURI := "mongodb://" + MongoUsr + ":" + MongoPw + "@" + MongoHost
-	// HOTFIX: in some linux environments the
-	// above connstr does not work
-	addrMongoURI := "mongodb://" + MongoUsr + ":" + MongoPw + "@" + MongoHost + "/?ssl=true&replicaSet=" + MongoRepSet + "&authSource=admin&retryWrites=true&w=majority"
 
 	usr, err := user.Current()
 	if err != nil {
@@ -77,9 +63,7 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 		AddrGatewayHost:    addrGatewayHost,
 		AddrGatewayURL:     addrGatewayURL,
 		//AddrPowergateAPI: addrPowergateApi,
-		AddrMongoURI: addrMongoURI,
 		//UseSubdomains:    config.Viper.GetBool("gateway.subdomains"),
-		AddrMongoName: "buckets",
 		//DNSDomain:        dnsDomain,
 		//DNSZoneID:        dnsZoneID,
 		//DNSToken:         dnsToken,

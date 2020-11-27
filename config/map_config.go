@@ -32,10 +32,6 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[Ipfsaddr] = os.Getenv(env.IpfsAddr)
 		configStr[Ipfsnodeaddr] = os.Getenv(env.IpfsNodeAddr)
 		configStr[Ipfsnodepath] = os.Getenv(env.IpfsNodePath)
-		configStr[Mongousr] = os.Getenv(env.MongoUsr)
-		configStr[Mongopw] = os.Getenv(env.MongoPw)
-		configStr[Mongohost] = os.Getenv(env.MongoHost)
-		configStr[Mongorepset] = os.Getenv(env.MongoRepSet)
 		configStr[SpaceServicesAPIURL] = os.Getenv(env.ServicesAPIURL)
 		configStr[SpaceVaultAPIURL] = os.Getenv(env.VaultAPIURL)
 		configStr[SpaceVaultSaltSecret] = os.Getenv(env.VaultSaltSecret)
@@ -55,10 +51,6 @@ func NewMap(envVal env.SpaceEnv, flags *Flags) Config {
 		configStr[Ipfsaddr] = flags.Ipfsaddr
 		configStr[Ipfsnodeaddr] = flags.Ipfsnodeaddr
 		configStr[Ipfsnodepath] = flags.Ipfsnodepath
-		configStr[Mongousr] = flags.Mongousr
-		configStr[Mongopw] = flags.Mongopw
-		configStr[Mongohost] = flags.Mongohost
-		configStr[Mongorepset] = flags.Mongorepset
 		configStr[SpaceServicesAPIURL] = flags.ServicesAPIURL
 		configStr[SpaceVaultAPIURL] = flags.VaultAPIURL
 		configStr[SpaceVaultSaltSecret] = flags.VaultSaltSecret
