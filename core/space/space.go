@@ -30,8 +30,8 @@ type Service interface {
 	DeleteKeypair(ctx context.Context) error
 	GetMnemonic(ctx context.Context) (mnemonic string, err error)
 	RestoreKeyPairFromMnemonic(ctx context.Context, mnemonic string) error
-	RecoverKeysByPassphrase(ctx context.Context, uuid string, pass string) error
-	BackupKeysByPassphrase(ctx context.Context, uuid string, pass string, backupType string) error
+	RecoverKeysByPassphrase(ctx context.Context, uuid string, pass string, backupType domain.KeyBackupType) error
+	BackupKeysByPassphrase(ctx context.Context, uuid string, pass string, backupType domain.KeyBackupType) error
 	TestPassphrase(ctx context.Context, uuid string, pass string) error
 	GetPublicKey(ctx context.Context) (string, error)
 	GetHubAuthToken(ctx context.Context) (string, error)
@@ -64,6 +64,7 @@ type Service interface {
 	TruncateData(ctx context.Context) error
 	SearchFiles(ctx context.Context, query string) ([]domain.SearchFileEntry, error)
 	InitializeMasterAppToken(ctx context.Context) (*permissions.AppToken, error)
+	RemoveDirOrFile(ctx context.Context, path, bucketName string) error
 }
 
 type serviceOptions struct {

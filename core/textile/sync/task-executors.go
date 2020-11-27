@@ -10,7 +10,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/FleekHQ/space-daemon/core/textile/model"
-	api_buckets_pb "github.com/textileio/textile/v2/api/buckets/pb"
+	api_buckets_pb "github.com/textileio/textile/v2/api/bucketsd/pb"
 
 	"github.com/FleekHQ/space-daemon/log"
 

@@ -79,7 +79,7 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 		//AddrPowergateAPI: addrPowergateApi,
 		AddrMongoURI: addrMongoURI,
 		//UseSubdomains:    config.Viper.GetBool("gateway.subdomains"),
-		MongoName: "buckets",
+		AddrMongoName: "buckets",
 		//DNSDomain:        dnsDomain,
 		//DNSZoneID:        dnsZoneID,
 		//DNSToken:         dnsToken,

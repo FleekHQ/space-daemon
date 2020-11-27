@@ -149,25 +149,16 @@ If you update the gRPC API, you need to regenerate the Protobuf file.
 You will need to install the following binaries in your Go path:
 
 - `go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway`
-- `go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger`
-
-If you don't have swagger generator, you will need it for generating the REST API documentation:
-
-`brew install swagger-codegen`
-`brew install statik`
 
 Checking the binaries:
 `ls $GOPATH/bin`
-Should show the following binaries in your path: protoc-gen-go, protoc-gen-grpc-gateway, protoc-gen-swagger
+Should show the following binaries in your path: protoc-gen-go, protoc-gen-grpc-gateway
 
 Run the protobuf generation:
 `make proto_gen`
 
 Run the REST proxy generation:
 `make gen_rest`
-
-To generate REST proxy swagger spec and ui binary generation
-`make gen_rest_swagger`
 
 ** Ideally you should run `make gen_all` before commiting as this would run all the above three code generations and
 ensure everything is up to date **

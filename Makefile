@@ -26,12 +26,8 @@ proto_gen:
 gen_rest:
 	protoc -I grpc/pb/ -I grpc/proto/ -I./devtools/googleapis grpc/proto/space.proto --go_out=plugins=grpc:grpc/pb --grpc-gateway_out=logtostderr=true:grpc/pb
 
-## this target requires both protoc-gen-swagger and statik to be installed
-gen_rest_swagger:
-	protoc -I grpc/pb/ -I grpc/proto/ -I./devtools/googleapis grpc/proto/space.proto --swagger_out=logtostderr=true:swagger/ui \
-		&& statik -src=swagger/ui -f -dest=swagger -p=bin_ui
 
-gen_all: proto_gen gen_rest gen_rest_swagger
+gen_all: proto_gen gen_rest
 
 ## runs jaeger tracing server, should be used when trace is enabled on daemon
 jaegar:
