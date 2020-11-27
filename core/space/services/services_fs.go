@@ -358,7 +358,7 @@ func (s *Space) TruncateData(ctx context.Context) error {
 
 func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket, isRemote bool, dbID, cid string) (string, error) {
 	// write file copy to temp folder
-	tmpFile, err := s.createTempFileForPath(ctx, path, false)
+	tmpFile, err := s.createTempFileForPath(ctx, path, true)
 	if err != nil {
 		log.Error("cannot create temp file while executing OpenFile", err)
 		return "", err
