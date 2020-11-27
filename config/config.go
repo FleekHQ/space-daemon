@@ -28,10 +28,6 @@ const (
 	Ipfsnode                 = "space/ipfsNode"
 	Ipfsnodeaddr             = "space/ipfsNodeAddr"
 	Ipfsnodepath             = "space/ipfsNodePath"
-	Mongousr                 = "space/mongoUsr"
-	Mongopw                  = "space/mongoPw"
-	Mongohost                = "space/mongoHost"
-	Mongorepset              = "space/mongoRepSet"
 	MinThreadsConnection     = "space/minThreadsConn"
 	MaxThreadsConnection     = "space/maxThreadsConn"
 )
@@ -45,10 +41,6 @@ type Flags struct {
 	Ipfsnode             bool
 	Ipfsnodeaddr         string
 	Ipfsnodepath         string
-	Mongousr             string
-	Mongopw              string
-	Mongohost            string
-	Mongorepset          string
 	DevMode              bool
 	ServicesAPIURL       string
 	SpaceStorageSiteUrl  string

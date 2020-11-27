@@ -32,10 +32,6 @@ var (
 	ipfsnode             = flag.Bool("ipfsnode", true, "run IPFS embedded into the daemon (defaults to true)")
 	ipfsnodeaddr         string
 	ipfsnodepath         string
-	mongousr             string
-	mongopw              string
-	mongohost            string
-	mongorepset          string
 	spaceapi             string
 	spacestoragesiteurl  string
 	vaultapi             string
@@ -64,10 +60,6 @@ func main() {
 		Ipfsnode:             *ipfsnode == true,
 		Ipfsnodeaddr:         ipfsnodeaddr,
 		Ipfsnodepath:         ipfsnodepath,
-		Mongousr:             mongousr,
-		Mongopw:              mongopw,
-		Mongohost:            mongohost,
-		Mongorepset:          mongorepset,
 		ServicesAPIURL:       spaceapi,
 		SpaceStorageSiteUrl:  spacestoragesiteurl,
 		VaultAPIURL:          vaultapi,
