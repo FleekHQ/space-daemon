@@ -64,6 +64,8 @@ github.com/FleekHQ/go-threads v1.0.1-0.20201028195307-d9371c20fe66/go.mod h1:mQg
 github.com/FleekHQ/space-daemon v0.0.33/go.mod h1:dpCcfU+b6FP+whLdnPwaSAbcmVGQwYcNedsbEumE/Mc=
 github.com/FleekHQ/textile/v2 v2.0.0-20201116173414-db43a5d7591f h1:Phw2fWt6eJ2SAVXJNZaGXqQyT3I5HDOxibM5ocqVLvM=
 github.com/FleekHQ/textile/v2 v2.0.0-20201116173414-db43a5d7591f/go.mod h1:BXhNUwvl7dR0fvNi7xaKTSUEent09vJ7bhNYkMNzQ7c=
+github.com/FleekHQ/textile/v2 v2.0.0-20201127024116-cee5aaade92c h1:Qu2C3VP+G0maRQYrOxyU0HTqVBNXAjh/5Uyw3Y/DIQ8=
+github.com/FleekHQ/textile/v2 v2.0.0-20201127024116-cee5aaade92c/go.mod h1:telji7Pfrll6wugWd0cSk1u3FSsTESOPfL39r0QTloU=
 github.com/GeertJohan/go.incremental v1.0.0/go.mod h1:6fAjUhbVuX1KcMD3c8TEgVUqmo4seqhv0i0kdATSkM0=
 github.com/GeertJohan/go.rice v1.0.0 h1:KkI6O9uMaQU3VEKaj01ulavtF7o1fWT7+pk/4voiMLQ=
 github.com/GeertJohan/go.rice v1.0.0/go.mod h1:eH6gbSOAUv07dQuZVnBmoDP8mgsM1rtixis4Tib9if0=
@@ -216,12 +218,12 @@ github.com/cloudflare/cloudflare-go v0.11.6 h1:gErXaYucoS8aHdmoJnF4RMFiXJH449sk6
 github.com/cloudflare/cloudflare-go v0.11.6/go.mod h1:lmCbgQdBeSQlMv0W0OSqoGgl8aFrgc5oXHhWMt47dh0=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/cockroachdb/datadriven v0.0.0-20190809214429-80d97fb3cbaa/go.mod h1:zn76sxSg3SzpJ0PPJaLDCu+Bu0Lg3sKTORVIj19EIF8=
-github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd h1:qMd81Ts1T2OTKmB4acZcyKaMtRnY5Y44NuXGX2GFJ1w=
 github.com/cockroachdb/errors v1.2.4/go.mod h1:rQD95gz6FARkaKkQXUksEje/d9a6wBJoCr5oaCLELYA=
 github.com/cockroachdb/logtags v0.0.0-20190617123548-eb05cc24525f/go.mod h1:i/u985jwjWRlyHXQbwatDASoW0RMlZ/3i9yJHE2xLkI=
 github.com/cockroachdb/pebble v0.0.0-20200916222308-4e219a90ba5b/go.mod h1:hU7vhtrqonEphNF+xt8/lHdaBprxmV1h8BOGrd9XwmQ=
 github.com/cockroachdb/pebble v0.0.0-20201001221639-879f3bfeef07/go.mod h1:hU7vhtrqonEphNF+xt8/lHdaBprxmV1h8BOGrd9XwmQ=
 github.com/cockroachdb/redact v0.0.0-20200622112456-cd282804bbd3/go.mod h1:BVNblN9mBWFyMyqK1k3AAiSxhvhfK2oOZZ2lK+dpvRg=
+github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd h1:qMd81Ts1T2OTKmB4acZcyKaMtRnY5Y44NuXGX2GFJ1w=
 github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd/go.mod h1:sE/e/2PUdi/liOCUjSTXgM1o87ZssimdTWN964YiIeI=
 github.com/containerd/continuity v0.0.0-20190827140505-75bee3e2ccb6/go.mod h1:GL3xCUCBDV3CZiTSEKksMWbLE66hEyuu9qyDOOqM47Y=
 github.com/containerd/continuity v0.0.0-20200228182428-0f16d7a0959c h1:8ahmSVELW1wghbjerVAyuEYD5+Dio66RYvSS0iGfL1M=

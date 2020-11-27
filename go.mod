@@ -3,7 +3,7 @@ module github.com/FleekHQ/space-daemon
 go 1.14
 
 replace github.com/textileio/go-threads => github.com/FleekHQ/go-threads v1.0.1-0.20201028195307-d9371c20fe66
-replace github.com/textileio/textile/v2 => github.com/FleekHQ/textile/v2 v2.0.0-20201116173414-db43a5d7591f
+replace github.com/textileio/textile/v2 => github.com/FleekHQ/textile/v2 v2.0.0-20201127024116-cee5aaade92c
 
 replace github.com/libp2p/go-libp2p-pubsub => github.com/libp2p/go-libp2p-pubsub v0.3.2
 replace github.com/libp2p/go-libp2p-core => github.com/libp2p/go-libp2p-core v0.6.1
