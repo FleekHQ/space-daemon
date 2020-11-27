@@ -667,6 +667,7 @@ enum FuseState {
 
 message FuseDriveResponse {
   FuseState state = 1;
+  string mountPath = 2;
 }
 
 message ListBucketsRequest {}

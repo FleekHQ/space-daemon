@@ -4,22 +4,26 @@ package libfuse
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"os"
 	"syscall"
 
 	"github.com/FleekHQ/space-daemon/core/spacefs"
+	"github.com/FleekHQ/space-daemon/log"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
 )
 
-var _ fs.Node = (*VFSFile)(nil)
-var _ = fs.NodeAccesser(&VFSFile{})
-var _ = fs.NodeOpener(&VFSFile{})
-var _ = fs.HandleReader(&VFSFileHandler{})
-var _ = fs.HandleWriter(&VFSFileHandler{})
-var _ = fs.HandleReleaser(&VFSFileHandler{})
+var (
+	_ fs.Node = (*VFSFile)(nil)
+	_         = fs.NodeAccesser(&VFSFile{})
+	_         = fs.NodeOpener(&VFSFile{})
+	_         = fs.NodeSetattrer(&VFSFile{})
+	_         = fs.HandleReader(&VFSFileHandler{})
+	_         = fs.HandleWriter(&VFSFileHandler{})
+	_         = fs.HandleReleaser(&VFSFileHandler{})
+)
 
 // VFSFile represents a file in the Virtual file system
 type VFSFile struct {
@@ -38,17 +42,20 @@ func NewVFSFile(vfs *VFS, fileOps spacefs.FileOps) *VFSFile {
 func (vfile *VFSFile) Attr(ctx context.Context, attr *fuse.Attr) error {
 	path := vfile.fileOps.Path()
 	log.Printf("Getting File Attr %s", path)
-	fileAttribute, err := vfile.fileOps.Attribute()
+	fileAttribute, err := vfile.fileOps.Attribute(ctx)
 	if err != nil {
 		log.Printf("ERROR Getting Open File Attr %s", err.Error())
 		return err
 	}
 
 	attr.Size = fileAttribute.Size()
+	attr.Blocks = getNumBlocksFromSize(attr.Size)
 	attr.Mode = fileAttribute.Mode()
 	attr.Mtime = fileAttribute.ModTime()
 	attr.Ctime = fileAttribute.Ctime()
 	attr.Crtime = fileAttribute.Ctime()
+	attr.Uid = fileAttribute.Uid()
+	attr.Gid = fileAttribute.Gid()
 
 	log.Printf("Successful File Attr %s : %+v", path, attr)
 
@@ -78,13 +85,30 @@ func (vfile *VFSFile) Access(ctx context.Context, r *fuse.AccessRequest) (err er
 
 	// check is executable mask enable
 	if r.Mask&01 != 0 {
-		_, err := vfile.fileOps.Attribute()
+		_, err := vfile.fileOps.Attribute(ctx)
 		if err != nil {
 			return err
 		}
 		// for now always return permission error for executable calls
 		// we are not supporting executable at the moment
 		return syscall.EPERM
+	}
+
+	return nil
+}
+
+// Setattr implements the set attribute of fs.NodeSetattrer
+func (vfile *VFSFile) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse.SetattrResponse) error {
+	path := vfile.fileOps.Path()
+	log.Debug("Setattr called", "path:"+path, "req.Valid:"+req.Valid.String(), fmt.Sprintf("req:%v", req))
+	valid := req.Valid
+
+	if valid.Size() {
+		err := vfile.fileOps.Truncate(ctx, req.Size)
+		if err != nil {
+			return err
+		}
+		valid ^= fuse.SetattrSize
 	}
 
 	return nil

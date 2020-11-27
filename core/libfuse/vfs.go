@@ -45,7 +45,8 @@ func (vfs *VFS) Mount(mountPath, fsName string) error {
 		fuse.FSName(fsName),
 		fuse.VolumeName(fsName),
 		fuse.NoAppleDouble(),
-		fuse.NoAppleXattr(),
+		//fuse.ExclCreate(),
+		//fuse.NoAppleXattr(),
 		fuse.AsyncRead(),
 		fuse.LocalVolume(),
 	)
@@ -124,4 +125,24 @@ func (vfs *VFS) Root() (fs.Node, error) {
 		dirOps: rootDir,
 	}
 	return node, nil
+}
+
+var _ fs.FSStatfser = (*VFS)(nil)
+
+// Statfs implements the fs.FSStatfser interface and reports block and storage information stats about VFS
+func (vfs *VFS) Statfs(ctx context.Context, req *fuse.StatfsRequest, resp *fuse.StatfsResponse) error {
+	//log.Debug("Request Statfs")
+	resp.Bsize = fuseBlockSize
+	resp.Namelen = ^uint32(0)
+	resp.Frsize = fuseBlockSize
+
+	// Simulate a large amount of free space
+	storageSize := uint64(1 << 50) // 2^50 bytes approximately 1PiB
+	totalAvailableBlocks := getNumBlocksFromSize(storageSize)
+	usedBlockSize := getNumBlocksFromSize(0)
+
+	resp.Blocks = totalAvailableBlocks
+	resp.Bavail = totalAvailableBlocks - usedBlockSize
+	resp.Bfree = totalAvailableBlocks - usedBlockSize
+	return nil
 }

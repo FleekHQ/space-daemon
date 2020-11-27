@@ -77,6 +77,16 @@ func (fs *SpaceFS) CreateEntry(ctx context.Context, req CreateDirEntry) (DirEntr
 	}, nil
 }
 
+// RenameEntry should rename the directory entry from old to new
+func (fs *SpaceFS) RenameEntry(ctx context.Context, req RenameDirEntry) error {
+	return fs.store.RenameEntry(ctx, req.OldPath, req.NewPath)
+}
+
+// DeleteEntry should delete the item at the path
+func (fs *SpaceFS) DeleteEntry(ctx context.Context, path string) error {
+	return fs.store.DeleteEntry(ctx, path)
+}
+
 // Open a file at specified path
 func (fs *SpaceFS) Open(ctx context.Context, path string, mode FileHandlerMode) (FileHandler, error) {
 	result, err := fs.store.Open(ctx, path)
@@ -98,7 +108,7 @@ func (dir *SpaceDirectory) Path() string {
 }
 
 // Attribute implements DirEntryOps Attribute() and fetches the metadata of the directory
-func (dir *SpaceDirectory) Attribute() (DirEntryAttribute, error) {
+func (dir *SpaceDirectory) Attribute(ctx context.Context) (DirEntryAttribute, error) {
 	return dir.entry, nil
 }
 
@@ -141,8 +151,17 @@ func (f *SpaceFile) Path() string {
 }
 
 // Attribute implements DirEntryOps Attribute() and fetches the metadata of the directory
-func (f *SpaceFile) Attribute() (DirEntryAttribute, error) {
-	return f.entry, nil
+func (f *SpaceFile) Attribute(ctx context.Context) (DirEntryAttribute, error) {
+	fileInfo, err := f.fs.store.Open(ctx, f.Path())
+	if err != nil {
+		return nil, err
+	}
+
+	stats, err := fileInfo.Stats(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return stats, nil
 }
 
 // Open implements FileOps Open
@@ -151,4 +170,12 @@ func (f *SpaceFile) Attribute() (DirEntryAttribute, error) {
 func (f *SpaceFile) Open(ctx context.Context, mode FileHandlerMode) (FileHandler, error) {
 	fileHandler, err := f.fs.Open(ctx, f.entry.Path(), mode)
 	return fileHandler, err
+}
+
+func (f *SpaceFile) Truncate(ctx context.Context, size uint64) error {
+	fileInfo, err := f.fs.store.Open(ctx, f.Path())
+	if err != nil {
+		return err
+	}
+	return fileInfo.Truncate(ctx, size)
 }

@@ -3,6 +3,9 @@ package fuse
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
+	"strings"
 	"sync"
 
 	"github.com/FleekHQ/space-daemon/core/space/fuse/installer"
@@ -81,11 +84,26 @@ func (s *Controller) Mount() error {
 
 	s.mountPath = mountPath
 
-	if err := s.vfs.Mount(
+	err = s.vfs.Mount(
 		mountPath,
 		s.cfg.GetString(config.FuseDriveName, DefaultFuseDriveName),
-	); err != nil {
-		return err
+	)
+
+	if err != nil {
+		if !strings.Contains(err.Error(), "exit status 64") {
+			return err
+		}
+
+		// a drive mount error, so we try unmounting first and retry mounting
+		_ = s.vfs.Unmount()
+		s.removeMountedPath()
+		err = s.vfs.Mount(
+			mountPath,
+			s.cfg.GetString(config.FuseDriveName, DefaultFuseDriveName),
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	// persist mount state to store to trigger remount on restart
@@ -95,6 +113,15 @@ func (s *Controller) Mount() error {
 
 	s.serve()
 	return nil
+}
+
+func (s *Controller) GetMountPath() string {
+	if !s.IsMounted() {
+		return ""
+	}
+
+	path, _ := getMountPath(s.cfg)
+	return path
 }
 
 func (s *Controller) serve() {
@@ -138,13 +165,17 @@ func (s *Controller) Unmount() error {
 
 	err := s.vfs.Unmount()
 
-	// remove mounted path directory
-	//if err == nil && s.mountPath != "" {
-	//	_ = os.RemoveAll(s.mountPath)
-	//	//log.ERROR("Failed to delete mount directory on unmount", err)
-	//}
-
 	return err
+}
+
+func (s *Controller) removeMountedPath() {
+	if s.mountPath != "" {
+		// try unmounting via os
+		err := exec.Command("umount", s.mountPath).Run()
+		log.Error("Failed to run unmount command", err)
+		err = os.RemoveAll(s.mountPath)
+		log.Error("Failed to delete mount directory on unmount", err)
+	}
 }
 
 func (s *Controller) Shutdown() error {

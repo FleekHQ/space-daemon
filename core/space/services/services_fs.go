@@ -315,11 +315,10 @@ func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (do
 		return domain.OpenFileInfo{}, err
 	}
 	listdir, err := b.ListDirectory(ctx, path)
-	cid := listdir.Item.Cid
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
-
+	cid := listdir.Item.Cid
 	if filePath, exists := s.sync.GetOpenFilePath(b.Slug(), path, dbID, cid); exists {
 		// sanity check in case file was deleted or moved
 		if PathExists(filePath) {

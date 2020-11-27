@@ -41,7 +41,8 @@ func (srv *grpcServer) GetFuseDriveStatus(ctx context.Context, empty *empty.Empt
 	}
 
 	return &pb.FuseDriveResponse{
-		State: fuseStateToRpcState(state),
+		State:     fuseStateToRpcState(state),
+		MountPath: srv.fc.GetMountPath(),
 	}, nil
 }
 

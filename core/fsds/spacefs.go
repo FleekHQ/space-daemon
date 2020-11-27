@@ -2,13 +2,10 @@ package fsds
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
-
-	"github.com/FleekHQ/space-daemon/log"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 
@@ -51,7 +48,7 @@ func NewSpaceFSDataSource(service space.Service, configOptions ...FSDataSourceCo
 
 // Get returns the DirEntry information for item at path
 func (d *SpaceFSDataSource) Get(ctx context.Context, path string) (*DirEntry, error) {
-	log.Debug("FSDS.Get", "path:"+path)
+	//log.Debug("FSDS.Get", "path:"+path)
 	baseName := filepath.Base(path)
 	if blackListedDirEntryNames[baseName] {
 		return nil, EntryNotFound
@@ -72,12 +69,12 @@ func (d *SpaceFSDataSource) Get(ctx context.Context, path string) (*DirEntry, er
 		return nil, EntryNotFound
 	}
 
-	result, err := dataSource.Get(ctx, strings.TrimPrefix(path, dataSource.basePath))
+	result, err := dataSource.Get(ctx, dataSource.ChildPath(path))
 	if err != nil {
 		return nil, err
 	}
 
-	result.entry.Path = d.prefixBasePath(dataSource.basePath, result.entry.Path)
+	result.entry.Path = dataSource.ParentPath(result.entry.Path)
 	d.entryCache[path] = result
 
 	return result, nil
@@ -95,7 +92,7 @@ func (d *SpaceFSDataSource) findTLFDataSource(path string) *TLFDataSource {
 
 // GetChildren returns list of entries in a path
 func (d *SpaceFSDataSource) GetChildren(ctx context.Context, path string) ([]*DirEntry, error) {
-	log.Debug("FSDS.GetChildren", "path:"+path)
+	//log.Debug("FSDS.GetChildren", "path:"+path)
 	baseName := filepath.Base(path)
 	if blackListedDirEntryNames[baseName] {
 		return nil, EntryNotFound
@@ -109,12 +106,12 @@ func (d *SpaceFSDataSource) GetChildren(ctx context.Context, path string) ([]*Di
 		return nil, EntryNotFound
 	}
 
-	result, err := dataSource.GetChildren(ctx, strings.TrimPrefix(path, dataSource.basePath))
+	result, err := dataSource.GetChildren(ctx, dataSource.ChildPath(path))
 
 	// format results
 	if result != nil {
 		for _, entry := range result {
-			entry.entry.Path = d.prefixBasePath(dataSource.basePath, entry.entry.Path)
+			entry.entry.Path = dataSource.ParentPath(entry.entry.Path)
 			d.entryCache[entry.entry.Path] = entry
 		}
 	}
@@ -124,33 +121,56 @@ func (d *SpaceFSDataSource) GetChildren(ctx context.Context, path string) ([]*Di
 
 // Open is invoked to read the content of a file
 func (d *SpaceFSDataSource) Open(ctx context.Context, path string) (FileReadWriterCloser, error) {
-	log.Debug("FSDS.Open", "path:"+path)
+	//log.Debug("FSDS.Open", "path:"+path)
 	dataSource := d.findTLFDataSource(path)
 	if dataSource == nil {
 		return nil, EntryNotFound
 	}
 
-	return dataSource.Open(ctx, strings.TrimPrefix(path, dataSource.basePath))
+	return dataSource.Open(ctx, dataSource.ChildPath(path))
 }
 
 // CreateEntry creates a directory or file based on the mode at the path
 func (d *SpaceFSDataSource) CreateEntry(ctx context.Context, path string, mode os.FileMode) (*DirEntry, error) {
-	log.Debug("FSDS.CreateEntry", "path:"+path)
+	//log.Debug("FSDS.CreateEntry", "path:"+path)
 	dataSource := d.findTLFDataSource(path)
 	if dataSource == nil {
-		return nil, EntryNotFound
+		return nil, syscall.ENOTSUP
 	}
 
-	result, err := dataSource.CreateEntry(ctx, strings.TrimPrefix(path, dataSource.basePath), mode)
+	result, err := dataSource.CreateEntry(ctx, dataSource.ChildPath(path), mode)
 	if result != nil {
-		result.entry.Path = d.prefixBasePath(dataSource.basePath, result.entry.Path)
+		result.entry.Path = dataSource.ParentPath(result.entry.Path)
 	}
 
 	return result, err
 }
 
+func (d *SpaceFSDataSource) RenameEntry(ctx context.Context, oldPath, newPath string) error {
+	//log.Debug("FSDS.RenameEntry", "oldPath:"+oldPath, "newPath:"+newPath)
+	oldPathDataSource := d.findTLFDataSource(oldPath)
+	newPathDataSource := d.findTLFDataSource(newPath)
+
+	if oldPathDataSource.name != newPathDataSource.name {
+		// renaming can only happen within the same datasource
+		return syscall.ENOTSUP
+	}
+
+	return oldPathDataSource.RenameEntry(
+		ctx,
+		oldPathDataSource.ChildPath(oldPath),
+		oldPathDataSource.ChildPath(newPath),
+	)
+}
+
+func (d *SpaceFSDataSource) DeleteEntry(ctx context.Context, path string) error {
+	//log.Debug("FSDS.DeleteEntry", "path:"+path)
+	dataSource := d.findTLFDataSource(path)
+
+	return dataSource.DeleteEntry(ctx, dataSource.ChildPath(path))
+}
+
 // Returns list of top level entry
-// For now we only return the files directory
 func (d *SpaceFSDataSource) getTopLevelDirectories() []*DirEntry {
 	var directories []*DirEntry
 
@@ -167,9 +187,4 @@ func (d *SpaceFSDataSource) getTopLevelDirectories() []*DirEntry {
 		))
 	}
 	return directories
-}
-
-// returns the path with the parent base path prefixed
-func (d *SpaceFSDataSource) prefixBasePath(basePath, path string) string {
-	return fmt.Sprintf("%s%s", basePath, path)
 }
