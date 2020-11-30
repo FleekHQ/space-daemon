@@ -328,14 +328,6 @@ func TestService_OpenFile(t *testing.T) {
 	testFileName := "file.txt"
 
 	// setup mocks
-	cfg.On("GetInt", mock.Anything, mock.Anything).Return(
-		-1,
-	)
-
-	cfg.On("GetString", mock.Anything, mock.Anything).Return(
-		"",
-	)
-
 	mockEnv.On("WorkingFolder").Return(
 		getDir().dir,
 	)
@@ -392,7 +384,7 @@ func TestService_OpenFile(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotEmpty(t, res)
 	assert.FileExists(t, res.Location)
-	assert.Contains(t, res.Location, getDir().dir)
+	assert.Contains(t, res.Location, os.TempDir())
 	assert.True(t, strings.HasSuffix(res.Location, testFileName))
 	// assert mocks
 	cfg.AssertExpectations(t)
