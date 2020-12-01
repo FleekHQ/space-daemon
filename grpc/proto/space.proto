@@ -234,6 +234,14 @@ service SpaceApi {
     };
   }
 
+  // Remove public keys for shared files in buckets
+  rpc UnshareFilesViaPublicKey(UnshareFilesViaPublicKeyRequest) returns (UnshareFilesViaPublicKeyResponse) {
+    option (google.api.http) = {
+      post: "/v1/unshareFilesViaPublicKey"
+      body: "*"
+    };
+  }
+
   rpc HandleFilesInvitation(HandleFilesInvitationRequest) returns (HandleFilesInvitationResponse) {
     option (google.api.http) = {
       post: "/v1/filesinvitation/{invitationID}"
@@ -632,6 +640,7 @@ message ShareFilesViaPublicKeyRequest {
   repeated string publicKeys = 1;
   repeated FullPath paths = 2;
 }
+
 message FullPath {
   string dbId = 1; // optional field to specify shared with me file
   string bucket = 2;
@@ -639,6 +648,13 @@ message FullPath {
 }
 
 message ShareFilesViaPublicKeyResponse {}
+
+message UnshareFilesViaPublicKeyRequest {
+  repeated string publicKeys = 1;
+  repeated FullPath paths = 2;
+}
+
+message UnshareFilesViaPublicKeyResponse {}
 
 message GeneratePublicFileLinkRequest {
   string bucket = 1;

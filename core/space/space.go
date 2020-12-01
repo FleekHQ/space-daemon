@@ -8,7 +8,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/permissions"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/vault"
-	crypto "github.com/libp2p/go-libp2p-crypto"
+	"github.com/libp2p/go-libp2p-core/crypto"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/env"
@@ -53,6 +53,7 @@ type Service interface {
 	ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) error
 	BucketBackupRestore(ctx context.Context, bucketSlug string) error
 	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error
+	UnshareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pks []crypto.PubKey) error
 	HandleSharedFilesInvitation(ctx context.Context, invitationId string, accept bool) error
 	GetAPISessionTokens(ctx context.Context) (*domain.APISessionTokens, error)
 	AddRecentlySharedPublicKeys(ctx context.Context, pubkeys []crypto.PubKey) error

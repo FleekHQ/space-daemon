@@ -201,3 +201,11 @@ func (b KeyBackupType) String() string {
 		return fmt.Sprintf("%d", int(b))
 	}
 }
+
+// SharedFilesRoleAction represents action to be performed on the role
+type SharedFilesRoleAction int
+
+const (
+	DeleteRoleAction SharedFilesRoleAction = iota
+	ReadWriteRoleAction
+)
