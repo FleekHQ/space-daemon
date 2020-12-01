@@ -169,11 +169,11 @@ func (tc *textileClient) DownloadPublicItem(ctx context.Context, cid cid.Cid) (i
 		return nil, err
 	}
 
-	_, naddr, err := manet.DialArgs(maddr)
+	_, host, err := manet.DialArgs(maddr)
 	if err != nil {
 		log.Error(fmt.Sprintf("Unable to dial IPFS Multiaddr: %+v", maddr), err)
 		return nil, err
 	}
 
-	return ipfs.DownloadIpfsItem(ctx, naddr, cid)
+	return ipfs.DownloadIpfsItem(ctx, host, cid)
 }
