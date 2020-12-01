@@ -81,7 +81,7 @@ func (s *Space) encryptBucketFile(
 	defer span.Finish()
 
 	// tempFile is written from textile before encryption
-	tempFile, err := s.createTempFileForPath(ctx, bucketPath, true)
+	tempFile, err := s.createTempFileForPath(ctx, bucketPath)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (s *Space) encryptBucketFile(
 	}()
 
 	// encrypted file is the final encrypted file
-	encryptedFile, err := s.createTempFileForPath(ctx, bucketPath, true)
+	encryptedFile, err := s.createTempFileForPath(ctx, bucketPath)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func (s *Space) GenerateFilesSharingLink(
 	// create zip file output
 	filename := generateFilesSharingZip()
 	// tempFile is written from textile before encryption
-	tempFile, err := s.createTempFileForPath(ctx, filename, true)
+	tempFile, err := s.createTempFileForPath(ctx, filename)
 	if err != nil {
 		return domain.FileSharingInfo{}, err
 	}
@@ -196,7 +196,7 @@ func (s *Space) GenerateFilesSharingLink(
 		_ = os.Remove(tempFile.Name())
 	}()
 
-	encryptedFile, err := s.createTempFileForPath(ctx, filename, true)
+	encryptedFile, err := s.createTempFileForPath(ctx, filename)
 	if err != nil {
 		return domain.FileSharingInfo{}, err
 	}
@@ -277,7 +277,7 @@ func (s *Space) OpenSharedFile(ctx context.Context, hash, password, filename str
 	}
 	defer encryptedFile.Close()
 
-	decryptedFile, err := s.createTempFileForPath(ctx, filename, true)
+	decryptedFile, err := s.createTempFileForPath(ctx, filename)
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
