@@ -941,7 +941,7 @@ func TestService_OpenSharedFile_Should_AddOpenedFileToSharedWithMeList(t *testin
 	textileClient.On("IsHealthy").Return(true)
 	textileClient.On("GetPublicReceivedFile", mock.Anything, testHash, true).
 		Return(&domain.SharedDirEntry{}, testPassword, nil)
-	textileClient.On("DownloadPublicGatewayItem", mock.Anything, mock.Anything).
+	textileClient.On("DownloadPublicItem", mock.Anything, mock.Anything).
 		Return(encryptString(expectedFileContent, testPassword), nil)
 	textileClient.On("AcceptSharedFileLink", mock.Anything, testHash, testPassword, testFilename, fmt.Sprintf("%d", len(expectedFileContent))).
 		Return(&domain.SharedDirEntry{}, nil)

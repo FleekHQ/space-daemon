@@ -143,8 +143,8 @@ func (_m *Client) DisableSync() {
 	_m.Called()
 }
 
-// DownloadPublicGatewayItem provides a mock function with given fields: ctx, _a1
-func (_m *Client) DownloadPublicGatewayItem(ctx context.Context, _a1 cid.Cid) (io.ReadCloser, error) {
+// DownloadPublicItem provides a mock function with given fields: ctx, _a1
+func (_m *Client) DownloadPublicItem(ctx context.Context, _a1 cid.Cid) (io.ReadCloser, error) {
 	ret := _m.Called(ctx, _a1)
 
 	var r0 io.ReadCloser
