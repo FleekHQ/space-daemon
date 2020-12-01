@@ -597,7 +597,7 @@ func (tc *textileClient) GetModel() model.Model {
 
 func (tc *textileClient) getSecureBucketsClient(baseClient *bucketsClient.Client) *SecureBucketClient {
 	isRemote := baseClient == tc.hb
-	return NewSecureBucketsClient(baseClient, tc.kc, tc.store, tc.threads, tc.ipfsClient, isRemote)
+	return NewSecureBucketsClient(baseClient, tc.kc, tc.store, tc.threads, tc.ipfsClient, isRemote, tc.cfg)
 }
 
 func (tc *textileClient) requiresHubConnection() error {
