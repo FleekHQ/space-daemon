@@ -2,7 +2,6 @@ package textile
 
 import (
 	"context"
-	"fmt"
 	"io"
 
 	"github.com/opentracing/opentracing-go"
@@ -14,9 +13,6 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/pkg/errors"
 	api_buckets_pb "github.com/textileio/textile/v2/api/bucketsd/pb"
-
-	ma "github.com/multiformats/go-multiaddr"
-	manet "github.com/multiformats/go-multiaddr/net"
 
 	"github.com/FleekHQ/space-daemon/core/textile/bucket"
 
@@ -159,21 +155,8 @@ func (tc *textileClient) getPublicShareThread(ctx context.Context) (thread.ID, e
 	return dbId, nil
 }
 
-// DownloadPublicItem download a CID
+// DownloadPublicGatewayItem download a cid content from the hubs public gateway
 func (tc *textileClient) DownloadPublicItem(ctx context.Context, cid cid.Cid) (io.ReadCloser, error) {
-	ipfsAddr := tc.cfg.GetString(config.Ipfsaddr, "/ip4/127.0.0.1/tcp/5001")
-
-	maddr, err := ma.NewMultiaddr(ipfsAddr)
-	if err != nil {
-		log.Error(fmt.Sprintf("Unable to parse IPFS Multiaddr: %s", ipfsAddr), err)
-		return nil, err
-	}
-
-	_, host, err := manet.DialArgs(maddr)
-	if err != nil {
-		log.Error(fmt.Sprintf("Unable to dial IPFS Multiaddr: %+v", maddr), err)
-		return nil, err
-	}
-
-	return ipfs.DownloadIpfsItem(ctx, host, cid)
+	gatewayUrl := tc.cfg.GetString(config.TextileHubGatewayUrl, "https://hub.textile.io")
+	return ipfs.DownloadIpfsItem(ctx, gatewayUrl, cid)
 }
