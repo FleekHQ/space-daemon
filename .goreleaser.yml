@@ -22,6 +22,7 @@ builds:
       - -X main.textileuserkey={{ .Env.TXL_USER_KEY }}
       - -X main.textileusersecret={{ .Env.TXL_USER_SECRET }}
       - -X main.spacestoragesiteurl={{ .Env.SPACE_STORAGE_SITE_URL }}
+      - -X main.ipfsaddr={{ .Env.IPFS_ADDR }}
       - -X main.ipfsnodeaddr={{ .Env.IPFS_NODE_ADDR }}
       - -X main.ipfsnodepath={{ .Env.IPFS_NODE_PATH }}
     main: ./cmd/space-daemon/main.go
@@ -44,6 +45,7 @@ builds:
       - -X main.textileuserkey={{ .Env.TXL_USER_KEY }}
       - -X main.textileusersecret={{ .Env.TXL_USER_SECRET }}
       - -X main.spacestoragesiteurl={{ .Env.SPACE_STORAGE_SITE_URL }}
+      - -X main.ipfsaddr={{ .Env.IPFS_ADDR }}
       - -X main.ipfsnodeaddr={{ .Env.IPFS_NODE_ADDR }}
       - -X main.ipfsnodepath={{ .Env.IPFS_NODE_PATH }}
     main: ./cmd/space-daemon/main.go
@@ -68,6 +70,7 @@ builds:
       - -X main.textileuserkey={{ .Env.TXL_USER_KEY }}
       - -X main.textileusersecret={{ .Env.TXL_USER_SECRET }}
       - -X main.spacestoragesiteurl={{ .Env.SPACE_STORAGE_SITE_URL }}
+      - -X main.ipfsaddr={{ .Env.IPFS_ADDR }}
       - -X main.ipfsnodeaddr={{ .Env.IPFS_NODE_ADDR }}
       - -X main.ipfsnodepath={{ .Env.IPFS_NODE_PATH }}
     main: ./cmd/space-daemon/main.go
