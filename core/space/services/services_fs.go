@@ -358,7 +358,7 @@ func (s *Space) TruncateData(ctx context.Context) error {
 
 func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket, isRemote bool, dbID, cid string) (string, error) {
 	// write file copy to temp folder
-	tmpFile, err := s.createTempFileForPath(ctx, path, true)
+	tmpFile, err := s.createTempFileForPath(ctx, path)
 	if err != nil {
 		log.Error("cannot create temp file while executing OpenFile", err)
 		return "", err
@@ -394,15 +394,11 @@ func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket,
 // createTempFileForPath creates a temporary file using the path specified relative to the AppPath
 // configured when running the daemon. If inTempDir is true, then it is created relative
 // to the operating systems temp dir.
-func (s *Space) createTempFileForPath(ctx context.Context, path string, inTempDir bool) (*os.File, error) {
+func (s *Space) createTempFileForPath(ctx context.Context, path string) (*os.File, error) {
 	_, fileName := filepath.Split(path)
-	prefixPath := ""
-	if !inTempDir {
-		cfg := s.GetConfig(ctx)
-		prefixPath = cfg.AppPath
-	}
+
 	// NOTE: the pattern of the file ensures that it retains extension. e.g (rand num) + filename/path
-	return ioutil.TempFile(prefixPath, "*-"+fileName)
+	return ioutil.TempFile("", "*-"+fileName)
 }
 
 func (s *Space) CreateFolder(ctx context.Context, path string, bucketName string) error {
