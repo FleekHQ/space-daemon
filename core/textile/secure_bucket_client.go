@@ -291,7 +291,7 @@ func getTempFileName(encPath string) string {
 }
 
 func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) error {
-	pullers := []pathPullingFn{s.pullFileFromLocal, s.pullFileFromClient, s.pullFileFromDHT}
+	pullers := []pathPullingFn{s.pullFileFromDHT, s.pullFileFromLocal, s.pullFileFromClient}
 
 	pullSuccess := make(chan *pullSuccessResponse)
 	errc := make(chan error)

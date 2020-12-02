@@ -91,7 +91,7 @@ func DownloadIpfsItemViaGateway(ctx context.Context, gatewayUrl string, cid cid.
 func DownloadIpfsItem(ctx context.Context, nodeUrl string, cid cid.Cid) (io.ReadCloser, error) {
 
 	// https://docs.ipfs.io/reference/http/api/#api-v0-cat
-	url := fmt.Sprintf("%s/api/v0/cat?arg=%s", nodeUrl, cid.String())
+	url := fmt.Sprintf("http://%s/api/v0/cat?arg=%s", nodeUrl, cid.String())
 
 	req, err := http.NewRequest(http.MethodPost, url, nil)
 	if err != nil {
