@@ -51,6 +51,7 @@ jobs:
           args: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IPFS_ADDR: ${{ secrets.IPFS_ADDR }}
           IPFS_NODE_ADDR: ${{ secrets.IPFS_NODE_ADDR }}
           IPFS_NODE_PATH: ${{ secrets.IPFS_NODE_PATH }}
           SERVICES_API_URL: ${{ secrets[steps.secretnames.outputs.SERVICES_API_URL] }}
