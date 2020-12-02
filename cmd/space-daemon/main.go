@@ -28,8 +28,8 @@ var (
 	debugMode            = flag.Bool("debug", true, "run daemon with debug mode for profiling")
 	enableTracing        = flag.Bool("trace", false, "run tracing on daemon rpc")
 	devMode              = flag.Bool("dev", false, "run daemon in dev mode to use .env file")
-	ipfsaddr             = flag.String("ipfsaddr", "/ip4/127.0.0.1/tcp/5001", "IPFS multiaddress to connect to (defaults to local node)")
 	ipfsnode             = flag.Bool("ipfsnode", true, "run IPFS embedded into the daemon (defaults to true)")
+	ipfsaddr             string
 	ipfsnodeaddr         string
 	ipfsnodepath         string
 	spaceapi             string
@@ -56,7 +56,7 @@ func main() {
 	log.Debug("Running mode", fmt.Sprintf("DevMode:%v", *devMode))
 
 	cf := &config.Flags{
-		Ipfsaddr:             *ipfsaddr,
+		Ipfsaddr:             ipfsaddr,
 		Ipfsnode:             *ipfsnode == true,
 		Ipfsnodeaddr:         ipfsnodeaddr,
 		Ipfsnodepath:         ipfsnodepath,

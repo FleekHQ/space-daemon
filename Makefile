@@ -2,7 +2,8 @@ build:
 	go build \
 	-o bin/space \
 	-ldflags \
-	"-X 'main.ipfsnodeaddr=${IPFS_NODE_ADDR}' \
+	"-X 'main.ipfsaddr=${IPFS_ADDR}' \
+	-X 'main.ipfsnodeaddr=${IPFS_NODE_ADDR}' \
 	-X 'main.ipfsnodepath=${IPFS_NODE_PATH}' \
 	-X 'main.spaceapi=${SERVICES_API_URL}' \
 	-X 'main.spacestoragesiteurl=${SPACE_STORAGE_SITE_URL}' \
