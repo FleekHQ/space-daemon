@@ -296,7 +296,7 @@ func (tc *textileClient) createBucket(ctx context.Context, bucketSlug string) (B
 
 	log.Debug("Creating Bucket in db " + dbID.String())
 	// create bucket
-	b, err := tc.bucketsClient.Create(ctx, bc.WithName(bucketSlug), bc.WithPrivate(true))
+	b, err := tc.bucketsClient.Create(ctx, bc.WithName(bucketSlug))
 	if err != nil {
 		return nil, err
 	}
@@ -390,7 +390,7 @@ func (tc *textileClient) joinBucketViaAddress(ctx context.Context, address strin
 	}
 
 	// Create bucket in buckets client in case it's not already there
-	tc.bucketsClient.Create(newBucketCtx, bc.WithName(bucketSlug), bc.WithPrivate(true))
+	tc.bucketsClient.Create(newBucketCtx, bc.WithName(bucketSlug))
 
 	return nil
 }

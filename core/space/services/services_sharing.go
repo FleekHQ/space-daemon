@@ -271,7 +271,7 @@ func (s *Space) OpenSharedFile(ctx context.Context, hash, password, filename str
 		}
 	}
 
-	encryptedFile, err := s.tc.DownloadPublicGatewayItem(ctx, parsedCid)
+	encryptedFile, err := s.tc.DownloadPublicItem(ctx, parsedCid)
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
