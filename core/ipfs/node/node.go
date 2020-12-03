@@ -6,6 +6,8 @@ import (
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/log"
 
+	"os/user"
+
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -85,6 +87,13 @@ func (node *IpfsNode) start() error {
 	repoPath := node.cfg.GetString(config.Ipfsnodepath, pathRoot)
 	if repoPath == "" {
 		repoPath = pathRoot
+	} else {
+		usr, err := user.Current()
+		if err != nil {
+			repoPath = pathRoot
+		} else {
+			repoPath = filepath.Join(usr.HomeDir, repoPath)
+		}
 	}
 
 	if err := setupPlugins(repoPath); err != nil {
