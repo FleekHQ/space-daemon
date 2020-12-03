@@ -18,7 +18,7 @@ import (
 	"github.com/FleekHQ/space-daemon/config"
 
 	"github.com/FleekHQ/space-daemon/log"
-	crypto "github.com/libp2p/go-libp2p-crypto"
+	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/pkg/errors"
 
 	"github.com/FleekHQ/space-daemon/core/space/domain"
@@ -311,65 +311,19 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 		return err
 	}
 
-	m := s.tc.GetModel()
+	enhancedPaths, enckeys, err := s.resolveFullPaths(ctx, paths)
+	if err != nil {
+		return err
+	}
 
-	enhancedPaths := make([]domain.FullPath, len(paths))
-	enckeys := make([][]byte, len(paths))
-	for i, path := range paths {
-		ep := domain.FullPath{
-			DbId:      path.DbId,
-			Bucket:    path.Bucket,
-			Path:      path.Path,
-			BucketKey: path.BucketKey,
-		}
-
-		// this handles personal bucket since for shared-with-me files
-		// the dbid will be preset
-		if ep.DbId == "" {
-			b, err := s.tc.GetDefaultBucket(ctx)
-			if err != nil {
-				return err
-			}
-
-			bs, err := m.FindBucket(ctx, b.Slug())
-			if err != nil {
-				return err
-			}
-
-			ep.DbId = bs.RemoteDbID
-		}
-
-		if ep.Bucket == "" || ep.Bucket == t.GetDefaultBucketSlug() {
-			b, err := s.tc.GetDefaultBucket(ctx)
-			if err != nil {
-				return err
-			}
-			bs, err := m.FindBucket(ctx, b.GetData().Name)
-			if err != nil {
-				return err
-			}
-			ep.Bucket = t.GetDefaultMirrorBucketSlug()
-			ep.BucketKey = bs.RemoteBucketKey
-			enckeys[i] = bs.EncryptionKey
-		} else {
-			r, err := m.FindReceivedFile(ctx, path.DbId, path.Bucket, path.Path)
-			if err != nil {
-				return err
-			}
-			ep.Bucket = r.Bucket
-			ep.BucketKey = r.BucketKey
-			enckeys[i] = r.EncryptionKey
-		}
-
-		_, err = m.CreateSentFileViaInvitation(ctx, ep, "", enckeys[i])
+	for i, path := range enhancedPaths {
+		_, err = s.tc.GetModel().CreateSentFileViaInvitation(ctx, path, "", enckeys[i])
 		if err != nil {
 			return err
 		}
-
-		enhancedPaths[i] = ep
 	}
 
-	err = s.tc.ShareFilesViaPublicKey(ctx, enhancedPaths, pubkeys, enckeys)
+	err = s.tc.ManageShareFilesViaPublicKey(ctx, enhancedPaths, pubkeys, enckeys, domain.ReadWriteRoleAction)
 	if err != nil {
 		return err
 	}
@@ -420,6 +374,134 @@ func (s *Space) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullP
 	return nil
 }
 
+func (s *Space) resolveFullPaths(ctx context.Context, paths []domain.FullPath) ([]domain.FullPath, [][]byte, error) {
+	m := s.tc.GetModel()
+
+	enhancedPaths := make([]domain.FullPath, len(paths))
+	enckeys := make([][]byte, len(paths))
+	for i, path := range paths {
+		ep := domain.FullPath{
+			DbId:      path.DbId,
+			Bucket:    path.Bucket,
+			Path:      path.Path,
+			BucketKey: path.BucketKey,
+		}
+
+		// this handles personal bucket since for shared-with-me files
+		// the dbid will be preset
+		if ep.DbId == "" {
+			b, err := s.tc.GetDefaultBucket(ctx)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			bs, err := m.FindBucket(ctx, b.Slug())
+			if err != nil {
+				return nil, nil, err
+			}
+
+			ep.DbId = bs.RemoteDbID
+		}
+
+		if ep.Bucket == "" || ep.Bucket == t.GetDefaultBucketSlug() {
+			b, err := s.tc.GetDefaultBucket(ctx)
+			if err != nil {
+				return nil, nil, err
+			}
+			bs, err := m.FindBucket(ctx, b.GetData().Name)
+			if err != nil {
+				return nil, nil, err
+			}
+			ep.Bucket = t.GetDefaultMirrorBucketSlug()
+			ep.BucketKey = bs.RemoteBucketKey
+			enckeys[i] = bs.EncryptionKey
+		} else {
+			r, err := m.FindReceivedFile(ctx, path.DbId, path.Bucket, path.Path)
+			if err != nil {
+				return nil, nil, err
+			}
+			ep.Bucket = r.Bucket
+			ep.BucketKey = r.BucketKey
+			enckeys[i] = r.EncryptionKey
+		}
+
+		enhancedPaths[i] = ep
+	}
+
+	return enhancedPaths, enckeys, nil
+}
+
+func (s *Space) UnshareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error {
+	err := s.waitForTextileHub(ctx)
+	if err != nil {
+		return err
+	}
+
+	enhancedPaths, enckeys, err := s.resolveFullPaths(ctx, paths)
+	if err != nil {
+		return err
+	}
+
+	err = s.tc.ManageShareFilesViaPublicKey(ctx, enhancedPaths, pubkeys, enckeys, domain.DeleteRoleAction)
+	if err != nil {
+		return err
+	}
+
+	return s.sendPathsRevokedInvitation(ctx, pubkeys, enhancedPaths, enckeys)
+}
+
+func (s *Space) sendPathsRevokedInvitation(
+	ctx context.Context,
+	pubkeys []crypto.PubKey,
+	enhancedPaths []domain.FullPath,
+	keys [][]byte,
+) error {
+	for _, pk := range pubkeys {
+		uninviter, err := s.keychain.GetStoredPublicKey()
+		if err != nil {
+			return err
+		}
+
+		rawUniviter, err := uninviter.Raw()
+		if err != nil {
+			return err
+		}
+
+		pkRaw, err := pk.Raw()
+		if err != nil {
+			return err
+		}
+
+		d := &domain.RevokedInvitation{
+			InviterPublicKey: hex.EncodeToString(rawUniviter),
+			InviteePublicKey: hex.EncodeToString(pkRaw),
+			ItemPaths:        enhancedPaths,
+			Keys:             keys,
+		}
+
+		i, err := json.Marshal(d)
+		if err != nil {
+			return err
+		}
+
+		b := &domain.MessageBody{
+			Type: domain.REVOKED_INVITATION,
+			Body: i,
+		}
+
+		j, err := json.Marshal(b)
+		if err != nil {
+			return err
+		}
+
+		_, err = s.tc.SendMessage(ctx, pk, j)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 var errInvitationNotFound = errors.New("invitation not found")
 var errFailedToNotifyInviter = errors.New("failed to notify inviter of invitation status")
 
@@ -448,6 +530,9 @@ func (s *Space) HandleSharedFilesInvitation(ctx context.Context, invitationId st
 
 	if accept {
 		invitation, err = s.tc.AcceptSharedFilesInvitation(ctx, invitation)
+		if err != nil {
+			return err
+		}
 
 		// notify inviter,  it was accepted
 		invitersPk, err := decodePublicKey(err, invitation.InviterPublicKey)

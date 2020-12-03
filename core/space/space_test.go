@@ -805,6 +805,41 @@ func TestService_VaultRestore(t *testing.T) {
 	mockKeychain.AssertCalled(t, "ImportExistingKeyPair", mockPrivKey, mnemonic)
 }
 
+func TestService_UnshareFilesViaPublicKey_Works(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	defer tearDown()
+	ctx := context.Background()
+
+	textileClient.On("IsHealthy").Return(true)
+	textileClient.On("GetModel").Return(mockModel)
+	textileClient.On(
+		"ManageShareFilesViaPublicKey",
+		ctx,
+		[]domain.FullPath{},
+		[]crypto.PubKey{},
+		[][]byte{},
+		domain.DeleteRoleAction,
+	).Return(nil)
+
+	err := sv.UnshareFilesViaPublicKey(ctx, []domain.FullPath{}, []crypto.PubKey{})
+	assert.Nil(t, err)
+}
+
+func TestService_UnshareFilesViaPublicKey_Fails_IFTextileIsNotInitialized(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	defer tearDown()
+	ctx := context.Background()
+	expectedErr := errors.New("textile is not initialized")
+	errChan := make(chan error, 1)
+	errChan <- expectedErr
+
+	textileClient.On("WaitForHealthy").Return(errChan)
+	textileClient.On("IsHealthy").Return(false)
+
+	err := sv.UnshareFilesViaPublicKey(ctx, []domain.FullPath{}, []crypto.PubKey{})
+	assert.EqualError(t, err, expectedErr.Error())
+}
+
 func TestService_HandleSharedFilesInvitation_FailIfInvitationNotFound(t *testing.T) {
 	sv, _, tearDown := initTestService(t)
 	ctx := context.Background()

@@ -119,6 +119,23 @@ func (tc *textileClient) parseMessage(ctx context.Context, msgs []client.Message
 			}
 			n.UsageAlertValue = *u
 			n.RelatedObject = *u
+		case domain.REVOKED_INVITATION:
+			invite := domain.RevokedInvitation{}
+			if err := json.Unmarshal((*b).Body, &invite); err != nil {
+				return nil, err
+			}
+
+			// NOTE: current, this would run every time this notification is fetched
+			// we can further optimize this later to prevent unnecessary calls, but for now
+			// it would run asynchronously.
+			go func() {
+				if err = tc.GetModel().DeleteReceivedFiles(ctx, invite.ItemPaths, invite.Keys); err != nil {
+					log.Error("Failed to delete revoked files", err)
+				}
+			}()
+
+			n.RevokedInvitationValue = invite
+			n.RelatedObject = invite
 		default:
 		}
 

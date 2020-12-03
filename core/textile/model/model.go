@@ -71,6 +71,7 @@ type Model interface {
 	ListReceivedFiles(ctx context.Context, accepted bool, seek string, limit int) ([]*ReceivedFileSchema, error)
 	ListSentFiles(ctx context.Context, seek string, limit int) ([]*SentFileSchema, error)
 	ListReceivedPublicFiles(ctx context.Context, cidHash string, accepted bool) ([]*ReceivedFileSchema, error)
+	DeleteReceivedFiles(ctx context.Context, paths []domain.FullPath, keys [][]byte) error
 	FindMirrorFileByPaths(ctx context.Context, paths []string) (map[string]*MirrorFileSchema, error)
 	FindReceivedFilesByIds(ctx context.Context, ids []string) ([]*ReceivedFileSchema, error)
 	InitSearchIndexCollection(ctx context.Context) error
