@@ -697,6 +697,7 @@ enum NotificationType {
   INVITATION = 1;
   USAGEALERT = 2;
   INVITATION_REPLY = 3;
+  REVOKED_INVITATION = 4;
 }
 
 enum InvitationStatus {
@@ -722,6 +723,11 @@ message InvitationAccept {
   string invitationID = 2;
 }
 
+message RevokedInvitation {
+  string inviterPublicKey = 1;
+  repeated FullPath itemPaths = 5;
+}
+
 message Notification {
   string ID = 1; // underlying message id from textile
   string subject = 2;
@@ -730,10 +736,11 @@ message Notification {
     Invitation invitationValue = 4;
     UsageAlert usageAlert = 5;
     InvitationAccept invitationAccept = 6;
+    RevokedInvitation revokedInvitation = 7;
   }
-  NotificationType type = 7;
-  int64 createdAt = 8;
-  int64 readAt = 9;
+  NotificationType type = 8;
+  int64 createdAt = 9;
+  int64 readAt = 10;
 }
 
 message HandleFilesInvitationRequest {

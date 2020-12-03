@@ -243,6 +243,48 @@ func (m *model) ListReceivedFiles(ctx context.Context, accepted bool, seek strin
 	return files, nil
 }
 
+func (m *model) DeleteReceivedFiles(ctx context.Context, paths []domain.FullPath, keys [][]byte) error {
+	if len(paths) == 0 {
+		return nil
+	}
+
+	metaCtx, dbID, err := m.initReceivedFileModel(ctx)
+	if err != nil || dbID == nil {
+		return err
+	}
+
+	// build find query
+	var findQuery *db.Query
+	for i, path := range paths {
+		q := db.Where("dbId").Eq(path.DbId).
+			And("bucket").Eq(path.BucketKey).
+			And("path").Eq(path.Path).
+			And("encryptionKey").Eq(keys[i])
+		if findQuery == nil {
+			findQuery = q
+		} else {
+			findQuery = findQuery.Or(q)
+		}
+	}
+
+	rawFiles, err := m.threads.Find(metaCtx, *dbID, receivedFileModelName, findQuery, &ReceivedFileSchema{})
+	if err != nil {
+		return err
+	}
+	if rawFiles == nil {
+		return nil
+	}
+
+	// extract instance ids from result
+	files := rawFiles.([]*ReceivedFileSchema)
+	instanceIds := make([]string, len(files))
+	for i, file := range files {
+		instanceIds[i] = file.ID.String()
+	}
+
+	return m.threads.Delete(metaCtx, *dbID, receivedFileModelName, instanceIds)
+}
+
 func (m *model) ListReceivedPublicFiles(
 	ctx context.Context,
 	cidHash string,

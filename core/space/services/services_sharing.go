@@ -447,6 +447,58 @@ func (s *Space) UnshareFilesViaPublicKey(ctx context.Context, paths []domain.Ful
 		return err
 	}
 
+	return s.sendPathsRevokedInvitation(ctx, pubkeys, enhancedPaths, enckeys)
+}
+
+func (s *Space) sendPathsRevokedInvitation(
+	ctx context.Context,
+	pubkeys []crypto.PubKey,
+	enhancedPaths []domain.FullPath,
+	keys [][]byte,
+) error {
+	for _, pk := range pubkeys {
+		uninviter, err := s.keychain.GetStoredPublicKey()
+		if err != nil {
+			return err
+		}
+
+		rawUniviter, err := uninviter.Raw()
+		if err != nil {
+			return err
+		}
+
+		pkRaw, err := pk.Raw()
+		if err != nil {
+			return err
+		}
+
+		d := &domain.RevokedInvitation{
+			InviterPublicKey: hex.EncodeToString(rawUniviter),
+			InviteePublicKey: hex.EncodeToString(pkRaw),
+			ItemPaths:        enhancedPaths,
+			Keys:             keys,
+		}
+
+		i, err := json.Marshal(d)
+		if err != nil {
+			return err
+		}
+
+		b := &domain.MessageBody{
+			Type: domain.REVOKED_INVITATION,
+			Body: i,
+		}
+
+		j, err := json.Marshal(b)
+		if err != nil {
+			return err
+		}
+
+		_, err = s.tc.SendMessage(ctx, pk, j)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -478,6 +530,9 @@ func (s *Space) HandleSharedFilesInvitation(ctx context.Context, invitationId st
 
 	if accept {
 		invitation, err = s.tc.AcceptSharedFilesInvitation(ctx, invitation)
+		if err != nil {
+			return err
+		}
 
 		// notify inviter,  it was accepted
 		invitersPk, err := decodePublicKey(err, invitation.InviterPublicKey)
