@@ -11,6 +11,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 	"sync/atomic"
 
 	"github.com/FleekHQ/space-daemon/config"
@@ -294,11 +295,16 @@ func getTempFileName(encPath string) string {
 func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) error {
 	pullers := []pathPullingFn{s.pullFileFromLocal, s.pullFileFromDHT, s.pullFileFromClient}
 
-	var pullSuccessClosed int32
+	var pullSuccessClosed uint32
+	var pullSuccessMutex sync.Mutex
 
 	pullSuccess := make(chan *pullSuccessResponse)
+
 	defer func() {
-		atomic.AddInt32(&pullSuccessClosed, 1)
+		pullSuccessMutex.Lock()
+		defer pullSuccessMutex.Unlock()
+
+		atomic.StoreUint32(&pullSuccessClosed, 1)
 		close(pullSuccess)
 	}()
 
@@ -334,7 +340,10 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 				return
 			}
 
-			if atomic.LoadInt32(&pullSuccessClosed) == 0 {
+			pullSuccessMutex.Lock()
+			defer pullSuccessMutex.Unlock()
+
+			if atomic.LoadUint32(&pullSuccessClosed) == 0 {
 				pullSuccess <- chanRes
 			}
 
