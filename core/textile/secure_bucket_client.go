@@ -323,6 +323,11 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 				shouldCache: shouldCache,
 			}
 
+			if ctxWithCancel.Err() != nil {
+				errc <- ctxWithCancel.Err()
+				return
+			}
+
 			pullSuccess <- chanRes
 			errc <- nil
 		}(fn, f)
