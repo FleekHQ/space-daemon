@@ -11,6 +11,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync/atomic"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/ipfs"
@@ -293,8 +294,13 @@ func getTempFileName(encPath string) string {
 func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) error {
 	pullers := []pathPullingFn{s.pullFileFromLocal, s.pullFileFromDHT, s.pullFileFromClient}
 
+	var pullSuccessClosed int32
+
 	pullSuccess := make(chan *pullSuccessResponse)
-	defer close(pullSuccess)
+	defer func() {
+		atomic.AddInt32(&pullSuccessClosed, 1)
+		close(pullSuccess)
+	}()
 
 	errc := make(chan error)
 
@@ -328,7 +334,10 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 				return
 			}
 
-			pullSuccess <- chanRes
+			if atomic.LoadInt32(&pullSuccessClosed) == 0 {
+				pullSuccess <- chanRes
+			}
+
 			errc <- nil
 		}(fn, f)
 	}
@@ -349,7 +358,6 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 				if pendingFns <= 0 && erroredFns >= len(pullers) {
 					// All functions failed. Stop waiting
 					pullSuccess <- nil
-					return
 				}
 
 				if pendingFns <= 0 {
