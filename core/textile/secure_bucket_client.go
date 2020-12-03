@@ -294,8 +294,9 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 	pullers := []pathPullingFn{s.pullFileFromDHT, s.pullFileFromLocal, s.pullFileFromClient}
 
 	pullSuccess := make(chan *pullSuccessResponse)
-	errc := make(chan error)
 	defer close(pullSuccess)
+
+	errc := make(chan error)
 
 	ctxWithCancel, cancelPulls := context.WithCancel(ctx)
 	pendingFns := len(pullers)
@@ -303,7 +304,6 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 
 	for _, fn := range pullers {
 		f, err := ioutil.TempFile("", "*-"+getTempFileName(encPath))
-
 		if err != nil {
 			cancelPulls()
 			return err
@@ -344,6 +344,7 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 				if pendingFns <= 0 && erroredFns >= len(pullers) {
 					// All functions failed. Stop waiting
 					pullSuccess <- nil
+					return
 				}
 
 				if pendingFns <= 0 {
