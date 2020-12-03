@@ -11,6 +11,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
+	"sync/atomic"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/ipfs"
@@ -291,11 +293,22 @@ func getTempFileName(encPath string) string {
 }
 
 func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) error {
-	pullers := []pathPullingFn{s.pullFileFromDHT, s.pullFileFromLocal, s.pullFileFromClient}
+	pullers := []pathPullingFn{s.pullFileFromLocal, s.pullFileFromDHT, s.pullFileFromClient}
+
+	var pullSuccessClosed uint32
+	var pullSuccessMutex sync.Mutex
 
 	pullSuccess := make(chan *pullSuccessResponse)
+
+	defer func() {
+		pullSuccessMutex.Lock()
+		defer pullSuccessMutex.Unlock()
+
+		atomic.StoreUint32(&pullSuccessClosed, 1)
+		close(pullSuccess)
+	}()
+
 	errc := make(chan error)
-	defer close(pullSuccess)
 
 	ctxWithCancel, cancelPulls := context.WithCancel(ctx)
 	pendingFns := len(pullers)
@@ -303,7 +316,6 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 
 	for _, fn := range pullers {
 		f, err := ioutil.TempFile("", "*-"+getTempFileName(encPath))
-
 		if err != nil {
 			cancelPulls()
 			return err
@@ -323,7 +335,18 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 				shouldCache: shouldCache,
 			}
 
-			pullSuccess <- chanRes
+			if ctxWithCancel.Err() != nil {
+				errc <- ctxWithCancel.Err()
+				return
+			}
+
+			pullSuccessMutex.Lock()
+			defer pullSuccessMutex.Unlock()
+
+			if atomic.LoadUint32(&pullSuccessClosed) == 0 {
+				pullSuccess <- chanRes
+			}
+
 			errc <- nil
 		}(fn, f)
 	}
