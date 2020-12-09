@@ -365,7 +365,8 @@ func (tc *textileClient) buildInvitationSharedDirEntry(
 				Updated:       time.Unix(0, updatedAt).Format(time.RFC3339),
 			},
 		},
-		Members: members,
+		SharedBy: file.SharedBy,
+		Members:  members,
 	}
 
 	return res, nil
