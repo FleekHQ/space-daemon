@@ -179,7 +179,8 @@ type SharedDirEntry struct {
 	Bucket       string
 	IsPublicLink bool
 	FileInfo
-	Members []Member // XXX: it is duplicated from FileInfo
+	Members  []Member // XXX: it is duplicated from FileInfo
+	SharedBy string
 }
 
 type SearchFileEntry struct {

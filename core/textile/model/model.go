@@ -44,6 +44,7 @@ type Model interface {
 		invitationId string,
 		accepted bool,
 		key []byte,
+		sharedBy string,
 	) (*ReceivedFileSchema, error)
 	CreateReceivedFileViaPublicLink(
 		ctx context.Context,
