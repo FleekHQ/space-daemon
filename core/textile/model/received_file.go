@@ -28,6 +28,7 @@ type ReceivedFileViaInvitationSchema struct {
 	InvitationId  string `json:"invitationId"`
 	BucketKey     string `json:"bucketKey"`
 	EncryptionKey []byte `json:"encryptionKey"`
+	SharedBy      string `json:"sharedBy"`
 }
 
 // ReceivedFileSchema represents data of files shared with a user
@@ -55,6 +56,7 @@ func (m *model) CreateReceivedFileViaInvitation(
 	invitationID string,
 	accepted bool,
 	key []byte,
+	inviterPubKey string,
 ) (*ReceivedFileSchema, error) {
 	log.Debug("Model.CreateReceivedFileViaInvitation: Storing received file", "file:"+file.Path)
 	if existingFile, err := m.FindReceivedFile(ctx, file.DbId, file.Bucket, file.Path); err == nil {
@@ -71,6 +73,7 @@ func (m *model) CreateReceivedFileViaInvitation(
 			InvitationId:  invitationID,
 			BucketKey:     file.BucketKey,
 			EncryptionKey: key,
+			SharedBy:      inviterPubKey,
 		},
 		Accepted:  accepted,
 		CreatedAt: time.Now().UnixNano(),

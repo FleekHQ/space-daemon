@@ -133,7 +133,7 @@ func (tc *textileClient) createReceivedFiles(
 		if accepted {
 			encryptionKeys = invitation.Keys[i]
 		}
-		receivedFile, err := tc.GetModel().CreateReceivedFileViaInvitation(ctx, path, invitation.InvitationID, accepted, encryptionKeys)
+		receivedFile, err := tc.GetModel().CreateReceivedFileViaInvitation(ctx, path, invitation.InvitationID, accepted, encryptionKeys, invitation.InviterPublicKey)
 
 		// compose each create error
 		if err != nil {
@@ -274,6 +274,7 @@ func (tc *textileClient) buildPublicLinkSharedDirEntry(
 		},
 		Members:      []domain.Member{},
 		IsPublicLink: true,
+		SharedBy:     file.SharedBy,
 	}
 
 	return res, nil

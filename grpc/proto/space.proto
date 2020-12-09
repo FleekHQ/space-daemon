@@ -445,6 +445,7 @@ message SharedListDirectoryEntry {
   string dbId = 2;
   string bucket = 3;
   bool isPublicLink = 4;
+  string sharedBy = 5;
 }
 
 message ListDirectoriesResponse {

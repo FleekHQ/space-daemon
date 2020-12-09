@@ -110,8 +110,9 @@ func (srv *grpcServer) GetSharedWithMeFiles(ctx context.Context, request *pb.Get
 		}
 
 		dirEntry := &pb.SharedListDirectoryEntry{
-			DbId:   e.DbID,
-			Bucket: e.Bucket,
+			DbId:     e.DbID,
+			Bucket:   e.Bucket,
+			SharedBy: e.SharedBy,
 			Entry: &pb.ListDirectoryEntry{
 				Path:               e.Path,
 				IsDir:              e.IsDir,
