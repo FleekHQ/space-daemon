@@ -2,7 +2,6 @@ package textile
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"os"
@@ -109,11 +108,6 @@ func (tc *textileClient) parseMessage(ctx context.Context, msgs []client.Message
 			}
 
 			i.InvitationID = msg.ID
-			fb, err := msg.From.MarshalBinary()
-			if err != nil {
-				return nil, err
-			}
-			i.InviterPublicKey = hex.EncodeToString(fb)
 			n.InvitationValue = *i
 			n.RelatedObject = *i
 		case domain.USAGEALERT:
