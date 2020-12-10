@@ -158,5 +158,5 @@ func (tc *textileClient) getPublicShareThread(ctx context.Context) (thread.ID, e
 // DownloadPublicGatewayItem download a cid content from the hubs public gateway
 func (tc *textileClient) DownloadPublicItem(ctx context.Context, cid cid.Cid) (io.ReadCloser, error) {
 	gatewayUrl := tc.cfg.GetString(config.TextileHubGatewayUrl, "https://hub.textile.io")
-	return ipfs.DownloadIpfsItem(ctx, gatewayUrl, cid)
+	return ipfs.DownloadIpfsItemViaGateway(ctx, gatewayUrl, cid)
 }

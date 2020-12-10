@@ -3,7 +3,7 @@ package textile
 import (
 	"context"
 	"fmt"
-	"os/user"
+	"os"
 	"time"
 
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
@@ -37,25 +37,29 @@ func (tb *TextileBuckd) Start(ctx context.Context) error {
 	MinThreadsConn = tb.cfg.GetInt(config.MinThreadsConnection, 50)
 	MaxThreadsConn = tb.cfg.GetInt(config.MaxThreadsConnection, 100)
 
-	addrAPI := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/3006")
-	addrAPIProxy := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/3007")
-	addrThreadsHost := cmd.AddrFromStr("/ip4/0.0.0.0/tcp/4006")
+	addrAPI := cmd.AddrFromStr(tb.cfg.GetString(config.BuckdApiMaAddr, "/ip4/127.0.0.1/tcp/3006"))
+	addrAPIProxy := cmd.AddrFromStr(tb.cfg.GetString(config.BuckdApiProxyMaAddr, "/ip4/127.0.0.1/tcp/3007"))
+	addrThreadsHost := cmd.AddrFromStr(tb.cfg.GetString(config.BuckdThreadsHostMaAddr, "/ip4/0.0.0.0/tcp/4006"))
 
 	addrIpfsAPI := cmd.AddrFromStr(IpfsAddr)
 
-	addrGatewayHost := cmd.AddrFromStr("/ip4/127.0.0.1/tcp/8006")
-	addrGatewayURL := "http://127.0.0.1:8006"
+	gatewayPort := tb.cfg.GetInt(config.BuckdGatewayPort, 8006)
+	addrGatewayHost := cmd.AddrFromStr(fmt.Sprintf("/ip4/127.0.0.1/tcp/%d", gatewayPort))
+	addrGatewayURL := fmt.Sprintf("http://127.0.0.1:%d", gatewayPort)
 
-	// PLACEHOLDER: filecoin settings
-
-	usr, err := user.Current()
-	if err != nil {
-		return err
+	buckdPath := tb.cfg.GetString(config.BuckdPath, "")
+	if buckdPath == "" {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return err
+		}
+		buckdPath = homeDir + "/.buckd"
+		log.Debug("No Buckd Path provided. Using default.", "path:"+buckdPath)
 	}
 
 	textile, err := core.NewTextile(ctx, core.Config{
-		RepoPath:           usr.HomeDir + "/.buckd/repo",
-		CollectionRepoPath: usr.HomeDir + "/.buckd/collections",
+		RepoPath:           buckdPath + "/repo",
+		CollectionRepoPath: buckdPath + "/collections",
 		AddrAPI:            addrAPI,
 		AddrAPIProxy:       addrAPIProxy,
 		AddrThreadsHost:    addrThreadsHost,

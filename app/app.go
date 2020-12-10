@@ -3,13 +3,11 @@ package app
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/FleekHQ/space-daemon/core/space/fuse/installer"
 
 	"github.com/FleekHQ/space-daemon/core/search/bleve"
+	"github.com/pkg/errors"
 
 	"github.com/FleekHQ/space-daemon/core"
 	"github.com/FleekHQ/space-daemon/grpc"
@@ -41,11 +39,11 @@ import (
 
 // Shutdown logic follows this example https://gist.github.com/akhenakh/38dbfea70dc36964e23acc19777f3869
 type App struct {
-	eg             *errgroup.Group
-	components     *stack.Stack
-	cfg            config.Config
-	env            env.SpaceEnv
-	isShuttingDown bool
+	eg         *errgroup.Group
+	components *stack.Stack
+	cfg        config.Config
+	env        env.SpaceEnv
+	IsRunning  bool
 }
 
 type componentMap struct {
@@ -55,10 +53,10 @@ type componentMap struct {
 
 func New(cfg config.Config, env env.SpaceEnv) *App {
 	return &App{
-		components:     stack.New(),
-		cfg:            cfg,
-		env:            env,
-		isShuttingDown: false,
+		components: stack.New(),
+		cfg:        cfg,
+		env:        env,
+		IsRunning:  false,
 	}
 }
 
@@ -68,13 +66,11 @@ func New(cfg config.Config, env env.SpaceEnv) *App {
 // added to the apps list of tracked components using the `Run()` function, but if the component has a blocking
 // start/run function it should be tracked with the `RunAsync()` function and call the blocking function in the
 // input function block.
-func (a *App) Start(ctx context.Context) error {
-	a.eg, ctx = errgroup.WithContext(ctx)
+func (a *App) Start() error {
+	var ctx context.Context
+	a.eg, ctx = errgroup.WithContext(context.Background())
 
-	// setup to detect interruption
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
-	defer signal.Stop(interrupt)
+	log.SetLogLevel(a.cfg.GetString(config.LogLevel, "debug"))
 
 	// init appStore
 	appStore := store.New(
@@ -203,19 +199,9 @@ func (a *App) Start(ctx context.Context) error {
 	}
 
 	log.Info("Daemon ready")
+	a.IsRunning = true
 
-	// wait for interruption or done signal
-	select {
-	case <-interrupt:
-		log.Debug("Got interrupt signal")
-		// TODO: Track multiple interrupts in a goroutine to force exit for app.
-		break
-	case <-ctx.Done():
-		log.Debug("Got context done signal")
-		break
-	}
-
-	return a.Shutdown()
+	return nil
 }
 
 // Run registers this component to be cleaned up on Shutdown
@@ -264,6 +250,10 @@ func (a *App) RunAsync(name string, component core.AsyncComponent, fn func() err
 // Run() or RunAsync() functions
 func (a *App) Shutdown() error {
 	log.Info("Daemon shutdown started")
+	if !a.IsRunning {
+		return errors.New("app is not running")
+	}
+
 	for a.components.Len() > 0 {
 		m, ok := a.components.Pop().(*componentMap)
 		if ok {
@@ -276,5 +266,6 @@ func (a *App) Shutdown() error {
 
 	err := a.eg.Wait()
 	log.Info("Shutdown complete")
+	a.IsRunning = false
 	return err
 }

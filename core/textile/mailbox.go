@@ -276,16 +276,20 @@ func (tc *textileClient) createMailBox(ctx context.Context, maillib *mail.Mail, 
 	return mailbox, nil
 }
 
-func getMailboxPath() string {
+func (tc *textileClient) getMailboxPath() string {
 	usr, _ := user.Current()
-	mbpath := filepath.Join(usr.HomeDir, ".fleek-space/textile/mail")
+	mbpath := filepath.Join(
+		tc.cfg.GetString(config.SpaceStorePath, filepath.Join(usr.HomeDir, ".fleek-space/textile/mail")),
+		"textile",
+		"mail",
+	)
 	return mbpath
 }
 
 func (tc *textileClient) setupOrCreateMailBox(ctx context.Context) (*mail.Mailbox, error) {
 	maillib := mail.NewMail(cmd.NewClients(tc.cfg.GetString(config.TextileHubTarget, ""), true), mail.DefaultConfConfig())
 
-	mbpath := getMailboxPath()
+	mbpath := tc.getMailboxPath()
 
 	var mailbox *mail.Mailbox
 	dbid, err := tc.store.Get([]byte(mailboxSetupFlagStoreKey))
@@ -308,6 +312,6 @@ func (tc *textileClient) setupOrCreateMailBox(ctx context.Context) (*mail.Mailbo
 }
 
 func (tc *textileClient) clearLocalMailbox() error {
-	mbpath := getMailboxPath()
+	mbpath := tc.getMailboxPath()
 	return os.RemoveAll(mbpath)
 }
