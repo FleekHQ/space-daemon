@@ -39,6 +39,7 @@ require (
 	github.com/ipfs/go-ipfs-http-client v0.1.0
 	github.com/ipfs/go-ipld-format v0.2.0
 	github.com/ipfs/go-merkledag v0.3.2
+	github.com/ipfs/go-path v0.0.8 // indirect
 	github.com/ipfs/go-unixfs v0.2.4
 	github.com/ipfs/interface-go-ipfs-core v0.4.0
 	github.com/jmhodges/levigo v1.0.0 // indirect
@@ -57,6 +58,7 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/client_golang v1.7.1 // indirect
 	github.com/radovskyb/watcher v1.0.7
 	github.com/rs/cors v1.7.0
 	github.com/sirupsen/logrus v1.7.0
