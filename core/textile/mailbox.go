@@ -119,6 +119,23 @@ func (tc *textileClient) parseMessage(ctx context.Context, msgs []client.Message
 			}
 			n.UsageAlertValue = *u
 			n.RelatedObject = *u
+		case domain.REVOKED_INVITATION:
+			invite := domain.RevokedInvitation{}
+			if err := json.Unmarshal((*b).Body, &invite); err != nil {
+				return nil, err
+			}
+
+			// NOTE: current, this would run every time this notification is fetched
+			// we can further optimize this later to prevent unnecessary calls, but for now
+			// it would run asynchronously.
+			go func() {
+				if err = tc.GetModel().DeleteReceivedFiles(ctx, invite.ItemPaths, invite.Keys); err != nil {
+					log.Error("Failed to delete revoked files", err)
+				}
+			}()
+
+			n.RevokedInvitationValue = invite
+			n.RelatedObject = invite
 		default:
 		}
 
@@ -259,16 +276,20 @@ func (tc *textileClient) createMailBox(ctx context.Context, maillib *mail.Mail, 
 	return mailbox, nil
 }
 
-func getMailboxPath() string {
+func (tc *textileClient) getMailboxPath() string {
 	usr, _ := user.Current()
-	mbpath := filepath.Join(usr.HomeDir, ".fleek-space/textile/mail")
+	mbpath := filepath.Join(
+		tc.cfg.GetString(config.SpaceStorePath, filepath.Join(usr.HomeDir, ".fleek-space/textile/mail")),
+		"textile",
+		"mail",
+	)
 	return mbpath
 }
 
 func (tc *textileClient) setupOrCreateMailBox(ctx context.Context) (*mail.Mailbox, error) {
 	maillib := mail.NewMail(cmd.NewClients(tc.cfg.GetString(config.TextileHubTarget, ""), true), mail.DefaultConfConfig())
 
-	mbpath := getMailboxPath()
+	mbpath := tc.getMailboxPath()
 
 	var mailbox *mail.Mailbox
 	dbid, err := tc.store.Get([]byte(mailboxSetupFlagStoreKey))
@@ -291,6 +312,6 @@ func (tc *textileClient) setupOrCreateMailBox(ctx context.Context) (*mail.Mailbo
 }
 
 func (tc *textileClient) clearLocalMailbox() error {
-	mbpath := getMailboxPath()
+	mbpath := tc.getMailboxPath()
 	return os.RemoveAll(mbpath)
 }

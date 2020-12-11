@@ -80,7 +80,8 @@ type listener struct {
 	client     Client
 	bucketSlug string
 	handlers   []EventHandler
-	shutdown   chan (bool)
+	shutdown   chan bool
+	isRunning  bool
 }
 
 func NewListener(client Client, bucketSlug string, handlers []EventHandler) *listener {
@@ -88,7 +89,8 @@ func NewListener(client Client, bucketSlug string, handlers []EventHandler) *lis
 		client:     client,
 		bucketSlug: bucketSlug,
 		handlers:   handlers,
-		shutdown:   make(chan (bool)),
+		shutdown:   make(chan bool),
+		isRunning:  false,
 	}
 }
 
@@ -104,14 +106,15 @@ func (l *listener) Listen(ctx context.Context) error {
 	}
 	bucketData := bucket.GetData()
 
-	if err != nil {
-		return err
-	}
-
 	eventChan, err := l.client.Listen(ctx, bucketSchema.RemoteDbID, bucketSchema.RemoteBucketSlug)
 	if err != nil {
 		return err
 	}
+
+	l.isRunning = true
+	defer func() {
+		l.isRunning = false
+	}()
 
 Loop:
 	for {
@@ -119,6 +122,10 @@ Loop:
 		case ev := <-eventChan:
 			if ev.Err != nil {
 				return ev.Err
+			}
+
+			if !l.client.IsRunning() {
+				return nil
 			}
 
 			for _, handler := range l.handlers {
@@ -140,5 +147,8 @@ Loop:
 }
 
 func (l *listener) Close() {
+	if !l.isRunning {
+		return
+	}
 	l.shutdown <- true
 }

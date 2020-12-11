@@ -11,7 +11,11 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
+	"sync/atomic"
 
+	"github.com/FleekHQ/space-daemon/config"
+	"github.com/FleekHQ/space-daemon/core/ipfs"
 	"github.com/FleekHQ/space-daemon/core/keychain"
 	"github.com/FleekHQ/space-daemon/core/store"
 	"github.com/FleekHQ/space-daemon/core/textile/common"
@@ -20,6 +24,9 @@ import (
 	"github.com/FleekHQ/space-daemon/log"
 
 	"github.com/FleekHQ/space-daemon/core/textile/bucket/crypto"
+
+	ma "github.com/multiformats/go-multiaddr"
+	manet "github.com/multiformats/go-multiaddr/net"
 
 	"github.com/ipfs/go-cid"
 	ipfsfiles "github.com/ipfs/go-ipfs-files"
@@ -45,6 +52,7 @@ type SecureBucketClient struct {
 	threads    *threadsClient.Client
 	ipfsClient iface.CoreAPI
 	isRemote   bool
+	cfg        config.Config
 }
 
 func NewSecureBucketsClient(
@@ -54,6 +62,7 @@ func NewSecureBucketsClient(
 	threads *threadsClient.Client,
 	ipfsClient iface.CoreAPI,
 	isRemote bool,
+	cfg config.Config,
 ) *SecureBucketClient {
 	return &SecureBucketClient{
 		client:     client,
@@ -62,6 +71,7 @@ func NewSecureBucketsClient(
 		threads:    threads,
 		ipfsClient: ipfsClient,
 		isRemote:   isRemote,
+		cfg:        cfg,
 	}
 }
 
@@ -283,11 +293,22 @@ func getTempFileName(encPath string) string {
 }
 
 func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) error {
-	pullers := []pathPullingFn{s.pullFileFromLocal, s.pullFileFromClient, s.pullFileFromDHT}
+	pullers := []pathPullingFn{s.pullFileFromLocal, s.pullFileFromDHT, s.pullFileFromClient}
+
+	var pullSuccessClosed uint32
+	var pullSuccessMutex sync.Mutex
 
 	pullSuccess := make(chan *pullSuccessResponse)
+
+	defer func() {
+		pullSuccessMutex.Lock()
+		defer pullSuccessMutex.Unlock()
+
+		atomic.StoreUint32(&pullSuccessClosed, 1)
+		close(pullSuccess)
+	}()
+
 	errc := make(chan error)
-	defer close(pullSuccess)
 
 	ctxWithCancel, cancelPulls := context.WithCancel(ctx)
 	pendingFns := len(pullers)
@@ -295,7 +316,6 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 
 	for _, fn := range pullers {
 		f, err := ioutil.TempFile("", "*-"+getTempFileName(encPath))
-
 		if err != nil {
 			cancelPulls()
 			return err
@@ -315,7 +335,18 @@ func (s *SecureBucketClient) racePullFile(ctx context.Context, key, encPath stri
 				shouldCache: shouldCache,
 			}
 
-			pullSuccess <- chanRes
+			if ctxWithCancel.Err() != nil {
+				errc <- ctxWithCancel.Err()
+				return
+			}
+
+			pullSuccessMutex.Lock()
+			defer pullSuccessMutex.Unlock()
+
+			if atomic.LoadUint32(&pullSuccessClosed) == 0 {
+				pullSuccess <- chanRes
+			}
+
 			errc <- nil
 		}(fn, f)
 	}
@@ -483,10 +514,45 @@ func (s *SecureBucketClient) pullFileFromLocal(ctx context.Context, key, encPath
 }
 
 func (s *SecureBucketClient) pullFileFromDHT(ctx context.Context, key, encPath string, w io.Writer, opts ...bc.Option) (shouldCache bool, err error) {
-	shouldCache = true
+	shouldCache = false
 
-	// return shouldCache, nil
-	return false, errors.New("Not implemented")
+	bucketPath, err := s.client.ListPath(ctx, key, encPath)
+	if err != nil {
+		return false, err
+	}
+
+	encCid := bucketPath.Item.Cid
+
+	cid, err := cid.Decode(encCid)
+	if err != nil {
+		return false, err
+	}
+
+	ipfsAddr := s.cfg.GetString(config.Ipfsaddr, "/ip4/127.0.0.1/tcp/5001")
+
+	maddr, err := ma.NewMultiaddr(ipfsAddr)
+	if err != nil {
+		log.Error(fmt.Sprintf("Unable to parse IPFS Multiaddr: %s", ipfsAddr), err)
+		return false, err
+	}
+
+	_, host, err := manet.DialArgs(maddr)
+	if err != nil {
+		log.Error(fmt.Sprintf("Unable to dial IPFS Multiaddr: %+v", maddr), err)
+		return false, err
+	}
+
+	reader, err := ipfs.DownloadIpfsItem(ctx, host, cid)
+	if err != nil {
+		log.Error(fmt.Sprintf("Unable to download IPFS CID %s from host %s", cid.String(), host), err)
+		return false, err
+	}
+
+	if _, err := io.Copy(w, reader); err != nil {
+		return false, err
+	}
+
+	return shouldCache, nil
 }
 
 const cacheBucketThreadName = "cache_bucket"

@@ -21,11 +21,29 @@ import (
 	"github.com/textileio/textile/v2/buckets"
 )
 
-func (tc *textileClient) ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey, keys [][]byte) error {
+func (tc *textileClient) ManageShareFilesViaPublicKey(
+	ctx context.Context,
+	paths []domain.FullPath,
+	pubkeys []crypto.PubKey,
+	keys [][]byte,
+	role domain.SharedFilesRoleAction,
+) error {
 	var err error
 	ctx, err = tc.getHubCtx(ctx)
 	if err != nil {
 		return err
+	}
+	var bucketRole buckets.Role
+	switch role {
+	case domain.ReadWriteRoleAction:
+		// NOTE: setting to admin because receiving user
+		// should be able to see members and reshare
+		// as well
+		bucketRole = buckets.Admin
+	case domain.DeleteRoleAction:
+		bucketRole = buckets.None
+	default:
+		return errors.New("unsupported shared files role")
 	}
 
 	for i, pth := range paths {
@@ -34,14 +52,11 @@ func (tc *textileClient) ShareFilesViaPublicKey(ctx context.Context, paths []dom
 			return err
 		}
 
-		log.Info("Adding roles for pth: " + pth.Path)
+		log.Info("Adding roles", "path:"+pth.Path, "role:"+bucketRole.String())
 		roles := make(map[string]buckets.Role)
 		for _, pk := range pubkeys {
 			tpk := thread.NewLibp2pPubKey(pk)
-			// NOTE: setting to admin because receiving user
-			// should be able to see members and reshare
-			// as well
-			roles[tpk.String()] = buckets.Admin
+			roles[tpk.String()] = bucketRole
 		}
 
 		sbc := tc.getSecureBucketsClient(tc.hb)
@@ -118,7 +133,7 @@ func (tc *textileClient) createReceivedFiles(
 		if accepted {
 			encryptionKeys = invitation.Keys[i]
 		}
-		receivedFile, err := tc.GetModel().CreateReceivedFileViaInvitation(ctx, path, invitation.InvitationID, accepted, encryptionKeys)
+		receivedFile, err := tc.GetModel().CreateReceivedFileViaInvitation(ctx, path, invitation.InvitationID, accepted, encryptionKeys, invitation.InviterPublicKey)
 
 		// compose each create error
 		if err != nil {
@@ -259,6 +274,7 @@ func (tc *textileClient) buildPublicLinkSharedDirEntry(
 		},
 		Members:      []domain.Member{},
 		IsPublicLink: true,
+		SharedBy:     file.SharedBy,
 	}
 
 	return res, nil
@@ -349,7 +365,8 @@ func (tc *textileClient) buildInvitationSharedDirEntry(
 				Updated:       time.Unix(0, updatedAt).Format(time.RFC3339),
 			},
 		},
-		Members: members,
+		SharedBy: file.SharedBy,
+		Members:  members,
 	}
 
 	return res, nil

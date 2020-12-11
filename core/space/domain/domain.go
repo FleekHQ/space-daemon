@@ -95,6 +95,7 @@ const (
 	INVITATION
 	USAGEALERT
 	INVITATION_REPLY
+	REVOKED_INVITATION
 )
 
 type FullPath struct {
@@ -125,6 +126,14 @@ type InvitationReply struct {
 	InvitationID string `json:"invitationID"`
 }
 
+// Represents when an inviter unshared access to previously shared files in ItemPaths
+type RevokedInvitation struct {
+	InviterPublicKey string     `json:"inviterPublicKey"`
+	InviteePublicKey string     `json:"inviteePublicKey"`
+	ItemPaths        []FullPath `json:"itemPaths"`
+	Keys             [][]byte   `json:"keys"`
+}
+
 type UsageAlert struct {
 	Used    int64  `json:"used"`
 	Limit   int64  `json:"limit"`
@@ -144,10 +153,11 @@ type Notification struct {
 	CreatedAt        int64             `json:"createdAt"`
 	ReadAt           int64             `json:"readAt"`
 	// QUESTION: is there a way to enforce that only one of the below is present
-	InvitationValue       Invitation      `json:"invitationValue"`
-	UsageAlertValue       UsageAlert      `json:"usageAlertValue"`
-	InvitationAcceptValue InvitationReply `json:"invitationAcceptValue"`
-	RelatedObject         interface{}     `json:"relatedObject"`
+	InvitationValue        Invitation        `json:"invitationValue"`
+	UsageAlertValue        UsageAlert        `json:"usageAlertValue"`
+	InvitationAcceptValue  InvitationReply   `json:"invitationAcceptValue"`
+	RevokedInvitationValue RevokedInvitation `json:"revokedInvitationValue"`
+	RelatedObject          interface{}       `json:"relatedObject"`
 }
 
 type APISessionTokens struct {
@@ -169,7 +179,8 @@ type SharedDirEntry struct {
 	Bucket       string
 	IsPublicLink bool
 	FileInfo
-	Members []Member // XXX: it is duplicated from FileInfo
+	Members  []Member // XXX: it is duplicated from FileInfo
+	SharedBy string
 }
 
 type SearchFileEntry struct {
@@ -182,7 +193,9 @@ type KeyBackupType int
 
 const (
 	PASSWORD KeyBackupType = 0
-	ETH      KeyBackupType = 1
+	GOOGLE   KeyBackupType = 1
+	TWITTER  KeyBackupType = 2
+	EMAIL    KeyBackupType = 3
 )
 
 func (b KeyBackupType) String() string {
@@ -190,8 +203,20 @@ func (b KeyBackupType) String() string {
 	case 0:
 		return "password"
 	case 1:
-		return "eth"
+		return "google"
+	case 2:
+		return "twitter"
+	case 3:
+		return "email"
 	default:
 		return fmt.Sprintf("%d", int(b))
 	}
 }
+
+// SharedFilesRoleAction represents action to be performed on the role
+type SharedFilesRoleAction int
+
+const (
+	DeleteRoleAction SharedFilesRoleAction = iota
+	ReadWriteRoleAction
+)

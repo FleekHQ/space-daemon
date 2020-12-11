@@ -76,20 +76,12 @@ These are centralized services that are optional, but offer additional convenien
 
 Our hosted Textile Hub requires authentication via public key for logging in. This service sends a challenge to Space Daemon, which signs the challenge with the private key of the user and in that way our hosted Textile Hub can allow the user to store data.
 
-### MongoDB
-
-Currently, local Textile Threads require a running MongoDB database. Space Daemon by default connects to a hosted one, but this will be removed once Textile switches over to an embeddable data store.
-
 ## Running from source
 
 After cloning this repo, you can run it from source by running `go run ./cmd/space-daemon -dev`. Consider that you will need the following environment variables exported in your system:
 
 ```
 IPFS_ADDR=[Your IPFS node address]
-MONGO_PW=[The password of a MongoDB database]
-MONGO_USR=[The user of a MongoDB database]
-MONGO_HOST=[The host of a MongoDB database]
-MONGO_REPLICA_SET=[The replica set for a MongoDB database]
 SERVICES_API_URL=[The URL where Space Services API is located]
 VAULT_API_URL=[The URL where Space Vault API is located]
 VAULT_SALT_SECRET=[A random string used for kdf functions before storing keys to the vault]
@@ -149,25 +141,16 @@ If you update the gRPC API, you need to regenerate the Protobuf file.
 You will need to install the following binaries in your Go path:
 
 - `go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway`
-- `go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger`
-
-If you don't have swagger generator, you will need it for generating the REST API documentation:
-
-`brew install swagger-codegen`
-`brew install statik`
 
 Checking the binaries:
 `ls $GOPATH/bin`
-Should show the following binaries in your path: protoc-gen-go, protoc-gen-grpc-gateway, protoc-gen-swagger
+Should show the following binaries in your path: protoc-gen-go, protoc-gen-grpc-gateway
 
 Run the protobuf generation:
 `make proto_gen`
 
 Run the REST proxy generation:
 `make gen_rest`
-
-To generate REST proxy swagger spec and ui binary generation
-`make gen_rest_swagger`
 
 ** Ideally you should run `make gen_all` before commiting as this would run all the above three code generations and
 ensure everything is up to date **
@@ -197,7 +180,7 @@ Secrets are set by adding them in Github and then specifying them in `release.ym
 
 If specified, the release file will dynamically generate the secret name based on the stage by adding a `_DEV` or `_PRD` suffix to the secret name only for the specificed environment variable. It will always use `_PRD` unless the tag ends in `-dev`.  So for example tag `v0.0.15` will use PRD values, while `v0.0.15-dev` will use DEV values.
 
-Stage specific secret names will only be used for secrets `release.yml` that point to the step output instead of the secret name directly (i.e., `SERVICES_API_URL: ${{ secrets[steps.secretnames.outputs.SERVICES_API_URL] }}` instead of `MONGO_REPLICA_SET: ${{ secrets.MONGO_REPLICA_SET }}`.
+Stage specific secret names will only be used for secrets in `release.yml` that point to the step output instead of the secret name directly (i.e., `SERVICES_API_URL: ${{ secrets[steps.secretnames.outputs.SERVICES_API_URL] }}` instead of `SERVICES_API_URL: ${{ secrets.SERVICES_API_URL }}`.
 
 So to add a new secret:
 * If it's not stage specific then add the secret in GH with no suffix and in `release.yml`, refer to it based on the secret name.

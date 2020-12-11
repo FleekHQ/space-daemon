@@ -131,7 +131,7 @@ func (s *synchronizer) createMirrorBucket(ctx context.Context, slug string, enck
 	}
 
 	if root == nil {
-		createResp, err := s.hubBuckets.Create(hubCtx, bucketsClient.WithName(newSlug), bucketsClient.WithPrivate(true))
+		createResp, err := s.hubBuckets.Create(hubCtx, bucketsClient.WithName(newSlug))
 		if err != nil {
 			return nil, err
 		}

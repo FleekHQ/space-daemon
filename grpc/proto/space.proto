@@ -96,6 +96,13 @@ service SpaceApi {
     };
   }
 
+  // Removes a file or dir from a bucket
+  rpc RemoveDirOrFile(RemoveDirOrFileRequest) returns (RemoveDirOrFileResponse) {
+    option (google.api.http) = {
+      delete: "/v1/files"
+    };
+  }
+
   // Generates a copy of the file that's accessible through IPFS gateways
   rpc GeneratePublicFileLink(GeneratePublicFileLinkRequest) returns (GeneratePublicFileLinkResponse) {
     option (google.api.http) = {
@@ -145,7 +152,7 @@ service SpaceApi {
   // Toggle FUSE drive to be mounted or unmounted
   rpc ToggleFuseDrive(ToggleFuseRequest) returns (FuseDriveResponse) {
     option (google.api.http) = {
-      post: "/v1/fuse"
+      post: "/v1/toggleFuse"
       body: "*"
     };
   }
@@ -223,6 +230,14 @@ service SpaceApi {
   rpc ShareFilesViaPublicKey(ShareFilesViaPublicKeyRequest) returns (ShareFilesViaPublicKeyResponse) {
     option (google.api.http) = {
       post: "/v1/shareFilesViaPublicKey"
+      body: "*"
+    };
+  }
+
+  // Remove public keys for shared files in buckets
+  rpc UnshareFilesViaPublicKey(UnshareFilesViaPublicKeyRequest) returns (UnshareFilesViaPublicKeyResponse) {
+    option (google.api.http) = {
+      post: "/v1/unshareFilesViaPublicKey"
       body: "*"
     };
   }
@@ -430,6 +445,7 @@ message SharedListDirectoryEntry {
   string dbId = 2;
   string bucket = 3;
   bool isPublicLink = 4;
+  string sharedBy = 5;
 }
 
 message ListDirectoriesResponse {
@@ -570,7 +586,9 @@ message CreateFolderResponse {
 
 enum KeyBackupType {
   PASSWORD = 0;
-  ETH = 1;
+  GOOGLE = 1;
+  TWITTER = 2;
+  EMAIL = 3;
 }
 
 message BackupKeysByPassphraseRequest {
@@ -584,6 +602,7 @@ message BackupKeysByPassphraseResponse {}
 message RecoverKeysByPassphraseRequest {
   string uuid = 1;
   string passphrase = 2;
+  KeyBackupType type = 3;
 }
 
 message RecoverKeysByPassphraseResponse {}
@@ -622,6 +641,7 @@ message ShareFilesViaPublicKeyRequest {
   repeated string publicKeys = 1;
   repeated FullPath paths = 2;
 }
+
 message FullPath {
   string dbId = 1; // optional field to specify shared with me file
   string bucket = 2;
@@ -629,6 +649,13 @@ message FullPath {
 }
 
 message ShareFilesViaPublicKeyResponse {}
+
+message UnshareFilesViaPublicKeyRequest {
+  repeated string publicKeys = 1;
+  repeated FullPath paths = 2;
+}
+
+message UnshareFilesViaPublicKeyResponse {}
 
 message GeneratePublicFileLinkRequest {
   string bucket = 1;
@@ -648,8 +675,16 @@ message ToggleFuseRequest {
   bool mountDrive = 1;
 }
 
+enum FuseState {
+  UNSUPPORTED = 0;
+  NOT_INSTALLED = 1;
+  UNMOUNTED = 2;
+  MOUNTED = 3;
+}
+
 message FuseDriveResponse {
-  bool fuseDriveMounted = 1;
+  FuseState state = 1;
+  string mountPath = 2;
 }
 
 message ListBucketsRequest {}
@@ -663,6 +698,7 @@ enum NotificationType {
   INVITATION = 1;
   USAGEALERT = 2;
   INVITATION_REPLY = 3;
+  REVOKED_INVITATION = 4;
 }
 
 enum InvitationStatus {
@@ -688,6 +724,11 @@ message InvitationAccept {
   string invitationID = 2;
 }
 
+message RevokedInvitation {
+  string inviterPublicKey = 1;
+  repeated FullPath itemPaths = 5;
+}
+
 message Notification {
   string ID = 1; // underlying message id from textile
   string subject = 2;
@@ -696,10 +737,11 @@ message Notification {
     Invitation invitationValue = 4;
     UsageAlert usageAlert = 5;
     InvitationAccept invitationAccept = 6;
+    RevokedInvitation revokedInvitation = 7;
   }
-  NotificationType type = 7;
-  int64 createdAt = 8;
-  int64 readAt = 9;
+  NotificationType type = 8;
+  int64 createdAt = 9;
+  int64 readAt = 10;
 }
 
 message HandleFilesInvitationRequest {
@@ -788,3 +830,10 @@ message GenerateAppTokenRequest {
 message GenerateAppTokenResponse {
   string appToken = 1;
 }
+
+message RemoveDirOrFileRequest {
+  string path = 1;
+  string bucket = 2;
+}
+
+message RemoveDirOrFileResponse {}

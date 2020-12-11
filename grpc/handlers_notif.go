@@ -73,6 +73,32 @@ func mapToPbNotification(n domain.Notification) *pb.Notification {
 			Type:          pb.NotificationType(n.NotificationType),
 		}
 		return parsedNotif
+	case domain.REVOKED_INVITATION:
+		pbpths := make([]*pb.FullPath, 0)
+
+		for _, pth := range n.RevokedInvitationValue.ItemPaths {
+			pbpth := &pb.FullPath{
+				Bucket: pth.Bucket,
+				DbId:   pth.DbId,
+				Path:   pth.Path,
+			}
+			pbpths = append(pbpths, pbpth)
+		}
+
+		revokedInvite := &pb.RevokedInvitation{
+			InviterPublicKey: n.RevokedInvitationValue.InviterPublicKey,
+			ItemPaths:        pbpths,
+		}
+		ro := &pb.Notification_RevokedInvitation{RevokedInvitation: revokedInvite}
+		parsedNotif := &pb.Notification{
+			ID:            n.ID,
+			Body:          n.Body,
+			ReadAt:        n.ReadAt,
+			CreatedAt:     n.CreatedAt,
+			RelatedObject: ro,
+			Type:          pb.NotificationType(n.NotificationType),
+		}
+		return parsedNotif
 	default:
 		parsedNotif := &pb.Notification{
 			ID:        n.ID,

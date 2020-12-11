@@ -11,11 +11,7 @@ builds:
     # env:
     #   - CGO_ENABLED=0
     ldflags:
-      - -s -w -X main.mongousr={{ .Env.MONGO_USR }}
-      - -X main.mongopw={{ .Env.MONGO_PW }}
-      - -X main.mongohost={{ .Env.MONGO_HOST }}
-      - -X main.mongorepset={{ .Env.MONGO_REPLICA_SET }}
-      - -X main.spaceapi={{ .Env.SERVICES_API_URL }}
+      - -s -w -X  main.spaceapi={{ .Env.SERVICES_API_URL }}
       - -X main.vaultapi={{ .Env.VAULT_API_URL }}
       - -X main.vaultsaltsecret={{ .Env.VAULT_SALT_SECRET }}
       - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
@@ -26,6 +22,9 @@ builds:
       - -X main.textileuserkey={{ .Env.TXL_USER_KEY }}
       - -X main.textileusersecret={{ .Env.TXL_USER_SECRET }}
       - -X main.spacestoragesiteurl={{ .Env.SPACE_STORAGE_SITE_URL }}
+      - -X main.ipfsaddr={{ .Env.IPFS_ADDR }}
+      - -X main.ipfsnodeaddr={{ .Env.IPFS_NODE_ADDR }}
+      - -X main.ipfsnodepath={{ .Env.IPFS_NODE_PATH }}
     main: ./cmd/space-daemon/main.go
     binary: space
     goos:
@@ -35,11 +34,7 @@ builds:
     # env:
     #   - CGO_ENABLED=0
     ldflags:
-      - -s -w -X main.mongousr={{ .Env.MONGO_USR }}
-      - -X main.mongopw={{ .Env.MONGO_PW }}
-      - -X main.mongohost={{ .Env.MONGO_HOST }}
-      - -X main.mongorepset={{ .Env.MONGO_REPLICA_SET }}
-      - -X main.spaceapi={{ .Env.SERVICES_API_URL }}
+      - -s -w -X main.spaceapi={{ .Env.SERVICES_API_URL }}
       - -X main.vaultapi={{ .Env.VAULT_API_URL }}
       - -X main.vaultsaltsecret={{ .Env.VAULT_SALT_SECRET }}
       - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
@@ -50,6 +45,9 @@ builds:
       - -X main.textileuserkey={{ .Env.TXL_USER_KEY }}
       - -X main.textileusersecret={{ .Env.TXL_USER_SECRET }}
       - -X main.spacestoragesiteurl={{ .Env.SPACE_STORAGE_SITE_URL }}
+      - -X main.ipfsaddr={{ .Env.IPFS_ADDR }}
+      - -X main.ipfsnodeaddr={{ .Env.IPFS_NODE_ADDR }}
+      - -X main.ipfsnodepath={{ .Env.IPFS_NODE_PATH }}
     main: ./cmd/space-daemon/main.go
     binary: space
     goos:
@@ -61,11 +59,7 @@ builds:
     # env:
     #   - CGO_ENABLED=1
     ldflags:
-      - -s -w -X main.mongousr={{ .Env.MONGO_USR }}
-      - -X main.mongopw={{ .Env.MONGO_PW }}
-      - -X main.mongohost={{ .Env.MONGO_HOST }}
-      - -X main.mongorepset={{ .Env.MONGO_REPLICA_SET }}
-      - -X main.spaceapi={{ .Env.SERVICES_API_URL }}
+      - -s -w -X main.spaceapi={{ .Env.SERVICES_API_URL }}
       - -X main.vaultapi={{ .Env.VAULT_API_URL }}
       - -X main.vaultsaltsecret={{ .Env.VAULT_SALT_SECRET }}
       - -X main.spacehubauth={{ .Env.SERVICES_HUB_AUTH_URL }}
@@ -76,6 +70,9 @@ builds:
       - -X main.textileuserkey={{ .Env.TXL_USER_KEY }}
       - -X main.textileusersecret={{ .Env.TXL_USER_SECRET }}
       - -X main.spacestoragesiteurl={{ .Env.SPACE_STORAGE_SITE_URL }}
+      - -X main.ipfsaddr={{ .Env.IPFS_ADDR }}
+      - -X main.ipfsnodeaddr={{ .Env.IPFS_NODE_ADDR }}
+      - -X main.ipfsnodepath={{ .Env.IPFS_NODE_PATH }}
     main: ./cmd/space-daemon/main.go
     binary: space
     goos:

@@ -328,14 +328,6 @@ func TestService_OpenFile(t *testing.T) {
 	testFileName := "file.txt"
 
 	// setup mocks
-	cfg.On("GetInt", mock.Anything, mock.Anything).Return(
-		-1,
-	)
-
-	cfg.On("GetString", mock.Anything, mock.Anything).Return(
-		"",
-	)
-
 	mockEnv.On("WorkingFolder").Return(
 		getDir().dir,
 	)
@@ -392,7 +384,7 @@ func TestService_OpenFile(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotEmpty(t, res)
 	assert.FileExists(t, res.Location)
-	assert.Contains(t, res.Location, getDir().dir)
+	assert.Contains(t, res.Location, os.TempDir())
 	assert.True(t, strings.HasSuffix(res.Location, testFileName))
 	// assert mocks
 	cfg.AssertExpectations(t)
@@ -761,7 +753,7 @@ func TestService_VaultBackup(t *testing.T) {
 
 	pass := "strawberry123"
 	uuid := "c907e7ef-7b36-4ab1-8a56-f788d7526a2c"
-	backupType := "password"
+	backupType := domain.PASSWORD
 	ctx := context.Background()
 	mnemonic := "clog chalk blame black uncover frame before decide tuition maple crowd uncle"
 
@@ -802,15 +794,50 @@ func TestService_VaultRestore(t *testing.T) {
 
 	mockItems := []vault.VaultItem{mockItem}
 
-	mockVault.On("Retrieve", uuid, pass).Return(mockItems, nil)
+	mockVault.On("Retrieve", uuid, pass, domain.PASSWORD).Return(mockItems, nil)
 
 	mockKeychain.On("ImportExistingKeyPair", mock.Anything, mock.Anything).Return(nil)
 
 	textileClient.On("RestoreDB", mock.Anything).Return(nil)
 
-	err := sv.RecoverKeysByPassphrase(ctx, uuid, pass)
+	err := sv.RecoverKeysByPassphrase(ctx, uuid, pass, domain.PASSWORD)
 	assert.Nil(t, err)
 	mockKeychain.AssertCalled(t, "ImportExistingKeyPair", mockPrivKey, mnemonic)
+}
+
+func TestService_UnshareFilesViaPublicKey_Works(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	defer tearDown()
+	ctx := context.Background()
+
+	textileClient.On("IsHealthy").Return(true)
+	textileClient.On("GetModel").Return(mockModel)
+	textileClient.On(
+		"ManageShareFilesViaPublicKey",
+		ctx,
+		[]domain.FullPath{},
+		[]crypto.PubKey{},
+		[][]byte{},
+		domain.DeleteRoleAction,
+	).Return(nil)
+
+	err := sv.UnshareFilesViaPublicKey(ctx, []domain.FullPath{}, []crypto.PubKey{})
+	assert.Nil(t, err)
+}
+
+func TestService_UnshareFilesViaPublicKey_Fails_IFTextileIsNotInitialized(t *testing.T) {
+	sv, _, tearDown := initTestService(t)
+	defer tearDown()
+	ctx := context.Background()
+	expectedErr := errors.New("textile is not initialized")
+	errChan := make(chan error, 1)
+	errChan <- expectedErr
+
+	textileClient.On("WaitForHealthy").Return(errChan)
+	textileClient.On("IsHealthy").Return(false)
+
+	err := sv.UnshareFilesViaPublicKey(ctx, []domain.FullPath{}, []crypto.PubKey{})
+	assert.EqualError(t, err, expectedErr.Error())
 }
 
 func TestService_HandleSharedFilesInvitation_FailIfInvitationNotFound(t *testing.T) {
@@ -941,7 +968,7 @@ func TestService_OpenSharedFile_Should_AddOpenedFileToSharedWithMeList(t *testin
 	textileClient.On("IsHealthy").Return(true)
 	textileClient.On("GetPublicReceivedFile", mock.Anything, testHash, true).
 		Return(&domain.SharedDirEntry{}, testPassword, nil)
-	textileClient.On("DownloadPublicGatewayItem", mock.Anything, mock.Anything).
+	textileClient.On("DownloadPublicItem", mock.Anything, mock.Anything).
 		Return(encryptString(expectedFileContent, testPassword), nil)
 	textileClient.On("AcceptSharedFileLink", mock.Anything, testHash, testPassword, testFilename, fmt.Sprintf("%d", len(expectedFileContent))).
 		Return(&domain.SharedDirEntry{}, nil)

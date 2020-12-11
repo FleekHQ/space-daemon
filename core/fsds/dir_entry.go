@@ -3,7 +3,7 @@ package fsds
 import (
 	"fmt"
 	"os"
-	"os/user"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -13,8 +13,8 @@ import (
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 )
 
-var StandardFileAccessMode os.FileMode = 0600   // -rw-------
-var StandardDirAccessMode = os.ModeDir | 0700   // drwx------
+var StandardFileAccessMode os.FileMode = 0777   // -rw-------
+var StandardDirAccessMode = os.ModeDir | 0777   //0700   // drwx------
 var RestrictedDirAccessMode = os.ModeDir | 0500 // dr-x------ only allow reading and opening directory for user
 
 // DirEntry implements the DirEntryOps
@@ -26,6 +26,22 @@ type DirEntry struct {
 
 func NewDirEntry(entry domain.DirEntry) *DirEntry {
 	return NewDirEntryWithMode(entry, 0)
+}
+
+func NewDirEntryFromFileInfo(info os.FileInfo, path string) *DirEntry {
+	return &DirEntry{
+		entry: domain.DirEntry{
+			Path:          filepath.Dir(path),
+			IsDir:         info.IsDir(),
+			Name:          filepath.Base(path),
+			SizeInBytes:   fmt.Sprintf("%d", info.Size()),
+			Created:       info.ModTime().Format(time.RFC3339),
+			Updated:       info.ModTime().Format(time.RFC3339),
+			FileExtension: filepath.Ext(path),
+		},
+		mode: StandardFileAccessMode,
+		dbId: "",
+	}
 }
 
 func NewDirEntryWithMode(entry domain.DirEntry, mode os.FileMode) *DirEntry {
@@ -84,25 +100,13 @@ func (d *DirEntry) Mode() os.FileMode {
 	return StandardFileAccessMode
 }
 
-func (d *DirEntry) Uid() string {
+func (d *DirEntry) Uid() uint32 {
 	// for now return id of currently logged in user
-	currentUser, err := user.Current()
-	if err != nil {
-		log.Error("Uid() Error fetching user.Current()", err)
-		return "0"
-	}
-
-	return currentUser.Uid
+	return uint32(os.Getuid())
 }
 
-func (d *DirEntry) Gid() string {
-	currentUser, err := user.Current()
-	if err != nil {
-		log.Error("Gid() Error fetching user.Current()", err)
-		return "0"
-	}
-
-	return currentUser.Gid
+func (d *DirEntry) Gid() uint32 {
+	return uint32(os.Getgid())
 }
 
 // Ctime implements the DirEntryAttribute Interface

@@ -7,7 +7,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/space/domain"
 	"github.com/FleekHQ/space-daemon/core/util/address"
 	"github.com/FleekHQ/space-daemon/grpc/pb"
-	crypto "github.com/libp2p/go-libp2p-crypto"
+	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/opentracing/opentracing-go"
 )
 
@@ -52,6 +52,40 @@ func (srv *grpcServer) ShareFilesViaPublicKey(ctx context.Context, request *pb.S
 	return &pb.ShareFilesViaPublicKeyResponse{}, nil
 }
 
+func (srv *grpcServer) UnshareFilesViaPublicKey(
+	ctx context.Context,
+	request *pb.UnshareFilesViaPublicKeyRequest,
+) (*pb.UnshareFilesViaPublicKeyResponse, error) {
+	var pks []crypto.PubKey
+
+	for _, pk := range request.PublicKeys {
+		b, err := hex.DecodeString(pk)
+		if err != nil {
+			return nil, err
+		}
+		p, err := crypto.UnmarshalEd25519PublicKey(b)
+		if err != nil {
+			return nil, err
+		}
+		pks = append(pks, p)
+	}
+
+	var domainPaths []domain.FullPath
+	for _, path := range request.Paths {
+		cleanedPath := domain.FullPath{
+			Bucket: path.Bucket,
+			Path:   path.Path,
+			DbId:   path.DbId,
+		}
+
+		domainPaths = append(domainPaths, cleanedPath)
+	}
+
+	err := srv.sv.UnshareFilesViaPublicKey(ctx, domainPaths, pks)
+
+	return &pb.UnshareFilesViaPublicKeyResponse{}, err
+}
+
 func (srv *grpcServer) GetSharedWithMeFiles(ctx context.Context, request *pb.GetSharedWithMeFilesRequest) (*pb.GetSharedWithMeFilesResponse, error) {
 	entries, offset, err := srv.sv.GetSharedWithMeFiles(ctx, request.Seek, int(request.Limit))
 	if err != nil {
@@ -76,8 +110,9 @@ func (srv *grpcServer) GetSharedWithMeFiles(ctx context.Context, request *pb.Get
 		}
 
 		dirEntry := &pb.SharedListDirectoryEntry{
-			DbId:   e.DbID,
-			Bucket: e.Bucket,
+			DbId:     e.DbID,
+			Bucket:   e.Bucket,
+			SharedBy: e.SharedBy,
 			Entry: &pb.ListDirectoryEntry{
 				Path:               e.Path,
 				IsDir:              e.IsDir,

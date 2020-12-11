@@ -315,11 +315,10 @@ func (s *Space) OpenFile(ctx context.Context, path, bucketName, dbID string) (do
 		return domain.OpenFileInfo{}, err
 	}
 	listdir, err := b.ListDirectory(ctx, path)
-	cid := listdir.Item.Cid
 	if err != nil {
 		return domain.OpenFileInfo{}, err
 	}
-
+	cid := listdir.Item.Cid
 	if filePath, exists := s.sync.GetOpenFilePath(b.Slug(), path, dbID, cid); exists {
 		// sanity check in case file was deleted or moved
 		if PathExists(filePath) {
@@ -359,7 +358,7 @@ func (s *Space) TruncateData(ctx context.Context) error {
 
 func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket, isRemote bool, dbID, cid string) (string, error) {
 	// write file copy to temp folder
-	tmpFile, err := s.createTempFileForPath(ctx, path, false)
+	tmpFile, err := s.createTempFileForPath(ctx, path)
 	if err != nil {
 		log.Error("cannot create temp file while executing OpenFile", err)
 		return "", err
@@ -395,15 +394,11 @@ func (s *Space) openFileOnFs(ctx context.Context, path string, b textile.Bucket,
 // createTempFileForPath creates a temporary file using the path specified relative to the AppPath
 // configured when running the daemon. If inTempDir is true, then it is created relative
 // to the operating systems temp dir.
-func (s *Space) createTempFileForPath(ctx context.Context, path string, inTempDir bool) (*os.File, error) {
+func (s *Space) createTempFileForPath(ctx context.Context, path string) (*os.File, error) {
 	_, fileName := filepath.Split(path)
-	prefixPath := ""
-	if !inTempDir {
-		cfg := s.GetConfig(ctx)
-		prefixPath = cfg.AppPath
-	}
+
 	// NOTE: the pattern of the file ensures that it retains extension. e.g (rand num) + filename/path
-	return ioutil.TempFile(prefixPath, "*-"+fileName)
+	return ioutil.TempFile("", "*-"+fileName)
 }
 
 func (s *Space) CreateFolder(ctx context.Context, path string, bucketName string) error {
@@ -702,4 +697,25 @@ func (s *Space) addFile(ctx context.Context, sourcePath string, targetPath strin
 		BucketPath: root.String(),
 		Bytes:      fileSize,
 	}, err
+}
+
+// Removes a file or directory from a bucket
+// Note: If removing a file a user has been shared, call the RemoveMember method instead, as this works only for local buckets.
+func (s *Space) RemoveDirOrFile(ctx context.Context, path, bucketName string) error {
+	err := s.waitForTextileInit(ctx)
+	if err != nil {
+		return err
+	}
+
+	b, err := s.getBucketWithFallback(ctx, bucketName)
+	if err != nil {
+		return err
+	}
+
+	_, err = b.DeleteDirOrFile(ctx, path)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

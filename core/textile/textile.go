@@ -56,7 +56,13 @@ type Client interface {
 	WaitForInitialized() chan bool
 	Start(ctx context.Context, cfg config.Config) error
 	GetMailAsNotifications(ctx context.Context, seek string, limit int) ([]*domain.Notification, error)
-	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey, keys [][]byte) error
+	ManageShareFilesViaPublicKey(
+		ctx context.Context,
+		paths []domain.FullPath,
+		pubkeys []crypto.PubKey,
+		keys [][]byte,
+		role domain.SharedFilesRoleAction,
+	) error
 	AcceptSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
 	RejectSharedFilesInvitation(ctx context.Context, invitation domain.Invitation) (domain.Invitation, error)
 	AcceptSharedFileLink(
@@ -71,7 +77,7 @@ type Client interface {
 	GetSentFiles(ctx context.Context, seek string, limit int) ([]*domain.SharedDirEntry, string, error)
 	GetPathAccessRoles(ctx context.Context, b Bucket, path string) ([]domain.Member, error)
 	GetPublicShareBucket(ctx context.Context) (Bucket, error)
-	DownloadPublicGatewayItem(ctx context.Context, cid cid.Cid) (io.ReadCloser, error)
+	DownloadPublicItem(ctx context.Context, cid cid.Cid) (io.ReadCloser, error)
 	GetFailedHealthchecks() int
 	DeleteAccount(ctx context.Context) error
 	Listen(ctx context.Context, dbID, threadName string) (<-chan threadsClient.ListenEvent, error)

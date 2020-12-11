@@ -8,7 +8,7 @@ import (
 	"github.com/FleekHQ/space-daemon/core/permissions"
 	"github.com/FleekHQ/space-daemon/core/textile/hub"
 	"github.com/FleekHQ/space-daemon/core/vault"
-	crypto "github.com/libp2p/go-libp2p-crypto"
+	"github.com/libp2p/go-libp2p-core/crypto"
 
 	"github.com/FleekHQ/space-daemon/config"
 	"github.com/FleekHQ/space-daemon/core/env"
@@ -30,8 +30,8 @@ type Service interface {
 	DeleteKeypair(ctx context.Context) error
 	GetMnemonic(ctx context.Context) (mnemonic string, err error)
 	RestoreKeyPairFromMnemonic(ctx context.Context, mnemonic string) error
-	RecoverKeysByPassphrase(ctx context.Context, uuid string, pass string) error
-	BackupKeysByPassphrase(ctx context.Context, uuid string, pass string, backupType string) error
+	RecoverKeysByPassphrase(ctx context.Context, uuid string, pass string, backupType domain.KeyBackupType) error
+	BackupKeysByPassphrase(ctx context.Context, uuid string, pass string, backupType domain.KeyBackupType) error
 	TestPassphrase(ctx context.Context, uuid string, pass string) error
 	GetPublicKey(ctx context.Context) (string, error)
 	GetHubAuthToken(ctx context.Context) (string, error)
@@ -53,6 +53,7 @@ type Service interface {
 	ToggleBucketBackup(ctx context.Context, bucketSlug string, bucketBackup bool) error
 	BucketBackupRestore(ctx context.Context, bucketSlug string) error
 	ShareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pubkeys []crypto.PubKey) error
+	UnshareFilesViaPublicKey(ctx context.Context, paths []domain.FullPath, pks []crypto.PubKey) error
 	HandleSharedFilesInvitation(ctx context.Context, invitationId string, accept bool) error
 	GetAPISessionTokens(ctx context.Context) (*domain.APISessionTokens, error)
 	AddRecentlySharedPublicKeys(ctx context.Context, pubkeys []crypto.PubKey) error
@@ -64,6 +65,7 @@ type Service interface {
 	TruncateData(ctx context.Context) error
 	SearchFiles(ctx context.Context, query string) ([]domain.SearchFileEntry, error)
 	InitializeMasterAppToken(ctx context.Context) (*permissions.AppToken, error)
+	RemoveDirOrFile(ctx context.Context, path, bucketName string) error
 }
 
 type serviceOptions struct {

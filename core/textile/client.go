@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	manet "github.com/multiformats/go-multiaddr/net"
+
 	"github.com/FleekHQ/space-daemon/core/search"
 
 	"github.com/FleekHQ/space-daemon/config"
@@ -203,7 +205,11 @@ func (tc *textileClient) start(ctx context.Context, cfg config.Config) error {
 	var netc *nc.Client
 
 	// by default it goes to local threads now
-	host := "127.0.0.1:3006"
+	addrAPI := cmd.AddrFromStr(tc.cfg.GetString(config.BuckdApiMaAddr, "/ip4/127.0.0.1/tcp/3006"))
+	_, host, err := manet.DialArgs(addrAPI)
+	if err != nil {
+		return errors.New("invalid bucket daemon host provided: " + err.Error())
+	}
 
 	log.Debug("Creating buckets client in " + host)
 	if b, err := bucketsClient.NewClient(host, opts...); err != nil {
@@ -597,7 +603,7 @@ func (tc *textileClient) GetModel() model.Model {
 
 func (tc *textileClient) getSecureBucketsClient(baseClient *bucketsClient.Client) *SecureBucketClient {
 	isRemote := baseClient == tc.hb
-	return NewSecureBucketsClient(baseClient, tc.kc, tc.store, tc.threads, tc.ipfsClient, isRemote)
+	return NewSecureBucketsClient(baseClient, tc.kc, tc.store, tc.threads, tc.ipfsClient, isRemote, tc.cfg)
 }
 
 func (tc *textileClient) requiresHubConnection() error {

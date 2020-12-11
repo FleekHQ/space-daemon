@@ -479,6 +479,41 @@
       }
     },
     "/v1/files": {
+      "delete": {
+        "summary": "Removes a file or dir from a bucket",
+        "operationId": "SpaceApi_RemoveDirOrFile",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceRemoveDirOrFileResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "bucket",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      },
       "post": {
         "summary": "Adds items (files/folders) to be uploaded to the bucket.",
         "operationId": "SpaceApi_AddItems",
@@ -728,37 +763,6 @@
             }
           }
         },
-        "tags": [
-          "SpaceApi"
-        ]
-      },
-      "post": {
-        "summary": "Toggle FUSE drive to be mounted or unmounted",
-        "operationId": "SpaceApi_ToggleFuseDrive",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/spaceFuseDriveResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response",
-            "schema": {
-              "$ref": "#/definitions/runtimeError"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/spaceToggleFuseRequest"
-            }
-          }
-        ],
         "tags": [
           "SpaceApi"
         ]
@@ -1402,6 +1406,39 @@
         ]
       }
     },
+    "/v1/toggleFuse": {
+      "post": {
+        "summary": "Toggle FUSE drive to be mounted or unmounted",
+        "operationId": "SpaceApi_ToggleFuseDrive",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/spaceFuseDriveResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/spaceToggleFuseRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SpaceApi"
+        ]
+      }
+    },
     "/v1/usage": {
       "get": {
         "operationId": "SpaceApi_GetUsageInfo",
@@ -1755,11 +1792,20 @@
     "spaceFuseDriveResponse": {
       "type": "object",
       "properties": {
-        "fuseDriveMounted": {
-          "type": "boolean",
-          "format": "boolean"
+        "state": {
+          "$ref": "#/definitions/spaceFuseState"
         }
       }
+    },
+    "spaceFuseState": {
+      "type": "string",
+      "enum": [
+        "UNSUPPORTED",
+        "NOT_INSTALLED",
+        "UNMOUNTED",
+        "MOUNTED"
+      ],
+      "default": "UNSUPPORTED"
     },
     "spaceGenerateAppTokenRequest": {
       "type": "object",
@@ -2228,6 +2274,9 @@
       }
     },
     "spaceRecoverKeysByPassphraseResponse": {
+      "type": "object"
+    },
+    "spaceRemoveDirOrFileResponse": {
       "type": "object"
     },
     "spaceRestoreKeyPairViaMnemonicRequest": {

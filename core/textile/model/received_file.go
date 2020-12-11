@@ -28,6 +28,7 @@ type ReceivedFileViaInvitationSchema struct {
 	InvitationId  string `json:"invitationId"`
 	BucketKey     string `json:"bucketKey"`
 	EncryptionKey []byte `json:"encryptionKey"`
+	SharedBy      string `json:"sharedBy"`
 }
 
 // ReceivedFileSchema represents data of files shared with a user
@@ -55,6 +56,7 @@ func (m *model) CreateReceivedFileViaInvitation(
 	invitationID string,
 	accepted bool,
 	key []byte,
+	inviterPubKey string,
 ) (*ReceivedFileSchema, error) {
 	log.Debug("Model.CreateReceivedFileViaInvitation: Storing received file", "file:"+file.Path)
 	if existingFile, err := m.FindReceivedFile(ctx, file.DbId, file.Bucket, file.Path); err == nil {
@@ -71,6 +73,7 @@ func (m *model) CreateReceivedFileViaInvitation(
 			InvitationId:  invitationID,
 			BucketKey:     file.BucketKey,
 			EncryptionKey: key,
+			SharedBy:      inviterPubKey,
 		},
 		Accepted:  accepted,
 		CreatedAt: time.Now().UnixNano(),
@@ -241,6 +244,48 @@ func (m *model) ListReceivedFiles(ctx context.Context, accepted bool, seek strin
 
 	files := rawFiles.([]*ReceivedFileSchema)
 	return files, nil
+}
+
+func (m *model) DeleteReceivedFiles(ctx context.Context, paths []domain.FullPath, keys [][]byte) error {
+	if len(paths) == 0 {
+		return nil
+	}
+
+	metaCtx, dbID, err := m.initReceivedFileModel(ctx)
+	if err != nil || dbID == nil {
+		return err
+	}
+
+	// build find query
+	var findQuery *db.Query
+	for i, path := range paths {
+		q := db.Where("dbId").Eq(path.DbId).
+			And("bucket").Eq(path.BucketKey).
+			And("path").Eq(path.Path).
+			And("encryptionKey").Eq(keys[i])
+		if findQuery == nil {
+			findQuery = q
+		} else {
+			findQuery = findQuery.Or(q)
+		}
+	}
+
+	rawFiles, err := m.threads.Find(metaCtx, *dbID, receivedFileModelName, findQuery, &ReceivedFileSchema{})
+	if err != nil {
+		return err
+	}
+	if rawFiles == nil {
+		return nil
+	}
+
+	// extract instance ids from result
+	files := rawFiles.([]*ReceivedFileSchema)
+	instanceIds := make([]string, len(files))
+	for i, file := range files {
+		instanceIds[i] = file.ID.String()
+	}
+
+	return m.threads.Delete(metaCtx, *dbID, receivedFileModelName, instanceIds)
 }
 
 func (m *model) ListReceivedPublicFiles(
