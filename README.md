@@ -58,7 +58,7 @@ In the case you are running the embedded IPFS node, you can further configure th
 
 ### Textile Hub
 
-Required for sharing files between users and backing it up. It stores all backed up files encrypted using a set of keys so that only you, and people you share files with, can read the data. We host our own instance of the Textile Hub, and by default, Space Daemon will conect to it. It can be customized by providing the `-textilehub` flag and `-textilethreads` flag.
+Required for sharing files between users and backing it up. It stores all backed up files encrypted using a set of keys so that only you, and people you share files with, can read the data. We host our own instance of the Textile Hub, and by default, Space Daemon will connect to it. It can be customized by providing the `-textilehub` flag and `-textilethreads` flag.
 
 If you want to host your own Textile Hub node, you can [read its documentation here](https://github.com/textileio/textile)
 
@@ -172,7 +172,7 @@ To disable debug mode add this flag to binary arguments
 
 To enable trace in the daemon, pass `-trace` to the binary arguments. The daemon uses [jaegar](https://www.jaegertracing.io/) 
 for collecting trace information. Run `make jaegar` to quickly start a jaeger agent that collects the daemons trace information.
-You can `http://localhost:16686/` to explore the web ui for traces collected.
+You can visit `http://localhost:16686/` to explore the web ui for the collected traces.
 
 ### CI Secrets
 
@@ -183,5 +183,5 @@ If specified, the release file will dynamically generate the secret name based o
 Stage specific secret names will only be used for secrets in `release.yml` that point to the step output instead of the secret name directly (i.e., `SERVICES_API_URL: ${{ secrets[steps.secretnames.outputs.SERVICES_API_URL] }}` instead of `SERVICES_API_URL: ${{ secrets.SERVICES_API_URL }}`.
 
 So to add a new secret:
-* If it's not stage specific then add the secret in GH with no suffix and in `release.yml`, refer to it based on the secret name.
+* If it is not stage specific then add the secret in GH with no suffix and in `release.yml`, refer to it based on the secret name.
 * If it is stage specific, then create the 2 secrets in GH (ending in `_PRD` and `_DEV`), add the entry in step `secretnames`, and make sure the secret name in the next step points to the step output
