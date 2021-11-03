@@ -97,7 +97,7 @@ TXL_USER_SECRET=[Space level secret for hub access]
 
 Alternatively, you can run `make` to compile the binary. Make sure you have these environment variables exposed though. You can see some example environment variables in `.env.example`.
 
-## Contributting
+## Contributing
 
 We are happy to receive issues and review pull requests. Please make sure to write tests for the code you are introducing and make sure it doesn't break already passing tests.
 
