@@ -26,56 +26,54 @@ require (
 	github.com/dgraph-io/badger v1.6.2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
-	github.com/golang/protobuf v1.4.3
+	github.com/golang/protobuf v1.5.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
-	github.com/grpc-ecosystem/grpc-gateway v1.14.6
+	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/hsanjuan/ipfs-lite v1.1.17 // indirect
 	github.com/improbable-eng/grpc-web v0.13.0
-	github.com/ipfs/go-cid v0.0.7
-	github.com/ipfs/go-ipfs v0.7.0
+	github.com/ipfs/go-cid v0.2.0
+	github.com/ipfs/go-ipfs v0.13.1
 	github.com/ipfs/go-ipfs-chunker v0.0.5
 	github.com/ipfs/go-ipfs-config v0.10.0
-	github.com/ipfs/go-ipfs-files v0.0.8
+	github.com/ipfs/go-ipfs-files v0.1.1
 	github.com/ipfs/go-ipfs-http-client v0.1.0
-	github.com/ipfs/go-ipld-format v0.2.0
-	github.com/ipfs/go-merkledag v0.3.2
-	github.com/ipfs/go-path v0.0.8 // indirect
-	github.com/ipfs/go-unixfs v0.2.4
-	github.com/ipfs/interface-go-ipfs-core v0.4.0
+	github.com/ipfs/go-ipld-format v0.4.0
+	github.com/ipfs/go-merkledag v0.6.0
+	github.com/ipfs/go-unixfs v0.3.1
+	github.com/ipfs/interface-go-ipfs-core v0.7.0
 	github.com/jmhodges/levigo v1.0.0 // indirect
 	github.com/joho/godotenv v1.3.0
 	github.com/keybase/go-kext v0.0.0-20200218013902-e4a86908886a
 	github.com/libp2p/go-libp2p-connmgr v0.2.4
-	github.com/libp2p/go-libp2p-core v0.7.0
+	github.com/libp2p/go-libp2p-core v0.15.1
 	github.com/libp2p/go-libp2p-crypto v0.1.0
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/multiformats/go-multiaddr v0.3.1
+	github.com/multiformats/go-multiaddr v0.5.0
 	github.com/multiformats/go-multibase v0.0.3
-	github.com/multiformats/go-multihash v0.0.14
+	github.com/multiformats/go-multihash v0.1.0
 	github.com/odeke-em/go-utils v0.0.0-20170224015737-e8ebaed0777a
-	github.com/onsi/ginkgo v1.14.2
-	github.com/onsi/gomega v1.10.3
+	github.com/onsi/ginkgo v1.16.5
+	github.com/onsi/gomega v1.16.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.7.1 // indirect
 	github.com/radovskyb/watcher v1.0.7
 	github.com/rs/cors v1.7.0
-	github.com/sirupsen/logrus v1.7.0
-	github.com/stretchr/testify v1.6.1
+	github.com/sirupsen/logrus v1.8.1
+	github.com/stretchr/testify v1.7.1
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
 	github.com/textileio/dcrypto v0.0.1
 	github.com/textileio/go-threads v1.0.1
 	github.com/textileio/textile/v2 v2.1.7
 	github.com/tyler-smith/go-bip39 v1.0.2
 	github.com/uber/jaeger-client-go v2.23.1+incompatible
-	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
-	golang.org/x/net v0.0.0-20201006153459-a7d1128ccaa0
-	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	golang.org/x/sys v0.0.0-20201113135734-0a15ea8d9b02
-	google.golang.org/genproto v0.0.0-20200702021140-07506425bd67
-	google.golang.org/grpc v1.33.1
-	google.golang.org/protobuf v1.25.0
+	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898
+	golang.org/x/net v0.0.0-20220517181318-183a9ca12b87
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e
+	google.golang.org/genproto v0.0.0-20211118181313-81c1377c94b1
+	google.golang.org/grpc v1.46.0
+	google.golang.org/protobuf v1.28.0
 	gorm.io/driver/sqlite v1.1.3
 	gorm.io/gorm v1.20.5
 	gotest.tools v2.2.0+incompatible
