@@ -39,7 +39,6 @@ require (
 	github.com/ipfs/go-ipfs-http-client v0.1.0
 	github.com/ipfs/go-ipld-format v0.2.0
 	github.com/ipfs/go-merkledag v0.3.2
-	github.com/ipfs/go-path v0.0.8 // indirect
 	github.com/ipfs/go-unixfs v0.2.4
 	github.com/ipfs/interface-go-ipfs-core v0.4.0
 	github.com/jmhodges/levigo v1.0.0 // indirect
@@ -58,7 +57,6 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.7.1 // indirect
 	github.com/radovskyb/watcher v1.0.7
 	github.com/rs/cors v1.7.0
 	github.com/sirupsen/logrus v1.7.0
@@ -72,7 +70,7 @@ require (
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/net v0.0.0-20201006153459-a7d1128ccaa0
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	golang.org/x/sys v0.0.0-20201113135734-0a15ea8d9b02
+	golang.org/x/sys v0.1.0
 	google.golang.org/genproto v0.0.0-20200702021140-07506425bd67
 	google.golang.org/grpc v1.33.1
 	google.golang.org/protobuf v1.25.0
